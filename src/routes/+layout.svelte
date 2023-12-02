@@ -1,6 +1,7 @@
 <script lang="ts">
 	import '../app.postcss';
 	import { AppShell, AppBar } from '@skeletonlabs/skeleton';
+	import { LightSwitch } from '@skeletonlabs/skeleton';
 
 	//imports
 	import type { PageData } from './$types';
@@ -20,6 +21,7 @@
 			<svelte:fragment slot="lead">
 				<strong class="text-xl uppercase">Turbodota v3</strong>
 			</svelte:fragment>
+			
 			<svelte:fragment slot="trail">
 				<div class="flex justify-around space-x-8">
 				<div>
@@ -46,8 +48,10 @@
 						<button class="btn btn-sm variant-ghost-surface" formaction="/logout" type="submit">Logout</button>
 					{/if}
 				</form>
+				<LightSwitch/>
 			</div>
 			</svelte:fragment>
+			
 		</AppBar>
 	</svelte:fragment>
 
