@@ -60,6 +60,8 @@
 		<nav class="list-nav">
 			<ul>
 				<li><a href="/">Home</a></li>
+				<li><a href="/turbotown">Turbo Town</a></li>
+				<li><a href="/herostats">Hero Stats</a></li>
 			</ul>
 		</nav>
 		<!-- --- -->
