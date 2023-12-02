@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@tailwind variants;
+
+html,
+body {
+	@apply h-full overflow-hidden;
+}
+
+@font-face {
+	font-family: 'K2D';
+	src: url('/fonts/K2D/K2D-Regular.ttf');
+	font-weight: normal;
+	font-display: swap;
+}
+@font-face {
+	font-family: 'K2D';
+	src: url('/fonts/K2D/K2D-Bold.ttf');
+	font-weight: bold;
+	font-display: swap;
+}
+
+:root [data-theme='crimson'] {
+	--theme-font-family-base: 'K2D', sans-serif;
+	--theme-font-family-heading: 'K2D', sans-serif;
+	/* ... */
+}
