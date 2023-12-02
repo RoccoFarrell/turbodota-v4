@@ -24,6 +24,8 @@ export const actions: Actions = {
 			console.error(err)
 			return fail(400, { message: 'Could not login user.' })
 		}
+		console.log("HELLO WORLD")
+		//console.log('username:', username, ' password:', password)
 		throw redirect(302, '/')
 	}
 }
