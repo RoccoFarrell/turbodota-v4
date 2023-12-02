@@ -2,7 +2,7 @@
 	import '../app.postcss';
 	import { AppShell, AppBar } from '@skeletonlabs/skeleton';
 	import { LightSwitch } from '@skeletonlabs/skeleton';
-
+	import steam_logo from '$lib/assets/steam_logo.png'
 	//imports
 	import type { PageData } from './$types';
 	export let data: PageData;
@@ -42,7 +42,8 @@
 						<a
 							class="btn btn-sm variant-ghost-surface"
 							href="/login"
-							role="button">Login</a
+							role="button">Login
+							<img class="w-8 ml-1.5" alt="steamlogo" src={steam_logo} /> </a
 						>
 					{:else}
 						<button class="btn btn-sm variant-ghost-surface" formaction="/logout" type="submit">Logout</button>
