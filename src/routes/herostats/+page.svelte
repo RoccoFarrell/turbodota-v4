@@ -1,7 +1,10 @@
 <script lang="ts">
     import type { PageData } from './$types';
     import turboking from '$lib/assets/turboking.png'
-    //export let data: PageData;
+    export let data: PageData;
+
+    console.log(data)
+    //console.log(data.matchStats)
 </script>
 
 <div class="container mx-auto p-16 space-y-8">

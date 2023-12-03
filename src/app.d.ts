@@ -29,6 +29,28 @@ declare global {
         setSession: import('lucia/sveltekit').SetSession;
         auth: import('lucia').AuthRequest;
     }
+
+	interface Match {
+		id: number
+		match_id: number
+		account_id: number
+		assists: number
+		average_rank: number
+		deaths: number
+		duration: number
+		game_mode: number
+		hero_id: number
+		kills: number
+		leaver_status: number
+		lobby_type: number
+		party_size?: number
+		player_slot: number
+		radiant_win: boolean
+		skill?: number
+		start_time: number
+		version?: number
+	}
+	
 }
 
 export { }

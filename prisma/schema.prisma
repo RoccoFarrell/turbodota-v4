@@ -2,90 +2,74 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// datasource db {
+//   provider = "sqlite"
+//   url      = "file:./dev.sqlite"
+// }
+
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.sqlite"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model Article {
-  id        Int      @id @default(autoincrement())
+  id        Int    @id @default(autoincrement())
   title     String
   content   String
   userId    String
-  auth_user User @relation(fields: [userId], references: [id])
+  auth_user User   @relation(fields: [userId], references: [id])
   //auth_user AuthUser @relation(fields: [userId], references: [id])
 }
 
-// model AuthUser {
-//   id           String        @id @unique
-//   name         String
-//   username     String        @unique
-//   articles     Article[]
-//   auth_key     AuthKey[]
-//   auth_session AuthSession[]
-
-//   @@map("auth_user")
-// }
-
-// model AuthSession {
-//   id             String   @id @unique
-//   user_id        String
-//   active_expires BigInt
-//   idle_expires   BigInt
-//   auth_user      AuthUser @relation(fields: [user_id], references: [id], onDelete: Cascade)
-
-//   @@index([user_id])
-//   @@map("auth_session")
-// }
-
-
-// model AuthKey {
-//   id              String  @id @unique
-//   user_id         String
-//   hashed_password String?
-//   auth_user      AuthUser @relation(fields: [user_id], references: [id], onDelete: Cascade)
-
-//   @@index([user_id])
-//   @@map("auth_key")
-// }
-
-// model AuthKey {
-//   id              String   @id @unique
-//   hashed_password String?
-//   user_id         String
-//   primary_key     Boolean
-//   expires         BigInt?
-//   auth_user       AuthUser @relation(fields: [user_id], references: [id], onDelete: Cascade)
-
-//   @@index([user_id])
-//   @@map("auth_key")
-// }
+model Match {
+  id BigInt @id @unique
+  match_id      BigInt
+  account_id    BigInt
+  assists       Int
+  average_rank  Int
+  deaths        Int
+  duration      Int
+  game_mode     Int
+  hero_id       Int
+  kills         Int
+  leaver_status Int
+  lobby_type    Int
+  party_size    Int?
+  player_slot   Int
+  radiant_win   Boolean
+  skill         Int?
+  start_time    BigInt
+  version       Int?
+  //user          User?   @relation(fields: [account_id], references: [account_id])
+}
 
 model User {
-  id           String        @id @unique
+  id           String    @id @unique
   name         String
-  username     String        @unique
+  username     String    @unique
+  account_id   BigInt?   @unique
   articles     Article[]
-  key     Key[]
+  key          Key[]
   auth_session Session[]
+  //matches      Match[]
 }
 
 model Session {
-  id             String   @id @unique
+  id             String @id @unique
   user_id        String
   active_expires BigInt
   idle_expires   BigInt
-  user      User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user           User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@index([user_id])
 }
 
 model Key {
-  id              String   @id @unique
+  id              String  @id @unique
   hashed_password String?
   user_id         String
   // primary_key     Boolean
-  user       User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user            User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@index([user_id])
 }

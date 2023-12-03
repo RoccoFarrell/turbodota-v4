@@ -1,7 +1,7 @@
 import { PrismaClient } from "@prisma/client"
 import { env } from "$env/dynamic/private"
 
-const client = global.__prisma || new PrismaClient()
+const prisma = global.__prisma || new PrismaClient()
 // const client = new PrismaClient({
 // 	log: ['query', 'info', 'warn', 'error']
 // })
@@ -10,4 +10,4 @@ const client = global.__prisma || new PrismaClient()
 // 	global.__prisma = client
 // }
 
-export { client }
+export { prisma }
