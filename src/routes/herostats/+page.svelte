@@ -7,10 +7,10 @@
     import { tableSourceValues } from '@skeletonlabs/skeleton';
     import { ProgressRadial } from '@skeletonlabs/skeleton';
     export let data: PageData;
-    //console.log(data)
+    console.log(data)
 
     let promise = Promise.resolve([]);
-    let userData = [];
+    let tableData = [];
     let selectedHero = null;
 
     const heroList = [
@@ -20,21 +20,25 @@
     ];
     
     //need to put data into array for Skeleton table
-    userData.push({
-            player: 'Martin',
-            games: data.matchStats.totals.games,
-            wins: data.matchStats.totals.wins,
-            losses: data.matchStats.totals.losses,
-            winPct: data.matchStats.totals.wins/data.matchStats.totals.games,
-            kda: data.matchStats.totals.kda,
-            kills: data.matchStats.totals.kills,
-            deaths: data.matchStats.totals.deaths,
-            assists: data.matchStats.totals.assists
+    data.matchStats.forEach(element => {
+        let i = 0;
+        tableData.push({
+            player: element.playerName,
+            games: element.heroData.totals.games,
+            wins: element.heroData.totals.wins,
+            losses: element.heroData.totals.losses,
+            winPct: element.heroData.totals.wins/element.heroData.totals.games,
+            kda: element.heroData.totals.kda,
+            kills: element.heroData.totals.kills,
+            deaths: element.heroData.totals.deaths,
+            assists: element.heroData.totals.assists
         })
-
+        i = i + 1;
+    });
+    
     const tableSimple: TableSource = {
             head: ['Player', 'Games', 'Wins', 'Losses', 'Win %', 'KDA', 'Kills', 'Deaths', 'Assists'],
-            body: tableSourceValues(userData)
+            body: tableSourceValues(tableData)
     };
 
     onMount(async function () {

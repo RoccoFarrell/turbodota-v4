@@ -31,6 +31,8 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 
 	const getMatchStats = async () => {
 
+		let userDataArray = [];
+
 		const playersWeCareAbout = [
 			{ playerID: 113003047, playerName: 'Danny' },
 			//{ playerID: 123794823, playerName: 'Steven' },
@@ -44,25 +46,34 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 			//{ playerID: 214308966, playerName: 'Andy' }
 		];
 
-		const response = await fetch(`${url.origin}/api/updateMatchesForUser?account_id=${80636612}`, {
-			method: 'Get',
-			headers: {
-				'content-type': 'application/json',
-			},
-		});
+		for (const player of playersWeCareAbout) {
 
-		let responseData = await response.json()
-		responseData = processPlayerInfo(responseData)
-		responseData.playerID = 80636612
-		responseData.playerName = 'Martin'
-		//console.log(`responseData: ${JSON.stringify(responseData)}`)
-		return responseData
+			const response = await fetch(`${url.origin}/api/updateMatchesForUser?account_id=${player.playerID}`, {
+				method: 'Get',
+				headers: {
+					'content-type': 'application/json',
+				},
+			});
+
+			let responseData = await response.json()
+
+			userDataArray.push({
+				player: player.playerID,
+                playerName: player.playerName,
+                heroData: processPlayerInfo(responseData)
+			})
+			
+			//console.log(`responseData: ${JSON.stringify(responseData)}`)
+		};
+
+		console.log(userDataArray)
+		return userDataArray
 		
 	}
 
 	function processPlayerInfo(matchStats) {
 
-		let totals = {'kills': 0, 'deaths': 0, 'assists': 0, 'wins':0, 'losses':0, 'kda:':0 }
+		let totals = {'kills': 0, 'deaths': 0, 'assists': 0, 'wins':0, 'losses':0, 'kda':0, 'games':0}
 		let allHeroesGames = {}
 		for(let i = 0; i < matchStats.length; i++) {
 	
@@ -74,7 +85,8 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 			totals.deaths += matchStats[i].deaths
 			totals.assists += matchStats[i].assists
 			totals.kda += (totals.kills + totals.assists) / totals.deaths
-	
+			totals.games += matchStats[i].games
+
 			//sum total wins
 			if(winOrLoss(matchStats[i].player_slot, matchStats[i].radiant_win) === true){
 			totals.wins += 1
