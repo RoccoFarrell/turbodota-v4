@@ -22,7 +22,7 @@ model Article {
 }
 
 model Match {
-  id BigInt @id @unique
+  id Int @id @default(autoincrement())
   match_id      BigInt
   account_id    BigInt
   assists       Int
@@ -41,6 +41,23 @@ model Match {
   start_time    BigInt
   version       Int?
   //user          User?   @relation(fields: [account_id], references: [account_id])
+
+  @@unique([match_id, account_id], name: "matchPlusAccount")
+}
+
+model DotaUser {
+  account_id BigInt @id @unique
+  lastUpdated DateTime
+}
+
+model Hero {
+  id Int @id @unique
+  name String
+  localized_name String
+  primary_attr String
+  attack_type String
+  roles String
+  legs Int
 }
 
 model User {

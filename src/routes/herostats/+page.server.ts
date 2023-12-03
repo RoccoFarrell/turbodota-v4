@@ -5,18 +5,18 @@ import { env } from "$env/dynamic/private"
 
 import { base } from '$app/paths' 
 
-console.log(base)
 export const load: PageServerLoad = async ({ params, locals, url }) => {
+	
+	//session info
 	const session = await locals.auth.validate()
 	let user = null;
 	if (!session) {
 		throw error(401, 'Unauthorized')
 	} else {
-		console.log(session)
 		user = session.user
 	}
 
-	//console.log(url)
+	//test random number
 	const randomNumber = async () => {
 		const response = await fetch(`${url.origin}/api/randomNumber`, {
 			method: 'Get',
@@ -25,24 +25,40 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 			},
 		});
 	
-		//console.log(response)
+		//(response)
 		return await response.json();
 	 }
 
+	//get heroes list
+	const getHeroes = async () => {
+
+		const response = await fetch(`${url.origin}/api/getHeroes`, {
+			method: 'Get',
+			headers: {
+				'content-type': 'application/json',
+			},
+		});
+
+		let responseData = await response.json()
+
+		return responseData
+	}
+
+	//get match stats
 	const getMatchStats = async () => {
 
 		let userDataArray = [];
 
 		const playersWeCareAbout = [
-			{ playerID: 113003047, playerName: 'Danny' },
-			//{ playerID: 123794823, playerName: 'Steven' },
-			{ playerID: 125251142, playerName: 'Matt' },
-			{ playerID: 34940151, playerName: 'Roberts' },
-			{ playerID: 423076846, playerName: 'Chris' },
 			{ playerID: 65110965, playerName: 'Rocco' },
+			{ playerID: 34940151, playerName: 'Roberts' },
+			{ playerID: 80636612, playerName: 'Martin' },
+			{ playerID: 113003047, playerName: 'Danny' },
+			{ playerID: 125251142, playerName: 'Matt' },
+			{ playerID: 423076846, playerName: 'Chris' },
 			{ playerID: 67762413, playerName: 'Walker' },
 			{ playerID: 68024789, playerName: 'Ben' },
-			{ playerID: 80636612, playerName: 'Martin' }
+			//{ playerID: 123794823, playerName: 'Steven' },
 			//{ playerID: 214308966, playerName: 'Andy' }
 		];
 
@@ -58,154 +74,23 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 			let responseData = await response.json()
 
 			userDataArray.push({
-				player: player.playerID,
+				playerID: player.playerID,
                 playerName: player.playerName,
-                heroData: processPlayerInfo(responseData)
+                matchData: responseData.matchData,
+				dataSource: responseData.dataSource
 			})
 			
-			//console.log(`responseData: ${JSON.stringify(responseData)}`)
+			//(`responseData: ${JSON.stringify(responseData)}`)
 		};
 
-		console.log(userDataArray)
 		return userDataArray
 		
 	}
 
-	function processPlayerInfo(matchStats) {
-
-		let totals = {'kills': 0, 'deaths': 0, 'assists': 0, 'wins':0, 'losses':0, 'kda':0, 'games':0}
-		let allHeroesGames = {}
-		for(let i = 0; i < matchStats.length; i++) {
-	
-			//check if hero slot is 0, indicating bad match data
-			if(matchStats[i].hero_id === 0 || matchStats[i].hero_id === '0') i++
-	
-			//sum all KDA
-			totals.kills += matchStats[i].kills
-			totals.deaths += matchStats[i].deaths
-			totals.assists += matchStats[i].assists
-			totals.kda += (totals.kills + totals.assists) / totals.deaths
-			totals.games += matchStats[i].games
-
-			//sum total wins
-			if(winOrLoss(matchStats[i].player_slot, matchStats[i].radiant_win) === true){
-			totals.wins += 1
-			} else {
-			totals.losses += 1
-			}
-	
-			let heroID = matchStats[i].hero_id
-			
-			if(allHeroesGames[heroID] === undefined){
-			allHeroesGames[heroID] = {
-				games: 0,
-				wins: 0,
-				losses: 0,
-				kills: 0,
-				deaths: 0,
-				assists: 0,
-				partysize: {
-				1: {
-					games: 0,
-					wins: 0,
-					losses: 0,
-					kills: 0,
-					deaths: 0,
-					assists: 0
-				}, 
-				2: {
-					games: 0,
-					wins: 0,
-					losses: 0,
-					kills: 0,
-					deaths: 0,
-					assists: 0
-				},
-				3: {
-					games: 0,
-					wins: 0,
-					losses: 0,
-					kills: 0,
-					deaths: 0,
-					assists: 0
-				},
-				4: {
-					games: 0,
-					wins: 0,
-					losses: 0,
-					kills: 0,
-					deaths: 0,
-					assists: 0
-				},
-				5: {
-					games: 0,
-					wins: 0,
-					losses: 0,
-					kills: 0,
-					deaths: 0,
-					assists: 0
-				},
-				99: {
-					games: 0,
-					wins: 0,
-					losses: 0,
-					kills: 0,
-					deaths: 0,
-					assists: 0
-				}
-				}
-			}
-			}
-	
-			//add KDA stats to allHeroesGames
-			allHeroesGames[heroID].kills += matchStats[i].kills
-			allHeroesGames[heroID].deaths += matchStats[i].deaths
-			allHeroesGames[heroID].assists += matchStats[i].assists
-			allHeroesGames[heroID].games += 1
-	
-			let tempPartySize = matchStats[i].party_size
-			if(tempPartySize === null || tempPartySize === 0) tempPartySize = 99
-			//console.log('error')
-			//console.log("temp party size: ", tempPartySize , matchStats[i])
-			//console.log(allHeroesGames[heroID])
-			allHeroesGames[heroID].partysize[tempPartySize].games += 1
-			allHeroesGames[heroID].partysize[tempPartySize].kills += matchStats[i].kills
-			allHeroesGames[heroID].partysize[tempPartySize].deaths += matchStats[i].deaths
-			allHeroesGames[heroID].partysize[tempPartySize].assists += matchStats[i].assists
-	
-			if(winOrLoss(matchStats[i].player_slot, matchStats[i].radiant_win) === true){
-			allHeroesGames[heroID].wins += 1
-			allHeroesGames[heroID].partysize[tempPartySize].wins += 1
-			} else {
-			allHeroesGames[heroID].losses += 1
-			allHeroesGames[heroID].partysize[tempPartySize].losses += 1
-			}
-		}
-	
-		totals.games =(matchStats.length)
-		let avgObj = {'kills': (totals.kills / matchStats.length).toFixed(2), 'deaths': (totals.deaths / matchStats.length).toFixed(2), 'assists': (totals.assists / matchStats.length).toFixed(2)}
-		//console.log(allHeroesGames)
-		return ({"averages": avgObj, "totals": totals, "allHeroRecord": allHeroesGames })
-	}
-	
-	function winOrLoss (slot, win) {
-		if (slot > 127){
-			if (win === false){
-				return true
-			}
-			else return false
-		}
-		else {
-			if (win === false){
-				return false
-			}
-			else return true
-		}
-	}
-
 	return {
 		matchStats: await getMatchStats(),
-		randomNumber: await randomNumber()
+		randomNumber: await randomNumber(),
+		allHeroes: await getHeroes()
 	}
 }
 

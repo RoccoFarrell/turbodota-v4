@@ -31,9 +31,9 @@ declare global {
     }
 
 	interface Match {
-		id: number
-		match_id: number
-		account_id: number
+		id: Int
+		match_id: bigint
+		account_id: bigint
 		assists: number
 		average_rank: number
 		deaths: number
@@ -43,12 +43,22 @@ declare global {
 		kills: number
 		leaver_status: number
 		lobby_type: number
-		party_size?: number
+		party_size?: number | null
 		player_slot: number
 		radiant_win: boolean
-		skill?: number
-		start_time: number
-		version?: number
+		skill?: number | null
+		start_time: bigint
+		version?: number | null
+	}
+
+	interface Hero{
+		id: number
+		name: string
+		localized_name: string
+		primary_attr: string
+		attack_type: string
+		roles: string
+		legs: Int
 	}
 	
 }
