@@ -52,9 +52,143 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 		});
 
 		let responseData = await response.json()
+		responseData = processPlayerInfo(responseData)
+		responseData.playerID = 80636612
+		responseData.playerName = 'Martin'
 		//console.log(`responseData: ${JSON.stringify(responseData)}`)
 		return responseData
 		
+	}
+
+	function processPlayerInfo(matchStats) {
+
+		let totals = {'kills': 0, 'deaths': 0, 'assists': 0, 'wins':0, 'losses':0, 'kda:':0 }
+		let allHeroesGames = {}
+		for(let i = 0; i < matchStats.length; i++) {
+	
+			//check if hero slot is 0, indicating bad match data
+			if(matchStats[i].hero_id === 0 || matchStats[i].hero_id === '0') i++
+	
+			//sum all KDA
+			totals.kills += matchStats[i].kills
+			totals.deaths += matchStats[i].deaths
+			totals.assists += matchStats[i].assists
+			totals.kda += (totals.kills + totals.assists) / totals.deaths
+	
+			//sum total wins
+			if(winOrLoss(matchStats[i].player_slot, matchStats[i].radiant_win) === true){
+			totals.wins += 1
+			} else {
+			totals.losses += 1
+			}
+	
+			let heroID = matchStats[i].hero_id
+			
+			if(allHeroesGames[heroID] === undefined){
+			allHeroesGames[heroID] = {
+				games: 0,
+				wins: 0,
+				losses: 0,
+				kills: 0,
+				deaths: 0,
+				assists: 0,
+				partysize: {
+				1: {
+					games: 0,
+					wins: 0,
+					losses: 0,
+					kills: 0,
+					deaths: 0,
+					assists: 0
+				}, 
+				2: {
+					games: 0,
+					wins: 0,
+					losses: 0,
+					kills: 0,
+					deaths: 0,
+					assists: 0
+				},
+				3: {
+					games: 0,
+					wins: 0,
+					losses: 0,
+					kills: 0,
+					deaths: 0,
+					assists: 0
+				},
+				4: {
+					games: 0,
+					wins: 0,
+					losses: 0,
+					kills: 0,
+					deaths: 0,
+					assists: 0
+				},
+				5: {
+					games: 0,
+					wins: 0,
+					losses: 0,
+					kills: 0,
+					deaths: 0,
+					assists: 0
+				},
+				99: {
+					games: 0,
+					wins: 0,
+					losses: 0,
+					kills: 0,
+					deaths: 0,
+					assists: 0
+				}
+				}
+			}
+			}
+	
+			//add KDA stats to allHeroesGames
+			allHeroesGames[heroID].kills += matchStats[i].kills
+			allHeroesGames[heroID].deaths += matchStats[i].deaths
+			allHeroesGames[heroID].assists += matchStats[i].assists
+			allHeroesGames[heroID].games += 1
+	
+			let tempPartySize = matchStats[i].party_size
+			if(tempPartySize === null || tempPartySize === 0) tempPartySize = 99
+			//console.log('error')
+			//console.log("temp party size: ", tempPartySize , matchStats[i])
+			//console.log(allHeroesGames[heroID])
+			allHeroesGames[heroID].partysize[tempPartySize].games += 1
+			allHeroesGames[heroID].partysize[tempPartySize].kills += matchStats[i].kills
+			allHeroesGames[heroID].partysize[tempPartySize].deaths += matchStats[i].deaths
+			allHeroesGames[heroID].partysize[tempPartySize].assists += matchStats[i].assists
+	
+			if(winOrLoss(matchStats[i].player_slot, matchStats[i].radiant_win) === true){
+			allHeroesGames[heroID].wins += 1
+			allHeroesGames[heroID].partysize[tempPartySize].wins += 1
+			} else {
+			allHeroesGames[heroID].losses += 1
+			allHeroesGames[heroID].partysize[tempPartySize].losses += 1
+			}
+		}
+	
+		totals.games =(matchStats.length)
+		let avgObj = {'kills': (totals.kills / matchStats.length).toFixed(2), 'deaths': (totals.deaths / matchStats.length).toFixed(2), 'assists': (totals.assists / matchStats.length).toFixed(2)}
+		//console.log(allHeroesGames)
+		return ({"averages": avgObj, "totals": totals, "allHeroRecord": allHeroesGames })
+	}
+	
+	function winOrLoss (slot, win) {
+		if (slot > 127){
+			if (win === false){
+				return true
+			}
+			else return false
+		}
+		else {
+			if (win === false){
+				return false
+			}
+			else return true
+		}
 	}
 
 	return {
