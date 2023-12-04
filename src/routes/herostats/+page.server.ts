@@ -47,7 +47,7 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 	//get match stats
 	const getMatchStats = async () => {
 
-		let userDataArray = [];
+		let userDataArray: MatchStats[] = [];
 
 		const playersWeCareAbout = [
 			{ playerID: 65110965, playerName: 'Rocco' },
@@ -89,9 +89,23 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 	}
 
 	return {
-		matchStats: await getMatchStats(),
-		randomNumber: await randomNumber(),
-		allHeroes: await getHeroes()
+		streamed: {
+			matchStats: new Promise<MatchStats[]>((resolve, reject) => {  
+				getMatchStats()
+				 .then(data => {
+					let returnData: MatchStats[] = data;
+					return resolve(returnData)
+				 })
+				 .catch((error) => {
+				   console.log(error)
+				   return reject(error)
+				 })
+			 }),
+			//matchStats: await getMatchStats(),
+			randomNumber: await randomNumber(),
+			heroDescriptions: await getHeroes()
+		}
+		
 	}
 }
 

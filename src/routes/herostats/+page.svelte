@@ -1,19 +1,28 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	import { page } from '$app/stores';
-    import { navigating } from "$app/stores";
+	import { navigating } from '$app/stores';
 
-	import { onMount } from 'svelte';
-	import turboking from '$lib/assets/turboking.png';
-	import { Table } from '@skeletonlabs/skeleton';
+	//components
+	import {
+		Table,
+		tableSourceValues,
+		tableMapperValues,
+		ProgressRadial
+	} from '@skeletonlabs/skeleton';
 	import type { TableSource } from '@skeletonlabs/skeleton';
-	import { tableSourceValues, tableMapperValues } from '@skeletonlabs/skeleton';
-	import { ProgressRadial } from '@skeletonlabs/skeleton';
+	import Loading from '$lib/components/Loading.svelte';
+
+	//imports
+	import turboking from '$lib/assets/turboking.png';
+
+	//page data
 	export let data: PageData;
 
-	console.log(data);
-	console.log(page);
+	//console.log(data);
+	//console.log(page);
 
+	//table data
 	class TableRow {
 		playerID: number = 0;
 		playerName: string = '';
@@ -28,33 +37,62 @@
 	}
 
 	let selectedHeroID: number = -1;
-	//var obj: { property: string; } = { property: "foo" };
 
 	let tableData: TableSource = {
 		head: [],
 		body: []
 	};
+	$: tableData = recalcTable(selectedHeroID)
 
-	$: tableData = {
-		head: ['Player', 'Games', 'Wins', 'Losses', 'Win %', 'KDA', 'Kills', 'Deaths', 'Assists'],
-		body: tableMapperValues(recalcTable(selectedHeroID), [
-			'playerName',
-			'games',
-			'wins',
-			'losses',
-			'win_percentage',
-			'kda',
-			'kills',
-			'deaths',
-			'assists'
-		])
+	//hero list
+	let heroListWithAll = data.streamed.heroDescriptions.allHeroes.sort((a: any, b: any) => {
+		if (a.localized_name < b.localized_name) return -1;
+		else return 1;
+	});
+
+	heroListWithAll = [
+		{
+			id: -1,
+			localized_name: 'All'
+		},
+		...data.streamed.heroDescriptions.allHeroes
+	];
+	const heroList: Hero[] = heroListWithAll;
+
+	//helper functions
+
+	let matchStats: MatchStats[] = [];
+	data.streamed.matchStats.then((value) => {
+        console.log(`promise finished ${value}`)
+		matchStats = value;
+		tableData = recalcTable(-1);
+	});
+
+    let recalcTable = (heroID: number) => {
+        selectedHeroID = heroID;
+		return {
+			head: ['Player', 'Games', 'Wins', 'Losses', 'Win %', 'KDA', 'Kills', 'Deaths', 'Assists'],
+			body: tableMapperValues(recalcTableData(selectedHeroID), [
+				'playerName',
+				'games',
+				'wins',
+				'losses',
+				'win_percentage',
+				'kda',
+				'kills',
+				'deaths',
+				'assists'
+			])
+		};
 	};
 
-	const recalcTable = (heroID: number = -1) => {
-		console.log(heroID);
+	const recalcTableData = (heroID: number = -1) => {
+		console.log(`[herostats page.svelte] new hero ID selected: ${heroID}`);
 
 		let tableData: TableRow[] = [];
-		data.matchStats.forEach((player) => {
+
+        console.log(matchStats.length)
+		matchStats.forEach((player) => {
 			//filters match data for selected hero
 			let pushObj: TableRow = new TableRow();
 
@@ -77,38 +115,18 @@
 			pushObj.assists = filteredMatchData.reduce((acc: number, cur: Match) => acc + cur.assists, 0);
 			pushObj.kda = (pushObj.kills + pushObj.assists) / pushObj.deaths;
 
-			//console.log(`pushObj: ${JSON.stringify(pushObj)}`);
 			tableData.push(pushObj);
 		});
-
-		//console.log(`tableData: ${JSON.stringify(tableData)}`)
 
 		//sort by games by default
 		tableData = tableData.sort((a: any, b: any) => {
 			if (a.games < b.games) return 1;
 			else return -1;
 		});
-		console.log(tableData);
+
+        console.log(tableData)
 		return tableData;
 	};
-
-	// let promise = Promise.resolve([]);
-	// let tableData = [];
-	// let selectedHero = null;
-
-	let heroListWithAll = data.allHeroes.sort((a: any, b: any) => {
-		if (a.localized_name < b.localized_name) return -1;
-		else return 1;
-	});
-
-	heroListWithAll = [
-		{
-			id: -1,
-			localized_name: 'All'
-		},
-		...data.allHeroes
-	];
-	const heroList: Hero[] = heroListWithAll;
 
 	function winOrLoss(slot: number, win: boolean) {
 		if (slot > 127) {
@@ -145,88 +163,98 @@
 	}
 </script>
 
-<div class="container mx-auto my-4">
-	<div class="flex items-center justify-around space-x-4">
-		<div class="flex flex-col items-center">
-			<h1 class="h1 text-primary-500">Hero Stats</h1>
-			<div class="flex justify-center items-center space-x-8 my-2">
-				<h3 class="h3">ONLY THE TRUE KING WILL RULE</h3>
-				<img class="w-8 lg:w-12" alt="turboking" src={turboking} />
+{#await data.streamed.matchStats}
+	<Loading />
+{:then matchStats}
+	<div class="container mx-auto my-4">
+		<div class="flex items-center justify-around space-x-4">
+			<div class="flex flex-col items-center">
+				<h1 class="h1 text-primary-500">Hero Stats</h1>
+				<div class="flex justify-center items-center space-x-8 my-2">
+					<h3 class="h3">ONLY THE TRUE KING WILL RULE</h3>
+					<img class="w-8 lg:w-12" alt="turboking" src={turboking} />
+				</div>
+			</div>
+			<div class="flex flex-col">
+				<h3 class="h3 text-primary-500">Data sources</h3>
+				<div>
+					Open Dota: <p class="inline text-orange-500 font-bold">
+						{matchStats.filter((player) => player.dataSource !== 'db').length}
+					</p>
+				</div>
+				<div>
+					Database: <p class="inline text-green-500 font-bold">
+						{matchStats.filter((player) => player.dataSource === 'db').length}
+					</p>
+				</div>
 			</div>
 		</div>
-		<div class="flex flex-col">
-            <h3 class="h3 text-primary-500">Data sources</h3>
-            <div>Open Dota: <p class="inline text-orange-500 font-bold">{data.matchStats.filter(player => player.dataSource !== "db").length}</p> </div>
-            <div>Database: <p class="inline text-green-500 font-bold">{data.matchStats.filter(player => player.dataSource === "db").length}</p> </div>
-        </div>
 	</div>
-</div>
 
-<div class="container mx-auto p-4 space-y-8">
-	<div class="flex justify-center items-center space-x-8">
-		<select class="select select-sm variant-ghost-surface" bind:value={selectedHeroID}>
-			{#each heroList as hero}
-				<option value={hero.id}>{hero.localized_name}</option>
-			{/each}
-		</select>
-	</div>
-</div>
-
-<!-- Skeleton table component -->
-<!-- <div>
-	<Table source={tableData} />
-</div> -->
-
-<!-- Skeleton table styling -->
-<!-- Responsive Container (recommended) -->
-<div class="table-container">
-	<!-- Native Table Element -->
-	<table class="table table-interactive">
-		<thead>
-			<tr>
-				{#each ['Player', 'Games', 'Wins', 'Losses', 'Win %', 'KDA', 'Kills', 'Deaths', 'Assists'] as headerText, i}
-					{#if [2, 3, 6, 7, 8].includes(i)}
-						<th class="max-sm:hidden md:visible hover:bg-surface-500/50">{headerText}</th>
-					{:else}
-						<th class="hover:bg-surface-500/50">{headerText}</th>
-					{/if}
+	<div class="container mx-auto p-4 space-y-8">
+		<div class="flex justify-center items-center space-x-8">
+			<select class="select select-sm variant-ghost-surface" bind:value={selectedHeroID}>
+				{#each heroList as hero}
+					<option value={hero.id}>{hero.localized_name}</option>
 				{/each}
-			</tr>
-		</thead>
-		<tbody>
-			{#each tableData.body as row, i}
+			</select>
+		</div>
+	</div>
+
+	<!-- Skeleton table component -->
+	<!-- <div>
+	<Table source={tableData} />
+    </div> -->
+
+	<!-- Skeleton table styling -->
+	<!-- Responsive Container (recommended) -->
+	<div class="table-container">
+		<!-- Native Table Element -->
+		<table class="table table-interactive">
+			<thead>
 				<tr>
-					{#each ['Player', 'Games', 'Wins', 'Losses', 'Win %', 'KDA', 'Kills', 'Deaths', 'Assists'] as cellText, i}
-						{#if i === 4}
-							<td class={`${calculateWinPercentageClasses(parseFloat(row[i]))}`}
-								>{(parseFloat(row[i]) * 100).toFixed(2)}</td
-							>
-						{:else if i === 1}
-							<td class="text-orange-500 font-semibold">{row[i]}</td>
-						{:else if i === 5}
-							<td class={`${calculateKdaClasses(parseFloat(row[i]))}`}
-								>{parseFloat(row[i]).toFixed(2)}</td
-							>
-						{:else if [2, 3, 6, 7, 8].includes(i)}
-							<td class="max-sm:hidden md:visible">{row[i]}</td>
+					{#each ['Player', 'Games', 'Wins', 'Losses', 'Win %', 'KDA', 'Kills', 'Deaths', 'Assists'] as headerText, i}
+						{#if [2, 3, 6, 7, 8].includes(i)}
+							<th class="max-sm:hidden md:visible hover:bg-surface-500/50">{headerText}</th>
 						{:else}
-							<td>{row[i]}</td>
+							<th class="hover:bg-surface-500/50">{headerText}</th>
 						{/if}
 					{/each}
 				</tr>
-			{/each}
-		</tbody>
-		<!-- <tfoot>
+			</thead>
+			<tbody>
+                {#key tableData}
+				{#each tableData.body as row, i}
+					<tr>
+						{#each ['Player', 'Games', 'Wins', 'Losses', 'Win %', 'KDA', 'Kills', 'Deaths', 'Assists'] as cellText, i}
+							{#if i === 4}
+								<td class={`${calculateWinPercentageClasses(parseFloat(row[i]))}`}
+									>{(parseFloat(row[i]) * 100).toFixed(2)}</td
+								>
+							{:else if i === 1}
+								<td class="text-orange-500 font-semibold">{row[i]}</td>
+							{:else if i === 5}
+								<td class={`${calculateKdaClasses(parseFloat(row[i]))}`}
+									>{parseFloat(row[i]).toFixed(2)}</td
+								>
+							{:else if [2, 3, 6, 7, 8].includes(i)}
+								<td class="max-sm:hidden md:visible">{row[i]}</td>
+							{:else}
+								<td>{row[i]}</td>
+							{/if}
+						{/each}
+					</tr>
+				{/each}
+                {/key}
+			</tbody>
+			<!-- <tfoot>
 			<tr>
 				<th colspan="3">Calculated Total Weight</th>
 				<td>test</td>
 			</tr>
 		</tfoot> -->
-	</table>
-</div>
-
-<!-- {#await promise}
-    <ProgressRadial/>
-{:then}
-    
-{/await} -->
+		</table>
+	</div>
+{:catch error}
+	{error.message}
+{/await}

@@ -7,9 +7,9 @@ import { prisma } from '$lib/server/prisma'
 BigInt.prototype.toJSON = function (): number {return this.toString();};
 
 export const GET: RequestHandler = async ({ params, url }) => {
-    console.log(url)
-    console.log(`[api] - received GET to ${url.href}`)
-    console.log(`params: ${JSON.stringify(params)}`)
+    // console.log(url)
+    // console.log(`[api] - received GET to ${url.href}`)
+    // console.log(`params: ${JSON.stringify(params)}`)
     const playersWeCareAbout = [
         { playerID: 113003047, playerName: 'Danny' },
         //{ playerID: 123794823, playerName: 'Steven' },
@@ -39,8 +39,6 @@ export const GET: RequestHandler = async ({ params, url }) => {
         },
     })
 
-    console.log(result)
-
     let matchStats: Match[] = []
     let forceUpdate: boolean = false;
 
@@ -55,7 +53,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
             where: { account_id },
         })
 
-        console.log(matchesResult)
+        //console.log(matchesResult)
         matchStats = matchesResult
         dataSource = "db"
     } else {

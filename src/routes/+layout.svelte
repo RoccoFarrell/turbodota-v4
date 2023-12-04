@@ -12,24 +12,27 @@
 	import { beforeNavigate } from '$app/navigation';
 	import { navigating } from '$app/stores';
 
+	//types
+	import type { PageData } from './$types';
 	import type { Session } from 'lucia';
 
+	//components
+	import Navigation from '$lib/Navigation/Navigation.svelte';
+	import Loading from '$lib/components/Loading.svelte';
+
+	//imports
 	import steam_logo from '$lib/assets/steam_logo.png';
 	import turbo_logo from '$lib/assets/turbologo.png';
-	//imports
-	import type { PageData } from './$types';
-	export let data: PageData;
-
-	console.log(data.session);
-	let session: Session = data.session || null;
-
 	// Floating UI for Popups
 	import { computePosition, autoUpdate, flip, shift, offset, arrow } from '@floating-ui/dom';
 	import { storePopup } from '@skeletonlabs/skeleton';
 	storePopup.set({ computePosition, autoUpdate, flip, shift, offset, arrow });
+	
 
-	//components
-	import Navigation from '$lib/Navigation/Navigation.svelte';
+	export let data: PageData;
+
+	console.log(data.session);
+	let session: Session = data.session || null;
 
 	//drawer
 	initializeStores();
@@ -109,33 +112,7 @@
 	<!-- Page Route Content -->
 	<div class="my-8 mx-4 lg:mx-12 h-max">
 		{#if $navigating}
-		<section class="card w-full">
-			<div class="p-4 space-y-4">
-				<div class="placeholder animate-bounce" />
-				<div class="grid grid-cols-3 gap-8">
-					<div class="placeholder animate-bounce" />
-					<div class="placeholder animate-bounce" />
-					<div class="placeholder animate-bounce" />
-				</div>
-				<div class="grid grid-cols-4 gap-4">
-					<div class="placeholder animate-bounce" />
-					<div class="placeholder animate-bounce" />
-					<div class="placeholder animate-bounce" />
-					<div class="placeholder animate-bounce" />
-				</div>
-				<div class="grid grid-cols-3 gap-8">
-					<div class="placeholder animate-bounce" />
-					<div class="placeholder animate-bounce" />
-					<div class="placeholder animate-bounce" />
-				</div>
-				<div class="grid grid-cols-4 gap-4">
-					<div class="placeholder animate-bounce" />
-					<div class="placeholder animate-bounce" />
-					<div class="placeholder animate-bounce" />
-					<div class="placeholder animate-bounce" />
-				</div>
-			</div>
-		</section>
+		<Loading />
 
 		{:else}
 			<slot />

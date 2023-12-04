@@ -51,6 +51,14 @@ declare global {
 		version?: number | null
 	}
 
+	interface MatchStats {
+		playerID: number;
+		playerName: string;
+		matchData: any;
+		dataSource: any;
+		od_url: any;
+	}
+
 	interface Hero{
 		id: number
 		name: string
