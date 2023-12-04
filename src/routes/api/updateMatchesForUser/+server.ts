@@ -6,8 +6,6 @@ import { prisma } from '$lib/server/prisma'
 // @ts-ignore: Unreachable code error
 BigInt.prototype.toJSON = function (): number {return this.toString();};
 
-export const prerender = true;
-
 export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
     // console.log(url)
     // console.log(`[api] - received GET to ${url.href}`)
