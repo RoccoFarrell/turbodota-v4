@@ -5,7 +5,14 @@ import { env } from "$env/dynamic/private"
 
 import { base } from '$app/paths' 
 
-export const load: PageServerLoad = async ({ params, locals, url }) => {
+export const config = {
+	isr: {
+	  expiration: 600,
+	  bypassToken: 'REPLACE_ME_WITH_SECRET_VALUE',
+	},
+  };
+
+export const load: PageServerLoad = async ({ params, locals, url, setHeaders }) => {
 	
 	//session info
 	// const session = await locals.auth.validate()
@@ -15,6 +22,8 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 	// } else {
 	// 	user = session.user
 	// }
+
+	
 
 	//test random number
 	const randomNumber = async () => {
@@ -87,6 +96,10 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 		return userDataArray
 		
 	}
+
+	setHeaders({
+        "cache-control": "max-age=3600",
+      });
 
 	return {
 		streamed: {

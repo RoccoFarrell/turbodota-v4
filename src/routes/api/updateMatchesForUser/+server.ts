@@ -6,7 +6,9 @@ import { prisma } from '$lib/server/prisma'
 // @ts-ignore: Unreachable code error
 BigInt.prototype.toJSON = function (): number {return this.toString();};
 
-export const GET: RequestHandler = async ({ params, url }) => {
+export const prerender = true;
+
+export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
     // console.log(url)
     // console.log(`[api] - received GET to ${url.href}`)
     // console.log(`params: ${JSON.stringify(params)}`)
@@ -111,5 +113,10 @@ export const GET: RequestHandler = async ({ params, url }) => {
         })
     }
 
-    return new Response(JSON.stringify({ dataSource: dataSource, matchData: matchStats, od_url: od_url }))
+    setHeaders({
+        "cache-control": "max-age=3600",
+      });
+
+    let newResponse = new Response(JSON.stringify({ dataSource: dataSource, matchData: matchStats, od_url: od_url }))
+    return newResponse
 };
