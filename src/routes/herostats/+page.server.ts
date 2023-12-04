@@ -8,13 +8,13 @@ import { base } from '$app/paths'
 export const load: PageServerLoad = async ({ params, locals, url }) => {
 	
 	//session info
-	const session = await locals.auth.validate()
-	let user = null;
-	if (!session) {
-		throw error(401, 'Unauthorized')
-	} else {
-		user = session.user
-	}
+	// const session = await locals.auth.validate()
+	// let user = null;
+	// if (!session) {
+	// 	throw error(401, 'Unauthorized')
+	// } else {
+	// 	user = session.user
+	// }
 
 	//test random number
 	const randomNumber = async () => {
