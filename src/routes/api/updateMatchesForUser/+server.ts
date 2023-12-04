@@ -42,10 +42,12 @@ export const GET: RequestHandler = async ({ params, url }) => {
     console.log(result)
 
     let matchStats: Match[] = []
-    let forceUpdate: boolean = false;
+    let forceUpdate: boolean = true;
 
     let dataSource: string = ""
     let updateInterval = new Date()
+
+    let od_url;
     updateInterval.setMinutes(rightNow.getMinutes() - 30);
     if (!forceUpdate && (result && result.lastUpdated >= updateInterval)) {
         console.log('fetch from DB')
@@ -60,7 +62,9 @@ export const GET: RequestHandler = async ({ params, url }) => {
         console.log('fetch from OD')
 
         //query OD
-        matchStats = await fetch(encodeURI(`https://api.opendota.com/api/players/${account_id}/matches?significant=0&game_mode=23&date=${d_diff}`), {
+        od_url = encodeURI(`https://api.opendota.com/api/players/${account_id}/matches?significant=0&game_mode=23&date=${d_diff}`)
+        console.log(od_url)
+        matchStats = await fetch(od_url, {
             method: 'get',
             headers: { 'Content-Type': 'application/json' },
         })
@@ -108,5 +112,5 @@ export const GET: RequestHandler = async ({ params, url }) => {
         })
     }
 
-    return new Response(JSON.stringify({ dataSource: dataSource, matchData: matchStats }))
+    return new Response(JSON.stringify({ dataSource: dataSource, matchData: matchStats, od_url: od_url }))
 };

@@ -77,7 +77,8 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 				playerID: player.playerID,
                 playerName: player.playerName,
                 matchData: responseData.matchData,
-				dataSource: responseData.dataSource
+				dataSource: responseData.dataSource,
+				od_url: responseData.od_url
 			})
 			
 			//(`responseData: ${JSON.stringify(responseData)}`)
