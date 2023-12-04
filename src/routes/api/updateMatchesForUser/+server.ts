@@ -4,7 +4,14 @@ import { prisma } from '$lib/server/prisma'
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unreachable code error
-BigInt.prototype.toJSON = function (): number {return this.toString();};
+BigInt.prototype.toJSON = function (): number { return this.toString(); };
+
+export const config = {
+    isr: {
+        expiration: 600,
+        bypassToken: 'fbybpmuenv4foogdrax2ab2u863gxtqa4p15or78',
+    },
+};
 
 export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
     // console.log(url)
@@ -113,8 +120,13 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
 
     setHeaders({
         "cache-control": "max-age=3600",
-      });
+    });
 
-    let newResponse = new Response(JSON.stringify({ dataSource: dataSource, matchData: matchStats, od_url: od_url }))
+    let cacheTimeoutSeconds = 3600
+    let newResponse = new Response(JSON.stringify({ dataSource: dataSource, matchData: matchStats, od_url: od_url }), {
+        headers: {
+            'cache-control': `max-age=${cacheTimeoutSeconds}`
+        }
+    })
     return newResponse
 };
