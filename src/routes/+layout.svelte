@@ -9,15 +9,18 @@
 		getDrawerStore
 	} from '@skeletonlabs/skeleton';
 
-	import type { Session } from "lucia"
+	import { beforeNavigate } from '$app/navigation';
+	import { navigating } from '$app/stores';
+
+	import type { Session } from 'lucia';
 
 	import steam_logo from '$lib/assets/steam_logo.png';
-	import turbo_logo from "$lib/assets/turbologo.png"
+	import turbo_logo from '$lib/assets/turbologo.png';
 	//imports
 	import type { PageData } from './$types';
 	export let data: PageData;
 
-	console.log(data.session)
+	console.log(data.session);
 	let session: Session = data.session || null;
 
 	// Floating UI for Popups
@@ -37,7 +40,9 @@
 		drawerStore.open({});
 	}
 
-	
+	beforeNavigate(() => {
+		drawerStore.close();
+	});
 </script>
 
 <!-- App Shell -->
@@ -58,7 +63,7 @@
 							</svg>
 						</span>
 					</button>
-					<img src={turbo_logo} class="w-14" alt="site logo"/>
+					<img src={turbo_logo} class="w-14" alt="site logo" />
 					<strong class="text-sm lg:text-xl uppercase ml-4 text-center">Turbodota v3</strong>
 				</div>
 			</svelte:fragment>
@@ -67,8 +72,9 @@
 				<div class="flex justify-around space-x-8 items-center">
 					<div class="h-full m-auto">
 						{#if data.session}
-						<div class="m-auto h-full text-center">Welcome <p class="font-bold text-red-400">{`${data.session.user.username}`}</p></div>
-							
+							<div class="m-auto h-full text-center">
+								Welcome <p class="font-bold text-red-400">{`${data.session.user.username}`}</p>
+							</div>
 						{/if}
 					</div>
 					<!-- <form method="POST">
@@ -96,12 +102,43 @@
 
 	<svelte:fragment slot="sidebarLeft">
 		<!-- Insert the list: -->
-		<Navigation {session}/>
+		<Navigation {session} />
 		<!-- --- -->
 	</svelte:fragment>
 
 	<!-- Page Route Content -->
-	<div class="my-8 mx-4 lg:mx-12"><slot /></div>	
-	
-	
+	<div class="my-8 mx-4 lg:mx-12 h-max">
+		{#if $navigating}
+		<section class="card w-full">
+			<div class="p-4 space-y-4">
+				<div class="placeholder animate-bounce" />
+				<div class="grid grid-cols-3 gap-8">
+					<div class="placeholder animate-bounce" />
+					<div class="placeholder animate-bounce" />
+					<div class="placeholder animate-bounce" />
+				</div>
+				<div class="grid grid-cols-4 gap-4">
+					<div class="placeholder animate-bounce" />
+					<div class="placeholder animate-bounce" />
+					<div class="placeholder animate-bounce" />
+					<div class="placeholder animate-bounce" />
+				</div>
+				<div class="grid grid-cols-3 gap-8">
+					<div class="placeholder animate-bounce" />
+					<div class="placeholder animate-bounce" />
+					<div class="placeholder animate-bounce" />
+				</div>
+				<div class="grid grid-cols-4 gap-4">
+					<div class="placeholder animate-bounce" />
+					<div class="placeholder animate-bounce" />
+					<div class="placeholder animate-bounce" />
+					<div class="placeholder animate-bounce" />
+				</div>
+			</div>
+		</section>
+
+		{:else}
+			<slot />
+		{/if}
+	</div>
 </AppShell>

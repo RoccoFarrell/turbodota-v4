@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-    import { page } from '$app/stores'
+	import { page } from '$app/stores';
+    import { navigating } from "$app/stores";
 
 	import { onMount } from 'svelte';
 	import turboking from '$lib/assets/turboking.png';
@@ -11,7 +12,7 @@
 	export let data: PageData;
 
 	console.log(data);
-    console.log(page)
+	console.log(page);
 
 	class TableRow {
 		playerID: number = 0;
@@ -82,11 +83,11 @@
 
 		//console.log(`tableData: ${JSON.stringify(tableData)}`)
 
-        //sort by games by default
-        tableData = tableData.sort((a: any, b: any) => {
-            if(a.games < b.games) return 1
-            else return -1
-        })
+		//sort by games by default
+		tableData = tableData.sort((a: any, b: any) => {
+			if (a.games < b.games) return 1;
+			else return -1;
+		});
 		console.log(tableData);
 		return tableData;
 	};
@@ -95,18 +96,17 @@
 	// let tableData = [];
 	// let selectedHero = null;
 
-    let heroListWithAll = data.allHeroes.sort((a: any,b: any) => {
-        if(a.localized_name < b.localized_name) return -1
-        else return 1
-    })
+	let heroListWithAll = data.allHeroes.sort((a: any, b: any) => {
+		if (a.localized_name < b.localized_name) return -1;
+		else return 1;
+	});
 
 	heroListWithAll = [
-        {
+		{
 			id: -1,
 			localized_name: 'All'
 		},
 		...data.allHeroes
-		
 	];
 	const heroList: Hero[] = heroListWithAll;
 
@@ -122,39 +122,44 @@
 		}
 	}
 
-    function calculateWinPercentageClasses(win_percentage: number){
-        //console.log(win_percentage)
-        let classes = ""
-        if(win_percentage < .45) classes="text-red-300"
-        if(win_percentage <= .4) classes="text-red-500"
-        if(win_percentage >= .55) classes="text-green-300"
-        if(win_percentage >= .6) classes="text-green-500"
+	function calculateWinPercentageClasses(win_percentage: number) {
+		//console.log(win_percentage)
+		let classes = '';
+		if (win_percentage < 0.45) classes = 'text-red-300';
+		if (win_percentage <= 0.4) classes = 'text-red-500';
+		if (win_percentage >= 0.55) classes = 'text-green-300';
+		if (win_percentage >= 0.6) classes = 'text-green-500';
 
-        return classes
-    }
+		return classes;
+	}
 
-    function calculateKdaClasses(kda: number){
-        //console.log(kda)
-        let classes = ""
-        if(kda < 4) classes="text-red-300"
-        if(kda <= 2) classes="text-red-500"
-        if(kda >= 5) classes="text-green-300"
-        if(kda >= 7) classes="text-green-500"
+	function calculateKdaClasses(kda: number) {
+		//console.log(kda)
+		let classes = '';
+		if (kda < 4) classes = 'text-red-300';
+		if (kda <= 2) classes = 'text-red-500';
+		if (kda >= 5) classes = 'text-green-300';
+		if (kda >= 7) classes = 'text-green-500';
 
-
-        return classes
-    }
+		return classes;
+	}
 </script>
 
 <div class="container mx-auto my-4">
-    <div class="flex flex-col items-center">
-        <h1 class="h1 text-red-500">Hero Stats</h1>
-        <div class="flex justify-center items-center space-x-8 my-2">
-            <h3 class="h3">ONLY THE TRUE KING WILL RULE</h3>
-            <img class="w-12" alt="turboking" src={turboking} />
+	<div class="flex items-center justify-around space-x-4">
+		<div class="flex flex-col items-center">
+			<h1 class="h1 text-primary-500">Hero Stats</h1>
+			<div class="flex justify-center items-center space-x-8 my-2">
+				<h3 class="h3">ONLY THE TRUE KING WILL RULE</h3>
+				<img class="w-8 lg:w-12" alt="turboking" src={turboking} />
+			</div>
+		</div>
+		<div class="flex flex-col">
+            <h3 class="h3 text-primary-500">Data sources</h3>
+            <div>Open Dota: <p class="inline text-orange-500 font-bold">{data.matchStats.filter(player => player.dataSource !== "db").length}</p> </div>
+            <div>Database: <p class="inline text-green-500 font-bold">{data.matchStats.filter(player => player.dataSource === "db").length}</p> </div>
         </div>
-    </div>
-
+	</div>
 </div>
 
 <div class="container mx-auto p-4 space-y-8">
@@ -176,15 +181,15 @@
 <!-- Responsive Container (recommended) -->
 <div class="table-container">
 	<!-- Native Table Element -->
-	<table class="table table-hover">
+	<table class="table table-interactive">
 		<thead>
 			<tr>
 				{#each ['Player', 'Games', 'Wins', 'Losses', 'Win %', 'KDA', 'Kills', 'Deaths', 'Assists'] as headerText, i}
-                {#if [2,3,6,7,8].includes(i)}
-                    <th class="max-sm:hidden md:visible">{headerText}</th>
-				{:else}
-                    <th>{headerText}</th>
-                {/if}
+					{#if [2, 3, 6, 7, 8].includes(i)}
+						<th class="max-sm:hidden md:visible hover:bg-surface-500/50">{headerText}</th>
+					{:else}
+						<th class="hover:bg-surface-500/50">{headerText}</th>
+					{/if}
 				{/each}
 			</tr>
 		</thead>
@@ -193,14 +198,18 @@
 				<tr>
 					{#each ['Player', 'Games', 'Wins', 'Losses', 'Win %', 'KDA', 'Kills', 'Deaths', 'Assists'] as cellText, i}
 						{#if i === 4}
-							<td class={`${calculateWinPercentageClasses(parseFloat(row[i]))}`}>{(parseFloat(row[i]) * 100).toFixed(2)}</td>
-                        {:else if i === 1}
-                            <td class="text-orange-500 font-semibold">{row[i]}</td>
-                        {:else if i === 5}
-                            <td class={`${calculateKdaClasses(parseFloat(row[i]))}`}>{parseFloat(row[i]).toFixed(2)}</td>
-                        {:else if [2,3,6,7,8].includes(i)}
-                            <td class="max-sm:hidden md:visible">{row[i]}</td>
-                        {:else}
+							<td class={`${calculateWinPercentageClasses(parseFloat(row[i]))}`}
+								>{(parseFloat(row[i]) * 100).toFixed(2)}</td
+							>
+						{:else if i === 1}
+							<td class="text-orange-500 font-semibold">{row[i]}</td>
+						{:else if i === 5}
+							<td class={`${calculateKdaClasses(parseFloat(row[i]))}`}
+								>{parseFloat(row[i]).toFixed(2)}</td
+							>
+						{:else if [2, 3, 6, 7, 8].includes(i)}
+							<td class="max-sm:hidden md:visible">{row[i]}</td>
+						{:else}
 							<td>{row[i]}</td>
 						{/if}
 					{/each}
