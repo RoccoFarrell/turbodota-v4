@@ -8,7 +8,7 @@ import { base } from '$app/paths'
 export const config = {
 	isr: {
 	  expiration: 600,
-	  bypassToken: 'REPLACE_ME_WITH_SECRET_VALUE',
+	  bypassToken: 'fbybpmuenv4foogdrax2ab2u863gxtqa4p15or78',
 	},
   };
 
