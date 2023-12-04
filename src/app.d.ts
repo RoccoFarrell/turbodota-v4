@@ -35,7 +35,7 @@ declare global {
 		match_id: bigint
 		account_id: bigint
 		assists: number
-		average_rank: number
+		average_rank?: number | null
 		deaths: number
 		duration: number
 		game_mode: number

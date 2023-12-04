@@ -26,7 +26,7 @@ model Match {
   match_id      BigInt
   account_id    BigInt
   assists       Int
-  average_rank  Int
+  average_rank  Int?
   deaths        Int
   duration      Int
   game_mode     Int

@@ -1,5 +1,7 @@
 <script lang="ts">
 	import type { PageData } from './$types';
+    import { page } from '$app/stores'
+
 	import { onMount } from 'svelte';
 	import turboking from '$lib/assets/turboking.png';
 	import { Table } from '@skeletonlabs/skeleton';
@@ -9,6 +11,7 @@
 	export let data: PageData;
 
 	console.log(data);
+    console.log(page)
 
 	class TableRow {
 		playerID: number = 0;
@@ -73,11 +76,17 @@
 			pushObj.assists = filteredMatchData.reduce((acc: number, cur: Match) => acc + cur.assists, 0);
 			pushObj.kda = (pushObj.kills + pushObj.assists) / pushObj.deaths;
 
-			console.log(`pushObj: ${JSON.stringify(pushObj)}`);
+			//console.log(`pushObj: ${JSON.stringify(pushObj)}`);
 			tableData.push(pushObj);
 		});
 
 		//console.log(`tableData: ${JSON.stringify(tableData)}`)
+
+        //sort by games by default
+        tableData = tableData.sort((a: any, b: any) => {
+            if(a.games < b.games) return 1
+            else return -1
+        })
 		console.log(tableData);
 		return tableData;
 	};
@@ -86,12 +95,18 @@
 	// let tableData = [];
 	// let selectedHero = null;
 
-	let heroListWithAll = [
-		...data.allHeroes,
-		{
+    let heroListWithAll = data.allHeroes.sort((a: any,b: any) => {
+        if(a.localized_name < b.localized_name) return -1
+        else return 1
+    })
+
+	heroListWithAll = [
+        {
 			id: -1,
 			localized_name: 'All'
-		}
+		},
+		...data.allHeroes
+		
 	];
 	const heroList: Hero[] = heroListWithAll;
 
@@ -108,7 +123,7 @@
 	}
 
     function calculateWinPercentageClasses(win_percentage: number){
-        console.log(win_percentage)
+        //console.log(win_percentage)
         let classes = ""
         if(win_percentage < .45) classes="text-red-300"
         if(win_percentage <= .4) classes="text-red-500"
@@ -119,12 +134,12 @@
     }
 
     function calculateKdaClasses(kda: number){
-        console.log(kda)
+        //console.log(kda)
         let classes = ""
-        if(kda < 5) classes="text-red-300"
-        if(kda <= 3) classes="text-red-500"
-        if(kda >= 6) classes="text-green-300"
-        if(kda >= 8) classes="text-green-500"
+        if(kda < 4) classes="text-red-300"
+        if(kda <= 2) classes="text-red-500"
+        if(kda >= 5) classes="text-green-300"
+        if(kda >= 7) classes="text-green-500"
 
 
         return classes

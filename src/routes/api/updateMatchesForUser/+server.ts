@@ -42,7 +42,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
     console.log(result)
 
     let matchStats: Match[] = []
-    let forceUpdate: boolean = true;
+    let forceUpdate: boolean = false;
 
     let dataSource: string = ""
     let updateInterval = new Date()
@@ -63,6 +63,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
 
         //query OD
         od_url = encodeURI(`https://api.opendota.com/api/players/${account_id}/matches?significant=0&game_mode=23&date=${d_diff}`)
+        //od_url = encodeURI(`https://api.opendota.com/api/players/${account_id}/matches?significant=0&game_mode=23`)
         console.log(od_url)
         matchStats = await fetch(od_url, {
             method: 'get',
