@@ -72,13 +72,19 @@ export const load: PageServerLoad = async ({ params, locals, url, setHeaders }) 
 		];
 
 		for (const player of playersWeCareAbout) {
-
-			const response = await fetch(`${url.origin}/api/updateMatchesForUser?account_id=${player.playerID}`, {
+			const response = await fetch(`${url.origin}/api/updateMatchesForUser/${player.playerID}?account_id=${player.playerID}`, {
 				method: 'Get',
 				headers: {
 					'content-type': 'application/json',
 				},
 			});
+
+			// const response = await fetch(`${url.origin}/api/updateMatchesForUser?account_id=${player.playerID}`, {
+			// 	method: 'Get',
+			// 	headers: {
+			// 		'content-type': 'application/json',
+			// 	},
+			// });
 
 			let responseData = await response.json()
 

@@ -1,5 +1,5 @@
 import { error } from '@sveltejs/kit';
-import type { RequestHandler } from './$types';
+import type { RequestHandler } from '../$types';
 import { prisma } from '$lib/server/prisma'
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -16,7 +16,8 @@ export const config = {
 export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
     // console.log(url)
     // console.log(`[api] - received GET to ${url.href}`)
-    // console.log(`params: ${JSON.stringify(params)}`)
+    //console.log(`params: ${JSON.stringify(params)}`)
+    //console.log(params)
     const playersWeCareAbout = [
         { playerID: 113003047, playerName: 'Danny' },
         //{ playerID: 123794823, playerName: 'Steven' },
@@ -30,7 +31,11 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
         //{ playerID: 214308966, playerName: 'Andy' }
     ];
 
-    let account_id: number = parseInt(url.searchParams.get('account_id') || "80636612")
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore: Unreachable code error
+    let account_id: number = parseInt(params.slug)
+    //console.log(`account_id: ${account_id}`)
+    //let account_id: number = parseInt(url.searchParams.get('account_id') || "80636612")
     let startDate = new Date("2023/11/01")
     console.log('[matches] start date present in query, fetching matches after ', startDate.toLocaleString())
     let rightNow = new Date()
