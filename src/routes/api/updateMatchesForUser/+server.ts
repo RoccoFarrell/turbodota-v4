@@ -53,7 +53,7 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
     let updateInterval = new Date()
 
     let od_url;
-    updateInterval.setMinutes(rightNow.getHours() - 12);
+    updateInterval.setHours(rightNow.getHours() - 12);
     if (!forceUpdate && (result && result.lastUpdated >= updateInterval)) {
         console.log('fetch from DB')
         const matchesResult = await prisma.match.findMany({

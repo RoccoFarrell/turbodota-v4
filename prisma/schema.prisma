@@ -8,8 +8,9 @@ generator client {
 // }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model Article {
@@ -22,7 +23,7 @@ model Article {
 }
 
 model Match {
-  id Int @id @default(autoincrement())
+  id            Int     @id @default(autoincrement())
   match_id      BigInt
   account_id    BigInt
   assists       Int
@@ -46,18 +47,20 @@ model Match {
 }
 
 model DotaUser {
-  account_id BigInt @id @unique
+  account_id  BigInt   @id @unique
   lastUpdated DateTime
+
+  @@index([account_id])
 }
 
 model Hero {
-  id Int @id @unique
-  name String
+  id             Int    @id @unique
+  name           String
   localized_name String
-  primary_attr String
-  attack_type String
-  roles String
-  legs Int
+  primary_attr   String
+  attack_type    String
+  roles          String
+  legs           Int
 }
 
 model User {
