@@ -19,7 +19,7 @@
 	//page data
 	export let data: PageData;
 
-	//console.log(data);
+	console.log(data);
 	//console.log(page);
 
 	//table data
@@ -36,13 +36,16 @@
 		assists: number = 0;
 	}
 
-	let selectedHeroID: number = -1;
+	let selectedHeroID: number | null = -1;
+
+	const heroRoles = ['All','Carry','Disabler','Durable','Escape','Initiator','Nuker','Pusher','Support'];
+	let selectedRole: string | null = 'All';
 
 	let tableData: TableSource = {
 		head: [],
 		body: []
 	};
-	$: tableData = recalcTable(selectedHeroID)
+	$: tableData = recalcTable(selectedHeroID, selectedRole)
 
 	//hero list
 	let heroListWithAll = data.streamed.heroDescriptions.allHeroes.sort((a: any, b: any) => {
@@ -65,14 +68,15 @@
 	data.streamed.matchStats.then((value) => {
         console.log(`promise finished ${value}`)
 		matchStats = value;
-		tableData = recalcTable(-1);
+		tableData = recalcTable(-1,'All');  // ask rocco
 	});
 
-    let recalcTable = (heroID: number) => {
+    let recalcTable = (heroID: number | null, heroRole: string | null) => { // ask rocco what the null does? was -1 before
         selectedHeroID = heroID;
+		selectedRole = heroRole;
 		return {
 			head: ['Player', 'Games', 'Wins', 'Losses', 'Win %', 'KDA', 'Kills', 'Deaths', 'Assists'],
-			body: tableMapperValues(recalcTableData(selectedHeroID), [
+			body: tableMapperValues(recalcTableData(selectedHeroID, selectedRole), [
 				'playerName',
 				'games',
 				'wins',
@@ -86,20 +90,27 @@
 		};
 	};
 
-	const recalcTableData = (heroID: number = -1) => {
+	const recalcTableData = (heroID: number | null = null, heroRole?: string) => {
 		console.log(`[herostats page.svelte] new hero ID selected: ${heroID}`);
+		console.log(`[herostats page.svelte] new hero Role selected: ${heroRole}`);
 
 		let tableData: TableRow[] = [];
 
         console.log(matchStats.length)
+		console.log(heroRole)
 		matchStats.forEach((player) => {
 			//filters match data for selected hero
 			let pushObj: TableRow = new TableRow();
 
 			let filteredMatchData = [];
+
+			//filter by heroID
 			heroID === -1
 				? (filteredMatchData = player.matchData)
 				: (filteredMatchData = player.matchData.filter((match: Match) => match.hero_id === heroID));
+
+			//filter by heroRole
+			if (heroRole) {heroList.filter((hero) =>  hero.roles.includes(heroRole))}
 
 			pushObj.playerID = player.playerID;
 			pushObj.playerName = player.playerName;
@@ -193,9 +204,16 @@
 
 	<div class="container mx-auto p-4 space-y-8">
 		<div class="flex justify-center items-center space-x-8">
+			<p class="inline text-primary-500 font-bold">Hero</p>
 			<select class="select select-sm variant-ghost-surface" bind:value={selectedHeroID}>
 				{#each heroList as hero}
 					<option value={hero.id}>{hero.localized_name}</option>
+				{/each}
+			</select>
+			<p class="inline text-primary-500 font-bold">Role</p>
+			<select class="select select-sm variant-ghost-surface" bind:value={selectedRole}>
+				{#each heroRoles as role}
+					<option>{role}</option>
 				{/each}
 			</select>
 		</div>
