@@ -19,7 +19,7 @@
 	//page data
 	export let data: PageData;
 
-	//console.log(data);
+	console.log(data);
 	//console.log(page);
 
 	//table data
