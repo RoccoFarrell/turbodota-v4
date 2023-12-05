@@ -31,7 +31,7 @@
 
 	export let data: PageData;
 
-	console.log(data.session);
+	//console.log(data.session);
 	let session: Session = data.session || null;
 
 	//drawer
