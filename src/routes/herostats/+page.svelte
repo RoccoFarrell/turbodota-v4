@@ -38,11 +38,7 @@
 	}
 
 	let selectedHeroID: number = -1;
-	let selectedHeader: string = 'games';
 	let selectedRole: string = 'All';
-	let sortBy = {col: "games", ascending: false};
-	let sortModifier = 1;
-	let sortIcon:HTMLElement;
 
 	const heroRoles = [
 		'All',
@@ -63,7 +59,7 @@
 
 	// $: tableData = recalcTable(selectedHeroID);
 	// $: tableData = recalcTable(selectedRole);
-	
+
 	// function changeSelect(inputVal: number | string) {
 	// 	let returnVal: TableSource = {
 	// 		head: [],
@@ -84,51 +80,96 @@
 	// 	return returnVal;
 	// }
 
-	function handleSort(headerText: string) {
-		if (headerText == 'Player') {selectedHeader = 'player';}
-		else if (headerText == 'Games') {selectedHeader = 'games';}
-		else if (headerText == 'Wins') {selectedHeader = 'wins';}
-		else if (headerText == 'Losses') {selectedHeader = 'losses';}
-		else if (headerText == 'Win %') {selectedHeader = 'win_percentage';}
-		else if (headerText == 'KDA') {selectedHeader = 'kda';}
-		else if (headerText == 'Kills') {selectedHeader = 'kills';}
-		else if (headerText == 'Deaths') {selectedHeader = 'deaths';}
-		else if (headerText == 'Assists') {selectedHeader = 'assists';}
-	
-		let sortIconPrev = sortIcon;
-		sortIcon = document.getElementById(headerText)
-
-		if (sortBy.col == selectedHeader) {
-			sortBy.ascending = !sortBy.ascending
-			if (sortIcon?.classList.contains("table-sort-dsc"))
-			{
-		 		sortIcon?.classList.replace("table-sort-dsc", "table-sort-asc")
-		 	}
-			else if (sortIcon?.classList.contains("table-sort-asc"))
-			{
-		 		sortIcon?.classList.replace("table-sort-asc", "table-sort-dsc")
-		 	}
-			//console.log(sortBy.col, sortBy.ascending)
-		} else {
-			sortBy.col = selectedHeader
-			sortBy.ascending = true
-
-			if (sortIconPrev?.classList.contains("table-sort-dsc"))
-			{
-				sortIconPrev?.classList.remove("table-sort-dsc")
-		 	}
-			else if (sortIconPrev?.classList.contains("table-sort-asc"))
-			{
-				sortIconPrev?.classList.remove("table-sort-asc")
-		 	}
-
-			sortIcon?.classList.add('table-sort-asc')
-			//console.log(sortBy.col, sortBy.ascending)
-		}
-		sortModifier = (sortBy.ascending) ? 1 : -1;
-		//console.log("new sortIcon: ", sortIcon);
+	interface SortObj {
+		headerText: string;
+		headerKey: string;
+		index: number;
 	}
-	
+
+	interface SortBy {
+		sortObj: SortObj;
+		ascending: boolean;
+	}
+
+	let sortBy: SortBy = {
+		sortObj: {
+			headerText: 'Games',
+			headerKey: 'games',
+			index: 1
+		},
+		ascending: false
+	};
+
+	const sortMap: SortObj[] = [
+		{
+			headerText: 'Player',
+			headerKey: 'player',
+			index: 0
+		},
+		{
+			headerText: 'Games',
+			headerKey: 'games',
+			index: 1
+		},
+		{
+			headerText: 'Wins',
+			headerKey: 'wins',
+			index: 2
+		},
+		{
+			headerText: 'Losses',
+			headerKey: 'losses',
+			index: 3
+		},
+		{
+			headerText: 'Win %',
+			headerKey: 'win_percentage',
+			index: 4
+		},
+		{
+			headerText: 'KDA',
+			headerKey: 'kda',
+			index: 5
+		},
+		{
+			headerText: 'Kills',
+			headerKey: 'kills',
+			index: 6
+		},
+		{
+			headerText: 'Deaths',
+			headerKey: 'deaths',
+			index: 7
+		},
+		{
+			headerText: 'Assists',
+			headerKey: 'assists',
+			index: 8
+		}
+	];
+
+	let selectedSortHeader: string = 'Games';
+
+	function handleSortHeaderClick(headerText: string) {
+		let temp = sortMap.filter((item) => item.headerText === headerText)[0];
+		sortBy = {
+			sortObj: temp,
+			ascending: headerText === selectedSortHeader ? !sortBy.ascending : sortBy.ascending
+		};
+		handleSort(sortBy);
+		selectedSortHeader = headerText;
+	}
+
+	function handleSort(sortBy: SortBy) {
+		tableData = {
+			head: tableData.head,
+			body: tableData.body.sort((a: any, b: any) => {
+				if (a[sortBy.sortObj.index] < b[sortBy.sortObj.index]) return sortBy.ascending ? -1 : 1;
+				else return sortBy.ascending ? 1 : -1;
+			})
+		};
+	}
+
 	//hero list
 	let heroListWithAll = data.streamed.heroDescriptions.allHeroes.sort((a: any, b: any) => {
 		if (a.localized_name < b.localized_name) return -1;
@@ -152,12 +193,13 @@
 		console.log(`promise finished ${value}`);
 		matchStats = value;
 		recalcTable(-1);
+		handleSort(sortBy);
 	});
 
-	let recalcTable = (filterInput: number | string) => {
+	const recalcTable = (filterInput: number | string) => {
 		tableData = {
 			head: ['Player', 'Games', 'Wins', 'Losses', 'Win %', 'KDA', 'Kills', 'Deaths', 'Assists'],
-			body: tableMapperValues(recalcTableData(filterInput, selectedHeader, sortModifier), [
+			body: tableMapperValues(recalcTableData(filterInput), [
 				'playerName',
 				'games',
 				'wins',
@@ -171,7 +213,7 @@
 		};
 	};
 
-	const recalcTableData = (filterInput: number | string, selectedHeader?: | string, sortModifier?: | number) => {
+	const recalcTableData = (filterInput: number | string) => {
 		if (typeof filterInput === 'number') {
 			console.log(`[herostats page.svelte] new hero ID selected: ${filterInput}`);
 		}
@@ -191,7 +233,7 @@
 			//filter by heroID
 
 			if (typeof filterInput === 'number') {
-				selectedRole = "All"
+				selectedRole = 'All';
 				filterInput === -1
 					? (filteredMatchData = player.matchData)
 					: (filteredMatchData = player.matchData.filter(
@@ -200,7 +242,7 @@
 			}
 			//filter by heroRole
 			else if (typeof filterInput === 'string') {
-				selectedHeroID  = -1
+				selectedHeroID = -1;
 				if (filterInput === 'all' || filterInput === 'All') filteredMatchData = player.matchData;
 				else {
 					console.log(heroList);
@@ -229,14 +271,6 @@
 			pushObj.kda = (pushObj.kills + pushObj.assists) / pushObj.deaths;
 
 			tableData.push(pushObj);
-			
-		});
-		
-
-		//tableData = tableData.sort(sort);
-		tableData = tableData.sort((a: any, b: any) => {
-			if (a[selectedHeader] < b[selectedHeader]) return (-1 * sortModifier);
-			else return (1 * sortModifier);
 		});
 
 		//console.log(tableData);
@@ -276,7 +310,6 @@
 
 		return classes;
 	}
-
 </script>
 
 {#await data.streamed.matchStats}
@@ -310,13 +343,21 @@
 	<div class="container mx-auto p-4 space-y-8">
 		<div class="flex justify-center items-center space-x-8">
 			<p class="inline text-primary-500 font-bold">Hero</p>
-			<select class="select select-sm variant-ghost-surface" bind:value={selectedHeroID} on:change={()=>recalcTable(selectedHeroID)}>
+			<select
+				class="select select-sm variant-ghost-surface"
+				bind:value={selectedHeroID}
+				on:change={() => recalcTable(selectedHeroID)}
+			>
 				{#each heroList as hero}
 					<option value={hero.id}>{hero.localized_name}</option>
 				{/each}
 			</select>
 			<p class="inline text-primary-500 font-bold">Role</p>
-			<select class="select select-sm variant-ghost-surface" bind:value={selectedRole} on:change={()=>recalcTable(selectedRole)}>
+			<select
+				class="select select-sm variant-ghost-surface"
+				bind:value={selectedRole}
+				on:change={() => recalcTable(selectedRole)}
+			>
 				{#each heroRoles as role}
 					<option>{role}</option>
 				{/each}
@@ -337,11 +378,27 @@
 			<thead>
 				<tr>
 					{#each ['Player', 'Games', 'Wins', 'Losses', 'Win %', 'KDA', 'Kills', 'Deaths', 'Assists'] as headerText, i}
-						{#if [2, 3, 6, 7, 8].includes(i)}
-							<th id={headerText} class="max-sm:hidden md:visible hover:bg-surface-500/50" on:click={() => handleSort(headerText)}>{headerText}</th>
+						<!-- {#if [2, 3, 6, 7, 8].includes(i)}
+							<th
+								id={headerText}
+								class={'max-sm:hidden md:visible hover:bg-surface-500/50'}
+								on:click={() => handleSortHeaderClick(headerText)}>{headerText}</th
+							>
 						{:else}
-							<th id={headerText} class="hover:bg-surface-500/50" on:click={() => handleSort(headerText)}>{headerText}</th>
-						{/if}
+							<th
+								id={headerText}
+								class="hover:bg-surface-500/50"
+								on:click={() => handleSortHeaderClick(headerText)}>{headerText}</th
+							>
+						{/if} -->
+						<th
+							id={headerText}
+							class={'hover:bg-surface-500/50' +
+								([2, 3, 6, 7, 8].includes(i) ? ' max-sm:hidden md:visible' : '') +
+								(headerText === sortBy.sortObj.headerText && sortBy.ascending ? ' table-sort-asc' : '') +
+								(headerText === sortBy.sortObj.headerText && !sortBy.ascending ? ' table-sort-dsc' : '')}
+							on:click={() => handleSortHeaderClick(headerText)}>{headerText}</th
+						>
 					{/each}
 				</tr>
 			</thead>
