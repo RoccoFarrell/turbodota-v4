@@ -38,6 +38,11 @@
 	}
 
 	let selectedHeroID: number = -1;
+	let selectedHeader: string = 'games';
+	let selectedRole: string = 'All';
+	let sortBy = {col: "games", ascending: false};
+	let sortModifier = 1;
+	let sortIcon:HTMLElement;
 
 	const heroRoles = [
 		'All',
@@ -50,16 +55,15 @@
 		'Pusher',
 		'Support'
 	];
-	let selectedRole: string = 'All';
 
 	let tableData: TableSource = {
 		head: [],
 		body: []
 	};
 
-	$: tableData = recalcTable(selectedHeroID);
-	$: tableData = recalcTable(selectedRole);
-	
+	$: tableData = recalcTable(selectedRole, selectedHeader, sortModifier);
+	$: tableData = recalcTable(selectedHeroID, selectedHeader, sortModifier);
+
 	// function changeSelect(inputVal: number | string) {
 	// 	let returnVal: TableSource = {
 	// 		head: [],
@@ -80,6 +84,51 @@
 	// 	return returnVal;
 	// }
 
+	function handleSort(headerText: string) {
+		if (headerText == 'Player') {selectedHeader = 'player';}
+		else if (headerText == 'Games') {selectedHeader = 'games';}
+		else if (headerText == 'Wins') {selectedHeader = 'wins';}
+		else if (headerText == 'Losses') {selectedHeader = 'losses';}
+		else if (headerText == 'Win %') {selectedHeader = 'win_percentage';}
+		else if (headerText == 'KDA') {selectedHeader = 'kda';}
+		else if (headerText == 'Kills') {selectedHeader = 'kills';}
+		else if (headerText == 'Deaths') {selectedHeader = 'deaths';}
+		else if (headerText == 'Assists') {selectedHeader = 'assists';}
+	
+		let sortIconPrev = sortIcon;
+		sortIcon = document.getElementById(headerText)
+
+		if (sortBy.col == selectedHeader) {
+			sortBy.ascending = !sortBy.ascending
+			if (sortIcon?.classList.contains("table-sort-dsc"))
+			{
+		 		sortIcon?.classList.replace("table-sort-dsc", "table-sort-asc")
+		 	}
+			else if (sortIcon?.classList.contains("table-sort-asc"))
+			{
+		 		sortIcon?.classList.replace("table-sort-asc", "table-sort-dsc")
+		 	}
+			//console.log(sortBy.col, sortBy.ascending)
+		} else {
+			sortBy.col = selectedHeader
+			sortBy.ascending = true
+
+			if (sortIconPrev?.classList.contains("table-sort-dsc"))
+			{
+				sortIconPrev?.classList.remove("table-sort-dsc")
+		 	}
+			else if (sortIconPrev?.classList.contains("table-sort-asc"))
+			{
+				sortIconPrev?.classList.remove("table-sort-asc")
+		 	}
+
+			sortIcon?.classList.add('table-sort-asc')
+			//console.log(sortBy.col, sortBy.ascending)
+		}
+		sortModifier = (sortBy.ascending) ? 1 : -1;
+		//console.log("new sortIcon: ", sortIcon);
+	}
+	
 	//hero list
 	let heroListWithAll = data.streamed.heroDescriptions.allHeroes.sort((a: any, b: any) => {
 		if (a.localized_name < b.localized_name) return -1;
@@ -105,10 +154,10 @@
 		tableData = recalcTable(-1);
 	});
 
-	let recalcTable = (filterInput: number | string) => {
+	let recalcTable = (filterInput: number | string, selectedHeader?: | string, sortModifier?: | number) => {
 		return {
 			head: ['Player', 'Games', 'Wins', 'Losses', 'Win %', 'KDA', 'Kills', 'Deaths', 'Assists'],
-			body: tableMapperValues(recalcTableData(filterInput), [
+			body: tableMapperValues(recalcTableData(filterInput, selectedHeader, sortModifier), [
 				'playerName',
 				'games',
 				'wins',
@@ -122,7 +171,7 @@
 		};
 	};
 
-	const recalcTableData = (filterInput: number | string) => {
+	const recalcTableData = (filterInput: number | string, selectedHeader?: | string, sortModifier?: | number) => {
 		if (typeof filterInput === 'number') {
 			console.log(`[herostats page.svelte] new hero ID selected: ${filterInput}`);
 		}
@@ -149,9 +198,8 @@
 							(match: Match) => match.hero_id === filterInput
 					  ));
 			}
-
 			//filter by heroRole
-			if (typeof filterInput === 'string') {
+			else if (typeof filterInput === 'string') {
 				selectedHeroID  = -1
 				if (filterInput === 'all' || filterInput === 'All') filteredMatchData = player.matchData;
 				else {
@@ -164,6 +212,7 @@
 					);
 				}
 			}
+			//console.log('filtered match data', filteredMatchData)
 
 			pushObj.playerID = player.playerID;
 			pushObj.playerName = player.playerName;
@@ -180,12 +229,14 @@
 			pushObj.kda = (pushObj.kills + pushObj.assists) / pushObj.deaths;
 
 			tableData.push(pushObj);
+			
 		});
+		
 
-		//sort by games by default
+		//tableData = tableData.sort(sort);
 		tableData = tableData.sort((a: any, b: any) => {
-			if (a.games < b.games) return 1;
-			else return -1;
+			if (a[selectedHeader] < b[selectedHeader]) return (-1 * sortModifier);
+			else return (1 * sortModifier);
 		});
 
 		console.log(tableData);
@@ -225,6 +276,7 @@
 
 		return classes;
 	}
+
 </script>
 
 {#await data.streamed.matchStats}
@@ -286,9 +338,9 @@
 				<tr>
 					{#each ['Player', 'Games', 'Wins', 'Losses', 'Win %', 'KDA', 'Kills', 'Deaths', 'Assists'] as headerText, i}
 						{#if [2, 3, 6, 7, 8].includes(i)}
-							<th class="max-sm:hidden md:visible hover:bg-surface-500/50">{headerText}</th>
+							<th id={headerText} class="max-sm:hidden md:visible hover:bg-surface-500/50" on:click={() => handleSort(headerText)}>{headerText}</th>
 						{:else}
-							<th class="hover:bg-surface-500/50">{headerText}</th>
+							<th id={headerText} class="hover:bg-surface-500/50" on:click={() => handleSort(headerText)}>{headerText}</th>
 						{/if}
 					{/each}
 				</tr>
