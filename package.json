@@ -10,7 +10,8 @@
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "test": "vitest",
     "lint": "prettier --check .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "prisma": "npx prisma generate && npx prisma db push"
   },
   "devDependencies": {
     "@skeletonlabs/skeleton": "2.5.1",

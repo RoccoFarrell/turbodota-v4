@@ -1,12 +1,11 @@
 generator client {
   provider = "prisma-client-js"
-  output = "../../node_modules/@prisma-prod/client"
+  output = "../../node_modules/@prisma-dev/client"
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "sqlite"
+  url      = "file:./dev.sqlite"
 }
 
 model Article {
