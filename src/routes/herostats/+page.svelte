@@ -57,8 +57,8 @@
 		body: []
 	};
 
-	$: tableData = recalcTable(selectedHeroID);
-	$: tableData = recalcTable(selectedRole);
+	// $: tableData = recalcTable(selectedHeroID);
+	// $: tableData = recalcTable(selectedRole);
 	
 	// function changeSelect(inputVal: number | string) {
 	// 	let returnVal: TableSource = {
@@ -102,11 +102,11 @@
 	data.streamed.matchStats.then((value) => {
 		console.log(`promise finished ${value}`);
 		matchStats = value;
-		tableData = recalcTable(-1);
+		recalcTable(-1);
 	});
 
 	let recalcTable = (filterInput: number | string) => {
-		return {
+		tableData = {
 			head: ['Player', 'Games', 'Wins', 'Losses', 'Win %', 'KDA', 'Kills', 'Deaths', 'Assists'],
 			body: tableMapperValues(recalcTableData(filterInput), [
 				'playerName',
@@ -188,7 +188,7 @@
 			else return -1;
 		});
 
-		console.log(tableData);
+		//console.log(tableData);
 		return tableData;
 	};
 
@@ -207,8 +207,8 @@
 	function calculateWinPercentageClasses(win_percentage: number) {
 		//console.log(win_percentage)
 		let classes = '';
-		if (win_percentage < 0.45) classes = 'text-red-300';
-		if (win_percentage <= 0.4) classes = 'text-red-500';
+		if (win_percentage < 0.45) classes = 'text-red-400';
+		if (win_percentage <= 0.4) classes = 'text-red-600';
 		if (win_percentage >= 0.55) classes = 'text-green-300';
 		if (win_percentage >= 0.6) classes = 'text-green-500';
 
@@ -218,8 +218,8 @@
 	function calculateKdaClasses(kda: number) {
 		//console.log(kda)
 		let classes = '';
-		if (kda < 4) classes = 'text-red-300';
-		if (kda <= 2) classes = 'text-red-500';
+		if (kda < 4) classes = 'text-red-400';
+		if (kda <= 2) classes = 'text-red-600';
 		if (kda >= 5) classes = 'text-green-300';
 		if (kda >= 7) classes = 'text-green-500';
 
@@ -258,13 +258,13 @@
 	<div class="container mx-auto p-4 space-y-8">
 		<div class="flex justify-center items-center space-x-8">
 			<p class="inline text-primary-500 font-bold">Hero</p>
-			<select class="select select-sm variant-ghost-surface" bind:value={selectedHeroID}>
+			<select class="select select-sm variant-ghost-surface" bind:value={selectedHeroID} on:change={()=>recalcTable(selectedHeroID)}>
 				{#each heroList as hero}
 					<option value={hero.id}>{hero.localized_name}</option>
 				{/each}
 			</select>
 			<p class="inline text-primary-500 font-bold">Role</p>
-			<select class="select select-sm variant-ghost-surface" bind:value={selectedRole}>
+			<select class="select select-sm variant-ghost-surface" bind:value={selectedRole} on:change={()=>recalcTable(selectedRole)}>
 				{#each heroRoles as role}
 					<option>{role}</option>
 				{/each}
