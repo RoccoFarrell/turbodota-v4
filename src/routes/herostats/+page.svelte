@@ -8,7 +8,8 @@
 		Table,
 		tableSourceValues,
 		tableMapperValues,
-		ProgressRadial
+		ProgressRadial,
+		filter
 	} from '@skeletonlabs/skeleton';
 	import type { TableSource } from '@skeletonlabs/skeleton';
 	import Loading from '$lib/components/Loading.svelte';
@@ -19,7 +20,7 @@
 	//page data
 	export let data: PageData;
 
-	//console.log(data);
+	console.log(data);
 	//console.log(page);
 
 	//table data
@@ -38,11 +39,46 @@
 
 	let selectedHeroID: number = -1;
 
+	const heroRoles = [
+		'All',
+		'Carry',
+		'Disabler',
+		'Durable',
+		'Escape',
+		'Initiator',
+		'Nuker',
+		'Pusher',
+		'Support'
+	];
+	let selectedRole: string = 'All';
+
 	let tableData: TableSource = {
 		head: [],
 		body: []
 	};
-	$: tableData = recalcTable(selectedHeroID)
+
+	$: tableData = recalcTable(selectedHeroID);
+	$: tableData = recalcTable(selectedRole);
+	
+	// function changeSelect(inputVal: number | string) {
+	// 	let returnVal: TableSource = {
+	// 		head: [],
+	// 		body: []
+	// 	}
+	// 	if (typeof inputVal === 'number') {
+	// 		{
+	// 			selectedRole = 'All';
+	// 			returnVal = recalcTable(selectedHeroID);
+	// 		}
+	// 	}
+
+	// 	if (typeof inputVal === 'string') {
+	// 		selectedHeroID = -1;
+	// 		returnVal = recalcTable(selectedRole);
+	// 	}
+
+	// 	return returnVal;
+	// }
 
 	//hero list
 	let heroListWithAll = data.streamed.heroDescriptions.allHeroes.sort((a: any, b: any) => {
@@ -53,7 +89,8 @@
 	heroListWithAll = [
 		{
 			id: -1,
-			localized_name: 'All'
+			localized_name: 'All',
+			roles: []
 		},
 		...data.streamed.heroDescriptions.allHeroes
 	];
@@ -63,16 +100,15 @@
 
 	let matchStats: MatchStats[] = [];
 	data.streamed.matchStats.then((value) => {
-        console.log(`promise finished ${value}`)
+		console.log(`promise finished ${value}`);
 		matchStats = value;
 		tableData = recalcTable(-1);
 	});
 
-    let recalcTable = (heroID: number) => {
-        selectedHeroID = heroID;
+	let recalcTable = (filterInput: number | string) => {
 		return {
 			head: ['Player', 'Games', 'Wins', 'Losses', 'Win %', 'KDA', 'Kills', 'Deaths', 'Assists'],
-			body: tableMapperValues(recalcTableData(selectedHeroID), [
+			body: tableMapperValues(recalcTableData(filterInput), [
 				'playerName',
 				'games',
 				'wins',
@@ -86,20 +122,48 @@
 		};
 	};
 
-	const recalcTableData = (heroID: number = -1) => {
-		console.log(`[herostats page.svelte] new hero ID selected: ${heroID}`);
+	const recalcTableData = (filterInput: number | string) => {
+		if (typeof filterInput === 'number') {
+			console.log(`[herostats page.svelte] new hero ID selected: ${filterInput}`);
+		}
+
+		if (typeof filterInput === 'string') {
+			console.log(`[herostats page.svelte] new hero Role selected: ${filterInput}`);
+		}
 
 		let tableData: TableRow[] = [];
 
-        console.log(matchStats.length)
 		matchStats.forEach((player) => {
 			//filters match data for selected hero
 			let pushObj: TableRow = new TableRow();
 
 			let filteredMatchData = [];
-			heroID === -1
-				? (filteredMatchData = player.matchData)
-				: (filteredMatchData = player.matchData.filter((match: Match) => match.hero_id === heroID));
+
+			//filter by heroID
+
+			if (typeof filterInput === 'number') {
+				selectedRole = "All"
+				filterInput === -1
+					? (filteredMatchData = player.matchData)
+					: (filteredMatchData = player.matchData.filter(
+							(match: Match) => match.hero_id === filterInput
+					  ));
+			}
+
+			//filter by heroRole
+			if (typeof filterInput === 'string') {
+				selectedHeroID  = -1
+				if (filterInput === 'all' || filterInput === 'All') filteredMatchData = player.matchData;
+				else {
+					console.log(heroList);
+					let filteredHeroList = heroList
+						.filter((hero) => hero.roles.includes(filterInput))
+						.map((item) => item.id);
+					filteredMatchData = player.matchData.filter((match: Match) =>
+						filteredHeroList.includes(match.hero_id)
+					);
+				}
+			}
 
 			pushObj.playerID = player.playerID;
 			pushObj.playerName = player.playerName;
@@ -124,7 +188,7 @@
 			else return -1;
 		});
 
-        console.log(tableData)
+		console.log(tableData);
 		return tableData;
 	};
 
@@ -193,9 +257,16 @@
 
 	<div class="container mx-auto p-4 space-y-8">
 		<div class="flex justify-center items-center space-x-8">
+			<p class="inline text-primary-500 font-bold">Hero</p>
 			<select class="select select-sm variant-ghost-surface" bind:value={selectedHeroID}>
 				{#each heroList as hero}
 					<option value={hero.id}>{hero.localized_name}</option>
+				{/each}
+			</select>
+			<p class="inline text-primary-500 font-bold">Role</p>
+			<select class="select select-sm variant-ghost-surface" bind:value={selectedRole}>
+				{#each heroRoles as role}
+					<option>{role}</option>
 				{/each}
 			</select>
 		</div>
@@ -223,29 +294,29 @@
 				</tr>
 			</thead>
 			<tbody>
-                {#key tableData}
-				{#each tableData.body as row, i}
-					<tr>
-						{#each ['Player', 'Games', 'Wins', 'Losses', 'Win %', 'KDA', 'Kills', 'Deaths', 'Assists'] as cellText, i}
-							{#if i === 4}
-								<td class={`${calculateWinPercentageClasses(parseFloat(row[i]))}`}
-									>{(parseFloat(row[i]) * 100).toFixed(2)}</td
-								>
-							{:else if i === 1}
-								<td class="text-orange-500 font-semibold">{row[i]}</td>
-							{:else if i === 5}
-								<td class={`${calculateKdaClasses(parseFloat(row[i]))}`}
-									>{parseFloat(row[i]).toFixed(2)}</td
-								>
-							{:else if [2, 3, 6, 7, 8].includes(i)}
-								<td class="max-sm:hidden md:visible">{row[i]}</td>
-							{:else}
-								<td>{row[i]}</td>
-							{/if}
-						{/each}
-					</tr>
-				{/each}
-                {/key}
+				{#key tableData}
+					{#each tableData.body as row, i}
+						<tr>
+							{#each ['Player', 'Games', 'Wins', 'Losses', 'Win %', 'KDA', 'Kills', 'Deaths', 'Assists'] as cellText, i}
+								{#if i === 4}
+									<td class={`${calculateWinPercentageClasses(parseFloat(row[i]))}`}
+										>{(parseFloat(row[i]) * 100).toFixed(2)}</td
+									>
+								{:else if i === 1}
+									<td class="text-orange-500 font-semibold">{row[i]}</td>
+								{:else if i === 5}
+									<td class={`${calculateKdaClasses(parseFloat(row[i]))}`}
+										>{parseFloat(row[i]).toFixed(2)}</td
+									>
+								{:else if [2, 3, 6, 7, 8].includes(i)}
+									<td class="max-sm:hidden md:visible">{row[i]}</td>
+								{:else}
+									<td>{row[i]}</td>
+								{/if}
+							{/each}
+						</tr>
+					{/each}
+				{/key}
 			</tbody>
 			<!-- <tfoot>
 			<tr>
