@@ -38,6 +38,7 @@
 	}
 
 	let selectedHeroID: number = -1;
+	let selectedRole: string = 'All';
 
 	const heroRoles = [
 		'All',
@@ -50,7 +51,6 @@
 		'Pusher',
 		'Support'
 	];
-	let selectedRole: string = 'All';
 
 	let tableData: TableSource = {
 		head: [],
@@ -59,7 +59,7 @@
 
 	// $: tableData = recalcTable(selectedHeroID);
 	// $: tableData = recalcTable(selectedRole);
-	
+
 	// function changeSelect(inputVal: number | string) {
 	// 	let returnVal: TableSource = {
 	// 		head: [],
@@ -79,6 +79,96 @@
 
 	// 	return returnVal;
 	// }
+
+	interface SortObj {
+		headerText: string;
+		headerKey: string;
+		index: number;
+	}
+
+	interface SortBy {
+		sortObj: SortObj;
+		ascending: boolean;
+	}
+
+	let sortBy: SortBy = {
+		sortObj: {
+			headerText: 'Games',
+			headerKey: 'games',
+			index: 1
+		},
+		ascending: false
+	};
+
+	const sortMap: SortObj[] = [
+		{
+			headerText: 'Player',
+			headerKey: 'player',
+			index: 0
+		},
+		{
+			headerText: 'Games',
+			headerKey: 'games',
+			index: 1
+		},
+		{
+			headerText: 'Wins',
+			headerKey: 'wins',
+			index: 2
+		},
+		{
+			headerText: 'Losses',
+			headerKey: 'losses',
+			index: 3
+		},
+		{
+			headerText: 'Win %',
+			headerKey: 'win_percentage',
+			index: 4
+		},
+		{
+			headerText: 'KDA',
+			headerKey: 'kda',
+			index: 5
+		},
+		{
+			headerText: 'Kills',
+			headerKey: 'kills',
+			index: 6
+		},
+		{
+			headerText: 'Deaths',
+			headerKey: 'deaths',
+			index: 7
+		},
+		{
+			headerText: 'Assists',
+			headerKey: 'assists',
+			index: 8
+		}
+	];
+
+	let selectedSortHeader: string = 'Games';
+
+	function handleSortHeaderClick(headerText: string) {
+		let temp = sortMap.filter((item) => item.headerText === headerText)[0];
+		sortBy = {
+			sortObj: temp,
+			ascending: headerText === selectedSortHeader ? !sortBy.ascending : sortBy.ascending
+		};
+		handleSort(sortBy);
+		selectedSortHeader = headerText;
+	}
+
+	function handleSort(sortBy: SortBy) {
+		tableData = {
+			head: tableData.head,
+			body: tableData.body.sort((a: any, b: any) => {
+				if (a[sortBy.sortObj.index] < b[sortBy.sortObj.index]) return sortBy.ascending ? -1 : 1;
+				else return sortBy.ascending ? 1 : -1;
+			})
+		};
+	}
 
 	//hero list
 	let heroListWithAll = data.streamed.heroDescriptions.allHeroes.sort((a: any, b: any) => {
@@ -103,9 +193,10 @@
 		console.log(`promise finished ${value}`);
 		matchStats = value;
 		recalcTable(-1);
+		handleSort(sortBy);
 	});
 
-	let recalcTable = (filterInput: number | string) => {
+	const recalcTable = (filterInput: number | string) => {
 		tableData = {
 			head: ['Player', 'Games', 'Wins', 'Losses', 'Win %', 'KDA', 'Kills', 'Deaths', 'Assists'],
 			body: tableMapperValues(recalcTableData(filterInput), [
@@ -142,17 +233,16 @@
 			//filter by heroID
 
 			if (typeof filterInput === 'number') {
-				selectedRole = "All"
+				selectedRole = 'All';
 				filterInput === -1
 					? (filteredMatchData = player.matchData)
 					: (filteredMatchData = player.matchData.filter(
 							(match: Match) => match.hero_id === filterInput
 					  ));
 			}
-
 			//filter by heroRole
-			if (typeof filterInput === 'string') {
-				selectedHeroID  = -1
+			else if (typeof filterInput === 'string') {
+				selectedHeroID = -1;
 				if (filterInput === 'all' || filterInput === 'All') filteredMatchData = player.matchData;
 				else {
 					console.log(heroList);
@@ -164,6 +254,7 @@
 					);
 				}
 			}
+			//console.log('filtered match data', filteredMatchData)
 
 			pushObj.playerID = player.playerID;
 			pushObj.playerName = player.playerName;
@@ -180,12 +271,6 @@
 			pushObj.kda = (pushObj.kills + pushObj.assists) / pushObj.deaths;
 
 			tableData.push(pushObj);
-		});
-
-		//sort by games by default
-		tableData = tableData.sort((a: any, b: any) => {
-			if (a.games < b.games) return 1;
-			else return -1;
 		});
 
 		//console.log(tableData);
@@ -258,13 +343,21 @@
 	<div class="container mx-auto p-4 space-y-8">
 		<div class="flex justify-center items-center space-x-8">
 			<p class="inline text-primary-500 font-bold">Hero</p>
-			<select class="select select-sm variant-ghost-surface" bind:value={selectedHeroID} on:change={()=>recalcTable(selectedHeroID)}>
+			<select
+				class="select select-sm variant-ghost-surface"
+				bind:value={selectedHeroID}
+				on:change={() => recalcTable(selectedHeroID)}
+			>
 				{#each heroList as hero}
 					<option value={hero.id}>{hero.localized_name}</option>
 				{/each}
 			</select>
 			<p class="inline text-primary-500 font-bold">Role</p>
-			<select class="select select-sm variant-ghost-surface" bind:value={selectedRole} on:change={()=>recalcTable(selectedRole)}>
+			<select
+				class="select select-sm variant-ghost-surface"
+				bind:value={selectedRole}
+				on:change={() => recalcTable(selectedRole)}
+			>
 				{#each heroRoles as role}
 					<option>{role}</option>
 				{/each}
@@ -285,11 +378,27 @@
 			<thead>
 				<tr>
 					{#each ['Player', 'Games', 'Wins', 'Losses', 'Win %', 'KDA', 'Kills', 'Deaths', 'Assists'] as headerText, i}
-						{#if [2, 3, 6, 7, 8].includes(i)}
-							<th class="max-sm:hidden md:visible hover:bg-surface-500/50">{headerText}</th>
+						<!-- {#if [2, 3, 6, 7, 8].includes(i)}
+							<th
+								id={headerText}
+								class={'max-sm:hidden md:visible hover:bg-surface-500/50'}
+								on:click={() => handleSortHeaderClick(headerText)}>{headerText}</th
+							>
 						{:else}
-							<th class="hover:bg-surface-500/50">{headerText}</th>
-						{/if}
+							<th
+								id={headerText}
+								class="hover:bg-surface-500/50"
+								on:click={() => handleSortHeaderClick(headerText)}>{headerText}</th
+							>
+						{/if} -->
+						<th
+							id={headerText}
+							class={'hover:bg-surface-500/50' +
+								([2, 3, 6, 7, 8].includes(i) ? ' max-sm:hidden md:visible' : '') +
+								(headerText === sortBy.sortObj.headerText && sortBy.ascending ? ' table-sort-asc' : '') +
+								(headerText === sortBy.sortObj.headerText && !sortBy.ascending ? ' table-sort-dsc' : '')}
+							on:click={() => handleSortHeaderClick(headerText)}>{headerText}</th
+						>
 					{/each}
 				</tr>
 			</thead>
