@@ -1,6 +1,6 @@
 //import { PrismaClient } from "@prisma/client"
-import { PrismaClient as PrismaClientProd} from '@prisma-prod/client'
-import { PrismaClient as PrismaClientDev} from '@prisma-dev/client'
+//import { PrismaClient as PrismaClientProd} from '@prisma-prod/client'
+//import { PrismaClient as PrismaClientDev} from '@prisma-dev/client'
 import { env } from "$env/dynamic/private"
 
 
@@ -9,13 +9,16 @@ import { env } from "$env/dynamic/private"
 // 	log: ['query', 'info', 'warn', 'error']
 // })
 
-const prismaClientSingleton = () => {
+const prismaClientSingleton = async () => {
 
     console.log(`[prisma.ts] Running in ${process.env.NODE_ENV}`)
     if (process.env.NODE_ENV !== "development") {
-        return new PrismaClientProd()     
-    } else return new PrismaClientDev()
-    
+        const { PrismaClient } = await import('@prisma-prod/client')
+        return new PrismaClient()     
+    } else {
+        const { PrismaClient } = await import('@prisma-dev/client')
+        return new PrismaClient()   
+    }
 }
 
 declare global {
