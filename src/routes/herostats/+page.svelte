@@ -57,29 +57,6 @@
 		body: []
 	};
 
-	// $: tableData = recalcTable(selectedHeroID);
-	// $: tableData = recalcTable(selectedRole);
-
-	// function changeSelect(inputVal: number | string) {
-	// 	let returnVal: TableSource = {
-	// 		head: [],
-	// 		body: []
-	// 	}
-	// 	if (typeof inputVal === 'number') {
-	// 		{
-	// 			selectedRole = 'All';
-	// 			returnVal = recalcTable(selectedHeroID);
-	// 		}
-	// 	}
-
-	// 	if (typeof inputVal === 'string') {
-	// 		selectedHeroID = -1;
-	// 		returnVal = recalcTable(selectedRole);
-	// 	}
-
-	// 	return returnVal;
-	// }
-
 	interface SortObj {
 		headerText: string;
 		headerKey: string;
@@ -161,6 +138,7 @@
 	}
 
 	function handleSort(sortBy: SortBy) {
+		console.log('Sort by: ', sortBy)
 		tableData = {
 			head: tableData.head,
 			body: tableData.body.sort((a: any, b: any) => {
@@ -211,6 +189,8 @@
 				'assists'
 			])
 		};
+
+		handleSort(sortBy)
 	};
 
 	const recalcTableData = (filterInput: number | string) => {
@@ -264,11 +244,11 @@
 				0
 			);
 			pushObj.losses = filteredMatchData.length - pushObj.wins;
-			pushObj.win_percentage = pushObj.wins / filteredMatchData.length;
+			pushObj.win_percentage = (pushObj.wins / filteredMatchData.length) || 0;
 			pushObj.kills = filteredMatchData.reduce((acc: number, cur: Match) => acc + cur.kills, 0);
 			pushObj.deaths = filteredMatchData.reduce((acc: number, cur: Match) => acc + cur.deaths, 0);
 			pushObj.assists = filteredMatchData.reduce((acc: number, cur: Match) => acc + cur.assists, 0);
-			pushObj.kda = (pushObj.kills + pushObj.assists) / pushObj.deaths;
+			pushObj.kda = (pushObj.kills + pushObj.assists) / pushObj.deaths || 0;
 
 			tableData.push(pushObj);
 		});
@@ -365,11 +345,6 @@
 		</div>
 	</div>
 
-	<!-- Skeleton table component -->
-	<!-- <div>
-	<Table source={tableData} />
-    </div> -->
-
 	<!-- Skeleton table styling -->
 	<!-- Responsive Container (recommended) -->
 	<div class="table-container">
@@ -378,19 +353,6 @@
 			<thead>
 				<tr>
 					{#each ['Player', 'Games', 'Wins', 'Losses', 'Win %', 'KDA', 'Kills', 'Deaths', 'Assists'] as headerText, i}
-						<!-- {#if [2, 3, 6, 7, 8].includes(i)}
-							<th
-								id={headerText}
-								class={'max-sm:hidden md:visible hover:bg-surface-500/50'}
-								on:click={() => handleSortHeaderClick(headerText)}>{headerText}</th
-							>
-						{:else}
-							<th
-								id={headerText}
-								class="hover:bg-surface-500/50"
-								on:click={() => handleSortHeaderClick(headerText)}>{headerText}</th
-							>
-						{/if} -->
 						<th
 							id={headerText}
 							class={'hover:bg-surface-500/50' +
