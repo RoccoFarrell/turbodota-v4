@@ -49,6 +49,8 @@ model Match {
 model DotaUser {
   account_id  BigInt   @id @unique
   lastUpdated DateTime
+  oldestMatch DateTime?
+  newestMatch DateTime?
 
   @@index([account_id])
 }

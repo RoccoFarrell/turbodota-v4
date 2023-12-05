@@ -168,7 +168,7 @@
 
 	let matchStats: MatchStats[] = [];
 	data.streamed.matchStats.then((value) => {
-		console.log(`promise finished ${value}`);
+		//console.log(`promise finished ${value}`);
 		matchStats = value;
 		recalcTable(-1);
 		handleSort(sortBy);
