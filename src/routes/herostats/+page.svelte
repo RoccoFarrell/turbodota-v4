@@ -20,7 +20,7 @@
 	//page data
 	export let data: PageData;
 
-	console.log(data);
+	console.log(`[herostats page.svelte]`, data);
 	//console.log(page);
 
 	//table data
@@ -138,7 +138,7 @@
 	}
 
 	function handleSort(sortBy: SortBy) {
-		console.log('Sort by: ', sortBy)
+		console.log('[herostats page.svelte] Sort by: ', sortBy)
 		tableData = {
 			head: tableData.head,
 			body: tableData.body.sort((a: any, b: any) => {

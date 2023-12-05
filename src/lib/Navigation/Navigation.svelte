@@ -4,7 +4,7 @@
 
 	import steam_logo from '$lib/assets/steam_logo.png';
 
-	console.log(session);
+	//console.log(session);
 </script>
 
 <nav class="list-nav p-4">
