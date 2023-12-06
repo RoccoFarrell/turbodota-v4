@@ -47,7 +47,7 @@ model Match {
 }
 
 model DotaUser {
-  account_id  BigInt   @id @unique
+  account_id  BigInt    @id @unique
   lastUpdated DateTime
   oldestMatch DateTime?
   newestMatch DateTime?
@@ -67,9 +67,12 @@ model Hero {
 
 model User {
   id           String    @id @unique
-  name         String
+  name         String?
   username     String    @unique
   account_id   BigInt?   @unique
+  steam_id     BigInt?   @unique
+  profile_url  String
+  avatar_url   String
   articles     Article[]
   key          Key[]
   auth_session Session[]

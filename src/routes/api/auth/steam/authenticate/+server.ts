@@ -30,7 +30,7 @@ export const GET: RequestHandler = async ({ request, locals, params, url }) => {
                 password: null
             },
             attributes: {
-                name: steamUser.name || null,
+                name: steamUser.name || "",
                 username: steamUser.username,
                 steam_id: steamUser.steamid,
                 profile_url: steamUser.profile,
