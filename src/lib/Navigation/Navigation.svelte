@@ -20,10 +20,8 @@
 		<li class="h-32 lg:h-4"></li>
 		<hr class="!border-t-4" />
 		{#if !session || !session.user}
-			<li><a href="/register">Register</a></li>
-
 			<li>
-				<a class="" href="/login"
+				<a class="" href="/api/auth/steam"
 					>
                     <span><img class="w-6 ml-1.5" alt="steamlogo" src={steam_logo} /></span>
                     <span>Login</span>

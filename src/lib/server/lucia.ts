@@ -19,7 +19,9 @@ export const auth = lucia({
 			// IMPORTANT!!!!
 			// `userId` included by default!!
 			username: data.username,
-			name: data.name
+			name: data.name,
+			profile_url: data.profile_url,
+			avatar_url: data.avatar_url
 		};
 	},
 })

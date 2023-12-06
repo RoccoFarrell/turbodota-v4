@@ -40,3 +40,7 @@ You can preview the production build with `npm run preview`.
 ## Other Info
 
 ['Prisma connection pooling with Supabase'](https://supabase.com/partners/integrations/prisma#connection-pooling-with-supabase)
+
+### Lucia Auth with Steam
+
+(https://discord.com/channels/1004048134218981416/1119986172383469569)
