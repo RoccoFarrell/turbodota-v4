@@ -237,9 +237,8 @@
 
 			//filter by heroID
 
-			if (typeof selectedHeroID === 'number' && inputRole == 'All') {
-				console.log('doing a hero id', inputHeroID);
-				//selectedRole = 'All';
+			if (typeof inputHeroID === 'number' && inputRole == 'All') {
+				selectedRole = 'All';
 				selectedHeroID === -1
 					? (filteredMatchData = player.matchData)
 					: (filteredMatchData = player.matchData.filter(
@@ -247,8 +246,8 @@
 					  ));
 			}
 			//filter by heroRole
-			if (typeof inputRole === 'string' && selectedHeroID == -1) {
-				//selectedHeroID = -1;
+			if (typeof inputRole === 'string' && inputHeroID == -1) {
+				selectedHeroID = -1;
 				if (inputRole === 'all' || inputRole === 'All') filteredMatchData = player.matchData;
 				else {
 					console.log('doing a hero role');
