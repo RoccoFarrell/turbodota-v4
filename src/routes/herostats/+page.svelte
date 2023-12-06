@@ -140,7 +140,7 @@
 	}
 
 	function handleSort(sortBy: SortBy) {
-		console.log('[herostats page.svelte] Sort by: ', sortBy)
+		console.log('[herostats page.svelte] Sort by: ', sortBy);
 		tableData = {
 			head: tableData.head,
 			body: tableData.body.sort((a: any, b: any) => {
@@ -148,23 +148,6 @@
 				else return sortBy.ascending ? 1 : -1;
 			})
 		};
-	}
-
-	function handleDateRangeSelect(selectedStartDate: Date, selectedEndDate: Date) {
-		// let startDateUnix = new Date(selectedStartDate)
-		// let endDateUnix = new Date(selectedEndDate)
-
-		// return ()
-		//console.log(startDateUnix, endDateUnix)
-
-		// console.log(matchStats[0].matchData[0].start_time, typeof matchStats[0].matchData[0].start_time)
-		// console.log(startDateUnix, typeof startDateUnix)
-		// matchStats.forEach((player) => {
-		// 	let filteredMatchData = [];
-		// 	(filteredMatchData = player.matchData.filter((match: Match) => match.start_time >= startDateUnix));
-		// 	console.log(filteredMatchData);
-		// })
-		//console.log(filteredMatchData);
 	}
 
 	//hero list
@@ -193,37 +176,39 @@
 		handleSort(sortBy);
 	});
 
-	const recalcTable = (selectedStartDate: Date, selectedEndDate: Date, selectedRole: string, selectedHeroID: number) => {
+	const recalcTable = (
+		selectedStartDate: Date,
+		selectedEndDate: Date,
+		selectedRole: string,
+		selectedHeroID: number
+	) => {
 		tableData = {
 			head: ['Player', 'Games', 'Wins', 'Losses', 'Win %', 'KDA', 'Kills', 'Deaths', 'Assists'],
-			body: tableMapperValues(recalcTableData(selectedStartDate, selectedEndDate, selectedRole, selectedHeroID), [
-				'playerName',
-				'games',
-				'wins',
-				'losses',
-				'win_percentage',
-				'kda',
-				'kills',
-				'deaths',
-				'assists'
-			])
+			body: tableMapperValues(
+				recalcTableData(selectedStartDate, selectedEndDate, selectedRole, selectedHeroID),
+				[
+					'playerName',
+					'games',
+					'wins',
+					'losses',
+					'win_percentage',
+					'kda',
+					'kills',
+					'deaths',
+					'assists'
+				]
+			)
 		};
 
-		handleSort(sortBy)
+		handleSort(sortBy);
 	};
 
-	const recalcTableData = (selectedStartDate: Date, selectedEndDate: Date, inputRole: string, inputHeroID: number) => {
-		
-		if (inputHeroID != -1 && inputRole != 'all') {
-			console.log(`[herostats page.svelte] new hero ID selected: ${inputHeroID}`);
-			inputRole = "All"
-		}
-
-		if (inputRole == 'all' && inputHeroID == -1) {
-			console.log(`[herostats page.svelte] new hero Role selected: ${inputRole}`);
-			inputHeroID = -1;
-		}
-
+	const recalcTableData = (
+		selectedStartDate: Date,
+		selectedEndDate: Date,
+		inputRole: string,
+		inputHeroID: number
+	) => {
 		let tableData: TableRow[] = [];
 
 		matchStats.forEach((player) => {
@@ -260,7 +245,9 @@
 				}
 			}
 
-			filteredMatchData = filteredMatchData.filter((match: Match) => match.start_time >= startDateUnix && match.start_time <= endDateUnix);
+			filteredMatchData = filteredMatchData.filter(
+				(match: Match) => match.start_time >= startDateUnix && match.start_time <= endDateUnix
+			);
 			console.log(filteredMatchData);
 
 			// (filteredMatchData = player.matchData.filter((match: Match) => match.start_time <= endDateUnix));
@@ -276,7 +263,7 @@
 				0
 			);
 			pushObj.losses = filteredMatchData.length - pushObj.wins;
-			pushObj.win_percentage = (pushObj.wins / filteredMatchData.length) || 0;
+			pushObj.win_percentage = pushObj.wins / filteredMatchData.length || 0;
 			pushObj.kills = filteredMatchData.reduce((acc: number, cur: Match) => acc + cur.kills, 0);
 			pushObj.deaths = filteredMatchData.reduce((acc: number, cur: Match) => acc + cur.deaths, 0);
 			pushObj.assists = filteredMatchData.reduce((acc: number, cur: Match) => acc + cur.assists, 0);
@@ -304,11 +291,14 @@
 	function calculateWinPercentageClasses(win_percentage: number) {
 		//console.log(win_percentage)
 		let classes = '';
-		if (win_percentage < 0.45) classes = 'text-red-800';
-		if (win_percentage <= 0.465) classes = 'text-red-600';
-		if (win_percentage <= 0.49) classes = 'text-red-400';
+		if (win_percentage < 0.4) classes = "text-red-800 vibrating font-bold";
+		else if (win_percentage < 0.45) classes = 'text-red-700';
+		else if (win_percentage <= 0.465) classes = 'text-red-600';
+		else if (win_percentage <= 0.49) classes = 'text-red-500';
+
 		if (win_percentage >= 0.51) classes = 'text-green-300';
 		if (win_percentage >= 0.535) classes = 'text-green-500';
+		if (win_percentage >= 0.58) classes ='text-amber-500 animate-pulse'
 
 		return classes;
 	}
@@ -328,11 +318,11 @@
 {#await data.streamed.matchStats}
 	<Loading />
 {:then matchStats}
-	<div class="container mx-auto my-4">
+	<div class="container mx-auto md:my-4 my-1">
 		<div class="flex items-center justify-around space-x-4">
 			<div class="flex flex-col items-center">
 				<h1 class="h1 text-primary-500">Hero Stats</h1>
-				<div class="flex justify-center items-center space-x-8 my-2">
+				<div class="flex justify-center items-center space-x-8 my-2 max-md:hidden">
 					<h3 class="h3">ONLY THE TRUE KING WILL RULE</h3>
 					<img class="w-8 lg:w-12" alt="turboking" src={turboking} />
 				</div>
@@ -353,40 +343,52 @@
 		</div>
 	</div>
 
-	<div class="container mx-auto p-4 space-y-8">
-		<div class="flex justify-center items-center space-x-8">
-			<p class="inline text-primary-500 font-bold">Hero</p>
-			<select
-				class="select select-sm variant-ghost-surface"
-				bind:value={selectedHeroID}
-				on:change={() => recalcTable(selectedStartDate, selectedEndDate, "All", selectedHeroID)}
-			>
-				{#each heroList as hero}
-					<option value={hero.id}>{hero.localized_name}</option>
-				{/each}
-			</select>
-			<p class="inline text-primary-500 font-bold">Role</p>
-			<select
-				class="select select-sm variant-ghost-surface"
-				bind:value={selectedRole}
-				on:change={() => recalcTable(selectedStartDate, selectedEndDate, selectedRole, -1)}
-			>
-				{#each heroRoles as role}
-					<option>{role}</option>
-				{/each}
-			</select>
-			<p class="inline text-primary-500 font-bold">Start Date</p>
-			<input type="date" 
-				class="select select-sm variant-ghost-surface"
-				bind:value={selectedStartDate}
-				on:change={() => recalcTable(selectedStartDate, selectedEndDate, selectedRole, selectedHeroID)}
+	<div class="container mx-auto p-4">
+		<div class="max-md:flex-col flex justify-center items-center md:space-x-8 max-md:space-y-2">
+			<div class="flex justify-around items-center w-full">
+				<p class="inline text-primary-500 font-bold w-1/4">Hero</p>
+				<select
+					class="select select-sm variant-ghost-surface w-3/4"
+					bind:value={selectedHeroID}
+					on:change={() => recalcTable(selectedStartDate, selectedEndDate, 'All', selectedHeroID)}
 				>
-			<p class="inline text-primary-500 font-bold">End Date</p>
-			<input type="date" 
-				class="select select-sm variant-ghost-surface"
-				bind:value={selectedEndDate}
-				on:change={() => recalcTable(selectedStartDate, selectedEndDate, selectedRole, selectedHeroID)}
+					{#each heroList as hero}
+						<option value={hero.id}>{hero.localized_name}</option>
+					{/each}
+				</select>
+			</div>
+			<div class="flex justify-around items-center w-full">
+				<p class="inline text-primary-500 font-bold w-1/4">Role</p>
+				<select
+					class="select select-sm variant-ghost-surface w-3/4"
+					bind:value={selectedRole}
+					on:change={() => recalcTable(selectedStartDate, selectedEndDate, selectedRole, -1)}
 				>
+					{#each heroRoles as role}
+						<option>{role}</option>
+					{/each}
+				</select>
+			</div>
+			<div class="flex justify-around items-center w-full md:space-x-1">
+				<p class="text-primary-500 font-bold w-1/4">Start Date</p>
+				<input
+					type="date"
+					class="select select-sm variant-ghost-surface w-3/4"
+					bind:value={selectedStartDate}
+					on:change={() =>
+						recalcTable(selectedStartDate, selectedEndDate, selectedRole, selectedHeroID)}
+				/>
+			</div>
+			<div class="flex justify-around items-center w-full md:space-x-1">
+				<p class="inline text-primary-500 font-bold w-1/4">End Date</p>
+				<input
+					type="date"
+					class="select select-sm variant-ghost-surface w-3/4"
+					bind:value={selectedEndDate}
+					on:change={() =>
+						recalcTable(selectedStartDate, selectedEndDate, selectedRole, selectedHeroID)}
+				/>
+			</div>
 		</div>
 	</div>
 
@@ -402,8 +404,12 @@
 							id={headerText}
 							class={'hover:bg-surface-500/50' +
 								([2, 3, 6, 7, 8].includes(i) ? ' max-sm:hidden md:visible' : '') +
-								(headerText === sortBy.sortObj.headerText && sortBy.ascending ? ' table-sort-asc' : '') +
-								(headerText === sortBy.sortObj.headerText && !sortBy.ascending ? ' table-sort-dsc' : '')}
+								(headerText === sortBy.sortObj.headerText && sortBy.ascending
+									? ' table-sort-asc'
+									: '') +
+								(headerText === sortBy.sortObj.headerText && !sortBy.ascending
+									? ' table-sort-dsc'
+									: '')}
 							on:click={() => handleSortHeaderClick(headerText)}>{headerText}</th
 						>
 					{/each}
@@ -419,7 +425,7 @@
 										>{(parseFloat(row[i]) * 100).toFixed(2)}</td
 									>
 								{:else if i === 1}
-									<td class="text-orange-500 font-semibold">{row[i]}</td>
+									<td class="text-primary-500 font-semibold">{row[i]}</td>
 								{:else if i === 5}
 									<td class={`${calculateKdaClasses(parseFloat(row[i]))}`}
 										>{parseFloat(row[i]).toFixed(2)}</td
