@@ -88,6 +88,11 @@ export const load: PageServerLoad = async ({ params, locals, url, setHeaders }) 
 
 			let responseData = await response.json()
 
+			//convert bigInt to Javascript Date
+			responseData.matchData.forEach((element: Match) => {
+				element.start_time = new Date(Number(element.start_time)*1000)
+			});
+
 			userDataArray.push({
 				playerID: player.playerID,
                 playerName: player.playerName,

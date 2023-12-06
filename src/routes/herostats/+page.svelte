@@ -39,6 +39,8 @@
 
 	let selectedHeroID: number = -1;
 	let selectedRole: string = 'All';
+	let selectedStartDate = new Date(0);
+	let selectedEndDate = new Date();
 
 	const heroRoles = [
 		'All',
@@ -148,6 +150,21 @@
 		};
 	}
 
+	function handleDateRangeSelect(selectedStartDate: Date, selectedEndDate: Date) {
+		let startDateUnix = new Date(selectedStartDate)
+		let endDateUnix = new Date(selectedEndDate)
+		//console.log(startDateUnix, endDateUnix)
+
+		console.log(matchStats[0].matchData[0].start_time, typeof matchStats[0].matchData[0].start_time)
+		console.log(startDateUnix, typeof startDateUnix)
+		matchStats.forEach((player) => {
+			let filteredMatchData = [];
+			(filteredMatchData = player.matchData.filter((match: Match) => match.start_time >= startDateUnix));
+			console.log(filteredMatchData);
+		})
+		//console.log(filteredMatchData);
+	}
+
 	//hero list
 	let heroListWithAll = data.streamed.heroDescriptions.allHeroes.sort((a: any, b: any) => {
 		if (a.localized_name < b.localized_name) return -1;
@@ -172,6 +189,7 @@
 		matchStats = value;
 		recalcTable(-1);
 		handleSort(sortBy);
+		handleDateRangeSelect(selectedStartDate, selectedEndDate);
 	});
 
 	const recalcTable = (filterInput: number | string) => {
@@ -343,6 +361,18 @@
 					<option>{role}</option>
 				{/each}
 			</select>
+			<p class="inline text-primary-500 font-bold">Start Date</p>
+			<input type="date" 
+				class="select select-sm variant-ghost-surface"
+				bind:value={selectedStartDate}
+				on:change={() => handleDateRangeSelect(selectedStartDate, selectedEndDate)}
+				>
+			<p class="inline text-primary-500 font-bold">End Date</p>
+			<input type="date" 
+				class="select select-sm variant-ghost-surface"
+				bind:value={selectedEndDate}
+				on:change={() => handleDateRangeSelect(selectedStartDate, selectedEndDate)}
+				>
 		</div>
 	</div>
 

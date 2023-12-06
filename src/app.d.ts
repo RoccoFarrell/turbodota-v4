@@ -47,7 +47,7 @@ declare global {
 		player_slot: number
 		radiant_win: boolean
 		skill?: number | null
-		start_time: bigint
+		start_time: bigint | Date
 		version?: number | null
 	}
 
