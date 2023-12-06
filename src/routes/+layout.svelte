@@ -109,8 +109,15 @@
 		<!-- --- -->
 	</svelte:fragment>
 
+	<svelte:fragment slot="footer">
+		<div class="flex w-full justify-center m-auto">
+			<p class="text-xs text-slate-300 dark:text-slate-700">Copyright No Salt Studios 2023</p>
+		</div>
+		
+	</svelte:fragment>
+
 	<!-- Page Route Content -->
-	<div class="my-8 mx-4 lg:mx-12 h-max">
+	<div class="h-max">
 		{#if $navigating}
 		<Loading />
 

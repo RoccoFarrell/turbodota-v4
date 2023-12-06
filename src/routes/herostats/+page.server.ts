@@ -1,19 +1,18 @@
-import type { Actions, PageServerLoad } from './$types'
-import { prisma } from '$lib/server/prisma'
-import { error, fail } from '@sveltejs/kit'
-import { env } from "$env/dynamic/private"
+import type { Actions, PageServerLoad } from './$types';
+import { prisma } from '$lib/server/prisma';
+import { error, fail } from '@sveltejs/kit';
+import { env } from '$env/dynamic/private';
 
-import { base } from '$app/paths' 
+import { base } from '$app/paths';
 
 export const config = {
 	isr: {
-	  expiration: 600,
-	  bypassToken: 'fbybpmuenv4foogdrax2ab2u863gxtqa4p15or78',
-	},
-  };
+		expiration: 600,
+		bypassToken: 'fbybpmuenv4foogdrax2ab2u863gxtqa4p15or78'
+	}
+};
 
 export const load: PageServerLoad = async ({ params, locals, url, setHeaders }) => {
-	
 	//session info
 	// const session = await locals.auth.validate()
 	// let user = null;
@@ -23,39 +22,35 @@ export const load: PageServerLoad = async ({ params, locals, url, setHeaders }) 
 	// 	user = session.user
 	// }
 
-	
-
 	//test random number
 	const randomNumber = async () => {
 		const response = await fetch(`${url.origin}/api/randomNumber`, {
 			method: 'Get',
 			headers: {
-				'content-type': 'application/json',
-			},
+				'content-type': 'application/json'
+			}
 		});
-	
+
 		//(response)
 		return await response.json();
-	 }
+	};
 
 	//get heroes list
 	const getHeroes = async () => {
-
 		const response = await fetch(`${url.origin}/api/getHeroes`, {
 			method: 'Get',
 			headers: {
-				'content-type': 'application/json',
-			},
+				'content-type': 'application/json'
+			}
 		});
 
-		let responseData = await response.json()
+		let responseData = await response.json();
 
-		return responseData
-	}
+		return responseData;
+	};
 
 	//get match stats
 	const getMatchStats = async () => {
-
 		let userDataArray: MatchStats[] = [];
 
 		const playersWeCareAbout = [
@@ -66,72 +61,77 @@ export const load: PageServerLoad = async ({ params, locals, url, setHeaders }) 
 			{ playerID: 125251142, playerName: 'Matt' },
 			{ playerID: 423076846, playerName: 'Chris' },
 			{ playerID: 67762413, playerName: 'Walker' },
-			{ playerID: 68024789, playerName: 'Ben' },
+			{ playerID: 68024789, playerName: 'Ben' }
 			//{ playerID: 123794823, playerName: 'Steven' },
 			//{ playerID: 214308966, playerName: 'Andy' }
 		];
 
 		for (const player of playersWeCareAbout) {
-			const response = await fetch(`${url.origin}/api/updateMatchesForUser/${player.playerID}?account_id=${player.playerID}`, {
-				method: 'Get',
-				headers: {
-					'content-type': 'application/json',
-				},
-			});
+			try {
+				const response = await fetch(
+					`${url.origin}/api/updateMatchesForUser/${player.playerID}?account_id=${player.playerID}`,
+					{
+						method: 'Get',
+						headers: {
+							'content-type': 'application/json'
+						}
+					}
+				);
 
-			// const response = await fetch(`${url.origin}/api/updateMatchesForUser?account_id=${player.playerID}`, {
-			// 	method: 'Get',
-			// 	headers: {
-			// 		'content-type': 'application/json',
-			// 	},
-			// });
+				// const response = await fetch(`${url.origin}/api/updateMatchesForUser?account_id=${player.playerID}`, {
+				// 	method: 'Get',
+				// 	headers: {
+				// 		'content-type': 'application/json',
+				// 	},
+				// });
 
-			let responseData = await response.json()
+				let responseData = await response.json();
 
-			//convert bigInt to Javascript Date
-			responseData.matchData.forEach((element: Match) => {
-				element.start_time = new Date(Number(element.start_time)*1000)
-			});
+				//convert bigInt to Javascript Date
+				responseData.matchData.forEach((element: Match) => {
+					element.start_time = new Date(Number(element.start_time) * 1000);
+				});
 
-			userDataArray.push({
-				playerID: player.playerID,
-                playerName: player.playerName,
-                matchData: responseData.matchData,
-				dataSource: responseData.dataSource,
-				od_url: responseData.od_url
-			})
-			
+				userDataArray.push({
+					playerID: player.playerID,
+					playerName: player.playerName,
+					matchData: responseData.matchData,
+					dataSource: responseData.dataSource,
+					od_url: responseData.od_url
+				});
+			} catch (e) {
+				console.error(`Fetch match data for user ${player.playerID} failed: `, e);
+			}
+
 			//(`responseData: ${JSON.stringify(responseData)}`)
-		};
+		}
 
-		return userDataArray
-		
-	}
+		return userDataArray;
+	};
 
 	setHeaders({
-        "cache-control": "max-age=3600",
-      });
+		'cache-control': 'max-age=3600'
+	});
 
 	return {
 		streamed: {
-			matchStats: new Promise<MatchStats[]>((resolve, reject) => {  
+			matchStats: new Promise<MatchStats[]>((resolve, reject) => {
 				getMatchStats()
-				 .then(data => {
-					let returnData: MatchStats[] = data;
-					return resolve(returnData)
-				 })
-				 .catch((error) => {
-				   console.log(error)
-				   return reject(error)
-				 })
-			 }),
+					.then((data) => {
+						let returnData: MatchStats[] = data;
+						return resolve(returnData);
+					})
+					.catch((error) => {
+						console.log(error);
+						return reject(error);
+					});
+			}),
 			//matchStats: await getMatchStats(),
 			randomNumber: await randomNumber(),
 			heroDescriptions: await getHeroes()
 		}
-		
-	}
-}
+	};
+};
 
 // export const actions: Actions = {
 // 	updateArticle: async ({ request, params, locals }) => {

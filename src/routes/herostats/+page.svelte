@@ -291,14 +291,14 @@
 	function calculateWinPercentageClasses(win_percentage: number) {
 		//console.log(win_percentage)
 		let classes = '';
-		if (win_percentage < 0.4) classes = "text-red-800 vibrating font-bold";
+		if (win_percentage < 0.4) classes = 'text-red-800 vibrating font-bold';
 		else if (win_percentage < 0.45) classes = 'text-red-700';
 		else if (win_percentage <= 0.465) classes = 'text-red-600';
 		else if (win_percentage <= 0.49) classes = 'text-red-500';
 
 		if (win_percentage >= 0.51) classes = 'text-green-300';
 		if (win_percentage >= 0.535) classes = 'text-green-500';
-		if (win_percentage >= 0.58) classes ='text-amber-500 animate-pulse'
+		if (win_percentage >= 0.58) classes = 'text-amber-500 animate-pulse';
 
 		return classes;
 	}
@@ -318,135 +318,137 @@
 {#await data.streamed.matchStats}
 	<Loading />
 {:then matchStats}
-	<div class="container mx-auto md:my-4 my-1">
-		<div class="flex items-center justify-around space-x-4">
-			<div class="flex flex-col items-center">
-				<h1 class="h1 text-primary-500">Hero Stats</h1>
-				<div class="flex justify-center items-center space-x-8 my-2 max-md:hidden">
-					<h3 class="h3">ONLY THE TRUE KING WILL RULE</h3>
-					<img class="w-8 lg:w-12" alt="turboking" src={turboking} />
+	<div class="m-4 md:m-10">
+		<div class="container mx-auto md:my-4 my-1">
+			<div class="flex items-center justify-around space-x-4">
+				<div class="flex flex-col items-center">
+					<h1 class="h1 text-primary-500">Hero Stats</h1>
+					<div class="flex justify-center items-center space-x-8 my-2 max-md:hidden">
+						<h3 class="h3">ONLY THE TRUE KING WILL RULE</h3>
+						<img class="w-8 lg:w-12" alt="turboking" src={turboking} />
+					</div>
 				</div>
-			</div>
-			<div class="flex flex-col">
-				<h3 class="h3 text-primary-500">Data sources</h3>
-				<div>
-					Open Dota: <p class="inline text-orange-500 font-bold">
-						{matchStats.filter((player) => player.dataSource !== 'db').length}
-					</p>
-				</div>
-				<div>
-					Database: <p class="inline text-green-500 font-bold">
-						{matchStats.filter((player) => player.dataSource === 'db').length}
-					</p>
+				<div class="flex flex-col">
+					<h3 class="h3 text-primary-500">Data sources</h3>
+					<div>
+						Open Dota: <p class="inline text-orange-500 font-bold">
+							{matchStats.filter((player) => player.dataSource !== 'db').length}
+						</p>
+					</div>
+					<div>
+						Database: <p class="inline text-green-500 font-bold">
+							{matchStats.filter((player) => player.dataSource === 'db').length}
+						</p>
+					</div>
 				</div>
 			</div>
 		</div>
-	</div>
 
-	<div class="container mx-auto p-4">
-		<div class="max-md:flex-col flex justify-center items-center md:space-x-8 max-md:space-y-2">
-			<div class="flex justify-around items-center w-full">
-				<p class="inline text-primary-500 font-bold w-1/4">Hero</p>
-				<select
-					class="select select-sm variant-ghost-surface w-3/4"
-					bind:value={selectedHeroID}
-					on:change={() => recalcTable(selectedStartDate, selectedEndDate, 'All', selectedHeroID)}
-				>
-					{#each heroList as hero}
-						<option value={hero.id}>{hero.localized_name}</option>
-					{/each}
-				</select>
-			</div>
-			<div class="flex justify-around items-center w-full">
-				<p class="inline text-primary-500 font-bold w-1/4">Role</p>
-				<select
-					class="select select-sm variant-ghost-surface w-3/4"
-					bind:value={selectedRole}
-					on:change={() => recalcTable(selectedStartDate, selectedEndDate, selectedRole, -1)}
-				>
-					{#each heroRoles as role}
-						<option>{role}</option>
-					{/each}
-				</select>
-			</div>
-			<div class="flex justify-around items-center w-full md:space-x-1">
-				<p class="text-primary-500 font-bold w-1/4">Start Date</p>
-				<input
-					type="date"
-					class="select select-sm variant-ghost-surface w-3/4"
-					bind:value={selectedStartDate}
-					on:change={() =>
-						recalcTable(selectedStartDate, selectedEndDate, selectedRole, selectedHeroID)}
-				/>
-			</div>
-			<div class="flex justify-around items-center w-full md:space-x-1">
-				<p class="inline text-primary-500 font-bold w-1/4">End Date</p>
-				<input
-					type="date"
-					class="select select-sm variant-ghost-surface w-3/4"
-					bind:value={selectedEndDate}
-					on:change={() =>
-						recalcTable(selectedStartDate, selectedEndDate, selectedRole, selectedHeroID)}
-				/>
+		<div class="container mx-auto p-4">
+			<div class="max-md:flex-col flex justify-center items-center md:space-x-8 max-md:space-y-2">
+				<div class="flex justify-around items-center w-full">
+					<p class="inline text-primary-500 font-bold w-1/4">Hero</p>
+					<select
+						class="select select-sm variant-ghost-surface w-3/4"
+						bind:value={selectedHeroID}
+						on:change={() => recalcTable(selectedStartDate, selectedEndDate, 'All', selectedHeroID)}
+					>
+						{#each heroList as hero}
+							<option value={hero.id}>{hero.localized_name}</option>
+						{/each}
+					</select>
+				</div>
+				<div class="flex justify-around items-center w-full">
+					<p class="inline text-primary-500 font-bold w-1/4">Role</p>
+					<select
+						class="select select-sm variant-ghost-surface w-3/4"
+						bind:value={selectedRole}
+						on:change={() => recalcTable(selectedStartDate, selectedEndDate, selectedRole, -1)}
+					>
+						{#each heroRoles as role}
+							<option>{role}</option>
+						{/each}
+					</select>
+				</div>
+				<div class="flex justify-around items-center w-full md:space-x-1">
+					<p class="text-primary-500 font-bold w-1/4">Start Date</p>
+					<input
+						type="date"
+						class="select select-sm variant-ghost-surface w-3/4"
+						bind:value={selectedStartDate}
+						on:change={() =>
+							recalcTable(selectedStartDate, selectedEndDate, selectedRole, selectedHeroID)}
+					/>
+				</div>
+				<div class="flex justify-around items-center w-full md:space-x-1">
+					<p class="inline text-primary-500 font-bold w-1/4">End Date</p>
+					<input
+						type="date"
+						class="select select-sm variant-ghost-surface w-3/4"
+						bind:value={selectedEndDate}
+						on:change={() =>
+							recalcTable(selectedStartDate, selectedEndDate, selectedRole, selectedHeroID)}
+					/>
+				</div>
 			</div>
 		</div>
-	</div>
 
-	<!-- Skeleton table styling -->
-	<!-- Responsive Container (recommended) -->
-	<div class="table-container">
-		<!-- Native Table Element -->
-		<table class="table table-interactive">
-			<thead>
-				<tr>
-					{#each ['Player', 'Games', 'Wins', 'Losses', 'Win %', 'KDA', 'Kills', 'Deaths', 'Assists'] as headerText, i}
-						<th
-							id={headerText}
-							class={'hover:bg-surface-500/50' +
-								([2, 3, 6, 7, 8].includes(i) ? ' max-sm:hidden md:visible' : '') +
-								(headerText === sortBy.sortObj.headerText && sortBy.ascending
-									? ' table-sort-asc'
-									: '') +
-								(headerText === sortBy.sortObj.headerText && !sortBy.ascending
-									? ' table-sort-dsc'
-									: '')}
-							on:click={() => handleSortHeaderClick(headerText)}>{headerText}</th
-						>
-					{/each}
-				</tr>
-			</thead>
-			<tbody>
-				{#key tableData}
-					{#each tableData.body as row, i}
-						<tr>
-							{#each ['Player', 'Games', 'Wins', 'Losses', 'Win %', 'KDA', 'Kills', 'Deaths', 'Assists'] as cellText, i}
-								{#if i === 4}
-									<td class={`${calculateWinPercentageClasses(parseFloat(row[i]))}`}
-										>{(parseFloat(row[i]) * 100).toFixed(2)}</td
-									>
-								{:else if i === 1}
-									<td class="text-primary-500 font-semibold">{row[i]}</td>
-								{:else if i === 5}
-									<td class={`${calculateKdaClasses(parseFloat(row[i]))}`}
-										>{parseFloat(row[i]).toFixed(2)}</td
-									>
-								{:else if [2, 3, 6, 7, 8].includes(i)}
-									<td class="max-sm:hidden md:visible">{row[i]}</td>
-								{:else}
-									<td>{row[i]}</td>
-								{/if}
-							{/each}
-						</tr>
-					{/each}
-				{/key}
-			</tbody>
-			<!-- <tfoot>
+		<!-- Skeleton table styling -->
+		<!-- Responsive Container (recommended) -->
+		<div class="table-container">
+			<!-- Native Table Element -->
+			<table class="table table-interactive">
+				<thead>
+					<tr>
+						{#each ['Player', 'Games', 'Wins', 'Losses', 'Win %', 'KDA', 'Kills', 'Deaths', 'Assists'] as headerText, i}
+							<th
+								id={headerText}
+								class={'hover:bg-surface-500/50' +
+									([2, 3, 6, 7, 8].includes(i) ? ' max-sm:hidden md:visible' : '') +
+									(headerText === sortBy.sortObj.headerText && sortBy.ascending
+										? ' table-sort-asc'
+										: '') +
+									(headerText === sortBy.sortObj.headerText && !sortBy.ascending
+										? ' table-sort-dsc'
+										: '')}
+								on:click={() => handleSortHeaderClick(headerText)}>{headerText}</th
+							>
+						{/each}
+					</tr>
+				</thead>
+				<tbody>
+					{#key tableData}
+						{#each tableData.body as row, i}
+							<tr>
+								{#each ['Player', 'Games', 'Wins', 'Losses', 'Win %', 'KDA', 'Kills', 'Deaths', 'Assists'] as cellText, i}
+									{#if i === 4}
+										<td class={`${calculateWinPercentageClasses(parseFloat(row[i]))}`}
+											>{(parseFloat(row[i]) * 100).toFixed(2)}</td
+										>
+									{:else if i === 1}
+										<td class="text-primary-500 font-semibold">{row[i]}</td>
+									{:else if i === 5}
+										<td class={`${calculateKdaClasses(parseFloat(row[i]))}`}
+											>{parseFloat(row[i]).toFixed(2)}</td
+										>
+									{:else if [2, 3, 6, 7, 8].includes(i)}
+										<td class="max-sm:hidden md:visible">{row[i]}</td>
+									{:else}
+										<td>{row[i]}</td>
+									{/if}
+								{/each}
+							</tr>
+						{/each}
+					{/key}
+				</tbody>
+				<!-- <tfoot>
 			<tr>
 				<th colspan="3">Calculated Total Weight</th>
 				<td>test</td>
 			</tr>
 		</tfoot> -->
-		</table>
+			</table>
+		</div>
 	</div>
 {:catch error}
 	{error.message}

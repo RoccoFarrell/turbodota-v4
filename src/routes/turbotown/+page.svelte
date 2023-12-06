@@ -7,7 +7,7 @@
 </script>
 
 <div class="container mx-auto p-16 space-y-8">
-    <div class="flex justify-center items-center">
+    <div class="flex flex-col md:flex-row items-center text-center">
         <h1 class="h1">ONLY THE BEST CAN BECOME MAYOR OF </h1>
         <img class="block dark:hidden w-64" alt="TurboTownLight" src={town_logo_light} />
         <img class="hidden dark:block w-64" alt="TurboTownDark" src={town_logo_dark} />
