@@ -3,6 +3,7 @@ import type { RequestHandler } from '@sveltejs/kit';
 import { prisma } from '$lib/server/prisma'
 //const SteamAuth = require("node-steam-openid");
 import { auth } from '$lib/server/lucia'
+import { LuciaError } from "lucia";
 import steam from '../steam';
 
 export const GET: RequestHandler = async ({ request, locals, params, url }) => {
@@ -10,8 +11,15 @@ export const GET: RequestHandler = async ({ request, locals, params, url }) => {
 
     const steamUser = await steam.authenticate(request);
 
-    let dbUser = await auth.getUser(steamUser.steamid);
-    //let dbUser = null
+    let dbUser = null;
+    try {
+        dbUser = await auth.getUser(steamUser.steamid)
+    } catch(e){
+        if (e instanceof LuciaError && e.message === "AUTH_INVALID_USER_ID") {
+            // invalid key
+            console.log(`User ${steamUser.steamid} - ${steamUser.username} not found`)
+        }
+    }
 
     if(!dbUser){
         dbUser = await auth.createUser({
@@ -42,13 +50,6 @@ export const GET: RequestHandler = async ({ request, locals, params, url }) => {
 		const session = await auth.createSession({userId: key.userId, attributes: {}})
 		locals.auth.setSession(session)
     }
-
-    // const session = await auth.createSession({
-    //     userId: dbUser.userId,
-    //     attributes: {}
-    // });
-
-    // locals.auth.setSession(session)
 
     //...do something with the data
     throw redirect(302, '/')
