@@ -151,17 +151,19 @@
 	}
 
 	function handleDateRangeSelect(selectedStartDate: Date, selectedEndDate: Date) {
-		let startDateUnix = new Date(selectedStartDate)
-		let endDateUnix = new Date(selectedEndDate)
+		// let startDateUnix = new Date(selectedStartDate)
+		// let endDateUnix = new Date(selectedEndDate)
+
+		// return ()
 		//console.log(startDateUnix, endDateUnix)
 
-		console.log(matchStats[0].matchData[0].start_time, typeof matchStats[0].matchData[0].start_time)
-		console.log(startDateUnix, typeof startDateUnix)
-		matchStats.forEach((player) => {
-			let filteredMatchData = [];
-			(filteredMatchData = player.matchData.filter((match: Match) => match.start_time >= startDateUnix));
-			console.log(filteredMatchData);
-		})
+		// console.log(matchStats[0].matchData[0].start_time, typeof matchStats[0].matchData[0].start_time)
+		// console.log(startDateUnix, typeof startDateUnix)
+		// matchStats.forEach((player) => {
+		// 	let filteredMatchData = [];
+		// 	(filteredMatchData = player.matchData.filter((match: Match) => match.start_time >= startDateUnix));
+		// 	console.log(filteredMatchData);
+		// })
 		//console.log(filteredMatchData);
 	}
 
@@ -187,15 +189,14 @@
 	data.streamed.matchStats.then((value) => {
 		//console.log(`promise finished ${value}`);
 		matchStats = value;
-		recalcTable(-1);
+		recalcTable(selectedStartDate, selectedEndDate, 'all', -1);
 		handleSort(sortBy);
-		handleDateRangeSelect(selectedStartDate, selectedEndDate);
 	});
 
-	const recalcTable = (filterInput: number | string) => {
+	const recalcTable = (selectedStartDate: Date, selectedEndDate: Date, selectedRole: string, selectedHeroID: number) => {
 		tableData = {
 			head: ['Player', 'Games', 'Wins', 'Losses', 'Win %', 'KDA', 'Kills', 'Deaths', 'Assists'],
-			body: tableMapperValues(recalcTableData(filterInput), [
+			body: tableMapperValues(recalcTableData(selectedStartDate, selectedEndDate, selectedRole, selectedHeroID), [
 				'playerName',
 				'games',
 				'wins',
@@ -211,13 +212,16 @@
 		handleSort(sortBy)
 	};
 
-	const recalcTableData = (filterInput: number | string) => {
-		if (typeof filterInput === 'number') {
-			console.log(`[herostats page.svelte] new hero ID selected: ${filterInput}`);
+	const recalcTableData = (selectedStartDate: Date, selectedEndDate: Date, inputRole: string, inputHeroID: number) => {
+		
+		if (inputHeroID != -1 && inputRole != 'all') {
+			console.log(`[herostats page.svelte] new hero ID selected: ${inputHeroID}`);
+			inputRole = "All"
 		}
 
-		if (typeof filterInput === 'string') {
-			console.log(`[herostats page.svelte] new hero Role selected: ${filterInput}`);
+		if (inputRole == 'all' && inputHeroID == -1) {
+			console.log(`[herostats page.svelte] new hero Role selected: ${inputRole}`);
+			inputHeroID = -1;
 		}
 
 		let tableData: TableRow[] = [];
@@ -228,30 +232,41 @@
 
 			let filteredMatchData = [];
 
+			let startDateUnix = new Date(selectedStartDate);
+			let endDateUnix = new Date(selectedEndDate);
+
 			//filter by heroID
 
-			if (typeof filterInput === 'number') {
-				selectedRole = 'All';
-				filterInput === -1
+			if (typeof selectedHeroID === 'number' && inputRole == 'All') {
+				console.log('doing a hero id', inputHeroID);
+				//selectedRole = 'All';
+				selectedHeroID === -1
 					? (filteredMatchData = player.matchData)
 					: (filteredMatchData = player.matchData.filter(
-							(match: Match) => match.hero_id === filterInput
+							(match: Match) => match.hero_id === inputHeroID
 					  ));
 			}
 			//filter by heroRole
-			else if (typeof filterInput === 'string') {
-				selectedHeroID = -1;
-				if (filterInput === 'all' || filterInput === 'All') filteredMatchData = player.matchData;
+			if (typeof inputRole === 'string' && selectedHeroID == -1) {
+				//selectedHeroID = -1;
+				if (inputRole === 'all' || inputRole === 'All') filteredMatchData = player.matchData;
 				else {
-					console.log(heroList);
+					console.log('doing a hero role');
 					let filteredHeroList = heroList
-						.filter((hero) => hero.roles.includes(filterInput))
+						.filter((hero) => hero.roles.includes(inputRole))
 						.map((item) => item.id);
 					filteredMatchData = player.matchData.filter((match: Match) =>
 						filteredHeroList.includes(match.hero_id)
 					);
 				}
 			}
+
+			filteredMatchData = filteredMatchData.filter((match: Match) => match.start_time >= startDateUnix && match.start_time <= endDateUnix);
+			console.log(filteredMatchData);
+
+			// (filteredMatchData = player.matchData.filter((match: Match) => match.start_time <= endDateUnix));
+			// console.log(filteredMatchData);
+
 			//console.log('filtered match data', filteredMatchData)
 
 			pushObj.playerID = player.playerID;
@@ -345,7 +360,7 @@
 			<select
 				class="select select-sm variant-ghost-surface"
 				bind:value={selectedHeroID}
-				on:change={() => recalcTable(selectedHeroID)}
+				on:change={() => recalcTable(selectedStartDate, selectedEndDate, "All", selectedHeroID)}
 			>
 				{#each heroList as hero}
 					<option value={hero.id}>{hero.localized_name}</option>
@@ -355,7 +370,7 @@
 			<select
 				class="select select-sm variant-ghost-surface"
 				bind:value={selectedRole}
-				on:change={() => recalcTable(selectedRole)}
+				on:change={() => recalcTable(selectedStartDate, selectedEndDate, selectedRole, -1)}
 			>
 				{#each heroRoles as role}
 					<option>{role}</option>
@@ -365,13 +380,13 @@
 			<input type="date" 
 				class="select select-sm variant-ghost-surface"
 				bind:value={selectedStartDate}
-				on:change={() => handleDateRangeSelect(selectedStartDate, selectedEndDate)}
+				on:change={() => recalcTable(selectedStartDate, selectedEndDate, selectedRole, selectedHeroID)}
 				>
 			<p class="inline text-primary-500 font-bold">End Date</p>
 			<input type="date" 
 				class="select select-sm variant-ghost-surface"
 				bind:value={selectedEndDate}
-				on:change={() => handleDateRangeSelect(selectedStartDate, selectedEndDate)}
+				on:change={() => recalcTable(selectedStartDate, selectedEndDate, selectedRole, selectedHeroID)}
 				>
 		</div>
 	</div>
