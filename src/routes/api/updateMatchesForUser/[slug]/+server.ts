@@ -120,13 +120,19 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
 
         //add matches to DB
         //https://github.com/prisma/prisma/discussions/19022
+
+
         const matchCollection = await prisma.$transaction(async (tx) => {
             await Promise.all(matchStats.map(((match: Match) => {
                 tx.match.upsert({
                     where: {
                         matchPlusAccount: { match_id: match.match_id, account_id: match.account_id }
                     },
+                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                    // @ts-ignore: Unreachable code error
                     update: { ...match },
+                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                    // @ts-ignore: Unreachable code error
                     create: { ...match }
                 })
             })))

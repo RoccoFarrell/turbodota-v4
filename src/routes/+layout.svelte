@@ -27,7 +27,6 @@
 	import { computePosition, autoUpdate, flip, shift, offset, arrow } from '@floating-ui/dom';
 	import { storePopup } from '@skeletonlabs/skeleton';
 	storePopup.set({ computePosition, autoUpdate, flip, shift, offset, arrow });
-	
 
 	export let data: PageData;
 
@@ -47,6 +46,14 @@
 		drawerStore.close();
 	});
 </script>
+
+<svelte:head>
+	<link
+		rel="stylesheet"
+		type="text/css"
+		href="./node_modules/dota2-css-hero-sprites/assets/stylesheets/dota2minimapheroes.css"
+	/>
+</svelte:head>
 
 <!-- App Shell -->
 <Drawer><Navigation {session} /></Drawer>
@@ -113,14 +120,12 @@
 		<div class="flex w-full justify-center m-auto">
 			<p class="text-xs text-slate-300 dark:text-slate-700">Copyright No Salt Studios 2023</p>
 		</div>
-		
 	</svelte:fragment>
 
 	<!-- Page Route Content -->
 	<div class="h-max">
 		{#if $navigating}
-		<Loading />
-
+			<div class="m-8"><Loading /></div>
 		{:else}
 			<slot />
 		{/if}

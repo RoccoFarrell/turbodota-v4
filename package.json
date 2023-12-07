@@ -42,6 +42,7 @@
     "@lucia-auth/adapter-prisma": "^3.0.2",
     "@prisma/client": "^5.6.0",
     "@types/node-steam-openid": "^1.0.3",
+    "dota2-css-hero-sprites": "^2.5.0",
     "lucia": "^2.7.4",
     "node-steam-openid": "^1.2.1"
   }
