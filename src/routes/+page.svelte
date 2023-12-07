@@ -21,32 +21,34 @@
 			Dota and 70 minute grinders, Turbodota.com unlocks a new quest chain in the Battle of the
 			Ancients.
 		</p>
-		<section class="flex flex-col w-full space-y-4">
-			<div class="grid grid-cols-2">
-				<a href="/random">
-					<img src={Quest} class="ml-8 w-1/2" alt="knight" />
+		<section class="flex flex-col w-full space-y-8 my-4">
+			<div class="grid grid-cols-2 place-items-center">
+				<a href="/random" class="">
+					<img src={Quest} class="ml-8 w-1/2 max-h-32 aspect-square" alt="knight" />
 				</a>
 				<div class="flex text-center items-center m-auto">
 					<div>Challenge yourself with Random Heroes, earn gold and prestige!</div>
 				</div>
 			</div>
 			<div class="border-b border-primary-400 border-dashed w-full"></div>
-			<div class="grid grid-cols-2">
-				<div class="flex text-center items-center m-auto">
-					<div>Become the mayor of Turbotown in a new hybrid Dota + idle game</div>
+			<div class="my-1 flex-col space-y-4">
+				<div class="grid grid-cols-2 place-items-center">
+					<div class="flex text-center items-center m-auto">
+						<div>Become the mayor of Turbotown in a new hybrid Dota + idle game</div>
+					</div>
+					<a href="/turbotown">
+						<img src={Town} class="mx-auto w-3/4 md:w-1/2" alt="turbo town logo" />
+					</a>
 				</div>
-				<a href="/turbotown">
-					<img src={Town} class="w-full ml-4" alt="knight" />
-				</a>
-			</div>
-			<div class="flex flex-col space-y-2">
-				<p class="text-sm text-primary-500 text-center italic">Training your last hitting...</p>
-				<ProgressBar value={undefined} class="text-primary-500 fill-primary-500" />
+				<div class="flex flex-col space-y-2">
+					<p class="text-sm text-primary-500 text-center italic">Training your last hitting...</p>
+					<ProgressBar value={undefined} class="text-primary-500 fill-primary-500" />
+				</div>
 			</div>
 			<div class="border-b border-primary-400 border-dashed w-full"></div>
-			<div class="grid grid-cols-2">
+			<div class="grid grid-cols-2 place-items-center my-4">
 				<a href="/herostats">
-					<img src={Observer} class="ml-8 w-1/2" alt="knight" />
+					<img src={Observer} class="ml-8 max-h-32 aspect-square" alt="observer wardt" />
 				</a>
 				<div class="flex text-center items-center m-auto">
 					<div>Keep track of your friend's stats with the dynamic Heroes table</div>
