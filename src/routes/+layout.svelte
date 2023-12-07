@@ -10,7 +10,7 @@
 	} from '@skeletonlabs/skeleton';
 
 	import { beforeNavigate } from '$app/navigation';
-	import { navigating } from '$app/stores';
+	import { navigating, page } from '$app/stores';
 
 	//types
 	import type { PageData } from './$types';
@@ -74,7 +74,7 @@
 			<svelte:fragment slot="trail">
 				<div class="flex justify-around space-x-8 items-center">
 					<div class="h-full m-auto">
-						{#if data.session}
+						{#if data.session && !$page.url.pathname.includes('herostats')}
 							<div class="m-auto h-full text-center">
 								Welcome <p class="font-bold text-red-400">{`${data.session.user.username}`}</p>
 							</div>
