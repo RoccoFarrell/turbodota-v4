@@ -18,8 +18,8 @@ async function writeRecordsChunked(partialArr: Match[], account_id: number) {
     let result_match
     const result_tx = await prisma.$transaction(async (tx) => {
         try {
-            result_match = await Promise.all(partialArr.map(((match: Match) => {
-                tx.match.upsert({
+            result_match = await Promise.all(partialArr.map((async (match: Match) => {
+                await tx.match.upsert({
                     where: {
                         matchPlusAccount: { match_id: match.match_id, account_id: match.account_id }
                     },
