@@ -6,7 +6,8 @@
 		LightSwitch,
 		initializeStores,
 		Drawer,
-		getDrawerStore
+		getDrawerStore,
+		Toast
 	} from '@skeletonlabs/skeleton';
 
 	import { beforeNavigate } from '$app/navigation';
@@ -20,7 +21,10 @@
 	import Navigation from '$lib/Navigation/Navigation.svelte';
 	import Loading from '$lib/components/Loading.svelte';
 
-	//imports
+	//assets
+	import HeroSprites from 'dota2-css-hero-sprites/assets/stylesheets/dota2minimapheroes.css'
+
+	//images
 	import steam_logo from '$lib/assets/steam_logo.png';
 	import turbo_logo from '$lib/assets/turbologo.png';
 	// Floating UI for Popups
@@ -53,11 +57,12 @@
 	<link
 		rel="stylesheet"
 		type="text/css"
-		href="./node_modules/dota2-css-hero-sprites/assets/stylesheets/dota2minimapheroes.css"
+		href={HeroSprites}
 	/>
 </svelte:head>
 
 <!-- App Shell -->
+<Toast/>
 <Drawer><Navigation {session} /></Drawer>
 <AppShell slotSidebarLeft="bg-surface-500/10 w-0 lg:w-64">
 	<svelte:fragment slot="header">

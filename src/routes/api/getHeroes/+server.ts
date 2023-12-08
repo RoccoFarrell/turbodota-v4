@@ -7,12 +7,11 @@ export const GET: RequestHandler = async ({ params, url }) => {
     console.log(`[api] - received GET to ${url.href}`)
     console.log(`params: ${JSON.stringify(params)}`)
     //check if user was updated recently, otherwise use the database
-    
 
-    let forceUpdate: boolean = false;
+    let forceUpdate: boolean = true;
     let updateInterval = new Date()
     let dataSource: string = ""
-    
+
     let allHeroes: Hero[] = []
 
     //updateInterval.setMinutes(rightNow.getMinutes() - (60 * 24));
@@ -36,8 +35,9 @@ export const GET: RequestHandler = async ({ params, url }) => {
             .then((json) => {
                 return (json)
             });
-    
+
         console.log(allHeroes.length)
+
         // //write to DB
         allHeroes = allHeroes.map(hero => {
             return {
@@ -46,16 +46,25 @@ export const GET: RequestHandler = async ({ params, url }) => {
             }
         })
 
+        //sort by name before returning
+        //     const transactions = (allHeroes.map(async (hero: Hero) => {
+        //         await tx.hero.upsert({
+        //             where: { id: hero.id },
+        //         update: { ...hero },
+        //         create: { ...hero }
+        //         })
+        //     }))
+        // })
         const heroCollection = await prisma.$transaction(async (tx) => {
-            await Promise.all(allHeroes.map(async (hero: Hero) => {
+            await Promise.all(allHeroes.map((hero: Hero) => {
                 tx.hero.upsert({
                     where: { id: hero.id },
-                update: { ...hero },
-                create: { ...hero }
+                    update: { ...hero },
+                    create: { ...hero }
                 })
             }))
         })
     }
 
-    return new Response(JSON.stringify({allHeroes, dataSource }))
+    return new Response(JSON.stringify({ allHeroes, dataSource }))
 };
