@@ -196,7 +196,7 @@
 				{/if}
 
 				<!-- Auto Bans -->
-				<div class="mx-8">
+				<div class="mx-8 md:my-4 my-2">
 					<h3 class="h3">Auto Bans</h3>
 					<button class="btn bg-amber-800 w-full my-4" on:click={() => setBanList('garbage')}
 						>Garbage</button
