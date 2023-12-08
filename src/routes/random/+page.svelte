@@ -116,7 +116,7 @@
 	}
 </script>
 
-<div class="container md:m-4 my-4 h-screen mx-auto w-full">
+<div class="container md:m-4 my-4 h-screen mx-auto w-full max-sm:mb-20">
 	<div class="flex flex-col items-center text-center space-y-4 md:mx-8 mx-2">
 		<h1 class="h1 text-primary-700">The Walker Random™</h1>
 		<div
@@ -180,7 +180,7 @@
 			</div>
 
 			<div
-				class="w-full text-center h-full items-center dark:bg-surface-600/30 light:bg-surface-200/30 shadow-xl rounded-xl p-2"
+				class="w-full text-center h-full items-center dark:bg-surface-600/30 light:bg-surface-200/30 shadow-xl rounded-xl px-2 md:py-8 max-sm:py-4"
 			>
 				{#if generatedRandomHero}
 					<div
