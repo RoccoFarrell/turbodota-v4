@@ -81,13 +81,19 @@
 				'Naga Siren',
 				'Lone Druid',
 				'Alchemist',
-				'Arc Warden'
+				'Arc Warden',
+                'Templar Assassin',
+                'Huskar',
+                'Medusa'
 			].includes(hero.localized_name)
 		)
 	};
 
 	const setBanList = (inputList: string) => {
 		heroRandom.bannedHeroes = autoBanLists.garbage;
+        heroRandom.bannedHeroes.forEach((hero: Hero) => {
+            heroRandom.availableHeroes.splice(heroRandom.availableHeroes.indexOf(hero), 1)
+        })
 	};
 
 	console.log(autoBanLists);
