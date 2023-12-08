@@ -20,7 +20,7 @@
 	//page data
 	export let data: PageData;
 
-	console.log(`[herostats page.svelte]`, data);
+	//console.log(`[herostats page.svelte]`, data);
 	//console.log(page);
 
 	//table data
@@ -248,7 +248,7 @@
 			filteredMatchData = filteredMatchData.filter(
 				(match: Match) => match.start_time >= startDateUnix && match.start_time <= endDateUnix
 			);
-			console.log(filteredMatchData);
+			//console.log(filteredMatchData);
 
 			// (filteredMatchData = player.matchData.filter((match: Match) => match.start_time <= endDateUnix));
 			// console.log(filteredMatchData);
@@ -316,7 +316,10 @@
 </script>
 
 {#await data.streamed.matchStats}
-	<Loading />
+	<div class="m-8">
+		<Loading />
+	</div>
+	
 {:then matchStats}
 	<div class="m-4 md:m-10">
 		<div class="container mx-auto md:my-4 my-1">
