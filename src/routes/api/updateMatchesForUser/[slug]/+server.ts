@@ -14,6 +14,35 @@ export const config = {
     },
 };
 
+async function writeRecordsChunked(partialArr: Match[], account_id: number) {
+    let result_match
+    const result_tx = await prisma.$transaction(async (tx) => {
+        try {
+            result_match = await Promise.all(partialArr.map(((match: Match) => {
+                tx.match.upsert({
+                    where: {
+                        matchPlusAccount: { match_id: match.match_id, account_id: match.account_id }
+                    },
+                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                    // @ts-ignore: Unreachable code error
+                    update: { ...match },
+                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                    // @ts-ignore: Unreachable code error
+                    create: { ...match }
+                })
+            })))
+
+            console.log(`result_match: ${result_match}`)
+        } catch (e) { console.error(e) }
+    }, {
+        maxWait: 10000, // default: 2000
+        timeout: 20000, // default: 5000
+    })
+
+    return { match: result_match, tx: result_tx }
+
+}
+
 export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
     // console.log(url)
     // console.log(`[api] - received GET to ${url.href}`)
@@ -58,7 +87,7 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
 
     let matchStats: Match[] = []
     let allowUpdates: boolean = true;
-    let forceFullUpdate: boolean = false;
+    let forceFullUpdate: boolean = true;
 
     let dataSource: string = ""
     let updateInterval = new Date()
@@ -124,28 +153,42 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
 
         console.log(`[matches][${account_id}] - trying to insert ${matchStats.length} match records`)
 
-        const matchCollection = await prisma.$transaction(async (tx) => {
-            try {
-                const matchResult = await Promise.all(matchStats.map((async (match: Match) => {
-                    await tx.match.upsert({
-                        where: {
-                            matchPlusAccount: { match_id: match.match_id, account_id: match.account_id }
-                        },
-                        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                        // @ts-ignore: Unreachable code error
-                        update: { ...match },
-                        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                        // @ts-ignore: Unreachable code error
-                        create: { ...match }
-                    })
-                })))
+        let txRecordCount = matchStats.length
+        let txBlockSize = 1000
+        let loopCount = 0;
+        let chunkInsertFail = false;
 
-                //console.log(`result: ${matchResult}`)
-            } catch (e) { console.error(e) }
+        while (txRecordCount > 0 && loopCount < 10) {
+            if (txRecordCount - txBlockSize > 0) {
+                let partialMatchArr = matchStats.slice(txRecordCount - txBlockSize, txRecordCount - 1)
 
+                console.log(`[matches][${account_id}] - too many records, chunked insert with block size ${txBlockSize}`)
+                console.log(`[matches][${account_id}] - from index ${txRecordCount - txBlockSize} to ${txRecordCount - 1}`)
 
-            //updated last updated on Dota User
-            const result_dotaUser = await tx.dotaUser.upsert({
+                let { match, tx } = await writeRecordsChunked(partialMatchArr, account_id)
+
+                if (!match) chunkInsertFail = true;
+                console.log(`tx results: ${match} | ${tx}`)
+                txRecordCount = txRecordCount - txBlockSize
+            } else {
+                let partialMatchArr = matchStats.slice(0, txRecordCount - 1)
+                console.log(`[matches][${account_id}] - too many records, chunked insert with block size ${txBlockSize}`)
+                console.log(`[matches][${account_id}] - final insert from index 0 to ${txRecordCount - 1}`)
+
+                let { match, tx } = await writeRecordsChunked(partialMatchArr, account_id)
+
+                if (!match) chunkInsertFail = true;
+                console.log(`tx results: ${match} | ${tx}`)
+                txRecordCount = 0
+            }
+
+            console.log("loop count: "), loopCount
+            loopCount++
+        }
+
+        //updated last updated on Dota User
+        if(!chunkInsertFail){
+            let result_dotaUser = await prisma.dotaUser.upsert({
                 where: { account_id: account_id },
                 update: {
                     account_id: account_id,
@@ -160,13 +203,8 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
                     newestMatch: new Date(Number(matchStats[matchStats.length - 1].start_time) * 1000)
                 }
             })
-
             console.log(`result_dotaUser: ${JSON.stringify(result_dotaUser)}`)
-        })
-
-        //console.log(matchCollection)
-
-
+        }   
     }
 
     let cacheTimeoutSeconds = 3600
