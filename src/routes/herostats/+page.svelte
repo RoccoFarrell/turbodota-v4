@@ -20,14 +20,13 @@
 	//page data
 	export let data: PageData;
 
-	//console.log(`[herostats page.svelte]`, data);
+	console.log(`[herostats page.svelte]`, data);
 	//console.log(page);
 
 	//table data
 	class TableRow {
 		playerID: number = 0;
-		playerName: string = '';
-		heroName: string = '';
+		name: string = '';
 		games: number = 0;
 		wins: number = 0;
 		losses: number = 0;
@@ -56,18 +55,17 @@
 	];
 
 	const playersWeCareAbout = [
-		{ playerID: -1, playerName: 'All'},
-        { playerID: 113003047, playerName: 'Danny' },
-        //{ playerID: 123794823, playerName: 'Steven' },
-        { playerID: 125251142, playerName: 'Matt' },
-        { playerID: 34940151, playerName: 'Roberts' },
-        { playerID: 423076846, playerName: 'Chris' },
-        { playerID: 65110965, playerName: 'Rocco' },
-        { playerID: 67762413, playerName: 'Walker' },
-        { playerID: 68024789, playerName: 'Ben' },
-        { playerID: 80636612, playerName: 'Martin' }
-        //{ playerID: 214308966, playerName: 'Andy' }
-    ];
+		{ playerID: 65110965, playerName: 'Rocco' },
+		{ playerID: 34940151, playerName: 'Roberts' },
+		{ playerID: 80636612, playerName: 'Martin' },
+		{ playerID: 113003047, playerName: 'Danny' },
+		{ playerID: 125251142, playerName: 'Matt' },
+		{ playerID: 423076846, playerName: 'Chris' },
+		{ playerID: 67762413, playerName: 'Walker' },
+		{ playerID: 68024789, playerName: 'Ben' }
+		//{ playerID: 123794823, playerName: 'Steven' },
+		//{ playerID: 214308966, playerName: 'Andy' }
+	];
 
 	let selectedPlayer = playersWeCareAbout[0].playerName;
 
@@ -100,6 +98,11 @@
 		{
 			headerText: 'Player',
 			headerKey: 'player',
+			index: 0
+		},
+		{
+			headerText: 'Hero',
+			headerKey: 'hero',
 			index: 0
 		},
 		{
@@ -157,7 +160,7 @@
 	}
 
 	function handleSort(sortBy: SortBy) {
-		console.log('[herostats page.svelte] Sort by: ', sortBy);
+		//console.log('[herostats page.svelte] Sort by: ', sortBy);
 		tableData = {
 			head: tableData.head,
 			body: tableData.body.sort((a: any, b: any) => {
@@ -190,7 +193,7 @@
 	data.streamed.matchStats.then((value) => {
 		//console.log(`promise finished ${value}`);
 		matchStats = value;
-		recalcTable(selectedStartDate, selectedEndDate, 'all', -1, 'All');
+		recalcTable(selectedStartDate, selectedEndDate, 'All', -1, 'All');
 		handleSort(sortBy);
 	});
 
@@ -211,17 +214,7 @@
 					selectedHeroID,
 					selectedPlayer
 				),
-				[
-					'playerName',
-					'games',
-					'wins',
-					'losses',
-					'win_percentage',
-					'kda',
-					'kills',
-					'deaths',
-					'assists'
-				]
+				['name', 'games', 'wins', 'losses', 'win_percentage', 'kda', 'kills', 'deaths', 'assists']
 			)
 		};
 
@@ -239,20 +232,28 @@
 		);
 	}
 
-	const recalcTableData = (inputStartDate: Date, inputEndDate: Date, inputRole: string, inputHeroID: number, inputSelectedPlayer: string) => {
+	const recalcTableData = (
+		inputStartDate: Date,
+		inputEndDate: Date,
+		inputRole: string,
+		inputHeroID: number,
+		inputSelectedPlayer: string
+	) => {
 		let tableData: TableRow[] = [];
 
 		let startDateUnix = new Date(inputStartDate);
 		let endDateUnix = new Date(inputEndDate);
 
-		if (formatDateToString(startDateUnix) == formatDateToString(new Date(0)) && formatDateToString(endDateUnix) == formatDateToString(new Date())) {
+		if (
+			formatDateToString(startDateUnix) == formatDateToString(new Date(0)) &&
+			formatDateToString(endDateUnix) == formatDateToString(new Date())
+		) {
 			selectedStartDate = new Date(0);
 			selectedEndDate = new Date();
 		}
 
 		if (inputSelectedPlayer == 'All') {
 			matchStats.forEach((player) => {
-				console.log(matchStats)
 				//filters match data for selected hero
 				let pushObj: TableRow = new TableRow();
 
@@ -261,9 +262,15 @@
 				startDateUnix = new Date(inputStartDate);
 				endDateUnix = new Date(inputEndDate);
 
+				//filter reset condition
+				if (inputRole == 'All' && inputHeroID == -1 && inputSelectedPlayer == 'All') {
+					selectedPlayer = 'All';
+					selectedHeroID = -1;
+					selectedRole = 'All';
+					filteredMatchData = player.matchData;
+				}
 				//filter by heroID
-
-				if (typeof inputHeroID === 'number' && inputRole == 'All' && selectedPlayer != 'All') {
+				else if (typeof inputHeroID === 'number' && inputRole == 'All') {
 					selectedRole = 'All';
 					selectedPlayer = 'All';
 					selectedHeroID === -1
@@ -273,11 +280,12 @@
 						  ));
 				}
 				//filter by heroRole
-				else if (typeof inputRole === 'string' && inputHeroID == -1 && selectedPlayer != 'All') {
-					selectedHeroID = -1;
+				else if (typeof inputRole === 'string' && inputHeroID == -1) {
 					selectedPlayer = 'All';
-					if (inputRole === 'all' || inputRole === 'All') filteredMatchData = player.matchData;
-					else {
+					selectedHeroID = -1;
+					if (inputRole === 'all' || inputRole === 'All') {
+						filteredMatchData = player.matchData;
+					} else {
 						let filteredHeroList = heroList
 							.filter((hero) => hero.roles.includes(inputRole))
 							.map((item) => item.id);
@@ -287,20 +295,13 @@
 					}
 				}
 
-			filteredMatchData = filteredMatchData.filter(
-				(match: Match) => match.start_time >= startDateUnix && match.start_time <= endDateUnix
-			);
-			//console.log(filteredMatchData);
+				//filter by Date
+				filteredMatchData = filteredMatchData.filter(
+					(match: Match) => match.start_time >= startDateUnix && match.start_time <= endDateUnix
+				);
 
-				//console.log(filteredMatchData);
-
-				// (filteredMatchData = player.matchData.filter((match: Match) => match.start_time <= endDateUnix));
-				// console.log(filteredMatchData);
-
-				//console.log('filtered match data', filteredMatchData)
-
-				pushObj.playerID = player.playerID;
-				pushObj.playerName = player.playerName;
+				//pushObj.playerID = player.playerID;
+				pushObj.name = player.playerName;
 				pushObj.games = filteredMatchData.length;
 				pushObj.wins = filteredMatchData.reduce(
 					(acc: number, cur: Match) => acc + (winOrLoss(cur.player_slot, cur.radiant_win) ? 1 : 0),
@@ -318,12 +319,13 @@
 
 				tableData.push(pushObj);
 			});
+
+			//filter by Player
 		} else {
 			selectedRole = 'All';
 			selectedHeroID = -1;
-			console.log(inputSelectedPlayer);
-			heroListWithAll.forEach((id) => {
-				console.log(id)
+
+			heroListWithAll.forEach((hero) => {
 				//filters match data for selected player
 				let pushObj: TableRow = new TableRow();
 
@@ -332,29 +334,43 @@
 				endDateUnix = new Date(inputEndDate);
 
 				//filter by heroID
-				filteredMatchData = matchStats[0].matchData.filter((match: Match) => match.hero_id === inputHeroID)
-				
-				filteredMatchData = filteredMatchData.filter(
-					(match: Match) => match.start_time >= startDateUnix && match.start_time <= endDateUnix
+				const findPlayer = playersWeCareAbout.find(
+					(element) => element.playerName === selectedPlayer
 				);
-			
-				pushObj.heroName = id;
-				pushObj.games = filteredMatchData.length;
-				pushObj.wins = filteredMatchData.reduce(
-					(acc: number, cur: Match) => acc + (winOrLoss(cur.player_slot, cur.radiant_win) ? 1 : 0),
-					0
-				);
-				pushObj.losses = filteredMatchData.length - pushObj.wins;
-				pushObj.win_percentage = pushObj.wins / filteredMatchData.length || 0;
-				pushObj.kills = filteredMatchData.reduce((acc: number, cur: Match) => acc + cur.kills, 0);
-				pushObj.deaths = filteredMatchData.reduce((acc: number, cur: Match) => acc + cur.deaths, 0);
-				pushObj.assists = filteredMatchData.reduce(
-					(acc: number, cur: Match) => acc + cur.assists,
-					0
-				);
-				pushObj.kda = (pushObj.kills + pushObj.assists) / pushObj.deaths || 0;
+				if (findPlayer != undefined) {
+					let playerIndex: number = playersWeCareAbout.indexOf(findPlayer);
 
-				tableData.push(pushObj);
+					filteredMatchData = matchStats[playerIndex].matchData.filter(
+						(match: Match) => match.hero_id === hero.id
+					);
+					filteredMatchData = filteredMatchData.filter(
+						(match: Match) => match.start_time >= startDateUnix && match.start_time <= endDateUnix
+					);
+
+					pushObj.name = hero.localized_name;
+					pushObj.games = filteredMatchData.length;
+					pushObj.wins = filteredMatchData.reduce(
+						(acc: number, cur: Match) =>
+							acc + (winOrLoss(cur.player_slot, cur.radiant_win) ? 1 : 0),
+						0
+					);
+					pushObj.losses = filteredMatchData.length - pushObj.wins;
+					pushObj.win_percentage = pushObj.wins / filteredMatchData.length || 0;
+					pushObj.kills = filteredMatchData.reduce((acc: number, cur: Match) => acc + cur.kills, 0);
+					pushObj.deaths = filteredMatchData.reduce(
+						(acc: number, cur: Match) => acc + cur.deaths,
+						0
+					);
+					pushObj.assists = filteredMatchData.reduce(
+						(acc: number, cur: Match) => acc + cur.assists,
+						0
+					);
+					pushObj.kda = (pushObj.kills + pushObj.assists) / pushObj.deaths || 0;
+
+					tableData.push(pushObj);
+				} else {
+					throw new TypeError('Error selecting player!');
+				}
 			});
 		}
 
@@ -404,7 +420,6 @@
 	<div class="m-8">
 		<Loading />
 	</div>
-	
 {:then matchStats}
 	<div class="m-4 md:m-10">
 		<div class="container mx-auto md:my-4 my-1">
@@ -509,8 +524,9 @@
 					<button
 						type="button"
 						class="btn variant-ghost-surface"
+						on:click={() => sortBy = {sortObj: sortMap.filter((item) => item.headerText === 'Games')[0], ascending: false}}
 						on:click={() => recalcTable(new Date(0), new Date(), 'All', -1, 'All')}
-						>Reset All Filters</button
+						>Reset Table</button
 					>
 				</div>
 			</div>
