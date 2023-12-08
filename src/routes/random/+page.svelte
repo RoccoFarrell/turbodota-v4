@@ -1,9 +1,15 @@
 <script lang="ts">
-    import { fade } from 'svelte/transition';
+	import { fade } from 'svelte/transition';
 	//page data
 	import type { PageData } from './$types';
 	export let data: PageData;
 	console.log(data);
+
+	//skeleton
+	import { getToastStore } from '@skeletonlabs/skeleton';
+    import type { ToastSettings, ToastStore } from '@skeletonlabs/skeleton';
+
+	const toastStore = getToastStore();
 
 	$: showHeroGrid = true;
 
@@ -23,7 +29,7 @@
 	const banHero = (hero: Hero) => {
 		let index = bannedHeroes.indexOf(hero);
 
-		if (bannedHeroes.length + 1 > heroRandom.maxBans) banLimitErrorVisible = true;
+		if (bannedHeroes.length + 1 > heroRandom.maxBans && index === -1) banLimitErrorVisible = true;
 		else {
 			if (index === -1) {
 				bannedHeroes = [...bannedHeroes, hero];
@@ -50,10 +56,14 @@
 		selectedRoles: [],
 		startingGold: 100,
 		expectedGold: 100,
-		banMultiplier: 5,
+		banMultiplier: 8,
 		modifierAmount: 0,
 		modifierTotal: 0,
-		maxBans: 10
+		maxBans: 1
+	};
+
+	const t: ToastSettings = {
+		message: `Max bans of ${heroRandom.maxBans} reached!`
 	};
 
 	$: {
@@ -65,20 +75,6 @@
 <div class="container md:m-4 my-4 h-screen">
 	<div class="flex flex-col items-center text-center space-y-4 md:mx-8 mx-2">
 		<h1 class="h1 text-primary-700">The Walker Random</h1>
-		<!-- error -->
-		{#if banLimitErrorVisible}
-			<aside class="alert bg-red-500" in:fade={{duration: 500}} out:fade={{duration:500}}>
-				<!-- Icon -->
-				<!-- <div>(icon)</div> -->
-				<!-- Message -->
-				<div class="alert-message">
-					<h3 class="h3">Ban limit of 10 reached!</h3>
-					<p>Unban to ban other heroes.</p>
-				</div>
-				<!-- Actions -->
-				<!-- <div class="alert-actions">(buttons)</div> -->
-			</aside>
-		{/if}
 
 		<div class="w-full flex flex-col mx-auto max-w-[95%] items-center">
 			<!-- Show hero grid button -->

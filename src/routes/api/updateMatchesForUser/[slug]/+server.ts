@@ -87,7 +87,7 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
 
     let matchStats: Match[] = []
     let allowUpdates: boolean = true;
-    let forceFullUpdate: boolean = true;
+    let forceFullUpdate: boolean = false;
 
     let dataSource: string = ""
     let updateInterval = new Date()

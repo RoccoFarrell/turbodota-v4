@@ -6,7 +6,8 @@
 		LightSwitch,
 		initializeStores,
 		Drawer,
-		getDrawerStore
+		getDrawerStore,
+		Toast
 	} from '@skeletonlabs/skeleton';
 
 	import { beforeNavigate } from '$app/navigation';
@@ -58,6 +59,7 @@
 </svelte:head>
 
 <!-- App Shell -->
+<Toast/>
 <Drawer><Navigation {session} /></Drawer>
 <AppShell slotSidebarLeft="bg-surface-500/10 w-0 lg:w-64">
 	<svelte:fragment slot="header">
