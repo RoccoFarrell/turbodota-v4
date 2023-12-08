@@ -130,9 +130,9 @@
 	</svelte:fragment>
 
 	<!-- Page Route Content -->
-	<div class="h-max">
+	<div class="h-max flex justify-center w-full">
 		{#if $navigating || navigatingTest}
-			<div class="m-8"><Loading /></div>
+			<div class="m-8 w-full"><Loading /></div>
 		{:else}
 			<slot />
 		{/if}

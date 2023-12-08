@@ -416,12 +416,12 @@
 	}
 </script>
 
-{#await data.streamed.matchStats}
-	<div class="m-8">
+{#await data.streamed.matchStats || true}
+	<div class="m-8 w-full">
 		<Loading />
 	</div>
 {:then matchStats}
-	<div class="m-4 md:m-10">
+	<div class="m-4 md:m-10 w-full w-max-[80%]">
 		<div class="container mx-auto md:my-4 my-1">
 			<div class="flex items-center justify-around space-x-4">
 				<div class="flex flex-col items-center">
