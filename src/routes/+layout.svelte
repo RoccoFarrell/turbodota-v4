@@ -33,6 +33,8 @@
 	//console.log(data.session);
 	let session: Session = data.session || null;
 
+	let navigatingTest = false;
+
 	//drawer
 	initializeStores();
 
@@ -124,7 +126,7 @@
 
 	<!-- Page Route Content -->
 	<div class="h-max">
-		{#if $navigating}
+		{#if $navigating || navigatingTest}
 			<div class="m-8"><Loading /></div>
 		{:else}
 			<slot />
