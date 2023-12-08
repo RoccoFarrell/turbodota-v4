@@ -27,6 +27,7 @@
 	class TableRow {
 		playerID: number = 0;
 		playerName: string = '';
+		heroName: string = '';
 		games: number = 0;
 		wins: number = 0;
 		losses: number = 0;
@@ -53,6 +54,22 @@
 		'Pusher',
 		'Support'
 	];
+
+	const playersWeCareAbout = [
+		{ playerID: -1, playerName: 'All'},
+        { playerID: 113003047, playerName: 'Danny' },
+        //{ playerID: 123794823, playerName: 'Steven' },
+        { playerID: 125251142, playerName: 'Matt' },
+        { playerID: 34940151, playerName: 'Roberts' },
+        { playerID: 423076846, playerName: 'Chris' },
+        { playerID: 65110965, playerName: 'Rocco' },
+        { playerID: 67762413, playerName: 'Walker' },
+        { playerID: 68024789, playerName: 'Ben' },
+        { playerID: 80636612, playerName: 'Martin' }
+        //{ playerID: 214308966, playerName: 'Andy' }
+    ];
+
+	let selectedPlayer = playersWeCareAbout[0].playerName;
 
 	let tableData: TableSource = {
 		head: [],
@@ -164,6 +181,7 @@
 		},
 		...data.streamed.heroDescriptions.allHeroes
 	];
+
 	const heroList: Hero[] = heroListWithAll;
 
 	//helper functions
@@ -172,7 +190,7 @@
 	data.streamed.matchStats.then((value) => {
 		//console.log(`promise finished ${value}`);
 		matchStats = value;
-		recalcTable(selectedStartDate, selectedEndDate, 'all', -1);
+		recalcTable(selectedStartDate, selectedEndDate, 'all', -1, 'All');
 		handleSort(sortBy);
 	});
 
@@ -180,12 +198,19 @@
 		selectedStartDate: Date,
 		selectedEndDate: Date,
 		selectedRole: string,
-		selectedHeroID: number
+		selectedHeroID: number,
+		selectedPlayer: string
 	) => {
 		tableData = {
 			head: ['Player', 'Games', 'Wins', 'Losses', 'Win %', 'KDA', 'Kills', 'Deaths', 'Assists'],
 			body: tableMapperValues(
-				recalcTableData(selectedStartDate, selectedEndDate, selectedRole, selectedHeroID),
+				recalcTableData(
+					selectedStartDate,
+					selectedEndDate,
+					selectedRole,
+					selectedHeroID,
+					selectedPlayer
+				),
 				[
 					'playerName',
 					'games',
@@ -203,76 +228,135 @@
 		handleSort(sortBy);
 	};
 
-	const recalcTableData = (
-		selectedStartDate: Date,
-		selectedEndDate: Date,
-		inputRole: string,
-		inputHeroID: number
-	) => {
+	function formatDateToString(date: Date) {
+		//return date in format MM/DD/YYYY with type string
+		return (
+			(date.getMonth() > 8 ? date.getMonth() + 1 : '0' + (date.getMonth() + 1)) +
+			'/' +
+			(date.getDate() > 9 ? date.getDate() : '0' + date.getDate()) +
+			'/' +
+			date.getFullYear()
+		);
+	}
+
+	const recalcTableData = (inputStartDate: Date, inputEndDate: Date, inputRole: string, inputHeroID: number, inputSelectedPlayer: string) => {
 		let tableData: TableRow[] = [];
 
-		matchStats.forEach((player) => {
-			//filters match data for selected hero
-			let pushObj: TableRow = new TableRow();
+		let startDateUnix = new Date(inputStartDate);
+		let endDateUnix = new Date(inputEndDate);
 
-			let filteredMatchData = [];
+		if (formatDateToString(startDateUnix) == formatDateToString(new Date(0)) && formatDateToString(endDateUnix) == formatDateToString(new Date())) {
+			selectedStartDate = new Date(0);
+			selectedEndDate = new Date();
+		}
 
-			let startDateUnix = new Date(selectedStartDate);
-			let endDateUnix = new Date(selectedEndDate);
+		if (inputSelectedPlayer == 'All') {
+			matchStats.forEach((player) => {
+				console.log(matchStats)
+				//filters match data for selected hero
+				let pushObj: TableRow = new TableRow();
 
-			//filter by heroID
+				let filteredMatchData = [];
 
-			if (typeof inputHeroID === 'number' && inputRole == 'All') {
-				selectedRole = 'All';
-				selectedHeroID === -1
-					? (filteredMatchData = player.matchData)
-					: (filteredMatchData = player.matchData.filter(
-							(match: Match) => match.hero_id === inputHeroID
-					  ));
-			}
-			//filter by heroRole
-			if (typeof inputRole === 'string' && inputHeroID == -1) {
-				selectedHeroID = -1;
-				if (inputRole === 'all' || inputRole === 'All') filteredMatchData = player.matchData;
-				else {
-					console.log('doing a hero role');
-					let filteredHeroList = heroList
-						.filter((hero) => hero.roles.includes(inputRole))
-						.map((item) => item.id);
-					filteredMatchData = player.matchData.filter((match: Match) =>
-						filteredHeroList.includes(match.hero_id)
-					);
+				startDateUnix = new Date(inputStartDate);
+				endDateUnix = new Date(inputEndDate);
+
+				//filter by heroID
+
+				if (typeof inputHeroID === 'number' && inputRole == 'All' && selectedPlayer != 'All') {
+					selectedRole = 'All';
+					selectedPlayer = 'All';
+					selectedHeroID === -1
+						? (filteredMatchData = player.matchData)
+						: (filteredMatchData = player.matchData.filter(
+								(match: Match) => match.hero_id === inputHeroID
+						  ));
 				}
-			}
+				//filter by heroRole
+				else if (typeof inputRole === 'string' && inputHeroID == -1 && selectedPlayer != 'All') {
+					selectedHeroID = -1;
+					selectedPlayer = 'All';
+					if (inputRole === 'all' || inputRole === 'All') filteredMatchData = player.matchData;
+					else {
+						let filteredHeroList = heroList
+							.filter((hero) => hero.roles.includes(inputRole))
+							.map((item) => item.id);
+						filteredMatchData = player.matchData.filter((match: Match) =>
+							filteredHeroList.includes(match.hero_id)
+						);
+					}
+				}
 
-			filteredMatchData = filteredMatchData.filter(
-				(match: Match) => match.start_time >= startDateUnix && match.start_time <= endDateUnix
-			);
-			console.log(filteredMatchData);
+				filteredMatchData = filteredMatchData.filter(
+					(match: Match) => match.start_time >= startDateUnix && match.start_time <= endDateUnix
+				);
 
-			// (filteredMatchData = player.matchData.filter((match: Match) => match.start_time <= endDateUnix));
-			// console.log(filteredMatchData);
+				//console.log(filteredMatchData);
 
-			//console.log('filtered match data', filteredMatchData)
+				// (filteredMatchData = player.matchData.filter((match: Match) => match.start_time <= endDateUnix));
+				// console.log(filteredMatchData);
 
-			pushObj.playerID = player.playerID;
-			pushObj.playerName = player.playerName;
-			pushObj.games = filteredMatchData.length;
-			pushObj.wins = filteredMatchData.reduce(
-				(acc: number, cur: Match) => acc + (winOrLoss(cur.player_slot, cur.radiant_win) ? 1 : 0),
-				0
-			);
-			pushObj.losses = filteredMatchData.length - pushObj.wins;
-			pushObj.win_percentage = pushObj.wins / filteredMatchData.length || 0;
-			pushObj.kills = filteredMatchData.reduce((acc: number, cur: Match) => acc + cur.kills, 0);
-			pushObj.deaths = filteredMatchData.reduce((acc: number, cur: Match) => acc + cur.deaths, 0);
-			pushObj.assists = filteredMatchData.reduce((acc: number, cur: Match) => acc + cur.assists, 0);
-			pushObj.kda = (pushObj.kills + pushObj.assists) / pushObj.deaths || 0;
+				//console.log('filtered match data', filteredMatchData)
 
-			tableData.push(pushObj);
-		});
+				pushObj.playerID = player.playerID;
+				pushObj.playerName = player.playerName;
+				pushObj.games = filteredMatchData.length;
+				pushObj.wins = filteredMatchData.reduce(
+					(acc: number, cur: Match) => acc + (winOrLoss(cur.player_slot, cur.radiant_win) ? 1 : 0),
+					0
+				);
+				pushObj.losses = filteredMatchData.length - pushObj.wins;
+				pushObj.win_percentage = pushObj.wins / filteredMatchData.length || 0;
+				pushObj.kills = filteredMatchData.reduce((acc: number, cur: Match) => acc + cur.kills, 0);
+				pushObj.deaths = filteredMatchData.reduce((acc: number, cur: Match) => acc + cur.deaths, 0);
+				pushObj.assists = filteredMatchData.reduce(
+					(acc: number, cur: Match) => acc + cur.assists,
+					0
+				);
+				pushObj.kda = (pushObj.kills + pushObj.assists) / pushObj.deaths || 0;
 
-		//console.log(tableData);
+				tableData.push(pushObj);
+			});
+		} else {
+			selectedRole = 'All';
+			selectedHeroID = -1;
+			console.log(inputSelectedPlayer);
+			heroListWithAll.forEach((id) => {
+				console.log(id)
+				//filters match data for selected player
+				let pushObj: TableRow = new TableRow();
+
+				let filteredMatchData = [];
+				startDateUnix = new Date(inputStartDate);
+				endDateUnix = new Date(inputEndDate);
+
+				//filter by heroID
+				filteredMatchData = matchStats[0].matchData.filter((match: Match) => match.hero_id === inputHeroID)
+				
+				filteredMatchData = filteredMatchData.filter(
+					(match: Match) => match.start_time >= startDateUnix && match.start_time <= endDateUnix
+				);
+			
+				pushObj.heroName = id;
+				pushObj.games = filteredMatchData.length;
+				pushObj.wins = filteredMatchData.reduce(
+					(acc: number, cur: Match) => acc + (winOrLoss(cur.player_slot, cur.radiant_win) ? 1 : 0),
+					0
+				);
+				pushObj.losses = filteredMatchData.length - pushObj.wins;
+				pushObj.win_percentage = pushObj.wins / filteredMatchData.length || 0;
+				pushObj.kills = filteredMatchData.reduce((acc: number, cur: Match) => acc + cur.kills, 0);
+				pushObj.deaths = filteredMatchData.reduce((acc: number, cur: Match) => acc + cur.deaths, 0);
+				pushObj.assists = filteredMatchData.reduce(
+					(acc: number, cur: Match) => acc + cur.assists,
+					0
+				);
+				pushObj.kda = (pushObj.kills + pushObj.assists) / pushObj.deaths || 0;
+
+				tableData.push(pushObj);
+			});
+		}
+
 		return tableData;
 	};
 
@@ -351,7 +435,8 @@
 					<select
 						class="select select-sm variant-ghost-surface w-3/4"
 						bind:value={selectedHeroID}
-						on:change={() => recalcTable(selectedStartDate, selectedEndDate, 'All', selectedHeroID)}
+						on:change={() =>
+							recalcTable(selectedStartDate, selectedEndDate, 'All', selectedHeroID, 'All')}
 					>
 						{#each heroList as hero}
 							<option value={hero.id}>{hero.localized_name}</option>
@@ -363,10 +448,24 @@
 					<select
 						class="select select-sm variant-ghost-surface w-3/4"
 						bind:value={selectedRole}
-						on:change={() => recalcTable(selectedStartDate, selectedEndDate, selectedRole, -1)}
+						on:change={() =>
+							recalcTable(selectedStartDate, selectedEndDate, selectedRole, -1, 'All')}
 					>
 						{#each heroRoles as role}
 							<option>{role}</option>
+						{/each}
+					</select>
+				</div>
+				<div class="flex justify-around items-center w-full">
+					<p class="inline text-primary-500 font-bold w-1/4">Player Select</p>
+					<select
+						class="select select-sm variant-ghost-surface w-3/4"
+						bind:value={selectedPlayer}
+						on:change={() =>
+							recalcTable(selectedStartDate, selectedEndDate, 'All', -1, selectedPlayer)}
+					>
+						{#each playersWeCareAbout as player}
+							<option>{player.playerName}</option>
 						{/each}
 					</select>
 				</div>
@@ -377,7 +476,13 @@
 						class="select select-sm variant-ghost-surface w-3/4"
 						bind:value={selectedStartDate}
 						on:change={() =>
-							recalcTable(selectedStartDate, selectedEndDate, selectedRole, selectedHeroID)}
+							recalcTable(
+								selectedStartDate,
+								selectedEndDate,
+								selectedRole,
+								selectedHeroID,
+								selectedPlayer
+							)}
 					/>
 				</div>
 				<div class="flex justify-around items-center w-full md:space-x-1">
@@ -387,8 +492,22 @@
 						class="select select-sm variant-ghost-surface w-3/4"
 						bind:value={selectedEndDate}
 						on:change={() =>
-							recalcTable(selectedStartDate, selectedEndDate, selectedRole, selectedHeroID)}
+							recalcTable(
+								selectedStartDate,
+								selectedEndDate,
+								selectedRole,
+								selectedHeroID,
+								selectedPlayer
+							)}
 					/>
+				</div>
+				<div class="flex justify-around items-center w-full md:space-x-1">
+					<button
+						type="button"
+						class="btn variant-ghost-surface"
+						on:click={() => recalcTable(new Date(0), new Date(), 'All', -1, 'All')}
+						>Reset All Filters</button
+					>
 				</div>
 			</div>
 		</div>
@@ -400,20 +519,37 @@
 			<table class="table table-interactive">
 				<thead>
 					<tr>
-						{#each ['Player', 'Games', 'Wins', 'Losses', 'Win %', 'KDA', 'Kills', 'Deaths', 'Assists'] as headerText, i}
-							<th
-								id={headerText}
-								class={'hover:bg-surface-500/50' +
-									([2, 3, 6, 7, 8].includes(i) ? ' max-sm:hidden md:visible' : '') +
-									(headerText === sortBy.sortObj.headerText && sortBy.ascending
-										? ' table-sort-asc'
-										: '') +
-									(headerText === sortBy.sortObj.headerText && !sortBy.ascending
-										? ' table-sort-dsc'
-										: '')}
-								on:click={() => handleSortHeaderClick(headerText)}>{headerText}</th
-							>
-						{/each}
+						{#if selectedPlayer == 'All'}
+							{#each ['Player', 'Games', 'Wins', 'Losses', 'Win %', 'KDA', 'Kills', 'Deaths', 'Assists'] as headerText, i}
+								<th
+									id={headerText}
+									class={'hover:bg-surface-500/50' +
+										([2, 3, 6, 7, 8].includes(i) ? ' max-sm:hidden md:visible' : '') +
+										(headerText === sortBy.sortObj.headerText && sortBy.ascending
+											? ' table-sort-asc'
+											: '') +
+										(headerText === sortBy.sortObj.headerText && !sortBy.ascending
+											? ' table-sort-dsc'
+											: '')}
+									on:click={() => handleSortHeaderClick(headerText)}>{headerText}</th
+								>
+							{/each}
+						{:else}
+							{#each ['Hero', 'Games', 'Wins', 'Losses', 'Win %', 'KDA', 'Kills', 'Deaths', 'Assists'] as headerText, i}
+								<th
+									id={headerText}
+									class={'hover:bg-surface-500/50' +
+										([2, 3, 6, 7, 8].includes(i) ? ' max-sm:hidden md:visible' : '') +
+										(headerText === sortBy.sortObj.headerText && sortBy.ascending
+											? ' table-sort-asc'
+											: '') +
+										(headerText === sortBy.sortObj.headerText && !sortBy.ascending
+											? ' table-sort-dsc'
+											: '')}
+									on:click={() => handleSortHeaderClick(headerText)}>{headerText}</th
+								>
+							{/each}
+						{/if}
 					</tr>
 				</thead>
 				<tbody>
