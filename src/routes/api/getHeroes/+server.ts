@@ -9,7 +9,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
     //check if user was updated recently, otherwise use the database
     
 
-    let forceUpdate: boolean = false;
+    let forceUpdate: boolean = true;
     let updateInterval = new Date()
     let dataSource: string = ""
     
@@ -27,7 +27,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
         console.log('fetch from OD')
         dataSource = "od"
 
-        let allHeroes: Hero[] = await fetch(encodeURI(`https://api.opendota.com/api/heroes`), {
+        allHeroes = await fetch(encodeURI(`https://api.opendota.com/api/heroes`), {
             method: 'get',
             headers: { 'Content-Type': 'application/json' },
         })
@@ -37,6 +37,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
                 return (json)
             });
     
+        console.log(allHeroes.length)
         // //write to DB
         allHeroes = allHeroes.map(hero => {
             return {
