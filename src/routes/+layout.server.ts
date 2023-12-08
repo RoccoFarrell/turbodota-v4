@@ -15,7 +15,7 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 		responseData = {
 			...responseData,
 			allHeroes: responseData.allHeroes.sort((a: Hero,b: Hero) => {
-				if(a.id < b.id) return -1
+				if(a.localized_name < b.localized_name) return -1
 				else return 1
 			})
 		}

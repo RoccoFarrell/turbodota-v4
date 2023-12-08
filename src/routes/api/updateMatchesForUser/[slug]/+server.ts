@@ -49,7 +49,7 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
     let rightNow = new Date()
     let startDate = userResult?.newestMatch
     let d_diff: number | null = null
-    if(startDate){ 
+    if (startDate) {
         console.log(`[matches][${account_id}] newest match present in query: `, startDate.toLocaleString())
         let t_diff = rightNow.getTime() - startDate.getTime()
         d_diff = Math.floor(t_diff / (1000 * 3600 * 24)) + 1;
@@ -58,6 +58,7 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
 
     let matchStats: Match[] = []
     let allowUpdates: boolean = true;
+    let forceFullUpdate: boolean = false;
 
     let dataSource: string = ""
     let updateInterval = new Date()
@@ -66,7 +67,7 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
     updateInterval.setHours(rightNow.getHours() - 12);
 
     console.log(`[matches][${account_id}] updateInterval: ${updateInterval}`)
-    if ((userResult && userResult.lastUpdated >= updateInterval)) {
+    if ((userResult && userResult.lastUpdated >= updateInterval) && !forceFullUpdate) {
         console.log(`[matches][${account_id}] user was last updated <12 hours - fetch from DB`)
         const matchesResult = await prisma.match.findMany({
             where: { account_id },
@@ -75,14 +76,14 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
         //console.log(matchesResult)
         matchStats = matchesResult
         dataSource = "db"
-    } else if(allowUpdates){
+    } else if (allowUpdates) {
         console.log(`[matches][${account_id}] allow update true, and user was last updated >12 hours - fetch from OD`)
 
         //query OD
-        if(d_diff){
+        if (d_diff && !forceFullUpdate) {
             console.log(`[matches][${account_id}] d_diff calculated, fetching matches ${d_diff} days back for ${userResult?.account_id}`)
             od_url = encodeURI(`https://api.opendota.com/api/players/${account_id}/matches?significant=0&game_mode=23&date=${d_diff}`)
-        } 
+        }
         else {
             console.log(`[matches][${account_id}] no d_diff calculated, fetching matches ${d_diff} from beginning of time for ${userResult?.account_id}`)
             od_url = encodeURI(`https://api.opendota.com/api/players/${account_id}/matches?significant=0&game_mode=23`)
@@ -121,39 +122,51 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
         //add matches to DB
         //https://github.com/prisma/prisma/discussions/19022
 
+        console.log(`[matches][${account_id}] - trying to insert ${matchStats.length} match records`)
 
         const matchCollection = await prisma.$transaction(async (tx) => {
-            await Promise.all(matchStats.map(((match: Match) => {
-                tx.match.upsert({
-                    where: {
-                        matchPlusAccount: { match_id: match.match_id, account_id: match.account_id }
-                    },
-                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                    // @ts-ignore: Unreachable code error
-                    update: { ...match },
-                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                    // @ts-ignore: Unreachable code error
-                    create: { ...match }
-                })
-            })))
+            try {
+                const matchResult = await Promise.all(matchStats.map((async (match: Match) => {
+                    await tx.match.upsert({
+                        where: {
+                            matchPlusAccount: { match_id: match.match_id, account_id: match.account_id }
+                        },
+                        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                        // @ts-ignore: Unreachable code error
+                        update: { ...match },
+                        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                        // @ts-ignore: Unreachable code error
+                        create: { ...match }
+                    })
+                })))
+
+                //console.log(`result: ${matchResult}`)
+            } catch (e) { console.error(e) }
+
+
+            //updated last updated on Dota User
+            const result_dotaUser = await tx.dotaUser.upsert({
+                where: { account_id: account_id },
+                update: {
+                    account_id: account_id,
+                    lastUpdated: new Date(),
+                    oldestMatch: new Date(Number(matchStats[0].start_time) * 1000),
+                    newestMatch: new Date(Number(matchStats[matchStats.length - 1].start_time) * 1000)
+                },
+                create: {
+                    account_id: account_id,
+                    lastUpdated: new Date(),
+                    oldestMatch: new Date(Number(matchStats[0].start_time) * 1000),
+                    newestMatch: new Date(Number(matchStats[matchStats.length - 1].start_time) * 1000)
+                }
+            })
+
+            console.log(`result_dotaUser: ${JSON.stringify(result_dotaUser)}`)
         })
 
-        //updated last updated on Dota User
-        await prisma.dotaUser.upsert({
-            where: { account_id: account_id },
-            update: {
-                account_id: account_id,
-                lastUpdated: new Date(),
-                oldestMatch: new Date(Number(matchStats[0].start_time) * 1000),
-                newestMatch: new Date(Number(matchStats[matchStats.length - 1].start_time) * 1000)
-            },
-            create: {
-                account_id: account_id,
-                lastUpdated: new Date(),
-                oldestMatch: new Date(Number(matchStats[0].start_time) * 1000),
-                newestMatch: new Date(Number(matchStats[matchStats.length - 1].start_time) * 1000)
-            }
-        })
+        //console.log(matchCollection)
+
+
     }
 
     let cacheTimeoutSeconds = 3600
@@ -161,7 +174,7 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
     setHeaders({
         "cache-control": "max-age=" + cacheTimeoutSeconds,
     });
-    
+
     let newResponse = new Response(JSON.stringify({ dataSource: dataSource, matchData: matchStats, od_url: od_url }), {
         headers: {
             'cache-control': `max-age=${cacheTimeoutSeconds}`
