@@ -9,7 +9,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
     //check if user was updated recently, otherwise use the database
     
 
-    let forceUpdate: boolean = true;
+    let forceUpdate: boolean = false;
     let updateInterval = new Date()
     let dataSource: string = ""
     
@@ -45,13 +45,15 @@ export const GET: RequestHandler = async ({ params, url }) => {
                 roles: JSON.stringify(hero.roles)
             }
         })
-    
-        allHeroes.forEach(async (hero: Hero) => {
-            await prisma.hero.upsert({
-                where: { id: hero.id },
+
+        const heroCollection = await prisma.$transaction(async (tx) => {
+            await Promise.all(allHeroes.map(async (hero: Hero) => {
+                tx.hero.upsert({
+                    where: { id: hero.id },
                 update: { ...hero },
                 create: { ...hero }
-            })
+                })
+            }))
         })
     }
 
