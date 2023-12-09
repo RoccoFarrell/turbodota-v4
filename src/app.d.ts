@@ -69,6 +69,11 @@ declare global {
 		legs: Int
 	}
 	
+
+	interface SortBy {
+		sortObj: SortObj;
+		ascending: boolean;
+	}
 }
 
 export { }

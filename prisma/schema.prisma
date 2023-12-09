@@ -3,9 +3,9 @@ generator client {
 }
 
 // datasource db {
-//   provider = "sqlite"
-//   url      = "file:./dev.sqlite"
-// }
+//    provider = "sqlite"
+//    url      = "file:./dev.sqlite"
+//  }
 
 datasource db {
   provider  = "postgresql"
