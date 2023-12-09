@@ -17,12 +17,21 @@
 	import type { TableSource } from '@skeletonlabs/skeleton';
 	import Loading from '$lib/components/Loading.svelte';
 
-	//imports
+	import StatsTable from '$lib/components/herostats/StatsTable.svelte';
+
+	//images
 	import turboking from '$lib/assets/turboking.png';
 	import Knight from '$lib/assets/knight.png';
 
 	//helpers
 	import winOrLoss from '$lib/helpers/winOrLoss';
+
+	//constants
+	import { playersWeCareAbout } from '$lib/constants/playersWeCareAbout';
+	import { heroRoles } from '$lib/constants/heroRoles';
+
+	//stores
+	import { sortData } from '$lib/stores/sortData';
 
 	//page data
 	export let data: PageData;
@@ -49,44 +58,18 @@
 		index: number;
 	}
 
-	interface SortBy {
-		sortObj: SortObj;
-		ascending: boolean;
-	}
+
+	//this is all replaced by $sortData
 
 	let selectedHeroID: number = -1;
 	let selectedRole: string = 'All';
 	let selectedStartDate = new Date(0);
 	let selectedEndDate = new Date();
-
-	let tabSet: number = 0;
-
-	const heroRoles = [
-		'All',
-		'Carry',
-		'Disabler',
-		'Durable',
-		'Escape',
-		'Initiator',
-		'Nuker',
-		'Pusher',
-		'Support'
-	];
-
-	const playersWeCareAbout = [
-		{ playerID: 65110965, playerName: 'Rocco' },
-		{ playerID: 34940151, playerName: 'Roberts' },
-		{ playerID: 80636612, playerName: 'Martin' },
-		{ playerID: 113003047, playerName: 'Danny' },
-		{ playerID: 125251142, playerName: 'Matt' },
-		{ playerID: 423076846, playerName: 'Chris' },
-		{ playerID: 67762413, playerName: 'Walker' },
-		{ playerID: 68024789, playerName: 'Ben' }
-		//{ playerID: 123794823, playerName: 'Steven' },
-		//{ playerID: 214308966, playerName: 'Andy' }
-	];
-
 	let selectedPlayer = playersWeCareAbout[0].playerName;
+
+	let selectedSortHeader: string = 'Games';
+	
+	let tabSet: number = 0;
 
 	let tableData: TableSource = {
 		head: [],
@@ -154,8 +137,6 @@
 			index: 8
 		}
 	];
-
-	let selectedSortHeader: string = 'Games';
 
 	function handleSortHeaderClick(headerText: string) {
 		let temp = sortMap.filter((item) => item.headerText === headerText)[0];
@@ -650,6 +631,11 @@
 			</tr>
 		</tfoot> -->
 			</table>
+
+			<!-- New Component -->
+			<div>{JSON.stringify($sortData)}</div>
+			<div>{JSON.stringify(sortBy)}</div>
+			<StatsTable tableData={tableData} sortBy={sortBy}/>
 		</div>
 	</div>
 {:catch error}

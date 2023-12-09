@@ -68,6 +68,12 @@ declare global {
 		roles: string
 		legs: Int
 	}
+	
+
+	interface SortBy {
+		sortObj: SortObj;
+		ascending: boolean;
+	}
 }
 
 export { }
