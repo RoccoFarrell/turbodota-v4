@@ -10,6 +10,11 @@
 	import { getToastStore } from '@skeletonlabs/skeleton';
 	import type { ToastSettings, ToastStore } from '@skeletonlabs/skeleton';
 
+	//constants
+	import { heroRoles } from '$lib/constants/heroRoles';
+
+	console.log(data);
+
 	const toastStore = getToastStore();
 
 	$: showHeroGrid = true;
@@ -95,12 +100,22 @@
 				if (heroRandom.availableHeroes.indexOf(hero) !== -1) heroRandom.availableHeroes.splice(heroRandom.availableHeroes.indexOf(hero), 1);
 			});
 		} else {
-			heroRandom.availableHeroes = [
-				...heroRandom.availableHeroes,
-				...heroRandom.bannedHeroes
-			]
+			heroRandom.availableHeroes = [...heroRandom.availableHeroes, ...heroRandom.bannedHeroes];
 			heroRandom.bannedHeroes = [];
 		}
+	};
+
+	const handleRoleSelect = (role: string) => {
+		console.log(role);
+		if (role === 'All') {
+			heroRandom.selectedRoles.includes('All')
+				? heroRandom.selectedRoles = []
+				: heroRandom.selectedRoles = heroRoles;
+		} else {
+			if (heroRandom.selectedRoles.includes(role)) heroRandom.selectedRoles = heroRandom.selectedRoles.filter((r) => r !== role);
+			else heroRandom.selectedRoles.push(role);
+		}
+		console.log(heroRandom.selectedRoles);
 	};
 
 	console.log(autoBanLists);
@@ -124,7 +139,15 @@
 
 <div class="container md:m-4 my-4 h-full mx-auto w-full max-sm:mb-20">
 	<div class="flex flex-col items-center text-center space-y-4 md:mx-8 mx-2">
-		<h1 class="h1 text-primary-700">The Walker Random™</h1>
+		<div class="flex justify-around items-center w-3/4 mb-4">
+			<h1 class="h1 text-primary-700 max-md:font-bold">The Walker Random™</h1>
+			{#if data.session.user}
+				<div class="text-xs">
+					Logged in as: <p class="text-secondary-500 text-lg font-bold">{data.session.user.username}</p>
+				</div>
+			{/if}
+		</div>
+
 		<div class="sm:grid sm:grid-cols-2 max-sm:flex max-sm:flex-col items-center max-sm:space-y-4 h-full sm:place-content-start">
 			<!-- Hero ban grid -->
 			<div class="w-full flex flex-col mx-auto max-w-[95%] items-center sm:h-full">
@@ -185,13 +208,13 @@
 					<h4 class="h4">Banned Heroes:</h4>
 					{#if heroRandom.bannedHeroes.length > 0}
 						<div>
-						{#each heroRandom.bannedHeroes as bannedHero}
-							<span class="badge variant-filled-secondary">{bannedHero.localized_name}</span>
-						{/each}
-					</div>
+							{#each heroRandom.bannedHeroes as bannedHero}
+								<span class="badge variant-filled-secondary">{bannedHero.localized_name}</span>
+							{/each}
+						</div>
 						<button class="btn bg-red-500 w-1/2 my-4" on:click={() => setBanList()}>Clear</button>
 					{:else}
-					<p>none</p>
+						<p>none</p>
 					{/if}
 				</div>
 				<!-- {#if !showHeroGrid}
@@ -228,9 +251,34 @@
 					<button class="btn dark:bg-amber-800 bg-amber-500 w-1/2 my-4" on:click={() => setBanList('garbage')}>Garbage</button>
 				</div>
 
+				<!-- Role filtering -->
+				<div class="mb-4 bg-surface-500/10 p-4 rounded-full md:w-1/2 w-3/4 mx-auto shadow-md">
+					<h3 class="h3 dark:text-yellow-500 text-primary-500">3. Roles</h3>
+					<p class="text-xs">Filter by role to fit your comp</p>
+				</div>
+
+				<div class="mx-8 md:my-4 my-2">
+					<!-- <h3 class="h3">Auto Bans</h3> -->
+					<!-- <button class="btn dark:bg-amber-800 bg-amber-500 w-1/2 my-4" on:click={() => setBanList('garbage')}>Garbage</button> -->
+
+					<div class="grid grid-cols-4">
+						{#each heroRoles as role}
+							<label class="flex items-center space-x-2">
+								<input
+									class="checkbox"
+									type="checkbox"
+									on:click={() => handleRoleSelect(role)}
+									checked={heroRandom.selectedRoles.includes(role)}
+								/>
+								<p>{role}</p>
+							</label>
+						{/each}
+					</div>
+				</div>
+
 				<!-- Modifier calculation -->
 				<div class="mb-4 bg-surface-500/10 p-4 rounded-full md:w-1/2 w-3/4 mx-auto shadow-md">
-					<h3 class="h3 dark:text-yellow-500 text-primary-500">3. Modifier Calculations</h3>
+					<h3 class="h3 dark:text-yellow-500 text-primary-500">4. Modifier Calculations</h3>
 					<p class="text-xs">See how much gold your random will get you on win!</p>
 				</div>
 				<div class="w-fullmax-w-[90%] mx-auto p-4">

@@ -13,15 +13,6 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-model Article {
-  id        Int    @id @default(autoincrement())
-  title     String
-  content   String
-  userId    String
-  auth_user User   @relation(fields: [userId], references: [id])
-  //auth_user AuthUser @relation(fields: [userId], references: [id])
-}
-
 model Match {
   id            Int     @id @default(autoincrement())
   match_id      BigInt
@@ -69,14 +60,19 @@ model User {
   id           String    @id @unique
   name         String?
   username     String    @unique
-  account_id   BigInt?   @unique
+  account_id   Int?   @unique
   steam_id     BigInt?   @unique
   profile_url  String
   avatar_url   String
-  articles     Article[]
   key          Key[]
   auth_session Session[]
   //matches      Match[]
+}
+
+model Random {
+  id            Int     @id @default(autoincrement())
+  availableHeroes String
+  bannedHeroes String
 }
 
 model Session {
