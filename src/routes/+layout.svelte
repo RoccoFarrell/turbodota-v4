@@ -119,15 +119,16 @@
 
 	<svelte:fragment slot="sidebarLeft">
 		<!-- Insert the list: -->
-		<Navigation {session} />
+		<div class="border-r border-primary-500/30 h-full"><Navigation {session} /></div>
+		
 		<!-- --- -->
 	</svelte:fragment>
 
-	<svelte:fragment slot="footer">
+	<!-- <svelte:fragment slot="footer">
 		<div class="flex w-full justify-center m-auto">
 			<p class="text-xs text-slate-300 dark:text-slate-700">Copyright No Salt Studios 2023</p>
 		</div>
-	</svelte:fragment>
+	</svelte:fragment> -->
 
 	<!-- Page Route Content -->
 	<div class="h-max flex justify-center w-full">
