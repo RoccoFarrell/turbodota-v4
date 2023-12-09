@@ -68,7 +68,6 @@ declare global {
 		roles: string
 		legs: Int
 	}
-	
 }
 
 export { }

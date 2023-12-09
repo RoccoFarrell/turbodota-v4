@@ -9,13 +9,20 @@
 		tableSourceValues,
 		tableMapperValues,
 		ProgressRadial,
-		filter
+		filter,
+		TabGroup,
+		Tab,
+		TabAnchor
 	} from '@skeletonlabs/skeleton';
 	import type { TableSource } from '@skeletonlabs/skeleton';
 	import Loading from '$lib/components/Loading.svelte';
 
 	//imports
 	import turboking from '$lib/assets/turboking.png';
+	import Knight from '$lib/assets/knight.png';
+
+	//helpers
+	import winOrLoss from '$lib/helpers/winOrLoss';
 
 	//page data
 	export let data: PageData;
@@ -23,7 +30,6 @@
 	console.log(`[herostats page.svelte]`, data);
 	//console.log(page);
 
-	//table data
 	class TableRow {
 		playerID: number = 0;
 		name: string = '';
@@ -37,10 +43,23 @@
 		assists: number = 0;
 	}
 
+	interface SortObj {
+		headerText: string;
+		headerKey: string;
+		index: number;
+	}
+
+	interface SortBy {
+		sortObj: SortObj;
+		ascending: boolean;
+	}
+
 	let selectedHeroID: number = -1;
 	let selectedRole: string = 'All';
 	let selectedStartDate = new Date(0);
 	let selectedEndDate = new Date();
+
+	let tabSet: number = 0;
 
 	const heroRoles = [
 		'All',
@@ -73,17 +92,6 @@
 		head: [],
 		body: []
 	};
-
-	interface SortObj {
-		headerText: string;
-		headerKey: string;
-		index: number;
-	}
-
-	interface SortBy {
-		sortObj: SortObj;
-		ascending: boolean;
-	}
 
 	let sortBy: SortBy = {
 		sortObj: {
@@ -325,7 +333,7 @@
 			selectedRole = 'All';
 			selectedHeroID = -1;
 
-			heroListWithAll.forEach((hero) => {
+			heroListWithAll.forEach((hero: Hero) => {
 				//filters match data for selected player
 				let pushObj: TableRow = new TableRow();
 
@@ -377,18 +385,6 @@
 		return tableData;
 	};
 
-	function winOrLoss(slot: number, win: boolean) {
-		if (slot > 127) {
-			if (win === false) {
-				return true;
-			} else return false;
-		} else {
-			if (win === false) {
-				return false;
-			} else return true;
-		}
-	}
-
 	function calculateWinPercentageClasses(win_percentage: number) {
 		//console.log(win_percentage)
 		let classes = '';
@@ -421,8 +417,9 @@
 		<Loading />
 	</div>
 {:then matchStats}
-	<div class="m-4 md:m-10 w-full w-max-[80%]">
-		<div class="container mx-auto md:my-4 my-1">
+	<div id="tablePageContainer" class="m-4 md:mx-10 md:my-4 w-full w-max-[80%]">
+		<!-- Header-->
+		<div id="header" class="container mx-auto md:my-2 my-1">
 			<div class="flex items-center justify-around space-x-4">
 				<div class="flex flex-col items-center">
 					<h1 class="h1 text-primary-500">Hero Stats</h1>
@@ -447,12 +444,45 @@
 			</div>
 		</div>
 
+		<TabGroup justify="justify-center">
+			<Tab bind:group={tabSet} name="tab1" value={0}>
+				<svelte:fragment slot="lead"
+					><div class="flex justify-center ml-2">
+						<div class="d2mh axe" />
+					</div></svelte:fragment
+				>
+				<span>Heroes</span>
+			</Tab>
+			<Tab bind:group={tabSet} name="tab1" value={1}>
+				<svelte:fragment slot="lead"
+					><div class="flex justify-center ml-2">
+						<img src={Knight} class="w-8" alt="Knight icon" />
+					</div></svelte:fragment
+				>
+				<span>Players</span>
+			</Tab>
+
+			<!-- Tab Panels --->
+			<svelte:fragment slot="panel">
+				{#if tabSet === 0}
+					(tab panel 1 contents)
+				{:else if tabSet === 1}
+					(tab panel 2 contents)
+				{:else if tabSet === 2}
+					(tab panel 3 contents)
+				{/if}
+			</svelte:fragment>
+		</TabGroup>
+
+		<!-- Filter elements -->
 		<div class="container mx-auto p-4">
-			<div class="max-md:flex-col flex justify-center items-center md:space-x-8 max-md:space-y-2">
-				<div class="flex justify-around items-center w-full">
-					<p class="inline text-primary-500 font-bold w-1/4">Hero</p>
+			<div class="max-md:flex-col flex justify-center items-center md:space-x-2 max-md:space-y-2">
+				<div
+					class="flex md:flex-col max-sm:justify-around items-center w-full md:space-x-1 md:justify-center"
+				>
+					<p class="w-full inline text-primary-500 font-bold max-sm:w-1/4 md:text-center">Hero</p>
 					<select
-						class="select select-sm variant-ghost-surface w-3/4"
+						class="select select-sm variant-ghost-surface w-full"
 						bind:value={selectedHeroID}
 						on:change={() =>
 							recalcTable(selectedStartDate, selectedEndDate, 'All', selectedHeroID, 'All')}
@@ -462,10 +492,12 @@
 						{/each}
 					</select>
 				</div>
-				<div class="flex justify-around items-center w-full">
-					<p class="inline text-primary-500 font-bold w-1/4">Role</p>
+				<div
+					class="flex md:flex-col max-sm:justify-around items-center w-full md:space-x-1 md:justify-center"
+				>
+					<p class="w-full inline text-primary-500 font-bold max-sm:w-1/4 md:text-center">Role</p>
 					<select
-						class="select select-sm variant-ghost-surface w-3/4"
+						class="select select-sm variant-ghost-surface"
 						bind:value={selectedRole}
 						on:change={() =>
 							recalcTable(selectedStartDate, selectedEndDate, selectedRole, -1, 'All')}
@@ -475,10 +507,12 @@
 						{/each}
 					</select>
 				</div>
-				<div class="flex justify-around items-center w-full">
-					<p class="inline text-primary-500 font-bold w-1/4">Player Select</p>
+				<div
+					class="flex md:flex-col max-sm:justify-around items-center w-full md:space-x-1 md:justify-center"
+				>
+					<p class="w-full inline text-primary-500 font-bold max-sm:w-1/4 md:text-center">Player</p>
 					<select
-						class="select select-sm variant-ghost-surface w-3/4"
+						class="select select-sm variant-ghost-surface w-full"
 						bind:value={selectedPlayer}
 						on:change={() =>
 							recalcTable(selectedStartDate, selectedEndDate, 'All', -1, selectedPlayer)}
@@ -488,11 +522,15 @@
 						{/each}
 					</select>
 				</div>
-				<div class="flex justify-around items-center w-full md:space-x-1">
-					<p class="text-primary-500 font-bold w-1/4">Start Date</p>
+				<div
+					class="flex md:flex-col max-sm:justify-around items-center w-full md:space-x-1 md:justify-center"
+				>
+					<p class="w-full inline text-primary-500 font-bold max-sm:w-1/4 md:text-center">
+						Start Date
+					</p>
 					<input
 						type="date"
-						class="select select-sm variant-ghost-surface w-3/4"
+						class="select select-sm variant-ghost-surface w-full"
 						bind:value={selectedStartDate}
 						on:change={() =>
 							recalcTable(
@@ -504,11 +542,15 @@
 							)}
 					/>
 				</div>
-				<div class="flex justify-around items-center w-full md:space-x-1">
-					<p class="inline text-primary-500 font-bold w-1/4">End Date</p>
+				<div
+					class="flex md:flex-col max-sm:justify-around items-center w-full md:space-x-1 md:justify-center"
+				>
+					<p class="w-full inline text-primary-500 font-bold max-sm:w-1/4 md:text-center">
+						End Date
+					</p>
 					<input
 						type="date"
-						class="select select-sm variant-ghost-surface w-3/4"
+						class="select select-sm variant-ghost-surface w-full"
 						bind:value={selectedEndDate}
 						on:change={() =>
 							recalcTable(
@@ -520,11 +562,15 @@
 							)}
 					/>
 				</div>
-				<div class="flex justify-around items-center w-full md:space-x-1">
+				<div class="flex md:flex-col justify-around items-center w-full md:space-x-1 mt-6">
 					<button
 						type="button"
-						class="btn variant-ghost-surface"
-						on:click={() => sortBy = {sortObj: sortMap.filter((item) => item.headerText === 'Games')[0], ascending: false}}
+						class="btn variant-ringed-error"
+						on:click={() =>
+							(sortBy = {
+								sortObj: sortMap.filter((item) => item.headerText === 'Games')[0],
+								ascending: false
+							})}
 						on:click={() => recalcTable(new Date(0), new Date(), 'All', -1, 'All')}
 						>Reset Table</button
 					>
