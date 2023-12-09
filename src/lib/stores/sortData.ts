@@ -1,6 +1,6 @@
 import { writable } from 'svelte/store'
 
-interface sortData {
+interface SortData {
     startDate: Date,
     endDate: Date,
     role: string,
@@ -11,8 +11,8 @@ interface sortData {
 
 function createSortData() {
     const { subscribe, set, update } = writable({
-        startDate: new Date(0),
-        endDate: new Date(),
+        startDate: new Date(0).toISOString().slice(0,10),
+        endDate: new Date().toISOString().slice(0,10),
         role: "All",
         heroID: -1,
         selectedPlayer: "All",
@@ -25,11 +25,11 @@ function createSortData() {
         update,
         setStartDate: (input: Date) => update(n => n = {
             ...n,
-            startDate: input
+            startDate: input.toISOString().slice(0,10)
         }),
         setEndDate: (input: Date) => update(n => n = {
             ...n,
-            endDate: input
+            endDate: input.toISOString().slice(0,10)
         }),
         setRole: (input: string) => update(n => n = {
             ...n,
@@ -47,14 +47,18 @@ function createSortData() {
             ...n,
             sortHeader: input 
         }),
-        reset: () => set({
-            startDate: new Date(0),
-            endDate: new Date(),
-            role: "All",
-            heroID: -1,
-            selectedPlayer: "All",
-            sortHeader: "Games"
-        })
+        reset: () => {
+  
+                update(n => n = {
+                    startDate: "",
+                    endDate: new Date().toISOString().slice(0,10),
+                    role: "All",
+                    heroID: -1,
+                    selectedPlayer: n.selectedPlayer !== "All" ? "Rocco" : "All",
+                    sortHeader: "Games"
+                })
+            
+        }
     }
 }
 export const sortData = createSortData()
