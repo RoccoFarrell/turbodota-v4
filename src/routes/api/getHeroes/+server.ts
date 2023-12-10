@@ -8,7 +8,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
     console.log(`params: ${JSON.stringify(params)}`)
     //check if user was updated recently, otherwise use the database
 
-    let forceUpdate: boolean = true;
+    let forceUpdate: boolean = false;
     let updateInterval = new Date()
     let dataSource: string = ""
 
@@ -56,8 +56,8 @@ export const GET: RequestHandler = async ({ params, url }) => {
         //     }))
         // })
         const heroCollection = await prisma.$transaction(async (tx) => {
-            await Promise.all(allHeroes.map((hero: Hero) => {
-                tx.hero.upsert({
+            await Promise.all(allHeroes.map(async (hero: Hero) => {
+                await tx.hero.upsert({
                     where: { id: hero.id },
                     update: { ...hero },
                     create: { ...hero }
