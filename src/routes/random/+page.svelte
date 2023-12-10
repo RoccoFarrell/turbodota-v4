@@ -95,6 +95,7 @@
 
 	const setBanList = (inputList?: string) => {
 		if (inputList) {
+			//sets the garbage preset
 			heroRandom.bannedHeroes = autoBanLists.garbage;
 			heroRandom.bannedHeroes.forEach((hero: Hero) => {
 				if (heroRandom.availableHeroes.indexOf(hero) !== -1) heroRandom.availableHeroes.splice(heroRandom.availableHeroes.indexOf(hero), 1);
@@ -115,6 +116,20 @@
 			if (heroRandom.selectedRoles.includes(role)) heroRandom.selectedRoles = heroRandom.selectedRoles.filter((r) => r !== role);
 			else heroRandom.selectedRoles.push(role);
 		}
+
+		heroRandom.availableHeroes = data.heroDescriptions.allHeroes.filter((heroDesc: Hero) => {
+			heroRandom.selectedRoles.forEach(role => {
+				if(heroDesc.roles.includes(role)) return false
+				else return true
+			})
+		})
+
+		heroRandom.availableHeroes = data.heroDescriptions.allHeroes.filter((heroDesc: Hero) => {
+			heroRandom.selectedRoles.forEach(role => {
+				if(heroDesc.roles.includes(role)) return false
+				else return true
+			})
+		})
 		console.log(heroRandom.selectedRoles);
 	};
 
@@ -141,7 +156,7 @@
 	<div class="flex flex-col items-center text-center space-y-4 md:mx-8 mx-2">
 		<div class="flex justify-around items-center w-3/4 mb-4">
 			<h1 class="h1 text-primary-700 max-md:font-bold">The Walker Random™</h1>
-			{#if data.session.user}
+			{#if data.session && data.session.user}
 				<div class="text-xs">
 					Logged in as: <p class="text-secondary-500 text-lg font-bold">{data.session.user.username}</p>
 				</div>
