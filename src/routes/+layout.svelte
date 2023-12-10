@@ -81,7 +81,7 @@
 						</span>
 					</button>
 					<img src={turbo_logo} class="w-14" alt="site logo" />
-					<strong class="text-sm lg:text-xl uppercase ml-4 text-center">Turbodota v3</strong>
+					<strong class="text-sm lg:text-xl uppercase ml-4 text-center">Turbodota v4</strong>
 				</div>
 			</svelte:fragment>
 
