@@ -10,4 +10,4 @@ const prisma = global.__prisma || new PrismaClient()
 // 	global.__prisma = client
 // }
 
-export { prisma }
+export default prisma

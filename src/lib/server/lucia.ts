@@ -3,7 +3,7 @@ import { lucia } from 'lucia'
 import { prisma } from '@lucia-auth/adapter-prisma'
 import { sveltekit } from 'lucia/middleware'
 import { dev } from '$app/environment'
-import { prisma as client }  from '$lib/server/prisma'
+import { default as client }  from '$lib/server/prisma'
 //import { PrismaClient } from "@prisma/client";
 
 // const client = new PrismaClient({

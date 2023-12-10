@@ -35,23 +35,31 @@ npm run build
 
 You can preview the production build with `npm run preview`.
 
-> To deploy your app, you may need to install an [adapter](https://kit.svelte.dev/docs/adapters) for your target environment.
+> To deploy your app, you may need to install an [adapter](https://kit.svelte.dev/docs/adapters) for your 
+target environment.
+
+## Testing
+
+[Mock Service Workers](https://mswjs.io/)
+
+- API testing https://www.usebruno.com/
+
+- Mocking Prisma https://www.prisma.io/blog/testing-series-1-8eRB5p0Y8o
 
 ## Other Info
 
 ### OpenMoji
-(https://openmoji.org/)
+https://openmoji.org/
 
 ### Prisma
 
-['Prisma connection pooling with Supabase'](https://supabase.com/partners/integrations/prisma#connection-pooling-with-supabase)
+[Prisma connection pooling with Supabase](https://supabase.com/partners/integrations/prisma#connection-pooling-with-supabase)
 
 ### Lucia Auth with Steam
 
-(https://discord.com/channels/1004048134218981416/1119986172383469569)
-
+https://discord.com/channels/1004048134218981416/1119986172383469569
 
 ## Thanks
 
-@pilcrow on the Lucia Discord
-@khromov on the Svelte Discord
+- @pilcrow on the Lucia Discord
+- @khromov on the Svelte Discord
