@@ -7,13 +7,17 @@
 	console.log(data);
 
 	//skeleton
-	import { getToastStore } from '@skeletonlabs/skeleton';
+	import { getToastStore, storeHighlightJs } from '@skeletonlabs/skeleton';
 	import type { ToastSettings, ToastStore } from '@skeletonlabs/skeleton';
 
 	//constants
 	import { heroRoles } from '$lib/constants/heroRoles';
 
-	console.log(data);
+	//stores
+	import { randomStore } from '$lib/stores/randomStore';
+
+	console.log('data: ', data);
+	$: console.log($randomStore);
 
 	const toastStore = getToastStore();
 
@@ -22,12 +26,6 @@
 	const handleCollapseHeroGrid = () => {
 		showHeroGrid = !showHeroGrid;
 	};
-
-	let banLimitErrorVisible: boolean = false;
-	$: if (banLimitErrorVisible === true)
-		setTimeout(() => {
-			banLimitErrorVisible = false;
-		}, 5000);
 
 	interface HeroRandom {
 		availableHeroes: Hero[];
@@ -56,22 +54,12 @@
 	$: heroRandom.bannedHeroes;
 
 	const banHero = (hero: Hero) => {
-		let bannedHeroes = heroRandom.bannedHeroes;
-		let banIndex = bannedHeroes.indexOf(hero);
+		let banIndex = $randomStore.bannedHeroes.indexOf(hero);
 
-		if (bannedHeroes.length + 1 > heroRandom.maxBans && banIndex === -1) banLimitErrorVisible = true;
+		if ($randomStore.bannedHeroes.length + 1 > $randomStore.maxBans && banIndex === -1) banLimitErrorVisible = true;
 		else {
-			if (banIndex === -1) {
-				bannedHeroes = [...bannedHeroes, hero];
-				let availableIndex = heroRandom.availableHeroes.indexOf(hero);
-				if (availableIndex > -1) heroRandom.availableHeroes.splice(availableIndex, 1);
-			} else {
-				bannedHeroes = bannedHeroes.filter((arrHero) => arrHero !== hero);
-			}
-			console.log(bannedHeroes);
+			randomStore.banHero(hero);
 		}
-
-		heroRandom.bannedHeroes = bannedHeroes;
 	};
 
 	let autoBanLists = {
@@ -95,59 +83,69 @@
 
 	const setBanList = (inputList?: string) => {
 		if (inputList) {
-			//sets the garbage preset
-			heroRandom.bannedHeroes = autoBanLists.garbage;
-			heroRandom.bannedHeroes.forEach((hero: Hero) => {
-				if (heroRandom.availableHeroes.indexOf(hero) !== -1) heroRandom.availableHeroes.splice(heroRandom.availableHeroes.indexOf(hero), 1);
-			});
+			if (inputList === 'garbage') randomStore.setBanList(autoBanLists.garbage);
 		} else {
-			heroRandom.availableHeroes = [...heroRandom.availableHeroes, ...heroRandom.bannedHeroes];
-			heroRandom.bannedHeroes = [];
+			randomStore.reset(data.heroDescriptions.allHeroes);
+			//randomStore.setAllHeroes(data.heroDescriptions.allHeroes)
 		}
 	};
 
 	const handleRoleSelect = (role: string) => {
 		console.log(role);
 		if (role === 'All') {
-			heroRandom.selectedRoles.includes('All')
-				? heroRandom.selectedRoles = []
-				: heroRandom.selectedRoles = heroRoles;
+            //if All was already selected, set to empty
+            //if not selected, set to all roles
+			$randomStore.selectedRoles.includes('All') ? ($randomStore.selectedRoles = []) : ($randomStore.selectedRoles = heroRoles);
 		} else {
-			if (heroRandom.selectedRoles.includes(role)) heroRandom.selectedRoles = heroRandom.selectedRoles.filter((r) => r !== role);
-			else heroRandom.selectedRoles.push(role);
+            //if not All, remove role if already there
+            //or add role if missing
+			if ($randomStore.selectedRoles.includes(role)) $randomStore.selectedRoles = $randomStore.selectedRoles.filter((r) => r !== role);
+			else $randomStore.selectedRoles.push(role);
 		}
 
-		heroRandom.availableHeroes = data.heroDescriptions.allHeroes.filter((heroDesc: Hero) => {
-			heroRandom.selectedRoles.forEach(role => {
-				if(heroDesc.roles.includes(role)) return false
-				else return true
-			})
-		})
+		$randomStore.availableHeroes = data.heroDescriptions.allHeroes.filter((heroDesc: Hero) => {
+            let returnVal = false;
+			$randomStore.selectedRoles.forEach((role) => {
+                console.log(`testing ${heroDesc.roles} includes ${role}: ${heroDesc.roles.includes(role)}`)
+				if (heroDesc.roles.includes(role)) returnVal = true;
+			});
+            return returnVal
+		});
+        console.log(`${data.heroDescriptions.allHeroes.length} filtered to ${$randomStore.availableHeroes.length}`)
 
-		heroRandom.availableHeroes = data.heroDescriptions.allHeroes.filter((heroDesc: Hero) => {
-			heroRandom.selectedRoles.forEach(role => {
-				if(heroDesc.roles.includes(role)) return false
-				else return true
-			})
-		})
-		console.log(heroRandom.selectedRoles);
+        $randomStore.bannedHeroes = data.heroDescriptions.allHeroes.filter((heroDesc: Hero) => {
+            let returnVal = true;
+			$randomStore.selectedRoles.forEach((role) => {
+                console.log(`testing ${heroDesc.roles} includes ${role}: ${heroDesc.roles.includes(role)}`)
+				if (heroDesc.roles.includes(role)) returnVal = false;
+			});
+            return returnVal
+		});
+
+        if($randomStore.availableHeroes.length === 0) randomStore.reset(data.heroDescriptions.allHeroes)
+        else randomStore.updateCalculations()
+		//console.log($randomStore.selectedRoles);
 	};
-
-	console.log(autoBanLists);
 
 	let generatedRandomHero: Hero | null = null;
 	const generateRandomHero = () => {
-		generatedRandomHero = heroRandom.availableHeroes[Math.floor(Math.random() * heroRandom.availableHeroes.length)];
+		generatedRandomHero = $randomStore.availableHeroes[Math.floor(Math.random() * $randomStore.availableHeroes.length)];
 	};
 
+	//toast settings
 	const t: ToastSettings = {
-		message: `Max bans of ${heroRandom.maxBans} reached!`,
+		message: `Max bans of ${$randomStore.maxBans} reached!`,
 		background: 'variant-filled-warning'
 	};
 
+	let banLimitErrorVisible: boolean = false;
+	$: if (banLimitErrorVisible === true)
+		setTimeout(() => {
+			banLimitErrorVisible = false;
+		}, 5000);
+
 	$: {
-		heroRandom.modifierAmount = heroRandom.bannedHeroes.length;
-		heroRandom.modifierTotal = heroRandom.bannedHeroes.length * heroRandom.banMultiplier;
+		randomStore.updateCalculations();
 		if (banLimitErrorVisible) toastStore.trigger(t);
 	}
 </script>
@@ -188,7 +186,7 @@
 					{#if showHeroGrid}
 						{#each data.heroDescriptions.allHeroes as hero}
 							<div class="object-contain m-1 relative">
-								{#if heroRandom.bannedHeroes.indexOf(hero) !== -1}
+								{#if $randomStore.bannedHeroes.indexOf(hero) !== -1}
 									<div class="w-full h-full bg-red-600 rounded-xl z-10 absolute bg-opacity-70">
 										<button on:click={() => banHero(hero)} class="w-full h-full"></button>
 									</div>
@@ -207,7 +205,7 @@
 					{#if showHeroGrid}
 						{#each data.heroDescriptions.allHeroes as hero}
 							<div class={`object-contain m-3 relative`}>
-								{#if heroRandom.bannedHeroes.indexOf(hero) !== -1}
+								{#if $randomStore.bannedHeroes.indexOf(hero) !== -1}
 									<div class="w-full h-full bg-red-600 rounded-xl z-10 absolute bg-opacity-70">
 										<button on:click={() => banHero(hero)} class="w-full h-full"></button>
 									</div>
@@ -221,9 +219,9 @@
 				<!-- Banned heroes -->
 				<div class="w-full space-x-1 max-w-[90%] flex-wrap p-2 md:p-4 my-1 md:my-4 md:mb-10">
 					<h4 class="h4">Banned Heroes:</h4>
-					{#if heroRandom.bannedHeroes.length > 0}
+					{#if $randomStore.bannedHeroes.length > 0}
 						<div>
-							{#each heroRandom.bannedHeroes as bannedHero}
+							{#each $randomStore.bannedHeroes as bannedHero}
 								<span class="badge variant-filled-secondary">{bannedHero.localized_name}</span>
 							{/each}
 						</div>
@@ -283,7 +281,7 @@
 									class="checkbox"
 									type="checkbox"
 									on:click={() => handleRoleSelect(role)}
-									checked={heroRandom.selectedRoles.includes(role)}
+									checked={$randomStore.selectedRoles.includes(role)}
 								/>
 								<p>{role}</p>
 							</label>
@@ -306,11 +304,11 @@
 							<p>Total gold on win:</p>
 						</div>
 						<div>
-							<p>{heroRandom.bannedHeroes.length}</p>
-							<p class="text-green-600">{heroRandom.availableHeroes.length}</p>
-							<p class="text-red-500">-{heroRandom.modifierTotal}</p>
+							<p>{$randomStore.bannedHeroes.length}</p>
+							<p class="text-green-600">{$randomStore.availableHeroes.length}</p>
+							<p class="text-red-500">-{$randomStore.modifierTotal}</p>
 							<p class="text-amber-500 font-bold">
-								{heroRandom.startingGold - heroRandom.modifierTotal}
+								{$randomStore.startingGold - $randomStore.modifierTotal}
 							</p>
 						</div>
 					</div>

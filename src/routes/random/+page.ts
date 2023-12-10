@@ -4,6 +4,6 @@ import { randomStore } from '$lib/stores/randomStore';
 export const load: PageLoad = async ({ parent }) => {
 	const layoutData = await parent();
 
-	randomStore.allHeroes = layoutData.heroDescriptions.allHeroes
+	randomStore.setAllHeroes([...layoutData.heroDescriptions.allHeroes])
 	return layoutData;
 };
