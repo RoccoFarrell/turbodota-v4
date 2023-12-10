@@ -21,7 +21,9 @@ export const auth = lucia({
 			username: data.username,
 			name: data.name,
 			profile_url: data.profile_url,
-			avatar_url: data.avatar_url
+			avatar_url: data.avatar_url,
+			account_id: data.account_id,
+			steam_id: data.steam_id
 		};
 	},
 })

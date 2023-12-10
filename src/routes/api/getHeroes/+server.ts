@@ -8,7 +8,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
     console.log(`params: ${JSON.stringify(params)}`)
     //check if user was updated recently, otherwise use the database
 
-    let forceUpdate: boolean = true;
+    let forceUpdate: boolean = false;
     let updateInterval = new Date()
     let dataSource: string = ""
 

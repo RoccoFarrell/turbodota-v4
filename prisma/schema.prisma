@@ -3,23 +3,14 @@ generator client {
 }
 
 // datasource db {
-//    provider = "sqlite"
-//    url      = "file:./dev.sqlite"
-//  }
+//   provider = "sqlite"
+//   url      = "file:./dev.sqlite"
+// }
 
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
-}
-
-model Article {
-  id        Int    @id @default(autoincrement())
-  title     String
-  content   String
-  userId    String
-  auth_user User   @relation(fields: [userId], references: [id])
-  //auth_user AuthUser @relation(fields: [userId], references: [id])
 }
 
 model Match {
@@ -69,14 +60,32 @@ model User {
   id           String    @id @unique
   name         String?
   username     String    @unique
-  account_id   BigInt?   @unique
+  account_id   Int?      @unique
   steam_id     BigInt?   @unique
   profile_url  String
   avatar_url   String
-  articles     Article[]
   key          Key[]
   auth_session Session[]
+  randoms      Random[]
   //matches      Match[]
+}
+
+model Random {
+  id              Int      @id @default(autoincrement())
+  account_id      Int
+  active          Boolean
+  status          String
+  date            DateTime
+  availableHeroes String
+  bannedHeroes    String
+  selectedRoles   String
+  expectedGold    Int
+  modifierAmount  Int
+  modifierTotal   Int
+  randomedHero    Int
+  user            User?    @relation(fields: [account_id], references: [account_id])
+
+  //@@unique([account_id, active], name: "matchPlusAccount")
 }
 
 model Session {

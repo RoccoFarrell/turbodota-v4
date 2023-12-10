@@ -11,13 +11,6 @@ BigInt.prototype.toJSON = function (): number {
 	return this.toString();
 };
 
-export const config = {
-	isr: {
-		expiration: 600,
-		bypassToken: 'fbybpmuenv4foogdrax2ab2u863gxtqa4p15or78'
-	}
-};
-
 async function writeRecordsChunked(partialArr: Match[], account_id: number) {
 	let result_match;
 	const result_tx = await prisma.$transaction(

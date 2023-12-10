@@ -33,6 +33,7 @@ export const GET: RequestHandler = async ({ request, locals, params, url }) => {
                 name: steamUser.name || "",
                 username: steamUser.username,
                 steam_id: steamUser.steamid,
+                account_id: Number(steamUser.steamid.substr(-16,16)) - 6561197960265728,
                 profile_url: steamUser.profile,
                 avatar_url: steamUser.avatar.small            
             }

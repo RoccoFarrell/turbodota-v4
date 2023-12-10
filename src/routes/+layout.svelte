@@ -22,7 +22,8 @@
 	import Loading from '$lib/components/Loading.svelte';
 
 	//assets
-	import HeroSprites from 'dota2-css-hero-sprites/assets/stylesheets/dota2minimapheroes.css'
+	//import HeroSprites from 'dota2-css-hero-sprites/assets/stylesheets/dota2minimapheroes.css'
+	import 'dota2-css-hero-sprites/assets/stylesheets/dota2minimapheroes.css'
 
 	//images
 	import steam_logo from '$lib/assets/steam_logo.png';
@@ -34,7 +35,6 @@
 
 	export let data: PageData;
 
-	//console.log(data.session);
 	let session: Session = data.session || null;
 
 	let navigatingTest = false;
@@ -54,11 +54,11 @@
 </script>
 
 <svelte:head>
-	<link
+	<!-- <link
 		rel="stylesheet"
 		type="text/css"
 		href={HeroSprites}
-	/>
+	/> -->
 </svelte:head>
 
 <!-- App Shell -->
@@ -81,7 +81,7 @@
 						</span>
 					</button>
 					<img src={turbo_logo} class="w-14" alt="site logo" />
-					<strong class="text-sm lg:text-xl uppercase ml-4 text-center">Turbodota v3</strong>
+					<strong class="text-sm lg:text-xl uppercase ml-4 text-center">Turbodota v4</strong>
 				</div>
 			</svelte:fragment>
 
