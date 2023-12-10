@@ -416,8 +416,8 @@
 					<!-- Responsive Container (recommended) -->
 					<div class="table-container overflow-hidden mx-auto">
 						<!-- New Component -->
-						<div>{JSON.stringify($sortData)}</div>
-					<div>{JSON.stringify(sortBy)}</div>
+						<!-- <div>{JSON.stringify($sortData)}</div>
+					<div>{JSON.stringify(sortBy)}</div> -->
 						<StatsTable {tableData} {sortBy} />
 					</div>
 				</div>

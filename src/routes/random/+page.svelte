@@ -251,12 +251,11 @@
 						</h3>
 						<img src={Lock} class="h-32 w-32 inline" alt="locked" />
 					</div>
-
-					<div class="mb-4 bg-surface-500/10 p-4 rounded-full xl:w-1/2 w-4/5 shadow-md">
-						<h3 class="h3 dark:text-yellow-500 text-primary-500">1. Ban heroes below</h3>
-						<p class="text-xs">Click a hero to ban!</p>
-					</div>
 				{/if}
+				<div class="mb-4 bg-surface-500/10 p-4 rounded-full xl:w-1/2 w-4/5 shadow-md">
+					<h3 class="h3 dark:text-yellow-500 text-primary-500">1. Ban heroes below</h3>
+					<p class="text-xs">Click a hero to ban!</p>
+				</div>
 
 				<!-- Show hero grid button -->
 				<div
@@ -350,12 +349,14 @@
 				<!-- Auto Bans -->
 				<div class="relative">
 					{#if randomFound}
-					<div class="z-50 absolute h-full w-full bg-slate-800/80 flex flex-col items-center justify-center rounded-xl">
-						<!-- <h2 class="h2 text-primary-500 rounded-full bg-surface-500 p-4">
+						<div
+							class="z-50 absolute h-full w-full bg-slate-800/80 flex flex-col items-center justify-center rounded-xl"
+						>
+							<!-- <h2 class="h2 text-primary-500 rounded-full bg-surface-500 p-4">
 							Randoming Locked, you have an active random!
 						</h2> -->
-						<img src={Lock} class="h-32 w-32 inline" alt="locked" />
-					</div>
+							<img src={Lock} class="h-32 w-32 inline" alt="locked" />
+						</div>
 					{/if}
 
 					<div class="mb-2 bg-surface-500/10 p-4 rounded-full xl:w-1/2 w-4/5 mx-auto shadow-md">
