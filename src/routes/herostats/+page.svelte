@@ -223,7 +223,7 @@
 
 			//filter by Player
 		} else {
-			$sortData.role = 'All';
+			//$sortData.role = 'All';
 			$sortData.heroID = -1;
 
 			heroListWithAll.forEach((hero: Hero) => {
@@ -241,6 +241,19 @@
 					filteredMatchData = filteredMatchData.filter(
 						(match: Match) => match.start_time >= startDateUnix && match.start_time <= endDateUnix
 					);
+
+					if (typeof $sortData.role === 'string' && $sortData.heroID == -1) {
+						if ($sortData.role === 'all' || $sortData.role === 'All') {
+							//filteredMatchData = player.matchData;
+						} else {
+							let filteredHeroList = heroList
+								.filter((hero) => hero.roles.includes($sortData.role))
+								.map((item) => item.id);
+							filteredMatchData = filteredMatchData.filter((match: Match) =>
+								filteredHeroList.includes(match.hero_id)
+							);
+						}
+					}
 
 					pushObj.name = hero.localized_name;
 					pushObj.games = filteredMatchData.length;
