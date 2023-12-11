@@ -1,6 +1,6 @@
 import type { RequestHandler } from '@sveltejs/kit';
 import { auth } from "$lib/server/lucia";
-import { prisma } from '$lib/server/prisma';
+import prisma from '$lib/server/prisma';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unreachable code error

@@ -9,6 +9,7 @@
 		getDrawerStore,
 		Toast
 	} from '@skeletonlabs/skeleton';
+	import { dev } from '$app/environment';
 
 	import { beforeNavigate } from '$app/navigation';
 	import { navigating, page } from '$app/stores';
@@ -23,7 +24,7 @@
 
 	//assets
 	//import HeroSprites from 'dota2-css-hero-sprites/assets/stylesheets/dota2minimapheroes.css'
-	import 'dota2-css-hero-sprites/assets/stylesheets/dota2minimapheroes.css'
+	import 'dota2-css-hero-sprites/assets/stylesheets/dota2minimapheroes.css';
 
 	//images
 	import steam_logo from '$lib/assets/steam_logo.png';
@@ -32,6 +33,35 @@
 	import { computePosition, autoUpdate, flip, shift, offset, arrow } from '@floating-ui/dom';
 	import { storePopup } from '@skeletonlabs/skeleton';
 	storePopup.set({ computePosition, autoUpdate, flip, shift, offset, arrow });
+
+	//mocks
+	// Loaded from .env.local, guide covers this
+	// step in a moment.
+	const isMswEnabled = dev && import.meta.env.VITE_MSW_ENABLED === 'true';
+	// Flag to defer rendering of components
+	// until certain criteria are met on dev,
+	// e.g. MSW init.
+	let isReady = !isMswEnabled;
+	if (isMswEnabled) {
+		import('$mocks').then((res) => res.inject()).then(() => (isReady = true));
+	}
+	// async function enableMocking() {
+	// 	if (process.env.NODE_ENV !== 'development') {
+	// 		return;
+	// 	}
+
+	// 	console.log('[msw] - enabling mocking')
+	// 	const { worker } = await import('../mocks/browser');
+
+	// 	// `worker.start()` returns a Promise that resolves
+	// 	// once the Service Worker is up and ready to intercept requests.
+	// 	return worker.start();
+	// }
+
+	// let isReady = enableMocking()
+	// $: console.log(isReady)
+
+	//page data
 
 	export let data: PageData;
 
@@ -62,39 +92,43 @@
 </svelte:head>
 
 <!-- App Shell -->
-<Toast/>
-<Drawer><Navigation {session} /></Drawer>
-<AppShell slotSidebarLeft="bg-surface-500/10 w-0 lg:w-64">
-	<svelte:fragment slot="header">
-		<!-- App Bar -->
-		<AppBar shadow="shadow-md">
-			<svelte:fragment slot="lead">
-				<!-- Hamburger Button-->
-				<div class="flex items-center">
-					<button class="lg:hidden btn btn-sm mr-4" on:click={drawerOpen}>
-						<span>
-							<svg viewBox="0 0 100 80" class="fill-token w-4 h-4">
-								<rect width="100" height="20" />
-								<rect y="30" width="100" height="20" />
-								<rect y="60" width="100" height="20" />
-							</svg>
-						</span>
-					</button>
-					<img src={turbo_logo} class="w-14" alt="site logo" />
-					<strong class="text-sm lg:text-xl uppercase ml-4 text-center">Turbodota v4</strong>
-				</div>
-			</svelte:fragment>
-
-			<svelte:fragment slot="trail">
-				<div class="flex justify-around space-x-8 items-center">
-					<div class="h-full m-auto">
-						{#if data.session && !$page.url.pathname.includes('herostats')}
-							<div class="m-auto h-full text-center">
-								Welcome <p class="font-bold text-red-400">{`${data.session.user.username}`}</p>
-							</div>
-						{/if}
+{#await isReady}
+	<div>Registering service worker {isReady}</div>
+{:then}
+	<Toast />
+	<Drawer><Navigation {session} /></Drawer>
+	<AppShell slotSidebarLeft="bg-surface-500/10 w-0 lg:w-64">
+		<svelte:fragment slot="header">
+			<!-- App Bar -->
+			<AppBar shadow="shadow-md">
+				<svelte:fragment slot="lead">
+					<!-- Hamburger Button-->
+					<div class="flex items-center">
+						<button class="lg:hidden btn btn-sm mr-4" on:click={drawerOpen}>
+							<span>
+								<svg viewBox="0 0 100 80" class="fill-token w-4 h-4">
+									<rect width="100" height="20" />
+									<rect y="30" width="100" height="20" />
+									<rect y="60" width="100" height="20" />
+								</svg>
+							</span>
+						</button>
+						<img src={turbo_logo} class="w-14" alt="site logo" />
+						<strong class="text-sm lg:text-xl uppercase ml-4 text-center">Turbodota v4</strong>
+						<div>{process.env.NODE_ENV === 'development' ? JSON.stringify(isReady) : ''}</div>
 					</div>
-					<!-- <form method="POST">
+				</svelte:fragment>
+
+				<svelte:fragment slot="trail">
+					<div class="flex justify-around space-x-8 items-center">
+						<div class="h-full m-auto">
+							{#if data.session && !$page.url.pathname.includes('herostats')}
+								<div class="m-auto h-full text-center">
+									Welcome <p class="font-bold text-red-400">{`${data.session.user.username}`}</p>
+								</div>
+							{/if}
+						</div>
+						<!-- <form method="POST">
 						<div class="flex flex-col lg:flex-row lg:space-x-2">	
 							<a class="btn btn-sm variant-ghost-surface" href="/">Home</a>
 							{#if !data.session || !data.session.user}
@@ -111,31 +145,32 @@
 							{/if}
 						</div>
 					</form> -->
-					<LightSwitch />
-				</div>
-			</svelte:fragment>
-		</AppBar>
-	</svelte:fragment>
+						<LightSwitch />
+					</div>
+				</svelte:fragment>
+			</AppBar>
+		</svelte:fragment>
 
-	<svelte:fragment slot="sidebarLeft">
-		<!-- Insert the list: -->
-		<div class="border-r border-primary-500/30 h-full"><Navigation {session} /></div>
-		
-		<!-- --- -->
-	</svelte:fragment>
+		<svelte:fragment slot="sidebarLeft">
+			<!-- Insert the list: -->
+			<div class="border-r border-primary-500/30 h-full"><Navigation {session} /></div>
 
-	<!-- <svelte:fragment slot="footer">
+			<!-- --- -->
+		</svelte:fragment>
+
+		<!-- <svelte:fragment slot="footer">
 		<div class="flex w-full justify-center m-auto">
 			<p class="text-xs text-slate-300 dark:text-slate-700">Copyright No Salt Studios 2023</p>
 		</div>
 	</svelte:fragment> -->
 
-	<!-- Page Route Content -->
-	<div class="h-max flex justify-center w-full">
-		{#if $navigating || navigatingTest}
-			<div class="m-8 w-full"><Loading /></div>
-		{:else}
-			<slot />
-		{/if}
-	</div>
-</AppShell>
+		<!-- Page Route Content -->
+		<div class="h-max flex justify-center w-full">
+			{#if $navigating || navigatingTest}
+				<div class="m-8 w-full"><Loading /></div>
+			{:else}
+				<slot />
+			{/if}
+		</div>
+	</AppShell>
+{/await}

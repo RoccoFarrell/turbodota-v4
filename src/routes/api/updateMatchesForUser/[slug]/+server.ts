@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
-import { prisma } from '$lib/server/prisma';
+import prisma from '$lib/server/prisma';
 import { match } from 'assert';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment

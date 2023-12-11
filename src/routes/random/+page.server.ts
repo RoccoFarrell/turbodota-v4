@@ -1,6 +1,6 @@
 import type { Actions, PageServerLoad } from './$types';
 import { auth } from '$lib/server/lucia';
-import { prisma } from '$lib/server/prisma';
+import prisma from '$lib/server/prisma';
 import type { Prisma } from '@prisma/client';
 import { error, fail, redirect } from '@sveltejs/kit';
 
