@@ -18,6 +18,7 @@
 		<li><a href="/turbotown">Turbo Town</a></li>
 		<li><a href="/random">Walker Random</a></li>
 		<li><a href="/herostats">Hero Stats</a></li>
+		<li><a href="/accolades">Accolades</a></li>
 		<li class="h-32 lg:h-4"></li>
 		<hr class="!border-t-4" />
 		{#if !session || !session.user}
