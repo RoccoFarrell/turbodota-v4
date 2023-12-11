@@ -21,7 +21,7 @@
 	//images
 	import Lock from '$lib/assets/lock.png';
 
-	console.log('data: ', data);
+	//console.log('data: ', data);
 	$: console.log('store data: ', $randomStore);
 
 	let generatedRandomHero: Hero | null = null;
@@ -60,6 +60,7 @@
 			banMultiplier: 8,
 			modifierAmount,
 			modifierTotal,
+			freeBans: 3,
 			maxBans: 10,
 			randomedHero: allHeroesCopy.filter((hero: Hero) => hero.id === randomedHero)[0]
 		});
@@ -105,7 +106,7 @@
 	const banHero = (hero: Hero) => {
 		let banIndex = $randomStore.bannedHeroes.indexOf(hero);
 
-		if ($randomStore.bannedHeroes.length + 1 > $randomStore.maxBans && banIndex === -1) banLimitErrorVisible = true;
+		if ($randomStore.bannedHeroes.length + 1 > ($randomStore.maxBans) && banIndex === -1) banLimitErrorVisible = true;
 		else {
 			randomStore.banHero(hero);
 		}
@@ -199,6 +200,8 @@
 			});
 
 			console.log(response);
+
+			randomFound = true
 		}
 	};
 
@@ -407,12 +410,14 @@
 					<div class="grid grid-cols-2">
 						<div>
 							<p>Number of bans:</p>
+							<p>Free bans left (max 3):</p>
 							<p>Heroes in random pool:</p>
 							<p>Modifier amount:</p>
 							<p>Total gold on win:</p>
 						</div>
 						<div>
 							<p>{$randomStore.bannedHeroes.length}</p>
+							<p>{$randomStore.bannedHeroes.length < $randomStore.freeBans ? $randomStore.freeBans - $randomStore.bannedHeroes.length : 0}</p>
 							<p class="text-green-600">{$randomStore.availableHeroes.length}</p>
 							<p class="text-red-500">-{$randomStore.modifierTotal}</p>
 							<p class="text-amber-500 font-bold">
@@ -425,12 +430,16 @@
 					</div>
 				</div>
 
+				{#if !randomFound}
 				<!-- Random Button-->
 				<button
 					on:click={generateRandomHero}
+					disabled={randomFound}
+					
 					class="btn variant-filled-primary w-full my-4 max-sm:fixed max-sm:bottom-0 max-sm:left-0 max-sm:my-8 max-sm:mx-4 max-sm:max-w-[90%] md:max-w-[80%]"
 					>Random me</button
 				>
+				{/if}
 			</div>
 		</div>
 	</div>

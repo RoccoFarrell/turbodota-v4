@@ -9,9 +9,10 @@ function createRandomStore() {
 		selectedRoles: [] as string[],
 		startingGold: 100,
 		expectedGold: 100,
-		banMultiplier: 8,
+		banMultiplier: 10,
 		modifierAmount: 0,
 		modifierTotal: 0,
+		freeBans: 3,
 		maxBans: 10,
 		randomedHero: {} as Hero | null
 	});
@@ -42,9 +43,10 @@ function createRandomStore() {
 						selectedRoles: [] as string[],
 						startingGold: 100,
 						expectedGold: 100,
-						banMultiplier: 8,
+						banMultiplier: 10,
 						modifierAmount: 0,
 						modifierTotal: 0,
+						freeBans: 3,
 						maxBans: 10,
 						randomedHero: null
 					})
@@ -64,22 +66,37 @@ function createRandomStore() {
 
 const updateCalculations = (store: any) => {
 	store.modifierAmount = store.bannedHeroes.length;
-	store.modifierTotal = store.bannedHeroes.length * store.banMultiplier;
+	store.modifierTotal = (store.bannedHeroes.length - store.freeBans < 0 ? 0 : store.bannedHeroes.length - store.freeBans) * store.banMultiplier;
+
+	//store.expectedGold =
+		// store.startingGold - (store.bannedHeroes.length > 3 ? store.modifierTotal : 0) > 25
+		// 	? store.startingGold - store.modifierTotal
+		// 	: 25;
 	store.expectedGold = store.startingGold - store.modifierTotal > 25 ? store.startingGold - store.modifierTotal : 25;
 	return store;
 };
 
 const banHero = (hero: Hero, store: any) => {
-	console.log(hero);
+	console.log(`banning hero:`);
+	console.log(hero)
 	let banIndex = store.bannedHeroes.indexOf(hero);
 
 	console.log(banIndex);
 	if (banIndex === -1) {
 		store.bannedHeroes = [...store.bannedHeroes, hero];
 		let availableIndex = store.availableHeroes.indexOf(hero);
+
+		if(availableIndex === -1){
+			store.availableHeroes.forEach((storeHero: Hero, i: number) => {
+				if(storeHero.id === hero.id) availableIndex = i
+			})
+		}
+
 		if (availableIndex > -1) store.availableHeroes.splice(availableIndex, 1);
+
 	} else {
 		store.bannedHeroes = store.bannedHeroes.filter((arrHero: Hero) => arrHero !== hero);
+		store.availableHeroes.push(hero)
 	}
 	console.log(store.bannedHeroes);
 
@@ -92,7 +109,8 @@ const setBanList = (inputList: Hero[] | null, store: any) => {
 		//sets the garbage preset
 		store.bannedHeroes = inputList;
 		store.bannedHeroes.forEach((hero: Hero) => {
-			if (store.availableHeroes.indexOf(hero) !== -1) store.availableHeroes.splice(store.availableHeroes.indexOf(hero), 1);
+			if (store.availableHeroes.indexOf(hero) !== -1)
+				store.availableHeroes.splice(store.availableHeroes.indexOf(hero), 1);
 		});
 
 		store = updateCalculations(store);
