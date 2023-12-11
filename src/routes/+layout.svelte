@@ -42,9 +42,9 @@
 	// until certain criteria are met on dev,
 	// e.g. MSW init.
 	let isReady = !isMswEnabled;
-	if (isMswEnabled) {
-		import('$mocks').then((res) => res.inject()).then(() => (isReady = true));
-	}
+	// if (isMswEnabled) {
+	// 	import('$mocks').then((res) => res.inject()).then(() => (isReady = true));
+	// }
 	// async function enableMocking() {
 	// 	if (process.env.NODE_ENV !== 'development') {
 	// 		return;

@@ -20,7 +20,7 @@
 	//images
 	import Lock from '$lib/assets/lock.png';
 
-	console.log('data: ', data);
+	// console.log('data: ', data);
 	// $: console.log('store data: ', $randomStore);
 
 	let generatedRandomHero: Hero | null = null;

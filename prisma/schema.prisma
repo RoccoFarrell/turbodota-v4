@@ -14,7 +14,7 @@ datasource db {
 // }
 
 model Match {
-  id            Int     @id @default(autoincrement())
+  id            Int      @id @default(autoincrement())
   match_id      BigInt
   account_id    BigInt
   assists       Int
@@ -32,6 +32,7 @@ model Match {
   skill         Int?
   start_time    BigInt
   version       Int?
+  randoms       Random[]
   //user          User?   @relation(fields: [account_id], references: [account_id])
 
   @@unique([match_id, account_id], name: "matchPlusAccount")
@@ -71,7 +72,7 @@ model User {
 }
 
 model Random {
-  id              Int      @id @default(autoincrement())
+  id              Int       @id @default(autoincrement())
   account_id      Int
   active          Boolean
   status          String
@@ -85,7 +86,8 @@ model Random {
   modifierAmount  Int
   modifierTotal   Int
   randomedHero    Int
-  user            User?    @relation(fields: [account_id], references: [account_id])
+  user            User?     @relation(fields: [account_id], references: [account_id])
+  match           Match?    @relation(fields: [endMatchID], references: [id])
 
   //@@unique([account_id, active], name: "matchPlusAccount")
 }
