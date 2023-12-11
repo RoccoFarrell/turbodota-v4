@@ -115,7 +115,12 @@
 						</button>
 						<img src={turbo_logo} class="w-14" alt="site logo" />
 						<strong class="text-sm lg:text-xl uppercase ml-4 text-center">Turbodota v4</strong>
-						<div>{process.env.NODE_ENV === 'development' ? JSON.stringify(isReady) : ''}</div>
+						{#if dev}
+							<div class="mx-8 flex flex-col">
+								<p>{`isReady: ${JSON.stringify(isReady)}`}</p>
+								<p>{`env: ${process.env.NODE_ENV}`}</p>
+							</div>
+						{/if}
 					</div>
 				</svelte:fragment>
 

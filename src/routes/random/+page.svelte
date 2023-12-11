@@ -5,7 +5,6 @@
 	//page data
 	import type { PageData } from './$types';
 	export let data: PageData;
-	console.log(data);
 
 	//skeleton
 	import { getToastStore, storeHighlightJs } from '@skeletonlabs/skeleton';
@@ -21,8 +20,8 @@
 	//images
 	import Lock from '$lib/assets/lock.png';
 
-	//console.log('data: ', data);
-	$: console.log('store data: ', $randomStore);
+	console.log('data: ', data);
+	// $: console.log('store data: ', $randomStore);
 
 	let generatedRandomHero: Hero | null = null;
 
@@ -34,12 +33,12 @@
 			data.randoms[0];
 
 		let allHeroesCopy = [...data.heroDescriptions.allHeroes];
-		console.log(availableHeroes.split(','));
-		console.log(
-			availableHeroes.split(',').map((randomID: string) => {
-				return allHeroesCopy.filter((hero: Hero) => hero.id === parseInt(randomID))[0];
-			})
-		);
+		// console.log(availableHeroes.split(','));
+		// console.log(
+		// 	availableHeroes.split(',').map((randomID: string) => {
+		// 		return allHeroesCopy.filter((hero: Hero) => hero.id === parseInt(randomID))[0];
+		// 	})
+		// );
 
 		//console.log(allHeroesCopy.filter((hero: Hero) => hero.id === 1)[0])
 
@@ -237,7 +236,11 @@
 		<div>
 			{#if randomFound}
 				<div class="w-full">
-					<h3 class="h3">{data.randoms.length} Random Found</h3>
+					{#if data.randoms}
+						<h3 class="h3">{data.randoms?.length} Random Found</h3>
+					{:else}
+						<h3 class="h3">New random locked!</h3>
+					{/if}
 				</div>
 			{/if}
 		</div>

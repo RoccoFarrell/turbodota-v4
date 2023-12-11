@@ -3,7 +3,6 @@
 //
 
 import { http } from "msw";
-import { values } from "./fixtures/msw-demo";
 
 export const handlers = [
   http.get("/api/randomNumber", ({ request }) => {

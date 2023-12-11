@@ -76,9 +76,11 @@ model Random {
   active          Boolean
   status          String
   date            DateTime
+  endDate         DateTime?
+  endMatchID      Int?
   availableHeroes String
-  bannedHeroes    String
-  selectedRoles   String
+  bannedHeroes    String?
+  selectedRoles   String?
   expectedGold    Int
   modifierAmount  Int
   modifierTotal   Int

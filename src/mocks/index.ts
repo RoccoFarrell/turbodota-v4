@@ -13,8 +13,8 @@ export async function inject() {
     // for requests that are not mocked. Change how
     // you think it best fits your project.
     return worker.start({ onUnhandledRequest: "bypass" }).catch(console.warn);
-  }
-  if (dev && !browser) {
+  } 
+  else if (dev && !browser) {
     const { server } = await import("./server");
     // Same as in worker-mock above.
     console.log(`[msw] - initiatlized on server`)

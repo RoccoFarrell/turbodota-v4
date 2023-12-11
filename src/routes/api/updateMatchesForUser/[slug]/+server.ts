@@ -105,7 +105,7 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
 			where: { account_id }
 		});
 
-        console.log(`[matches][${account_id}] ${matchStats.length} matches returned from Database`);
+		console.log(`[matches][${account_id}] ${matchesResult.length} matches returned from Database`);
 		//console.log(matchesResult)
 		matchStats = matchesResult;
 		dataSource = 'db';
@@ -114,10 +114,16 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
 
 		//query OD
 		if (d_diff && !forceFullUpdate) {
-			console.log(`[matches][${account_id}] d_diff calculated, fetching matches ${d_diff} days back for ${userResult?.account_id}`);
-			od_url = encodeURI(`https://api.opendota.com/api/players/${account_id}/matches?significant=0&game_mode=23&date=${d_diff}`);
+			console.log(
+				`[matches][${account_id}] d_diff calculated, fetching matches ${d_diff} days back for ${userResult?.account_id}`
+			);
+			od_url = encodeURI(
+				`https://api.opendota.com/api/players/${account_id}/matches?significant=0&game_mode=23&date=${d_diff}`
+			);
 		} else {
-			console.log(`[matches][${account_id}] no d_diff calculated, fetching matches ${d_diff} from beginning of time for ${userResult?.account_id}`);
+			console.log(
+				`[matches][${account_id}] no d_diff calculated, fetching matches ${d_diff} from beginning of time for ${userResult?.account_id}`
+			);
 			od_url = encodeURI(`https://api.opendota.com/api/players/${account_id}/matches?significant=0&game_mode=23`);
 		}
 		console.log(od_url);
@@ -134,7 +140,7 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
 				return json;
 			});
 
-        console.log(`[matches][${account_id}] ${matchStats.length} matches returned from OpenDota`);
+		console.log(`[matches][${account_id}] ${matchStats.length} matches returned from OpenDota`);
 		//add account ID to all matches
 		matchStats = matchStats.map((match) => {
 			//console.log(match.match_id, account_id, match.match_id.toString() + account_id.toString())
@@ -209,18 +215,18 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
 			});
 			console.log(`result_dotaUser: ${JSON.stringify(result_dotaUser)}`);
 		}
+
+		//after updates, if d_diff, query entire DB for full time range + matches added from the d_diff
+		console.log(`[matches][${account_id}] fetching full history after addition of d_diff matches - fetch from DB`);
+		const matchesResult = await prisma.match.findMany({
+			where: { account_id }
+		});
+
+		console.log(`[matches][${account_id}] ${matchStats.length} matches returned from Database`);
+		//console.log(matchesResult)
+		matchStats = matchesResult;
+		dataSource = 'db';
 	}
-
-	//after updates, if d_diff, query entire DB for full time range + matches added from the d_diff
-	console.log(`[matches][${account_id}] fetching full history after addition of d_diff matches - fetch from DB`);
-	const matchesResult = await prisma.match.findMany({
-		where: { account_id }
-	});
-
-    console.log(`[matches][${account_id}] ${matchStats.length} matches returned from Database`);
-	//console.log(matchesResult)
-	matchStats = matchesResult;
-	dataSource = 'db';
 
 	let cacheTimeoutSeconds = 3600;
 
