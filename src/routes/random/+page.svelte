@@ -30,12 +30,16 @@
 	if (data.userPreferences && data.userPreferences.length > 0) {
 		let banListPref = data.userPreferences.filter((pref: any) => pref.name === 'randomBanList');
 
-		if (banListPref.length > 0) {
-			let randomBanListParsed = JSON.parse(banListPref.value);
+		try {
+			if (banListPref.length > 0 && banListPref.value) {
+				let randomBanListParsed = JSON.parse(banListPref.value);
 
-			let setList = data.heroDescriptions.allHeroes.filter((hero: Hero) => randomBanListParsed.includes(hero.id));
+				let setList = data.heroDescriptions.allHeroes.filter((hero: Hero) => randomBanListParsed.includes(hero.id));
 
-			randomStore.setBanList(setList);
+				randomStore.setBanList(setList);
+			}
+		} catch (e) {
+			console.error('error in setting preferences');
 		}
 	}
 
