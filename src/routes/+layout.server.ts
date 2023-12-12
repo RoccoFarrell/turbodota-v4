@@ -28,7 +28,7 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 	console.log(`session: ${session}`)
 
 	//get user prefs if user is logged in
-	let userPreferences = {}
+	let userPreferences = []
 	if(session && session.user){
 		const prefsResponse = await fetch (`${url.origin}/api/preferences/${session.user.account_id}`, {
 			method: 'GET',

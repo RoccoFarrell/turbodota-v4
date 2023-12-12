@@ -27,19 +27,16 @@
 	$: console.log('store data: ', $randomStore);
 
 	//set user preferences on page
-	if(data.userPreferences){
-		console.log(data.userPreferences)
-		let banListPref = data.userPreferences.filter(pref => pref.name === "randomBanList")[0]
+	if (data.userPreferences && data.userPreferences.length > 0) {
+		let banListPref = data.userPreferences.filter((pref: any) => pref.name === 'randomBanList');
 
-		console.log(banListPref)
-		let randomBanListParsed = JSON.parse(banListPref.value)
-		console.log(randomBanListParsed)
+		if (banListPref.length > 0) {
+			let randomBanListParsed = JSON.parse(banListPref.value);
 
-		let setList = data.heroDescriptions.allHeroes.filter((hero: Hero) =>
-			randomBanListParsed.includes(hero.id)
-		)
+			let setList = data.heroDescriptions.allHeroes.filter((hero: Hero) => randomBanListParsed.includes(hero.id));
 
-		randomStore.setBanList(setList)
+			randomStore.setBanList(setList);
+		}
 	}
 
 	let generatedRandomHero: Hero | null = null;
@@ -175,7 +172,7 @@
 	};
 
 	const setBanList = (inputList?: string) => {
-		if (typeof inputList === "string") {
+		if (typeof inputList === 'string') {
 			if (inputList === 'garbage') randomStore.setBanList(autoBanLists.garbage);
 		} else {
 			randomStore.reset(data.heroDescriptions.allHeroes);
@@ -197,13 +194,13 @@
 			});
 
 			let prefsResponse = await response.json();
-			console.log(prefsResponse)
+			console.log(prefsResponse);
 			if (prefsResponse.status === 'success') {
 				const t: ToastSettings = {
 					message: `Bans saved!`,
 					background: 'variant-filled-success'
 				};
-				toastStore.trigger(t)
+				toastStore.trigger(t);
 			}
 		} else {
 			const t: ToastSettings = {
