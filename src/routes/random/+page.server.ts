@@ -4,7 +4,13 @@ import prisma from '$lib/server/prisma';
 import type { Prisma } from '@prisma/client';
 import { error, fail, redirect } from '@sveltejs/kit';
 
-console.log(process.env.BASE_URL);
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore: Unreachable code error
+BigInt.prototype.toJSON = function (): number {
+	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+	// @ts-ignore: Unreachable code error
+	return this.toString();
+};
 
 export const load: PageServerLoad = async ({ locals, parent, url }) => {
 	const parentData = await parent();
@@ -20,9 +26,9 @@ export const load: PageServerLoad = async ({ locals, parent, url }) => {
 					}
 				]
 			},
-            include: {
-                match: true
-            }
+			include: {
+				match: true
+			}
 		});
 	}
 
@@ -40,11 +46,10 @@ export const load: PageServerLoad = async ({ locals, parent, url }) => {
 	if (session && session.user) {
 		randomsForUser = await getRandomsForUser();
 
-        console.log(`active random length: ${randomsForUser.filter(random => random.active).length}`)
+		console.log(`active random length: ${randomsForUser.filter((random) => random.active).length}`);
 
 		//user has at least 1 active random
-		if (randomsForUser.length > 0 && randomsForUser.filter(random => random.active).length > 0) {
-
+		if (randomsForUser.length > 0 && randomsForUser.filter((random) => random.active).length > 0) {
 			//fetch most recent matches
 			const response = await fetch(`${url.origin}/api/updateMatchesForUser/${session.user.account_id}`, {
 				method: 'GET'
@@ -64,20 +69,24 @@ export const load: PageServerLoad = async ({ locals, parent, url }) => {
 			rawMatchData = responseData.matchData;
 
 			//a user should only ever have 1 active random, if not, sort by the oldest one for evaluation
-			let activeRandoms = randomsForUser.filter(random => random.active).sort((a: any, b: any) => {
-				if(a.date < b.date) return -1
-				else return 1
-			})
+			let activeRandoms = randomsForUser
+				.filter((random) => random.active)
+				.sort((a: any, b: any) => {
+					if (a.date < b.date) return -1;
+					else return 1;
+				});
 
 			//filter all matches for games in the oldest active random
-			filteredMatchData = rawMatchData.filter(
-				(match: Match) => match.start_time > activeRandoms[0].date && match.hero_id === activeRandoms[0].randomedHero
-			).sort((a: any, b: any) => {
-				if(a.start_time < b.start_time) return -1
-				else return 1
-			});
+			filteredMatchData = rawMatchData
+				.filter(
+					(match: Match) => match.start_time > activeRandoms[0].date && match.hero_id === activeRandoms[0].randomedHero
+				)
+				.sort((a: any, b: any) => {
+					if (a.start_time < b.start_time) return -1;
+					else return 1;
+				});
 
-			if(filteredMatchData.length > 0){
+			if (filteredMatchData.length > 0) {
 				let completeResponse = await fetch(`${url.origin}/api/random/${session.user.account_id}/complete`, {
 					method: 'POST',
 					headers: {
@@ -90,10 +99,10 @@ export const load: PageServerLoad = async ({ locals, parent, url }) => {
 					})
 				});
 				let completeResponseData = await completeResponse.json();
-				responseComplete = completeResponseData
+				responseComplete = completeResponseData;
 			} else {
-				responseComplete = {"error": "couldnt complete random"}
-			}	
+				responseComplete = { error: 'couldnt complete random' };
+			}
 		}
 	}
 
