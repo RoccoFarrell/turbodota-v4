@@ -1,6 +1,6 @@
 import type { RequestHandler } from '@sveltejs/kit';
 import { auth } from "$lib/server/lucia";
-import { prisma } from '$lib/server/prisma';
+import prisma from '$lib/server/prisma';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unreachable code error
@@ -22,6 +22,12 @@ export const POST: RequestHandler = async ({ request, params, url, locals }) => 
 	let account_id: number = parseInt(params.slug || '0');
 	console.log(`\n-----------\n[matches] account_id: ${account_id}\n-------------\n`);
 
+
+    let randomStoreValues = await request.json()
+    console.log('request json: ', randomStoreValues)
+
+    console.log(`[api/random/${account_id}/create] creating random for: ${randomStoreValues.randomedHero}`);
+
 	//check if user was updated recently, otherwise use the database
 	const userResult = await prisma.dotaUser.findUnique({
 		where: {
@@ -29,9 +35,7 @@ export const POST: RequestHandler = async ({ request, params, url, locals }) => 
 		}
 	});
 
-   
-    let randomStoreValues = await request.json()
-    console.log('request json: ', randomStoreValues)
+    
     const randomResults = await prisma.random.create({
         data: {
             account_id: session.user.account_id,

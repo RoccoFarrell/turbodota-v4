@@ -72,7 +72,7 @@ const updateCalculations = (store: any) => {
 		// store.startingGold - (store.bannedHeroes.length > 3 ? store.modifierTotal : 0) > 25
 		// 	? store.startingGold - store.modifierTotal
 		// 	: 25;
-	store.expectedGold = store.startingGold - store.modifierTotal > 25 ? store.startingGold - store.modifierTotal : 25;
+	store.expectedGold = store.startingGold - store.modifierTotal > 10 ? store.startingGold - store.modifierTotal : 10;
 	return store;
 };
 

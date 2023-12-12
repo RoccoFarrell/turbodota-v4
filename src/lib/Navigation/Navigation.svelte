@@ -10,19 +10,19 @@
 <nav class="list-nav p-4">
 	<ul>
 		<li>
-			<a href="/">
+			<a href="/" data-sveltekit-preload-data="tap">
 				<span class="badge bg-primary-500"></span>
 				<span class="flex-auto">Home</span></a
 			>
 		</li>
-		<li><a href="/turbotown">Turbo Town</a></li>
-		<li><a href="/random">Walker Random</a></li>
-		<li><a href="/herostats">Hero Stats</a></li>
+		<li><a href="/turbotown" data-sveltekit-preload-data="tap">Turbo Town</a></li>
+		<li><a href="/random" data-sveltekit-preload-data="tap">Walker Random</a></li>
+		<li><a href="/herostats" data-sveltekit-preload-data="tap">Hero Stats</a></li>
 		<li class="h-32 lg:h-4"></li>
 		<hr class="!border-t-4" />
 		{#if !session || !session.user}
 			<li>
-				<a class="" href="/api/auth/steam"
+				<a class="" href="/api/auth/steam" data-sveltekit-preload-data="tap"
 					>
                     <span><img class="w-6 ml-1.5" alt="steamlogo" src={steam_logo} /></span>
                     <span>Login</span>
