@@ -68,7 +68,18 @@ model User {
   key          Key[]
   auth_session Session[]
   randoms      Random[]
+  user_prefs UserPrefs[]
   //matches      Match[]
+}
+
+model UserPrefs {
+  id Int @id @default(autoincrement())
+  account_id Int
+  name String
+  value String
+  user            User?     @relation(fields: [account_id], references: [account_id])
+
+  @@unique([account_id, name], name: "userPlusName")
 }
 
 model Random {
@@ -77,6 +88,7 @@ model Random {
   active          Boolean
   status          String
   date            DateTime
+  win             Boolean?
   endDate         DateTime?
   endMatchID      Int?
   availableHeroes String

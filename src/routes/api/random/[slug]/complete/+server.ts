@@ -1,6 +1,7 @@
 import type { RequestHandler } from '@sveltejs/kit';
 import { auth } from '$lib/server/lucia';
 import prisma from '$lib/server/prisma';
+import winOrLoss from '$lib/helpers/winOrLoss';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unreachable code error
@@ -33,15 +34,20 @@ export const POST: RequestHandler = async ({ request, params, url, locals }) => 
 	// 	}
 	// });
 
-    console.log(`[api/random/${account_id}/complete] completing random for: ${completedRandom.id} ${completedRandom.randomedHero} in ${completedMatch.match_id}`);
+    console.log(`[api/random/${account_id}/complete] completing random for: randomID - ${completedRandom.id} randomedHero - ${completedRandom.randomedHero} in match - ${completedMatch.match_id}`);
+
+	let completedRandomWithoutMatch = { ...completedRandom }
+	delete completedRandomWithoutMatch.match
+
 	const randomCompleteResults = await prisma.random.update({
         where: {
             id: completedRandom.id
         },
 		data: {
-            ...completedRandom,
+            ...completedRandomWithoutMatch,
             active: false,
             status: 'completed',
+			win: winOrLoss(completedMatch.player_slot, completedMatch.radiant_win),
             endDate: new Date(),
             endMatchID: completedMatch.id,
 			// account_id: session.user.account_id,

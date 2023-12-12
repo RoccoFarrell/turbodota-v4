@@ -68,6 +68,24 @@ declare global {
 		roles: string
 		legs: Int
 	}
+
+	interface Random {
+		id: number,
+		account_id: number,
+		active: boolean,
+		status: string,
+		date: Date,
+		endDate: Date,
+		endMatchID: number,
+		availableHeroes: string,
+		bannedHeroes: string,
+		selectedRoles: string,
+		expectedGold: number,
+		modifierAmount: number,
+		modifierTotal:  number,
+		randomedHero: number,
+		match?: Match
+	}
 	
 
 	interface SortBy {

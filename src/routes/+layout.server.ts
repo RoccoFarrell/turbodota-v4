@@ -26,5 +26,19 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 
 	const session = await locals.auth.validate()
 	console.log(`session: ${session}`)
-	return { session, heroDescriptions: await getHeroes() }
+
+	//get user prefs if user is logged in
+	let userPreferences = {}
+	if(session && session.user){
+		const prefsResponse = await fetch (`${url.origin}/api/preferences/${session.user.account_id}`, {
+			method: 'GET',
+			headers: {
+				'content-type': 'application/json'
+			}
+		})
+
+		let responseData = await prefsResponse.json()
+		userPreferences = responseData
+	}
+	return { session, heroDescriptions: await getHeroes(), userPreferences }
 }

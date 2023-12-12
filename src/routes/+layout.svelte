@@ -34,6 +34,11 @@
 	import { storePopup } from '@skeletonlabs/skeleton';
 	storePopup.set({ computePosition, autoUpdate, flip, shift, offset, arrow });
 
+	//analytics
+	import { inject } from '@vercel/analytics';
+	
+	inject({ mode: dev ? 'development' : 'production' });
+
 	//mocks
 	// Loaded from .env.local, guide covers this
 	// step in a moment.

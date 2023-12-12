@@ -6,6 +6,9 @@
 	import type { PageData } from './$types';
 	export let data: PageData;
 
+	//helpers
+	import winOrLoss from '$lib/helpers/winOrLoss';
+
 	//skeleton
 	import { getToastStore, storeHighlightJs } from '@skeletonlabs/skeleton';
 	import type { ToastSettings, ToastStore } from '@skeletonlabs/skeleton';
@@ -20,17 +23,38 @@
 	//images
 	import Lock from '$lib/assets/lock.png';
 
-	// console.log('data: ', data);
-	// $: console.log('store data: ', $randomStore);
+	console.log('data: ', data);
+	$: console.log('store data: ', $randomStore);
+
+	//set user preferences on page
+	if(data.userPreferences){
+		console.log(data.userPreferences)
+		let banListPref = data.userPreferences.filter(pref => pref.name === "randomBanList")[0]
+
+		console.log(banListPref)
+		let randomBanListParsed = JSON.parse(banListPref.value)
+		console.log(randomBanListParsed)
+
+		let setList = data.heroDescriptions.allHeroes.filter((hero: Hero) =>
+			randomBanListParsed.includes(hero.id)
+		)
+
+		randomStore.setBanList(setList)
+	}
 
 	let generatedRandomHero: Hero | null = null;
 
 	let randomFound = false;
 	//evaluate if there is an active random stored in the DB
-	if ('randoms' in data && data?.randoms.length > 0) {
+	if ('randoms' in data && data?.randoms.length > 0 && data.randoms.filter((random) => random.active).length > 0) {
 		randomFound = true;
 		const { availableHeroes, bannedHeroes, selectedRoles, expectedGold, modifierAmount, modifierTotal, randomedHero } =
-			data.randoms[0];
+			data.randoms
+				.filter((random) => random.active)
+				.sort((a: any, b: any) => {
+					if (a.start_time < b.start_time) return -1;
+					else return 1;
+				})[0];
 
 		let allHeroesCopy = [...data.heroDescriptions.allHeroes];
 		// console.log(availableHeroes.split(','));
@@ -42,36 +66,56 @@
 
 		//console.log(allHeroesCopy.filter((hero: Hero) => hero.id === 1)[0])
 
-		randomStore.set({
-			allHeroes: data.heroDescriptions.allHeroes,
-			availableHeroes: availableHeroes.split(',').map((randomID: string) => {
-				return allHeroesCopy.filter((hero: Hero) => hero.id === parseInt(randomID))[0];
-			}),
-			bannedHeroes:
-				bannedHeroes.length > 0
-					? bannedHeroes.split(',').map((randomID: string) => {
-							return allHeroesCopy.filter((hero: Hero) => hero.id === parseInt(randomID))[0];
-					  })
-					: [],
-			selectedRoles: selectedRoles.split(',') || [],
-			startingGold: 100,
-			expectedGold,
-			banMultiplier: 8,
-			modifierAmount,
-			modifierTotal,
-			freeBans: 3,
-			maxBans: 10,
-			randomedHero: allHeroesCopy.filter((hero: Hero) => hero.id === randomedHero)[0]
-		});
+		if (bannedHeroes && selectedRoles) {
+			randomStore.set({
+				allHeroes: data.heroDescriptions.allHeroes,
+				availableHeroes: availableHeroes.split(',').map((randomID: string) => {
+					return allHeroesCopy.filter((hero: Hero) => hero.id === parseInt(randomID))[0];
+				}),
+				bannedHeroes:
+					bannedHeroes.length > 0
+						? bannedHeroes.split(',').map((randomID: string) => {
+								return allHeroesCopy.filter((hero: Hero) => hero.id === parseInt(randomID))[0];
+						  })
+						: [],
+				selectedRoles: selectedRoles.split(',') || [],
+				startingGold: 100,
+				expectedGold,
+				banMultiplier: 8,
+				modifierAmount,
+				modifierTotal,
+				freeBans: 3,
+				maxBans: 10,
+				randomedHero: allHeroesCopy.filter((hero: Hero) => hero.id === randomedHero)[0]
+			});
+		}
 
 		generatedRandomHero = $randomStore.randomedHero;
 	} else if (data.session && data.session.user) {
 		const t: ToastSettings = {
-			message: `No randoms found for user`,
+			message: `No active randoms found for user`,
 			background: 'variant-filled-warning'
 		};
 
 		toastStore.trigger(t);
+	}
+
+	//calc random lifetime stats on load
+	let randomLifetimeStats = {
+		wins: 0,
+		losses: 0,
+		totalGoldWon: 0,
+		totalLostGoldModifier: 0
+	};
+
+	let completedRandoms = data.randoms.filter((random) => !random.active);
+	if (completedRandoms.length > 0) {
+		randomLifetimeStats = {
+			wins: completedRandoms.filter((random) => random.win).length || 0,
+			losses: completedRandoms.filter((random) => !random.active && !random.win).length,
+			totalGoldWon: completedRandoms.reduce((acc, cur) => acc + cur.expectedGold, 0),
+			totalLostGoldModifier: completedRandoms.reduce((acc, cur) => acc + cur.modifierTotal, 0)
+		};
 	}
 
 	$: showHeroGrid = true;
@@ -105,7 +149,7 @@
 	const banHero = (hero: Hero) => {
 		let banIndex = $randomStore.bannedHeroes.indexOf(hero);
 
-		if ($randomStore.bannedHeroes.length + 1 > ($randomStore.maxBans) && banIndex === -1) banLimitErrorVisible = true;
+		if ($randomStore.bannedHeroes.length + 1 > $randomStore.maxBans && banIndex === -1) banLimitErrorVisible = true;
 		else {
 			randomStore.banHero(hero);
 		}
@@ -131,11 +175,42 @@
 	};
 
 	const setBanList = (inputList?: string) => {
-		if (inputList) {
+		if (typeof inputList === "string") {
 			if (inputList === 'garbage') randomStore.setBanList(autoBanLists.garbage);
 		} else {
 			randomStore.reset(data.heroDescriptions.allHeroes);
 			//randomStore.setAllHeroes(data.heroDescriptions.allHeroes)
+		}
+	};
+
+	const saveBanList = async () => {
+		if ($randomStore.bannedHeroes.length <= 3) {
+			let response = await fetch(`/api/preferences/${data.session.user.account_id}`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					name: 'randomBanList',
+					value: JSON.stringify($randomStore.bannedHeroes.map((hero: Hero) => hero.id))
+				})
+			});
+
+			let prefsResponse = await response.json();
+			console.log(prefsResponse)
+			if (prefsResponse.status === 'success') {
+				const t: ToastSettings = {
+					message: `Bans saved!`,
+					background: 'variant-filled-success'
+				};
+				toastStore.trigger(t)
+			}
+		} else {
+			const t: ToastSettings = {
+				message: `Need either 0 or 3 bans selected to save!`,
+				background: 'variant-filled-warning'
+			};
+			toastStore.trigger(t);
 		}
 	};
 
@@ -190,7 +265,7 @@
 				randomedHero: $randomStore.randomedHero.id
 			};
 			//bodyData.availableHeroes = bodyData.availableHeroes.map((hero: Hero) => hero.id);
-			let response = await fetch(`/api/random/${data.session.user.account_id}`, {
+			let response = await fetch(`/api/random/${data.session.user.account_id}/create`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json'
@@ -200,7 +275,7 @@
 
 			console.log(response);
 
-			randomFound = true
+			randomFound = true;
 		}
 	};
 
@@ -246,10 +321,10 @@
 		</div>
 
 		<div
-			class="sm:grid sm:grid-cols-2 max-sm:flex max-sm:flex-col items-center max-sm:space-y-4 h-full sm:place-content-start"
+			class="lg:grid lg:grid-cols-3 max-sm:flex max-sm:flex-col items-center max-lg:space-y-8 sm:place-content-start lg:gap-x-8"
 		>
 			<!-- Hero ban grid -->
-			<div class="w-full flex flex-col mx-auto max-w-[95%] items-center sm:h-full relative">
+			<div class="w-full flex flex-col items-center sm:h-full relative max-md:max-w-sm">
 				{#if randomFound}
 					<div class="z-50 absolute h-full w-full bg-slate-800/80 flex flex-col items-center justify-center rounded-xl">
 						<h3 class="h3 text-primary-500 rounded-xl m-4 bg-surface-500/90 p-4">
@@ -258,7 +333,7 @@
 						<img src={Lock} class="h-32 w-32 inline" alt="locked" />
 					</div>
 				{/if}
-				<div class="mb-4 bg-surface-500/10 p-4 rounded-full xl:w-1/2 w-4/5 shadow-md">
+				<div class="mb-4 bg-surface-500/10 p-4 rounded-full w-4/5 shadow-md">
 					<h3 class="h3 dark:text-yellow-500 text-primary-500">1. Ban heroes below</h3>
 					<p class="text-xs">Click a hero to ban!</p>
 				</div>
@@ -278,6 +353,7 @@
 				</div>
 				<!-- Desktop Hero Grid -->
 				<div
+					id="desktopHeroGrid"
 					class={`z-0 flex flex-wrap max-w-[95%] p-4 max-md:hidden xs:visible justify-center overflow-y-auto w-full max-h-[50rem] ${
 						showHeroGrid ? 'visible border border-dashed border-red-500' : 'border-double border-t-4 border-amber-500'
 					}`}
@@ -297,6 +373,7 @@
 				</div>
 				<!-- Mobile Hero Grid -->
 				<div
+					id="mobileHeroGrid"
 					class={`w-full flex flex-wrap max-w-[95%] p-2 md:hidden max-md:visible justify-center overflow-y-auto max-h-96 ${
 						showHeroGrid ? 'visible border border-dashed border-red-500' : 'border-double border-b-4 border-amber-500'
 					}`}
@@ -316,26 +393,35 @@
 				</div>
 
 				<!-- Banned heroes -->
-				<div class="w-full space-x-1 max-w-[90%] flex-wrap p-2 md:p-4 my-1 md:my-4 md:mb-10">
-					<h4 class="h4">Banned Heroes:</h4>
-					{#if $randomStore.bannedHeroes.length > 0}
-						<div>
-							{#each $randomStore.bannedHeroes as bannedHero}
-								<span class="badge variant-filled-secondary">{bannedHero?.localized_name}</span>
-							{/each}
-						</div>
-						<button class="btn bg-red-500 w-1/2 my-4" on:click={() => setBanList()}>Clear</button>
-					{:else}
-						<p>none</p>
-					{/if}
+				<div id="bannedHeroes" class="w-full space-x-1 max-w-[90%] flex-wrap p-2 my-2 md:mb-10">
+					<button
+						class={'btn dark:bg-purple-800/50 bg-purple-500/50 w-3/4'}
+						disabled={!data.session}
+						on:click={() => saveBanList()}
+						>{!data.session ? 'Log In to save 3 Free Bans' : 'Save Bans to account'}</button
+					>
+					<div class="my-2">
+						<h4 class="h4">Banned Heroes:</h4>
+						{#if $randomStore.bannedHeroes.length > 0}
+							<div>
+								{#each $randomStore.bannedHeroes as bannedHero}
+									<span class="badge variant-filled-secondary">{bannedHero?.localized_name}</span>
+								{/each}
+							</div>
+							<button class="btn bg-red-500 w-1/2 my-4" on:click={() => setBanList()}>Clear</button>
+						{:else}
+							<p>none</p>
+						{/if}
+					</div>
 				</div>
 				<!-- {#if !showHeroGrid}
 					<div class="border-double border-b-4 border-amber-500 w-full"></div>
 				{/if} -->
 			</div>
 
+			<!-- Autobans Roles and Modifiers -->
 			<div
-				class="md:w-full max-sm:w-fit text-center h-full items-center dark:bg-surface-600/30 bg-surface-200/30 border border-surface-200 dark:border-surface-700 shadow-lg rounded-xl px-2 md:py-8 max-sm:py-4 mx-4"
+				class="md:w-full max-sm:w-fit text-center h-full items-center dark:bg-surface-600/30 bg-surface-200/30 border border-surface-200 dark:border-surface-700 shadow-lg rounded-xl px-2 md:py-8 max-sm:py-4"
 			>
 				{#if generatedRandomHero}
 					<div
@@ -356,7 +442,7 @@
 				<div class="relative">
 					{#if randomFound}
 						<div
-							class="z-50 absolute h-full w-full bg-slate-800/80 flex flex-col items-center justify-center rounded-xl"
+							class="z-40 absolute h-full w-full bg-slate-800/80 flex flex-col items-center justify-center rounded-xl"
 						>
 							<!-- <h2 class="h2 text-primary-500 rounded-full bg-surface-500 p-4">
 							Randoming Locked, you have an active random!
@@ -365,7 +451,7 @@
 						</div>
 					{/if}
 
-					<div class="mb-2 bg-surface-500/10 p-4 rounded-full xl:w-1/2 w-4/5 mx-auto shadow-md">
+					<div class="mb-2 bg-surface-500/10 p-4 rounded-full w-4/5 mx-auto shadow-md">
 						<h3 class="h3 dark:text-yellow-500 text-primary-500">2. Autobans</h3>
 						<p class="text-xs">Use the preset lists below to eliminate the worst.</p>
 					</div>
@@ -378,7 +464,7 @@
 					</div>
 
 					<!-- Role filtering -->
-					<div class="mb-2 bg-surface-500/10 p-4 rounded-full xl:w-1/2 w-4/5 mx-auto shadow-md">
+					<div class="mb-2 bg-surface-500/10 p-4 rounded-full w-4/5 mx-auto shadow-md">
 						<h3 class="h3 dark:text-yellow-500 text-primary-500">3. Roles</h3>
 						<p class="text-xs">Filter by role to fit your comp</p>
 					</div>
@@ -404,7 +490,7 @@
 				</div>
 
 				<!-- Modifier calculation -->
-				<div class="mb-2 bg-surface-500/10 p-4 rounded-full xl:w-1/2 w-4/5 mx-auto shadow-md">
+				<div class="mb-2 bg-surface-500/10 p-4 rounded-full w-4/5 mx-auto shadow-md">
 					<h3 class="h3 dark:text-yellow-500 text-primary-500">4. Modifier Calculations</h3>
 					<p class="text-xs">See how much gold your random will get you on win!</p>
 				</div>
@@ -420,7 +506,11 @@
 						</div>
 						<div>
 							<p>{$randomStore.bannedHeroes.length}</p>
-							<p>{$randomStore.bannedHeroes.length < $randomStore.freeBans ? $randomStore.freeBans - $randomStore.bannedHeroes.length : 0}</p>
+							<p>
+								{$randomStore.bannedHeroes.length < $randomStore.freeBans
+									? $randomStore.freeBans - $randomStore.bannedHeroes.length
+									: 0}
+							</p>
 							<p class="text-green-600">{$randomStore.availableHeroes.length}</p>
 							<p class="text-red-500">-{$randomStore.modifierTotal}</p>
 							<p class="text-amber-500 font-bold">
@@ -434,15 +524,100 @@
 				</div>
 
 				{#if !randomFound}
-				<!-- Random Button-->
-				<button
-					on:click={generateRandomHero}
-					disabled={randomFound}
-					
-					class="btn variant-filled-primary w-full my-4 max-sm:fixed max-sm:bottom-0 max-sm:left-0 max-sm:my-8 max-sm:mx-4 max-sm:max-w-[90%] md:max-w-[80%]"
-					>Random me</button
-				>
+					<!-- Random Button-->
+					<button
+						on:click={generateRandomHero}
+						disabled={randomFound}
+						class="z-50 btn variant-filled-primary w-full my-4 max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:my-8 max-lg:mx-4 max-lg:max-w-[90%] md:max-w-[80%]"
+						>Random me</button
+					>
 				{/if}
+			</div>
+
+			<!-- Stats and History -->
+			<div
+				class="w-full h-full max-md:max-w-sm space-y-10 dark:bg-surface-600/30 bg-surface-200/30 border border-surface-200 dark:border-surface-700 rounded-lg relative"
+			>
+				{#if !data.session}
+					<div class="z-10 absolute h-full w-full bg-slate-800/80 flex flex-col items-center justify-center rounded-lg">
+						<h3 class="h3 text-primary-500 rounded-xl m-4 bg-surface-500/90 p-4">
+							Log in to start your Turbodota Random journey!
+						</h3>
+						<img src={Lock} class="h-32 w-32 inline" alt="locked" />
+					</div>
+				{/if}
+				<div class="mx-4 my-2">
+					<!-- Stats -->
+					<div>
+						<h2 class="h2 text-primary-500 w-full border-b border-primary-500 border-dashed py-2 mb-2">Stats</h2>
+						<h2 class="h2">
+							<p class="text-green-700 inline font-bold h1">
+								{randomLifetimeStats.wins}
+							</p>
+							W -
+							<p class="inline text-red-600 font-bold h1">
+								{randomLifetimeStats.losses}
+							</p>
+							L
+						</h2>
+						<div class="my-2">
+							<div>
+								Total Gold Acquired: <p class="text-amber-500 inline">{randomLifetimeStats.totalGoldWon}g</p>
+							</div>
+							<div>
+								Gold missed from Modifier: <p class="text-red-500 inline">
+									{randomLifetimeStats.totalLostGoldModifier}g
+								</p>
+							</div>
+						</div>
+
+						<!-- Add these later once people get more games -->
+						<!-- <p>Most randomed</p>
+				<p>Most randomed wins: Techies</p>
+				<p>Most randomed losses: Broodmother</p> -->
+					</div>
+					<!-- History-->
+					<div class="w-full flex flex-col space-y-4">
+						<h2 class="h2 text-primary-500 w-full border-b border-primary-500 border-dashed py-2">History</h2>
+						<div class="h-full">
+							<div class="grid grid-cols-4 text-secondary-500">
+								<div>Hero</div>
+								<div>Win or Loss</div>
+								<div>Gold</div>
+								<div>Lost Gold</div>
+							</div>
+							<div class="grid grid-cols-4 place-items-center">
+								{#each completedRandoms as random}
+									<!-- Hero-->
+									<div class="flex items-center space-x-2">
+										<i class={`z-0 d2mh hero-${random.randomedHero}`}></i>
+										<p class="inline">
+											{data.heroDescriptions.allHeroes.filter((hero) => hero.id === random.randomedHero)[0]
+												.localized_name}
+										</p>
+									</div>
+									<!-- Win or loss -->
+									<div class="flex items-center space-x-2">
+										{#if random.win}
+											<h2 class="h2 text-green-600">W</h2>
+										{:else}
+											<h2 class="h2 text-red-600">L</h2>
+										{/if}
+									</div>
+									<!-- Gold -->
+									<div class="flex items-center space-x-2">
+										<p class="text-amber-500 inline font-bold">{random.expectedGold}g</p>
+									</div>
+									<!-- Lost gold -->
+									<div class="flex items-center space-x-2">
+										<p class="text-red-500 inline font-bold">{random.modifierTotal}g</p>
+									</div>
+								{/each}
+							</div>
+						</div>
+					</div>
+				</div>
+				<!-- {JSON.stringify(data.randoms, null, 4)} -->
 			</div>
 		</div>
 	</div>
