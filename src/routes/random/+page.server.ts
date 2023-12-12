@@ -42,6 +42,7 @@ export const load: PageServerLoad = async ({ locals, parent, url }) => {
 		mocked: false
 	};
 	let responseComplete: any = null;
+	let matchesSinceRandom: Match[] = []
 
 	if (session && session.user) {
 		randomsForUser = await getRandomsForUser();
@@ -75,6 +76,10 @@ export const load: PageServerLoad = async ({ locals, parent, url }) => {
 					if (a.date < b.date) return -1;
 					else return 1;
 				});
+
+			matchesSinceRandom = rawMatchData.filter((match: Match) => {
+				match.start_time > activeRandoms[0].date
+			})
 
 			//filter all matches for games in the oldest active random
 			filteredMatchData = rawMatchData
@@ -111,6 +116,7 @@ export const load: PageServerLoad = async ({ locals, parent, url }) => {
 		randoms: randomsForUser,
 		rawMatchData,
 		randomAttempts: filteredMatchData,
+		matchesSinceRandom,
 		flags,
 		responseComplete
 	};
