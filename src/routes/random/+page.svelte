@@ -31,8 +31,8 @@
 		let banListPref = data.userPreferences.filter((pref: any) => pref.name === 'randomBanList');
 
 		try {
-			if (banListPref.length > 0 && banListPref.value) {
-				let randomBanListParsed = JSON.parse(banListPref.value);
+			if (banListPref.length > 0 && banListPref[0].value) {
+				let randomBanListParsed = JSON.parse(banListPref[0].value);
 
 				let setList = data.heroDescriptions.allHeroes.filter((hero: Hero) => randomBanListParsed.includes(hero.id));
 
@@ -65,9 +65,9 @@
 		// 	})
 		// );
 
-		//console.log(allHeroesCopy.filter((hero: Hero) => hero.id === 1)[0])
+		//console.log("randomed hero: ", allHeroesCopy.filter((hero: Hero) => hero.id === randomedHero)[0])
 
-		if (bannedHeroes && selectedRoles) {
+		if (bannedHeroes && selectedRoles !== null && randomedHero) {
 			randomStore.set({
 				allHeroes: data.heroDescriptions.allHeroes,
 				availableHeroes: availableHeroes.split(',').map((randomID: string) => {
@@ -89,6 +89,8 @@
 				maxBans: 10,
 				randomedHero: allHeroesCopy.filter((hero: Hero) => hero.id === randomedHero)[0]
 			});
+		} else {
+			console.error('[set locked random hero] - couldnt set locked random')
 		}
 
 		generatedRandomHero = $randomStore.randomedHero;
