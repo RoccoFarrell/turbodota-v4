@@ -67,7 +67,9 @@
 
 		//console.log("randomed hero: ", allHeroesCopy.filter((hero: Hero) => hero.id === randomedHero)[0])
 
-		if (bannedHeroes && selectedRoles !== null && randomedHero) {
+		console.log(`bannedHeroes: ${bannedHeroes} selectedRoles: ${selectedRoles} randomedHero: ${randomedHero}`)
+
+		if (typeof bannedHeroes === "string" && typeof selectedRoles === "string" && randomedHero) {
 			randomStore.set({
 				allHeroes: data.heroDescriptions.allHeroes,
 				availableHeroes: availableHeroes.split(',').map((randomID: string) => {
