@@ -166,7 +166,7 @@
 	};
 
 	const recalcTableData = () => {
-		console.log($sortData);
+		//console.log($sortData);
 		let tableData: TableRow[] = [];
 
 		let startDateUnix = $sortData.startDate === '' ? new Date(0) : new Date($sortData.startDate);
@@ -180,23 +180,25 @@
 				let filteredMatchData = [];
 
 				//filter by heroID
-				if (typeof $sortData.heroID === 'number' && $sortData.role == 'All') {
+				if ($sortData.heroID != -1) {
 					$sortData.role = 'All';
 					$sortData.selectedPlayer = 'All';
-					$sortData.heroID === -1
-						? (filteredMatchData = player.matchData)
-						: (filteredMatchData = player.matchData.filter((match: Match) => match.hero_id === $sortData.heroID));
+					filteredMatchData = player.matchData.filter((match: Match) => match.hero_id === $sortData.heroID);
 				}
 				//filter by heroRole
-				else if (typeof $sortData.role === 'string' && $sortData.heroID == -1) {
+				else if ($sortData.role != 'All') {
 					$sortData.selectedPlayer = 'All';
 					$sortData.heroID = -1;
 					if ($sortData.role === 'all' || $sortData.role === 'All') {
 						filteredMatchData = player.matchData;
 					} else {
-						let filteredHeroList = heroList.filter((hero) => hero.roles.includes($sortData.role)).map((item) => item.id);
+						let filteredHeroList = heroList
+							.filter((hero) => hero.roles.includes($sortData.role))
+							.map((item) => item.id);
 						filteredMatchData = player.matchData.filter((match: Match) => filteredHeroList.includes(match.hero_id));
 					}
+				} else {
+					filteredMatchData = player.matchData;
 				}
 
 				//filter by Date
@@ -358,6 +360,7 @@
 									<select
 										class="select select-sm variant-ghost-surface w-full"
 										bind:value={$sortData.heroID}
+										on:change={() => ($sortData.role = 'All')}
 										on:change={() => recalcTable()}
 									>
 										{#each heroList as hero}
@@ -382,7 +385,12 @@
 							{/if}
 							<div class="flex md:flex-col max-sm:justify-around items-center w-full md:space-x-1 md:justify-center">
 								<p class="w-full inline text-primary-500 font-bold max-sm:w-1/4 md:text-center">Role</p>
-								<select class="select select-sm variant-ghost-surface" bind:value={$sortData.role} on:change={() => recalcTable()}>
+								<select
+									class="select select-sm variant-ghost-surface"
+									bind:value={$sortData.role}
+									on:change={() => ($sortData.heroID = -1)}
+									on:change={() => recalcTable()}
+								>
 									{#each heroRoles as role}
 										<option>{role}</option>
 									{/each}
