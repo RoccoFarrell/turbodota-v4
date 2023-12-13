@@ -90,7 +90,7 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
 
 	let matchStats: Match[] = [];
 	let allowUpdates: boolean = true;
-	let forceFullUpdate: boolean = false;
+	let forceFullUpdate: boolean = true;
 
 	let dataSource: string = '';
 	let updateInterval = new Date();
@@ -152,7 +152,7 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
 
 		//sort by start time
 		matchStats = matchStats.sort((a, b) => {
-			if (a.start_time < b.start_time) return -1;
+			if (a.start_time <= b.start_time) return -1;
 			else return 1;
 		});
 
@@ -170,10 +170,10 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
 
 		while (txRecordCount > 0 && loopCount < 10) {
 			if (txRecordCount - txBlockSize > 0) {
-				let partialMatchArr = matchStats.slice(txRecordCount - txBlockSize, txRecordCount - 1);
+				let partialMatchArr = matchStats.slice(txRecordCount - txBlockSize, txRecordCount);
 
 				console.log(`[matches][${account_id}] - too many records, chunked insert with block size ${txBlockSize}`);
-				console.log(`[matches][${account_id}] - from index ${txRecordCount - txBlockSize} to ${txRecordCount - 1}`);
+				console.log(`[matches][${account_id}] - from index ${txRecordCount - txBlockSize} to ${txRecordCount}`);
 
 				let { match, tx } = await writeRecordsChunked(partialMatchArr, account_id);
 
@@ -181,9 +181,9 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
 				console.log(`tx results: ${match} | ${tx}`);
 				txRecordCount = txRecordCount - txBlockSize;
 			} else {
-				let partialMatchArr = matchStats.slice(0, txRecordCount - 1);
-				console.log(`[matches][${account_id}] - too many records, chunked insert with block size ${txBlockSize}`);
-				console.log(`[matches][${account_id}] - final insert from index 0 to ${txRecordCount - 1}`);
+				let partialMatchArr = matchStats.slice(0, txRecordCount);
+				console.log(`[matches][${account_id}] - too many records, chunked insert with block size ${txRecordCount}`);
+				console.log(`[matches][${account_id}] - final insert from index 0 to ${txRecordCount}`);
 
 				let { match, tx } = await writeRecordsChunked(partialMatchArr, account_id);
 
@@ -222,8 +222,10 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
 			where: { account_id }
 		});
 
-		console.log(`[matches][${account_id}] ${matchStats.length} matches returned from Database`);
-		//console.log(matchesResult)
+		console.log(`[matches][${account_id}] ${matchStats.length} matches returned from OpenDota`);
+		console.log(`[matches][${account_id}] ${matchesResult.length} matches returned from Database`);
+		if(matchStats.filter(match => match.id === 7482782346).length > 0) console.log('found 7482782346 in Open Dota')
+		if(matchesResult.filter(match => match.id === 7482782346).length > 0) console.log('found 7482782346 in matches result')
 		matchStats = matchesResult;
 		dataSource = 'db';
 	}
