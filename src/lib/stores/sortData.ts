@@ -50,7 +50,7 @@ function createSortData() {
         reset: () => {
   
                 update(n => n = {
-                    startDate: "",
+                    startDate: new Date(0).toISOString().slice(0,10),
                     endDate: new Date().toISOString().slice(0,10),
                     role: "All",
                     heroID: -1,
