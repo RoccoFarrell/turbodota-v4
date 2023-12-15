@@ -3,7 +3,7 @@
 
 	import Knight from '$lib/assets/knight.png';
 	import Quest from '$lib/assets/questIcon.png';
-	import Town from '$lib/assets/turbotowndark.png';
+	import Town from '$lib/assets/turbotown_dark.png';
 	import Observer from '$lib/assets/item_observer.png';
 </script>
 
