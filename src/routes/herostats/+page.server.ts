@@ -1,5 +1,5 @@
 import type { Actions, PageServerLoad } from './$types';
-import { prisma } from '$lib/server/prisma';
+import prisma from '$lib/server/prisma';
 import { error, fail } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 

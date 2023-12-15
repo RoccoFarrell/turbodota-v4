@@ -13,6 +13,7 @@
 
 	import { beforeNavigate } from '$app/navigation';
 	import { navigating, page } from '$app/stores';
+	import { browser } from '$app/environment';
 
 	//types
 	import type { PageData } from './$types';
@@ -36,7 +37,7 @@
 
 	//analytics
 	import { inject } from '@vercel/analytics';
-	
+
 	inject({ mode: dev ? 'development' : 'production' });
 
 	//mocks
@@ -65,6 +66,18 @@
 
 	// let isReady = enableMocking()
 	// $: console.log(isReady)
+
+	//visibility change
+
+	if (browser) {
+		document.addEventListener('visibilitychange', () => {
+			if (window.document.visibilityState === 'visible') {
+				console.log('[document] - visible - ', document.visibilityState);
+			} else {
+				console.log('[document] - hidden', document.visibilityState);
+			}
+		});
+	}
 
 	//page data
 
@@ -131,13 +144,15 @@
 
 				<svelte:fragment slot="trail">
 					<div class="flex justify-around space-x-8 items-center">
-						<div class="h-full m-auto">
-							{#if data.session && !$page.url.pathname.includes('herostats')}
-								<div class="m-auto h-full text-center">
-									Welcome <p class="font-bold text-red-400">{`${data.session.user.username}`}</p>
-								</div>
-							{/if}
-						</div>
+						{#key data.session}
+							<div class="h-full m-auto">
+								{#if data.session && !$page.url.pathname.includes('herostats')}
+									<div class="m-auto h-full text-center">
+										Welcome <p class="font-bold text-red-400">{`${data.session.user.username}`}</p>
+									</div>
+								{/if}
+							</div>
+						{/key}
 						<!-- <form method="POST">
 						<div class="flex flex-col lg:flex-row lg:space-x-2">	
 							<a class="btn btn-sm variant-ghost-surface" href="/">Home</a>
@@ -168,11 +183,13 @@
 			<!-- --- -->
 		</svelte:fragment>
 
-		<!-- <svelte:fragment slot="footer">
-		<div class="flex w-full justify-center m-auto">
-			<p class="text-xs text-slate-300 dark:text-slate-700">Copyright No Salt Studios 2023</p>
-		</div>
-	</svelte:fragment> -->
+		<svelte:fragment slot="pageFooter">
+			{#if $page.url.pathname.includes('turbotown')}
+				<div class="flex h-32 w-full justify-center m-auto border border-red-500">
+					<p class="text-xs text-slate-300 dark:text-slate-700">Copyright No Salt Studios 2023</p>
+				</div>
+			{/if}
+		</svelte:fragment>
 
 		<!-- Page Route Content -->
 		<div class="h-max flex justify-center w-full">

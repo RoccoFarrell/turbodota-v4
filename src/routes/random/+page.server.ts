@@ -42,7 +42,7 @@ export const load: PageServerLoad = async ({ locals, parent, url }) => {
 		mocked: false
 	};
 	let responseComplete: any = null;
-	let matchesSinceRandom: Match[] = []
+	let matchesSinceRandom: Match[] = [];
 
 	if (session && session.user) {
 		randomsForUser = await getRandomsForUser();
@@ -77,14 +77,20 @@ export const load: PageServerLoad = async ({ locals, parent, url }) => {
 					else return 1;
 				});
 
+			let activeRandomDate = activeRandoms[0].date;
+			let activeRandomDate5Minutes = new Date(activeRandoms[0].date.getTime() - 5 * 60 * 1000);
 			matchesSinceRandom = rawMatchData.filter((match: Match) => {
-				match.start_time > activeRandoms[0].date
-			})
+				match.start_time > activeRandomDate5Minutes;
+			});
+
+			console.log(`activeRandomDate: ${activeRandomDate}, minus 5 minutes: ${activeRandomDate5Minutes}`)
 
 			//filter all matches for games in the oldest active random
+			//minus 5 minutes from the random start date to account for picking phase
 			filteredMatchData = rawMatchData
 				.filter(
-					(match: Match) => match.start_time > activeRandoms[0].date && match.hero_id === activeRandoms[0].randomedHero
+					(match: Match) =>
+						match.hero_id === activeRandoms[0].randomedHero && match.start_time > activeRandomDate5Minutes
 				)
 				.sort((a: any, b: any) => {
 					if (a.start_time < b.start_time) return -1;
@@ -105,6 +111,7 @@ export const load: PageServerLoad = async ({ locals, parent, url }) => {
 				});
 				let completeResponseData = await completeResponse.json();
 				responseComplete = completeResponseData;
+				randomsForUser = await getRandomsForUser();
 			} else {
 				responseComplete = { error: 'couldnt complete random' };
 			}

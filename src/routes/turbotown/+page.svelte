@@ -1,15 +1,73 @@
 <script lang="ts">
-    import type { PageData } from './$types';
-    import town_logo_light from '$lib/assets/turbotownlight.png'
-    import town_logo_dark from '$lib/assets/turbotowndark.png'
-    //export let data: PageData;
+	import type { PageData } from './$types';
+	import { browser } from '$app/environment';
+	//images
+	import town_logo_light from '$lib/assets/turbotown_light.png';
+	import town_logo_dark from '$lib/assets/turbotown_dark.png';
 
+	//components
+	import { Avatar, ProgressBar } from '@skeletonlabs/skeleton';
+	import type { Return } from '@prisma/client/runtime/library';
+	import { onMount } from 'svelte';
+	export let data: PageData;
+
+	console.log(data);
+
+	$: training = false;
+	$: progressVal = 0;
+	$: skillCount = 0;
+
+    onMount(() => {
+        if(data.skillCount) skillCount = parseInt(data.skillCount)
+    })
+
+	$: if (browser) {
+		if (skillCount % 5 === 0) {
+			localStorage.setItem('skillCount', skillCount.toString());
+		}
+	}
+
+	let interval: ReturnType<typeof setInterval>;
+	function trainSkill() {
+		training = !training;
+		console.log(training);
+		if (training) {
+			interval = setInterval(() => {
+				progressVal += 10;
+				if (progressVal > 100) {
+					progressVal = 0;
+					skillCount += 1;
+				}
+			}, 100);
+		} else {
+			progressVal = 0;
+			clearInterval(interval);
+		}
+	}
 </script>
 
-<div class="container mx-auto p-16 space-y-8">
-    <div class="flex flex-col md:flex-row items-center text-center">
-        <h1 class="h1">ONLY THE BEST CAN BECOME MAYOR OF </h1>
-        <img class="block dark:hidden w-64" alt="TurboTownLight" src={town_logo_light} />
-        <img class="hidden dark:block w-64" alt="TurboTownDark" src={town_logo_dark} />
-    </div>
+<div class="container p-4">
+	<div class="flex flex-col space-y-4 justify-center items-center">
+		<div class="flex flex-col md:flex-row items-center text-center w-full justify-center">
+			<h1 class="h1">ONLY THE BEST CAN BECOME MAYOR OF</h1>
+			<img class="block dark:hidden w-64" alt="TurboTownLight" src={town_logo_light} />
+			<img class="hidden dark:block w-64" alt="TurboTownDark" src={town_logo_dark} />
+		</div>
+		<div class="flex flex-col space-y-8 justify-center w-3/4">
+			<p class="text-lg text-primary-500 text-center italic">Training your last hitting...</p>
+			<div class="text-secondary-500 text-center">
+				Last Hitting Level: <p
+					class="text-primary-500 text-2xl font-bold bg-surface-100 w-1/12 mx-auto rounded-full p-4"
+				>
+					{skillCount}
+				</p>
+			</div>
+			<ProgressBar
+				value={progressVal}
+				class="text-primary-500 fill-primary-500"
+				transition="transition-width"
+			/>
+			<button class="btn variant-filled w-1/4 mx-auto" on:click={() => trainSkill()}>Train!</button>
+		</div>
+	</div>
 </div>
