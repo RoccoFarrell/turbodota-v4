@@ -96,7 +96,7 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
 	let updateInterval = new Date();
 
 	let od_url;
-	updateInterval.setHours(rightNow.getHours() - 1);
+	updateInterval.setMinutes(rightNow.getMinutes() - 10);
 
 	console.log(`[matches][${account_id}] updateInterval: ${updateInterval}`);
 	if (userResult && userResult.lastUpdated >= updateInterval && !forceFullUpdate) {

@@ -304,20 +304,24 @@
 
 <div class="container md:m-4 my-4 h-full mx-auto w-full max-sm:mb-20">
 	<div class="flex flex-col items-center text-center space-y-2 md:mx-8 mx-2">
-		<div class="flex justify-around items-center w-3/4">
+		<div class="flex max-sm:flex-col max-sm:space-y-2 justify-around items-center w-3/4">
 			<h1 class="h1 text-primary-700 max-md:font-bold">The Walker Random™</h1>
-			{#if data.session && data.session.user}
-				<div class="text-xs">
-					Logged in as: <p class="text-secondary-500 text-lg font-bold">{data.session.user.username}</p>
-				</div>
-			{/if}
+			<div class="flex space-x-4">
+				<a href="/random/leaderboard"><button class="btn variant-ghost-primary">Leaderboard</button></a>
+				
+				{#if data.session && data.session.user}
+					<div class="text-xs">
+						Logged in as: <p class="text-secondary-500 text-lg font-bold">{data.session.user.username}</p>
+					</div>
+				{/if}
+			</div>
 		</div>
 
 		<div>
 			{#if randomFound}
 				<div class="w-full">
 					{#if data.randoms}
-						<h3 class="h3">{data.randoms?.length} Random Found</h3>
+						<h3 class="h3">{data.randoms?.length} Randoms Found</h3>
 					{:else}
 						<h3 class="h3">New random locked!</h3>
 					{/if}
@@ -614,7 +618,7 @@
 										<div class="text-amber-500 inline font-bold">
 											{random.endGold}g
 											{#if !random.win}
-											<p class="inline text-xs text-secondary-600">(-{random.expectedGold}g)</p>
+												<p class="inline text-xs text-secondary-600">(-{random.expectedGold}g)</p>
 											{/if}
 										</div>
 									</div>
