@@ -77,6 +77,7 @@ declare global {
 		date: Date,
 		endDate: Date,
 		endMatchID: number,
+		endGold: number,
 		availableHeroes: string,
 		bannedHeroes: string,
 		selectedRoles: string,

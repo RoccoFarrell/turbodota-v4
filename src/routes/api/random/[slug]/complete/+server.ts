@@ -50,6 +50,7 @@ export const POST: RequestHandler = async ({ request, params, url, locals }) => 
 			win: winOrLoss(completedMatch.player_slot, completedMatch.radiant_win),
             endDate: new Date(),
             endMatchID: completedMatch.id,
+			endGold: winOrLoss(completedMatch.player_slot, completedMatch.radiant_win) ? completedRandomWithoutMatch.expectedGold : 0
 			// account_id: session.user.account_id,
 			// active: true,
 			// status: 'active',

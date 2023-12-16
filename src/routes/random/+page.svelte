@@ -67,9 +67,9 @@
 
 		//console.log("randomed hero: ", allHeroesCopy.filter((hero: Hero) => hero.id === randomedHero)[0])
 
-		console.log(`bannedHeroes: ${bannedHeroes} selectedRoles: ${selectedRoles} randomedHero: ${randomedHero}`)
+		console.log(`bannedHeroes: ${bannedHeroes} selectedRoles: ${selectedRoles} randomedHero: ${randomedHero}`);
 
-		if (typeof bannedHeroes === "string" && typeof selectedRoles === "string" && randomedHero) {
+		if (typeof bannedHeroes === 'string' && typeof selectedRoles === 'string' && randomedHero) {
 			randomStore.set({
 				allHeroes: data.heroDescriptions.allHeroes,
 				availableHeroes: availableHeroes.split(',').map((randomID: string) => {
@@ -92,7 +92,7 @@
 				randomedHero: allHeroesCopy.filter((hero: Hero) => hero.id === randomedHero)[0]
 			});
 		} else {
-			console.error('[set locked random hero] - couldnt set locked random')
+			console.error('[set locked random hero] - couldnt set locked random');
 		}
 
 		generatedRandomHero = $randomStore.randomedHero;
@@ -118,7 +118,7 @@
 		randomLifetimeStats = {
 			wins: completedRandoms.filter((random) => random.win).length || 0,
 			losses: completedRandoms.filter((random) => !random.active && !random.win).length,
-			totalGoldWon: completedRandoms.reduce((acc, cur) => acc + cur.expectedGold, 0),
+			totalGoldWon: completedRandoms.reduce((acc, cur) => acc + (cur.endGold || 0), 0),
 			totalLostGoldModifier: completedRandoms.reduce((acc, cur) => acc + cur.modifierTotal, 0)
 		};
 	}
@@ -570,7 +570,7 @@
 								Total Gold Acquired: <p class="text-amber-500 inline">{randomLifetimeStats.totalGoldWon}g</p>
 							</div>
 							<div>
-								Gold missed from Modifier: <p class="text-red-500 inline">
+								Gold missed from Bans: <p class="text-red-500 inline">
 									{randomLifetimeStats.totalLostGoldModifier}g
 								</p>
 							</div>
@@ -611,7 +611,12 @@
 									</div>
 									<!-- Gold -->
 									<div class="flex items-center space-x-2">
-										<p class="text-amber-500 inline font-bold">{random.expectedGold}g</p>
+										<div class="text-amber-500 inline font-bold">
+											{random.endGold}g
+											{#if !random.win}
+											<p class="inline text-xs text-secondary-600">(-{random.expectedGold}g)</p>
+											{/if}
+										</div>
 									</div>
 									<!-- Lost gold -->
 									<div class="flex items-center space-x-2">

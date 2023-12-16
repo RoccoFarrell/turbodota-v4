@@ -49,14 +49,16 @@ export const load: PageServerLoad = async ({ locals, parent, url }) => {
 
 		console.log(`active random length: ${randomsForUser.filter((random) => random.active).length}`);
 
+		const response = await fetch(`${url.origin}/api/updateMatchesForUser/${session.user.account_id}`, {
+			method: 'GET'
+		});
+
+		let responseData = await response.json();
+
 		//user has at least 1 active random
 		if (randomsForUser.length > 0 && randomsForUser.filter((random) => random.active).length > 0) {
 			//fetch most recent matches
-			const response = await fetch(`${url.origin}/api/updateMatchesForUser/${session.user.account_id}`, {
-				method: 'GET'
-			});
-
-			let responseData = await response.json();
+			
 
 			if (responseData.mocked) flags.mocked = true;
 

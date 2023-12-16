@@ -96,11 +96,11 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
 	let updateInterval = new Date();
 
 	let od_url;
-	updateInterval.setHours(rightNow.getHours() - 12);
+	updateInterval.setHours(rightNow.getHours() - 1);
 
 	console.log(`[matches][${account_id}] updateInterval: ${updateInterval}`);
 	if (userResult && userResult.lastUpdated >= updateInterval && !forceFullUpdate) {
-		console.log(`[matches][${account_id}] user was last updated <12 hours - fetch from DB`);
+		console.log(`[matches][${account_id}] user was last updated <1 hours - fetch from DB`);
 		const matchesResult = await prisma.match.findMany({
 			where: { account_id }
 		});

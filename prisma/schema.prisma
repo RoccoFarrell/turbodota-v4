@@ -91,6 +91,7 @@ model Random {
   win             Boolean?
   endDate         DateTime?
   endMatchID      Int?
+  endGold         Int?
   availableHeroes String
   bannedHeroes    String?
   selectedRoles   String?
