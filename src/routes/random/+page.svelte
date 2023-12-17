@@ -543,6 +543,7 @@
 				{/if}
 			</div>
 
+
 			<!-- Stats and History -->
 			<div
 				class="w-full h-full max-md:max-w-sm space-y-10 dark:bg-surface-600/30 bg-surface-200/30 border border-surface-200 dark:border-surface-700 rounded-lg relative"
@@ -589,18 +590,18 @@
 					<div class="w-full flex flex-col space-y-4">
 						<h2 class="h2 text-primary-500 w-full border-b border-primary-500 border-dashed py-2">History</h2>
 						<div class="h-full">
-							<div class="grid grid-cols-4 text-secondary-500">
-								<div>Hero</div>
+							<div class="grid grid-cols-5 text-secondary-500">
+								<div class="col-span-2">Hero</div>
 								<div>Win or Loss</div>
 								<div>Gold</div>
 								<div>Lost Gold</div>
 							</div>
-							<div class="grid grid-cols-4 place-items-center">
+							<div class="grid grid-cols-5 place-items-center">
 								{#each completedRandoms as random}
 									<!-- Hero-->
-									<div class="flex items-center space-x-2">
+									<div class="flex items-center justify-start space-x-2 w-full col-span-2">
 										<i class={`z-0 d2mh hero-${random.randomedHero}`}></i>
-										<p class="inline">
+										<p class="inline text-ellipsis overflow-hidden">
 											{data.heroDescriptions.allHeroes.filter((hero) => hero.id === random.randomedHero)[0]
 												.localized_name}
 										</p>
