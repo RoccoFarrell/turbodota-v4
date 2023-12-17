@@ -30,6 +30,8 @@
 	//images
 	import steam_logo from '$lib/assets/steam_logo.png';
 	import turbo_logo from '$lib/assets/turbologo.png';
+
+	import ogImage from '$lib/assets/turbodota_1200-630.png'
 	// Floating UI for Popups
 	import { computePosition, autoUpdate, flip, shift, offset, arrow } from '@floating-ui/dom';
 	import { storePopup } from '@skeletonlabs/skeleton';
@@ -107,6 +109,36 @@
 		type="text/css"
 		href={HeroSprites}
 	/> -->
+
+	<!-- 
+
+		OG Meta Stuff
+	 -->
+
+	<!-- HTML Meta Tags -->
+	<title>Turbodota - The Tracker for Turbo</title>
+	<meta name="description" content="Track your randoms, and compete to become Mayor of Turbotown!" />
+
+	<!-- Facebook Meta Tags -->
+	<meta property="og:url" content="https://new.turbodota.com" />
+	<meta property="og:type" content="website" />
+	<meta property="og:title" content="Turbodota - The Tracker for Turbo" />
+	<meta property="og:description" content="Track your randoms, and compete to become Mayor of Turbotown!" />
+	<meta
+		property="og:image"
+		content={ogImage}
+	/>
+
+	<!-- Twitter Meta Tags -->
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta property="twitter:domain" content="new.turbodota.com" />
+	<meta property="twitter:url" content="https://new.turbodota.com" />
+	<meta name="twitter:title" content="Turbodota - The Tracker for Turbo" />
+	<meta name="twitter:description" content="Track your randoms, and compete to become Mayor of Turbotown!" />
+	<meta
+		name="twitter:image"
+		content={ogImage}
+	/>
 </svelte:head>
 
 <!-- App Shell -->
