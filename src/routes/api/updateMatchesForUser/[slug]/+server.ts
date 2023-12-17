@@ -100,7 +100,7 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
 
 	console.log(`[matches][${account_id}] updateInterval: ${updateInterval}`);
 	if (userResult && userResult.lastUpdated >= updateInterval && !forceFullUpdate) {
-		console.log(`[matches][${account_id}] user was last updated <1 hours - fetch from DB`);
+		console.log(`[matches][${account_id}] user was last updated <10 minutes - fetch from DB`);
 		const matchesResult = await prisma.match.findMany({
 			where: { account_id }
 		});
@@ -110,7 +110,7 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
 		matchStats = matchesResult;
 		dataSource = 'db';
 	} else if (allowUpdates) {
-		console.log(`[matches][${account_id}] allow update true, and user was last updated >12 hours - fetch from OD`);
+		console.log(`[matches][${account_id}] allow update true, and user was last updated >10 minutes - fetch from OD`);
 
 		//query OD
 		if (d_diff && !forceFullUpdate) {

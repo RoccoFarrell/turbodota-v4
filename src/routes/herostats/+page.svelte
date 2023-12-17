@@ -43,12 +43,6 @@
 		assists: number = 0;
 	}
 
-	interface SortObj {
-		headerText: string;
-		headerKey: string;
-		index: number;
-	}
-
 	let tabSet: number = 0;
 
 	let tableData: TableSource = {

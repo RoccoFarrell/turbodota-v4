@@ -88,6 +88,11 @@ declare global {
 		match?: Match
 	}
 	
+	interface SortObj {
+		headerText: string;
+		headerKey: string;
+		index: number;
+	}
 
 	interface SortBy {
 		sortObj: SortObj;

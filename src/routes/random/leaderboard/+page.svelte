@@ -13,23 +13,95 @@
 	import { tableMapperValues } from '@skeletonlabs/skeleton';
 	import type { TableSource } from '@skeletonlabs/skeleton';
 
-	//format leaderboard data
+	//helpers
+	import { calculateKdaClasses, calculateWinPercentageClasses } from '$lib/helpers/tableColors';
+
+	//assets
+	import Turboking from '$lib/assets/turboking.png';
+
+	/* 
+        Sort info
+    */
 	class LeaderboardRow {
-		playerID: number = 0;
+		player: number = 0;
 		name: string = '';
 		wins: number = 0;
 		losses: number = 0;
+		win_percentage: number = 0;
 		kdaWins: number = 0;
 		kdaLosses: number = 0;
+		kdaTotal: number = 0;
 		goldWon: number = 0;
 		goldLost: number = 0;
 	}
+
+	const sortMap: SortObj[] = [
+		{
+			headerText: 'Player',
+			headerKey: 'player',
+			index: 0
+		},
+		{
+			headerText: 'Name',
+			headerKey: 'name',
+			index: 1
+		},
+		{
+			headerText: 'Gold Won',
+			headerKey: 'goldWon',
+			index: 2
+		},
+		{
+			headerText: 'Gold Lost',
+			headerKey: 'goldLost',
+			index: 3
+		},
+		{
+			headerText: 'Wins',
+			headerKey: 'wins',
+			index: 4
+		},
+		{
+			headerText: 'Losses',
+			headerKey: 'losses',
+			index: 5
+		},
+		{
+			headerText: 'Win %',
+			headerKey: 'win_percentage',
+			index: 6
+		},
+		{
+			headerText: 'KDA in Wins',
+			headerKey: 'kdaWins',
+			index: 7
+		},
+		{
+			headerText: 'KDA in Losses',
+			headerKey: 'kdaLosses',
+			index: 8
+		},
+		{
+			headerText: 'Total KDA',
+			headerKey: 'kdaTotal',
+			index: 9
+		}
+	];
+
+	let sortBy: SortBy = {
+		sortObj: {
+			headerText: 'Games',
+			headerKey: 'games',
+			index: 1
+		},
+		ascending: false
+	};
 
 	/* 
         Table source defaults
     */
 	let tableSource: TableSource = {
-		head: ['player', 'name', 'wins', 'losses', 'Gold Won', 'Gold Lost', 'KDA In Wins', 'KDA In Losses'],
+		head: sortMap.map((sort) => sort.headerText),
 		body: []
 	};
 
@@ -54,12 +126,12 @@
             Loop through unique IDs generated above
         */
 		uniqueIDs.forEach((playerID) => {
-            console.log('looping through playerID: ', playerID)
+			console.log('looping through playerID: ', playerID);
 			let row: LeaderboardRow = new LeaderboardRow();
 
-			let playerRandoms = data.randoms.filter((random) => (random.account_id === playerID && random.active === false));
+			let playerRandoms = data.randoms.filter((random) => random.account_id === playerID && random.active === false);
 			if (playerRandoms.length > 0) {
-				row.playerID = playerID;
+				row.player = playerID;
 				row.name = playerRandoms[0].user ? playerRandoms[0].user.username : '';
 
 				/* calculate wins and losses */
@@ -67,20 +139,26 @@
 				let lossCount = playerRandoms.reduce((acc, cur) => (!cur.win ? (acc += 1) : (acc += 0)), 0);
 				row.wins = winCount;
 				row.losses = lossCount;
+				row.win_percentage = row.wins / (row.wins + row.losses);
 
 				let kdaWins = 0,
-					kdaLosses = 0;
+					kdaLosses = 0,
+					kdaTotal = 0;
 
 				/* 
                     Sum all KDAs in wins and losses
                 */
 				playerRandoms.forEach((random) => {
-					if (random.match && random.win) {
-						kdaWins += (random.match.kills + random.match.assists) / random.match.deaths;
-					} else if (random.match && !random.win) {
-						kdaLosses += (random.match.kills + random.match.assists) / random.match.deaths;
+					if (random.match) {
+						kdaTotal += (random.match.kills + random.match.assists) / random.match.deaths;
+						if (random.win) {
+							kdaWins += (random.match.kills + random.match.assists) / random.match.deaths;
+						} else if (!random.win) {
+							kdaLosses += (random.match.kills + random.match.assists) / random.match.deaths;
+						}
 					}
 				});
+				row.kdaTotal = kdaTotal / (winCount + lossCount);
 				row.kdaWins = kdaWins / winCount;
 				row.kdaLosses = kdaLosses / lossCount;
 
@@ -97,7 +175,7 @@
 					0
 				);
 
-                console.log(`pushing row for ${row.name}`)
+				console.log(`pushing row for ${row.name}`);
 				tableData.push(row);
 			}
 		});
@@ -108,49 +186,115 @@
 
 		console.log(tableData);
 
-        /* 
+		/* 
             Sort by gold 
         */
 
-        tableData = tableData.sort((a: any, b: any) => {
-            if(a.goldWon < b.goldWon) return 1
-            else return -1
-        })
+		tableData = tableData.sort((a: any, b: any) => {
+			if (a.goldWon < b.goldWon) return 1;
+			else if (a.goldWon > b.goldWon) return -1;
+			else if (a.goldWon === b.goldWon) {
+				if (a.win_percentage < b.win_percentage) return 1;
+				else return -1;
+			} else return 0;
+		});
 
 		tableSource = {
 			head: tableSource.head,
-			body: tableMapperValues(tableData, [
-				'playerID',
-				'name',
-				'wins',
-				'losses',
-				'goldWon',
-				'goldLost',
-				'kdaWins',
-				'kdaLosses'
-			])
+			body: tableMapperValues(
+				tableData,
+				sortMap.map((sort) => sort.headerKey)
+			)
 		};
 	}
 
-    /* 
+	/* 
         Handle header click
     */
 
-    const headerSelect = (header: any) => {
-        console.log(header)
-    }
+	const headerSelect = (header: any) => {
+		console.log(header);
+	};
 </script>
 
 <div class="container md:m-4 my-4 h-full mx-auto w-full max-sm:mb-20">
-	<div class="flex flex-col items-center text-center space-y-2 md:mx-8 mx-2">
-		<div class="flex justify-around items-center w-3/4">
-			<h1 class="h1 text-primary-700 max-md:font-bold">The Walker Random™</h1>
+	<div class="flex flex-col items-center text-center md:mx-8 mx-4">
+		<div class="flex justify-around items-center w-3/4 my-8">
+			<h1 class="h1 text-primary-700 max-md:font-bold">The Walker Random Leaderboard™</h1>
 			{#if data.session && data.session.user}
 				<div class="text-xs">
 					Logged in as: <p class="text-secondary-500 text-lg font-bold">{data.session.user.username}</p>
 				</div>
 			{/if}
 		</div>
-		<Table interactive={true} source={tableSource} on:selected={headerSelect} regionHeadCell={"text-center text-primary-500 font-semibold"}/>
+		<!-- <Table
+			interactive={true}
+			source={tableSource}
+			on:selected={headerSelect}
+			regionHeadCell={'text-center text-primary-500 font-semibold'}
+		/> -->
+		<div class="vibrating border-4 border-dashed border-amber-500 my-4 flex justify-center space-x-8 p-4">
+			<img src={Turboking} class="w-20" alt="the current turboking" />
+			<div class="h-full flex flex-col items-center justify-center my-auto">
+				<p class="text-tertiary-500 italic">The current king:</p>
+                <div class="text-2xl font-bold text-green-400">{tableSource.body[0][1]}</div>
+			</div>
+		</div>
+
+		<table class="table table-interactive mx-10">
+			<thead>
+				<tr>
+					{#each tableSource.head as headerText, i}
+						<th
+							id={headerText}
+							class={'text-center hover:bg-surface-500/50' +
+								([0, 3, 5, 6, 7, 8].includes(i) ? ' max-sm:hidden md:visible' : '') +
+								(headerText === sortBy.sortObj.headerText && sortBy.ascending ? ' table-sort-asc' : '') +
+								(headerText === sortBy.sortObj.headerText && !sortBy.ascending ? ' table-sort-dsc' : '')}
+							on:click={() => handleSortHeaderClick(headerText)}>{headerText}</th
+						>
+					{/each}
+				</tr>
+			</thead>
+			<tbody>
+				{#key tableSource}
+					{#each tableSource.body as row, i}
+						<tr>
+							{#each tableSource.head as cellText, i}
+								{#if cellText.includes('Player')}
+									<td class="max-sm:hidden md:visible text-2xl text-secondary-500">{row[i]}</td>
+								{:else if cellText.includes('Win %')}
+									<td class={`max-sm:hidden md:visible ${calculateWinPercentageClasses(parseFloat(row[i]))}`}
+										>{(parseFloat(row[i]) * 100).toFixed(2)}</td
+									>
+								{:else if cellText.includes('Gold Won')}
+									<td class="text-amber-400 font-bold">{row[i]}</td>
+								{:else if cellText.includes('Gold Lost')}
+									<td class="max-sm:hidden md:visible text-red-800 font-bold">{row[i]}</td>
+								{:else if i === 1}
+									<td class="text-primary-500 font-semibold">{row[i]}</td>
+								{:else if cellText.includes('KDA')}
+									<td
+										class={`${cellText === 'Total KDA' ? '' : 'max-sm:hidden md:visible'} ${calculateKdaClasses(
+											parseFloat(row[i])
+										)}`}>{parseFloat(row[i]).toFixed(2)}</td
+									>
+								{:else if [0, 3, 5, 6, 7, 8].includes(i)}
+									<td class="max-sm:hidden md:visible">{row[i]}</td>
+								{:else}
+									<td>{row[i]}</td>
+								{/if}
+							{/each}
+						</tr>
+					{/each}
+				{/key}
+			</tbody>
+			<!-- <tfoot>
+                    <tr>
+                        <th colspan="3">Calculated Total Weight</th>
+                        <td>test</td>
+                    </tr>
+                </tfoot> -->
+		</table>
 	</div>
 </div>
