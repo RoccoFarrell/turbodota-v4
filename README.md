@@ -1,22 +1,41 @@
-# create-svelte
+# Turbodota v4
 
-Everything you need to build a Svelte project, powered by [`create-svelte`](https://github.com/sveltejs/kit/tree/master/packages/create-svelte).
+The Sveltekit respository for [Turbodota.com: The Tracker for Turbo](https://www.turbodota.com)
 
-## Creating a project
+This is the 4th iteration of our Turbo Dota tracking site:
 
-If you're seeing this, you've probably already done this step. Congrats!
+- v1 - Vue and Firebase
+- v2 - React and Firebase
+- v3 - Sveltekit and no database
 
-```bash
-# create a new project in the current directory
-npm create svelte@latest
+v4 Built using:
 
-# create a new project in my-app
-npm create svelte@latest my-app
-```
+- [SvelteKit](https://kit.svelte.dev/)
+- [Skeleton UI](https://www.skeleton.dev/)
+- [Prisma](https://www.prisma.io/)
+- [Supabase](https://supabase.com/)
+- [Lucia Auth](https://lucia-auth.com/)
+- [OpenDota API](https://docs.opendota.com/)
 
 ## Developing
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
+Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`):
+
+### Prisma
+
+To migrate the schema to your local SQLite instance, use 
+
+```bash
+npm run prisma
+```
+
+Which runs:
+
+```bash
+npx prisma generate && npx prisma db push
+```
+
+### Dev Server
 
 ```bash
 npm run dev
@@ -25,7 +44,7 @@ npm run dev
 npm run dev -- --open
 ```
 
-## Building
+### Building
 
 To create a production version of your app:
 
@@ -38,7 +57,7 @@ You can preview the production build with `npm run preview`.
 > To deploy your app, you may need to install an [adapter](https://kit.svelte.dev/docs/adapters) for your 
 target environment.
 
-## Testing
+### Testing
 
 [Mock Service Workers](https://mswjs.io/)
 
