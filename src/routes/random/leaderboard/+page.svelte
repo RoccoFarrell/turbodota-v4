@@ -238,7 +238,7 @@
 
 <div class="container md:m-4 my-4 h-full mx-auto w-full max-sm:mb-20">
 	<div class="flex flex-col items-center text-center md:mx-8 mx-4">
-		<div class="flex justify-around items-center w-3/4 my-8">
+		<div class="flex justify-around items-center w-3/4 md:my-8 my-2">
 			<h1 class="h1 text-primary-700 max-md:font-bold">The Walker Random Leaderboard™</h1>
 			{#if data.session && data.session.user}
 				<div class="text-xs">
@@ -255,8 +255,10 @@
 		<div class="vibrating border-4 border-dashed border-amber-500 my-4 flex justify-center space-x-8 p-4">
 			<img src={Turboking} class="w-20" alt="the current turboking" />
 			<div class="h-full flex flex-col items-center justify-center my-auto">
+				{#if tableSource.body[0]}
 				<p class="text-tertiary-500 italic">The current king:</p>
                 <div class="text-2xl font-bold text-green-400">{tableSource.body[0][1]}</div>
+				{/if}
 			</div>
 		</div>
 
@@ -267,7 +269,7 @@
 						<th
 							id={headerText}
 							class={'text-center hover:bg-surface-500/50' +
-								([0, 3, 5, 6, 7, 8].includes(i) ? ' max-sm:hidden md:visible' : '') +
+								([0, 3, 5, 6, 7, 8].includes(i) ? ' max-md:hidden lg:visible' : '') +
 								(headerText === sortBy.sortObj.headerText && sortBy.ascending ? ' table-sort-asc' : '') +
 								(headerText === sortBy.sortObj.headerText && !sortBy.ascending ? ' table-sort-dsc' : '')}
 							on:click={() => handleSortHeaderClick(headerText)}>{headerText}</th
@@ -281,34 +283,34 @@
 						<tr on:click={() => rowSelected(row, i_player)} transition:slide={{ delay: 250, duration: 300, easing: quintOut, axis: 'y' }}>
 							{#each tableSource.head as cellText, i}
 								{#if cellText.includes('Player')}
-									<td class="max-sm:hidden md:visible text-2xl text-secondary-500">{row[i]}</td>
+									<td class="max-md:hidden lg:visible text-2xl text-secondary-500">{row[i]}</td>
 								{:else if cellText.includes('Win %')}
-									<td class={`max-sm:hidden md:visible ${calculateWinPercentageClasses(parseFloat(row[i]))}`}
+									<td class={`max-md:hidden lg:visible ${calculateWinPercentageClasses(parseFloat(row[i]))}`}
 										>{(parseFloat(row[i]) * 100).toFixed(2)}</td
 									>
 								{:else if cellText.includes('Gold Won')}
 									<td class="text-amber-400 font-bold">{row[i]}</td>
 								{:else if cellText.includes('Gold Lost')}
-									<td class="max-sm:hidden md:visible text-red-800 font-bold">{row[i]}</td>
+									<td class="max-md:hidden lg:visible text-red-800 font-bold">{row[i]}</td>
 								{:else if i === 1}
 									<td class="text-primary-500 font-semibold">{row[i]}</td>
 								{:else if cellText.includes('KDA')}
 									<td
-										class={`${cellText === 'Total KDA' ? '' : 'max-sm:hidden md:visible'} ${calculateKdaClasses(
+										class={`${cellText === 'Total KDA' ? '' : 'max-md:hidden lg:visible'} ${calculateKdaClasses(
 											parseFloat(row[i])
 										)}`}>{parseFloat(row[i]).toFixed(2)}</td
 									>
 								{:else if [0, 3, 5, 6, 7, 8].includes(i)}
-									<td class="max-sm:hidden md:visible">{row[i]}</td>
+									<td class="max-md:hidden lg:visible">{row[i]}</td>
 								{:else}
 									<td>{row[i]}</td>
 								{/if}
 							{/each}
 						</tr>
                         {#if selectedRow === i_player}
-                            <tr on:click={() => rowSelected(row, i_player)} transition:slide={{ delay: 100, duration: 300, easing: cubicOut}}>
-                                <td colspan="10" class="table-cell">
-                                    <div class="max-w-[30%] mx-auto" transition:blur={{ amount: 20, duration: 400 }}>
+                            <tr on:click={() => rowSelected(row, i_player)} transition:slide={{ delay: 100, duration: 300, easing: cubicOut}} class="p-0">
+                                <td colspan="10" class="table-cell p-0 m-0">
+                                    <div class="xl:max-w-[30%] lg:max-w-[40%] md:max-w-[50%] max-w-[90%] mx-auto" transition:blur={{ amount: 20, duration: 400 }}>
                                         <History completedRandoms={data.randoms.filter((random) => random.account_id === parseInt(row[0]) && random.active === false)} allHeroes={data.heroDescriptions.allHeroes}/>
                                     </div>
                                     
