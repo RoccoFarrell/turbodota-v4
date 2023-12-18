@@ -20,12 +20,14 @@
 	import type { Session } from 'lucia';
 
 	//components
-	import Navigation from '$lib/Navigation/Navigation.svelte';
+	import Navigation from './_components/Navigation/Navigation.svelte';
 	import Loading from '$lib/components/Loading.svelte';
 
 	//assets
+	import "@flaticon/flaticon-uicons/css/all/all.css";
 	//import HeroSprites from 'dota2-css-hero-sprites/assets/stylesheets/dota2minimapheroes.css'
 	import 'dota2-css-hero-sprites/assets/stylesheets/dota2minimapheroes.css';
+
 
 	//images
 	import steam_logo from '$lib/assets/steam_logo.png';
