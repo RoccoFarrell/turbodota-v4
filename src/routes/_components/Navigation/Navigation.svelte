@@ -9,6 +9,7 @@
 	//console.log(session);
 
 	console.log($page.url.pathname)
+	console.log(session)
 </script>
 
 <nav class="list-nav p-6">
@@ -40,12 +41,14 @@
 			>
 		</li>
 		
+		{#if session && session.user && [34940151, 65110965, 68024789, 80636612, 113003047, 423076846].includes(session.user.account_id)}
 		<li class={"flex items-center justify-start rounded-full " + ($page.url.pathname === '/herostats' ? "border border-secondary-500/60" : "")}>
 			<a href="/herostats" data-sveltekit-preload-data="tap" class="w-full"
 				><i class="fi fi-br-chart-histogram dark:text-amber-400 text-amber-600"></i>
 				<p class={($page.url.pathname === '/herostats' ? "font-bold" : "")}>Hero Stats</p></a
 			>
 		</li>
+		{/if}
 		<li class="h-32 lg:h-4"></li>
 		<hr class="!border-t-4" />
 		{#if !session || !session.user}

@@ -14,13 +14,15 @@ export const config = {
 
 export const load: PageServerLoad = async ({ params, locals, url, setHeaders }) => {
 	//session info
-	// const session = await locals.auth.validate()
-	// let user = null;
-	// if (!session) {
-	// 	//throw error(401, 'Unauthorized')
-	// } else {
-	// 	user = session.user
-	// }
+	const session = await locals.auth.validate()
+	let user = null;
+	if (!session) {
+		throw error(401, 'Unauthorized')
+	} else {
+		console.log(session)
+		user = session.user
+		if(![34940151, 65110965, 68024789, 80636612, 113003047, 423076846].includes(user.account_id)) throw error(401, 'Hero stats for friends only!')
+	}
 
 	//test random number
 	const randomNumber = async () => {
