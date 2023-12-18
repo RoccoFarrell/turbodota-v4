@@ -1,4 +1,8 @@
 <script lang="ts">
+    //svelte
+    import { slide, blur,fade } from 'svelte/transition';
+	import { quintOut, cubicOut } from 'svelte/easing';
+
 	//page data
 	import type { PageData } from './$types';
 	export let data: PageData;
@@ -12,6 +16,9 @@
 	import { Table } from '@skeletonlabs/skeleton';
 	import { tableMapperValues } from '@skeletonlabs/skeleton';
 	import type { TableSource } from '@skeletonlabs/skeleton';
+
+    //components
+    import History from '../_components/History.svelte';
 
 	//helpers
 	import { calculateKdaClasses, calculateWinPercentageClasses } from '$lib/helpers/tableColors';
@@ -215,6 +222,18 @@
 	const headerSelect = (header: any) => {
 		console.log(header);
 	};
+
+    /* 
+        Handle row select
+    */
+
+    $: selectedRow = -1
+    const rowSelected = (row: any, i: number) => {
+        console.log(`${i}: ${row}`)
+        if(selectedRow === i) selectedRow = -1
+        else selectedRow = i
+        console.log(`selectedRow: ${selectedRow}`)
+    }
 </script>
 
 <div class="container md:m-4 my-4 h-full mx-auto w-full max-sm:mb-20">
@@ -258,8 +277,8 @@
 			</thead>
 			<tbody>
 				{#key tableSource}
-					{#each tableSource.body as row, i}
-						<tr>
+					{#each tableSource.body as row, i_player}
+						<tr on:click={() => rowSelected(row, i_player)} transition:slide={{ delay: 250, duration: 300, easing: quintOut, axis: 'y' }}>
 							{#each tableSource.head as cellText, i}
 								{#if cellText.includes('Player')}
 									<td class="max-sm:hidden md:visible text-2xl text-secondary-500">{row[i]}</td>
@@ -286,6 +305,22 @@
 								{/if}
 							{/each}
 						</tr>
+                        {#if selectedRow === i_player}
+                            <tr on:click={() => rowSelected(row, i_player)} transition:slide={{ delay: 100, duration: 300, easing: cubicOut}}>
+                                <td colspan="10" class="table-cell">
+                                    <div class="max-w-[30%] mx-auto" transition:blur={{ amount: 20, duration: 400 }}>
+                                        <History completedRandoms={data.randoms.filter((random) => random.account_id === parseInt(row[0]) && random.active === false)} allHeroes={data.heroDescriptions.allHeroes}/>
+                                    </div>
+                                    
+                                </td>
+                            
+                            </tr>
+                        <!-- {:else}
+                            <div>
+                                {selectedRow}
+                                {i_player}
+                            </div> -->
+                        {/if}
 					{/each}
 				{/key}
 			</tbody>
