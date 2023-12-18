@@ -51,18 +51,6 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
 	// console.log(`[api] - received GET to ${url.href}`)
 	//console.log(`params: ${JSON.stringify(params)}`)
 	//console.log(params)
-	const playersWeCareAbout = [
-		{ playerID: 113003047, playerName: 'Danny' },
-		//{ playerID: 123794823, playerName: 'Steven' },
-		{ playerID: 125251142, playerName: 'Matt' },
-		{ playerID: 34940151, playerName: 'Roberts' },
-		{ playerID: 423076846, playerName: 'Chris' },
-		{ playerID: 65110965, playerName: 'Rocco' },
-		{ playerID: 67762413, playerName: 'Walker' },
-		{ playerID: 68024789, playerName: 'Ben' },
-		{ playerID: 80636612, playerName: 'Martin' }
-		//{ playerID: 214308966, playerName: 'Andy' }
-	];
 
 	let account_id: number = parseInt(params.slug || '0');
 	console.log(`\n-----------\n[matches] account_id: ${account_id}\n-------------\n`);

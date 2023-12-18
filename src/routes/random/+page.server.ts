@@ -59,7 +59,6 @@ export const load: PageServerLoad = async ({ locals, parent, url }) => {
 		if (randomsForUser.length > 0 && randomsForUser.filter((random) => random.active).length > 0) {
 			//fetch most recent matches
 			
-
 			if (responseData.mocked) flags.mocked = true;
 
 			console.log([`[random+page.server.ts] found ${responseData.matchData.length} for user`]);
