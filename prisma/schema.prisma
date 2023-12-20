@@ -2,9 +2,14 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// datasource db {
+//   provider = "sqlite"
+//   url      = "file:./dev.sqlite"
+// }
+
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.sqlite"
+  provider  = "postgresql"
+  url       = env("DEV_URL")
 }
 
 // datasource db {
@@ -39,7 +44,7 @@ model Match {
 }
 
 model MatchDetail {
-  match_id                BigInt               @id
+  match_id                BigInt               @id @unique
   radiant_win             Boolean
   duration                Int
   pre_game_duration       Int
@@ -57,7 +62,8 @@ model MatchDetail {
 }
 
 model PlayersMatchDetail {
-  match_id         BigInt      @id
+  id               Int          @id @default(autoincrement())
+  match_id         BigInt
   account_id       Int
   player_slot      Int
   hero_id          Int
@@ -92,11 +98,10 @@ model PlayersMatchDetail {
   lose             Boolean
   total_gold       Int
   total_xp         Int
-  kills_per_min    Float
   kda              Float
   benchmarks       String
-  match_detail     MatchDetail @relation(fields: [match_id], references: [match_id])
-  user             User        @relation(fields: [account_id], references: [account_id])
+  match_detail     MatchDetail? @relation(fields: [match_id], references: [match_id])
+  //user             User?        @relation(fields: [account_id], references: [account_id])
 
   @@unique([match_id, account_id], name: "matchPlusAccount")
 }
@@ -134,7 +139,7 @@ model User {
   auth_session         Session[]
   randoms              Random[]
   user_prefs           UserPrefs[]
-  player_match_details PlayersMatchDetail[]
+  //player_match_details PlayersMatchDetail[]
   dota_user            DotaUser?
 
   //matches      Match[]

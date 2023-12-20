@@ -32,9 +32,10 @@ export const GET: RequestHandler = async ({ params, url }) => {
 	//console.log(matchDetailResult);
 
 	let returnObj: any;
+	let forceUpdate: boolean = true;
 	type MatchDetailKeys = keyof typeof returnObj;
 
-	if (matchDetailResult) {
+	if (matchDetailResult && !forceUpdate) {
 		//return found match
 		returnObj = matchDetailResult;
 	}
@@ -67,14 +68,23 @@ export const GET: RequestHandler = async ({ params, url }) => {
 			average_rank: matchDetailsFetch.average_rank
 		};
 
+		//upsert match Details
+		// no update value behaves as findOrCreate
+		// https://www.prisma.io/docs/orm/prisma-client/queries/crud#update-or-create-records
+		let matchDetailsWrite = await prisma.matchDetail.upsert({
+			where: { match_id: matchDetailsFetch.match_id },
+			update: {},
+			create: { ...matchDetailObj }
+		});
+
 		let playersArr: PlayersMatchDetail[] = [];
 
 		playersArr = matchDetailsFetch.players
 			.filter((player: any) => player.account_id)
 			.map((player: any) => {
-				console.log(player);
+				//console.log(player);
 				return {
-					match_id: matchDetailObj.match_id,
+					match_id: matchDetailsFetch.match_id,
 					account_id: player.account_id,
 					player_slot: player.player_slot,
 					hero_id: player.hero_id,
@@ -101,15 +111,14 @@ export const GET: RequestHandler = async ({ params, url }) => {
 					aghanims_shard: player.aghanims_shard,
 					moonshard: player.moonshard,
 					hero_damage: player.hero_damage,
-					tower_damage: player.player_damage,
+					tower_damage: player.tower_damage,
 					hero_healing: player.hero_healing,
 					gold: player.gold,
 					gold_spent: player.gold_spent,
-					win: player.win,
-					lose: player.lose,
+					win: !!player.win,
+					lose: !!player.lose,
 					total_gold: player.total_gold,
 					total_xp: player.total_xp,
-					kills_per_min: player.kills_per_min,
 					kda: player.kda,
 					benchmarks: JSON.stringify(player.benchmarks)
 				};
@@ -118,31 +127,45 @@ export const GET: RequestHandler = async ({ params, url }) => {
 		const result_tx = await prisma.$transaction(
 			async (tx) => {
 				try {
-                    //upsert match Details
-					let matchDetailsWrite = await prisma.matchDetail.upsert({
-						where: { match_id },
-						update: { ...matchDetailObj },
-						create: { ...matchDetailObj }
-					});
-                    
 					//upsert player match details
+					//test single
+
+					// console.log(playersArr[0].account_id)
+					// let playerMatchDetailsWrite = await prisma.playersMatchDetail.upsert({
+					// 	where: {
+					// 		matchPlusAccount: { match_id: matchDetailObj.match_id, account_id: playersArr[0].account_id }
+					// 	},
+					// 	update: { ...playersArr[0] },
+					// 	create: { ...playersArr[0] }
+					// });
+					//loop
+
+					//create
 					let result_playerMatchDetails = await Promise.all(
 						playersArr.map(async (player: PlayersMatchDetail) => {
-							await tx.match.upsert({
-								where: {
-									matchPlusAccount: { match_id: matchDetailObj.match_id, account_id: player.account_id }
-								},
-								// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-								// @ts-ignore: Unreachable code error
-								update: { ...player },
-								// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-								// @ts-ignore: Unreachable code error
-								create: { ...player }
+							await tx.playersMatchDetail.create({
+								data: {
+									...player,
+									// match_detail: {
+									// 	connect: { match_id: BigInt(matchDetailsFetch.match_id) }
+									// }
+								}
 							});
 						})
 					);
 
-					
+					//upsert
+					// let result_playerMatchDetails = await Promise.all(
+					// 	playersArr.map(async (player: PlayersMatchDetail) => {
+					// 		await tx.playersMatchDetail.upsert({
+					// 			where: {
+					// 				matchPlusAccount: { match_id, account_id: player.account_id }
+					// 			},
+					// 			update: { ...player },
+					// 			create: { ...player }
+					// 		});
+					// 	})
+					// );
 
 					console.log(
 						`result_matchDetails: ${matchDetailsWrite} result_playerMatchDetails: ${result_playerMatchDetails}`
@@ -159,7 +182,8 @@ export const GET: RequestHandler = async ({ params, url }) => {
 		console.log(result_tx);
 		returnObj = {
 			matchDetail: matchDetailObj,
-			playerMatchDetails: playersArr
+			playerMatchDetails: playersArr,
+			test: playersArr[0]
 		};
 	}
 
