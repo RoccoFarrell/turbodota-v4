@@ -114,5 +114,8 @@
 		"transition",
 		"width",
 		"zIndex"
-	]
+	],
+	"deno.enable": true,
+	"deno.lint": false,
+	"deno.unstable": false
 }
