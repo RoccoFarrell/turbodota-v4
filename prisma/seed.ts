@@ -1,11 +1,17 @@
 import { PrismaClient } from '@prisma/client';
-import dayjs from 'dayjs';
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({ log: ['query', 'error'] });
 
+//dayjs
+import dayjs from 'dayjs';
+import bigIntSupport from 'dayjs/plugin/bigIntSupport.js';
+dayjs.extend(bigIntSupport);
+
+//constants
 import { playersWeCareAbout } from '../src/lib/constants/playersWeCareAbout.ts';
+import winOrLoss from '../src/lib/helpers/winOrLoss.ts';
 
 function sleep(ms: any) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 async function main() {
@@ -22,50 +28,86 @@ async function main() {
 
 	console.log(`found ${responseData.allHeroes.length} heroes`);
 
-    let allHeroes = responseData.allHeroes
+	let allHeroes = responseData.allHeroes;
+	//console.log(allHeroes[0]);
 
 	//add randoms
-	playersWeCareAbout.forEach(async player => {
-        await sleep(500)
+
+	playersWeCareAbout.map(async (player) => {
+		await sleep(1000);
+		let allRandoms: any[] = [];
 		let randomCount = Math.floor(Math.random() * 10) + 1;
-        console.log(`Inserting ${randomCount} randoms for ${player.playerID}`)
+		console.log(`Generating ${randomCount} randoms for ${player.playerID}`);
 		while (randomCount > 0) {
-            await sleep(500)
-            console.log(`Inserting ${randomCount} random`)
+			console.log(`Generating random #${randomCount}`);
 			randomCount -= 1;
 
-            let randomHero = allHeroes[Math.floor(Math.random() * allHeroes.length)]
-            let randomDays = Math.floor(Math.random() * 7)
-            let randomDateStart = dayjs().subtract(randomDays +1, 'days')
-            let randomDateEnd = dayjs().subtract(randomDays, 'days')
-            let randomWin = Math.floor(Math.random() * 2) === 0 ? false : true
+			let randomHero = allHeroes[Math.floor(Math.random() * allHeroes.length)];
 
-            console.log(`${randomWin ? "Won " : "Lost "} on hero ${randomHero.localized_name}`)
+			//find match with that hero
 
-            
-			const randomResults = await prisma.random.create({
-				data: {
+			const matchResult = await prisma.match.findFirst({
+				where: { AND: [{ hero_id: randomHero.id }, { account_id: player.playerID }] }
+			});
+
+			//console.log(matchResult);
+
+			let randomDays = Math.floor(Math.random() * 3);
+			let randomDateStart = dayjs(Number(matchResult?.start_time) * 1000).subtract(randomDays + 1, 'days');
+			let randomDateEnd = dayjs(Number(matchResult?.start_time) * 1000);
+
+			if (matchResult) {
+				let randomWin = winOrLoss(matchResult.player_slot, matchResult.radiant_win);
+				console.log(`${randomWin ? 'Won ' : 'Lost '} on hero ${randomHero.localized_name}`);
+
+				let randomObj = {
 					account_id: player.playerID,
-					date: randomDateStart.toDate(),
-					availableHeroes: allHeroes.map((hero: any) => hero.id),
+					date: randomDateStart.format(),
+					availableHeroes: allHeroes.map((hero: any) => hero.id).toString(),
 					bannedHeroes: [].toString(),
 					selectedRoles: [].toString(),
 					expectedGold: 100,
 					modifierAmount: 3,
 					modifierTotal: 0,
-					randomedHero: randomHero.hero_id,
+					randomedHero: randomHero.id,
 					active: false,
 					status: 'completed',
 					win: randomWin,
-					endDate: randomDateEnd.toDate(),
-					endMatchID: 123456789,
-					endGold: randomWin
-						? 100
-						: 0
-				}
-			});
+					endDate: randomDateEnd.format(),
+					endMatchID: matchResult.id,
+					endGold: randomWin ? 100 : 0
+				};
+				allRandoms.push(randomObj);
+			}
 		}
-	})
+
+		console.log(`${allRandoms.length} total randoms for ${player.playerID}`);
+
+		//create randoms in table
+
+		console.log(allRandoms[0]);
+
+		let writeCopy = { ...allRandoms[0]}
+		// delete writeCopy.account_id
+		// delete writeCopy.endMatchID
+		const result = await prisma.random.create({ 
+			data: {
+				...writeCopy,
+				// match: {
+				// 	connect: {id: allRandoms[0].endMatchID}
+				// },
+				// user: {
+				// 	connect: {account_id: allRandoms[0].account_id}
+				// }
+			}
+		});
+		// allRandoms.map(async (random) => {
+		// 	sleep(500);
+		// 	console.log(`attempting insert of random ${JSON.stringify(random)}`)
+		// 	const result = await prisma.random.create({ data: random });
+		// 	console.log(`Insert result: ${result}`);
+		// });
+	});
 }
 main()
 	.then(async () => {

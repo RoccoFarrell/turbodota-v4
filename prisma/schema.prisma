@@ -92,7 +92,7 @@ model PlayersMatchDetail {
   lose             Boolean
   total_gold       Int
   total_xp         Int
-  kills_per_min    BigInt
+  kills_per_min    Float
   kda              Float
   benchmarks       String
   match_detail     MatchDetail @relation(fields: [match_id], references: [match_id])

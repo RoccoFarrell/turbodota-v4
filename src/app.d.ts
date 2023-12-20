@@ -33,7 +33,7 @@ declare global {
 	interface Match {
 		id: Int
 		match_id: bigint
-		account_id: bigint
+		account_id: number
 		assists: number
 		average_rank?: number | null
 		deaths: number

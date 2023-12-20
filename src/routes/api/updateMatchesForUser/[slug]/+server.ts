@@ -134,7 +134,7 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
 			//console.log(match.match_id, account_id, match.match_id.toString() + account_id.toString())
 			return {
 				...match,
-				account_id: BigInt(account_id)
+				account_id: account_id
 			};
 		});
 
