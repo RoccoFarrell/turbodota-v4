@@ -10,13 +10,14 @@
 		"sourceMap": true,
 		"strict": true,
 		"moduleResolution": "bundler",
-		"paths": {
-			"$lib": ["./src/lib"],
-      		"$lib/*": ["./src/lib/*"],
-			"$mocks": ["./src/mocks"],
-      		"$mocks/*": ["./src/mocks/*"],
+		"allowImportingTsExtensions": true
+		// "paths": {
+		// 	"$lib": ["./src/lib"],
+      	// 	"$lib/*": ["./src/lib/*"],
+		// 	"$mocks": ["./src/mocks"],
+      	// 	"$mocks/*": ["./src/mocks/*"],
 
-		}
+		// }
 		//"allowImportingTsExtensions": false
 		//"declarationMap": true
 	}
