@@ -4,6 +4,14 @@ import type { MatchDetail, PlayersMatchDetail } from '@prisma/client';
 import prisma from '$lib/server/prisma';
 import { match } from 'assert';
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore: Unreachable code error
+BigInt.prototype.toJSON = function (): number {
+	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+	// @ts-ignore: Unreachable code error
+	return this.toString();
+};
+
 export const POST: RequestHandler = async ({ request, params, url, locals }) => {
 	console.log(`[api] - received GET to ${url.href}`);
 	console.log(`params: ${JSON.stringify(params)}`);
@@ -141,34 +149,34 @@ export const GET: RequestHandler = async ({ params, url }) => {
 					//loop
 
 					//create
-					let result_playerMatchDetails = await Promise.all(
-						playersArr.map(async (player: PlayersMatchDetail) => {
-							await tx.playersMatchDetail.create({
-								data: {
-									...player,
-									// match_detail: {
-									// 	connect: { match_id: BigInt(matchDetailsFetch.match_id) }
-									// }
-								}
-							});
-						})
-					);
-
-					//upsert
 					// let result_playerMatchDetails = await Promise.all(
 					// 	playersArr.map(async (player: PlayersMatchDetail) => {
-					// 		await tx.playersMatchDetail.upsert({
-					// 			where: {
-					// 				matchPlusAccount: { match_id, account_id: player.account_id }
-					// 			},
-					// 			update: { ...player },
-					// 			create: { ...player }
+					// 		await tx.playersMatchDetail.create({
+					// 			data: {
+					// 				...player,
+					// 				// match_detail: {
+					// 				// 	connect: { match_id: BigInt(matchDetailsFetch.match_id) }
+					// 				// }
+					// 			}
 					// 		});
 					// 	})
 					// );
 
+					//upsert
+					let result_playerMatchDetails = await Promise.all(
+						playersArr.map(async (player: PlayersMatchDetail) => {
+							return await tx.playersMatchDetail.upsert({
+								where: {
+									matchPlusAccount: { match_id, account_id: player.account_id }
+								},
+								update: { ...player },
+								create: { ...player }
+							});
+						})
+					);
+
 					console.log(
-						`result_matchDetails: ${matchDetailsWrite} result_playerMatchDetails: ${result_playerMatchDetails}`
+						`result_matchDetails: ${matchDetailsWrite} result_playerMatchDetails: ${JSON.stringify(result_playerMatchDetails)}`
 					);
 				} catch (e) {
 					console.error(e);
