@@ -97,7 +97,7 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
 		//console.log(matchesResult)
 		matchStats = matchesResult;
 		dataSource = 'db';
-	} else if (allowUpdates) {
+	} else if (userResult && allowUpdates) {
 		console.log(`[matches][${account_id}] allow update true, and user was last updated >10 minutes - fetch from OD`);
 
 		//query OD
