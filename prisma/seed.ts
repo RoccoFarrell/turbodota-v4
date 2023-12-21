@@ -14,7 +14,23 @@ function sleep(ms: any) {
 	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+async function generateDotaUsers(){
+	const DotaUserResponse = await prisma.dotaUser.createMany({
+		data: [
+			{ account_id: 80636612, lastUpdated: new Date() },
+			{ account_id: 125251142, lastUpdated: new Date() },
+			{ account_id: 67762413, lastUpdated: new Date() },
+			{ account_id: 113003047, lastUpdated: new Date() },
+			{ account_id: 65110965, lastUpdated: new Date() },
+			{ account_id: 68024789, lastUpdated: new Date() },
+			{ account_id: 423076846, lastUpdated: new Date() },
+			{ account_id: 34940151, lastUpdated: new Date() }
+		]
+	})
+}
+
 async function main() {
+	await generateDotaUsers()
 	//get available heroes
 	const response = await fetch(`http://localhost:5173/api/getHeroes`, {
 		method: 'Get',
@@ -93,12 +109,12 @@ async function main() {
 		const result = await prisma.random.create({ 
 			data: {
 				...writeCopy,
-				// match: {
-				// 	connect: {id: allRandoms[0].endMatchID}
-				// },
-				// user: {
-				// 	connect: {account_id: allRandoms[0].account_id}
-				// }
+				match: {
+					connect: {id: allRandoms[0].endMatchID}
+				},
+				user: {
+					connect: {account_id: allRandoms[0].account_id}
+				}
 			}
 		});
 		// allRandoms.map(async (random) => {
