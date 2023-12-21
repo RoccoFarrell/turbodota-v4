@@ -5,7 +5,7 @@ import type { Actions, PageServerLoad } from './$types'
 export const load: PageServerLoad = async ({ locals }) => {
 	const session = await locals.auth.validate()
 	if (session) {
-		throw redirect(302, '/')
+		redirect(302, '/');
 	}
 }
 
@@ -26,6 +26,6 @@ export const actions: Actions = {
 		}
 		console.log("HELLO WORLD")
 		//console.log('username:', username, ' password:', password)
-		throw redirect(302, '/')
+		redirect(302, '/');
 	}
 }
