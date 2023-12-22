@@ -14,8 +14,8 @@ let initialization: SteamAuthOptions = {
 
 if(process.env.NODE_ENV !== "development"){
     initialization = {
-        realm: "https://new.turbodota.com", // Site name displayed to users on logon
-        returnUrl: "https://new.turbodota.com/api/auth/steam/authenticate", // Your return route
+        realm: "https://turbodota.com", // Site name displayed to users on logon
+        returnUrl: "https://turbodota.com/api/auth/steam/authenticate", // Your return route
         apiKey: "EE3C24BAF27E921B77EFF80F9DBB969D" // Steam API key
     }
 }
