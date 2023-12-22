@@ -26,8 +26,8 @@
 	//images
 	import Lock from '$lib/assets/lock.png';
 
-	console.log('data: ', data);
-	$: console.log('store data: ', $randomStore);
+	// console.log('data: ', data);
+	// $: console.log('store data: ', $randomStore);
 
 	//set user preferences on page
 	if (data.userPreferences && data.userPreferences.length > 0) {
@@ -260,7 +260,113 @@
 		//console.log($randomStore.selectedRoles);
 	};
 
+	// let heroLoading = generateRandomHeroIndex(124);
+	// function handleRandomClick() {
+	// 	heroLoading = generateRandomHeroIndex(124);
+
+	// 	//heroLoading = generateRandomHeroIndex($randomStore.availableHeroes.length)
+	// 	//generateRandomHero();
+	// }
+
+	// async function generateRandomHeroIndex(max: number) {
+	// 	/* 
+	// 	New random scheme 1 
+	// 	*/
+	// 	function genrand1(min: number, max: number) {
+	// 		return (Math.floor(Math.pow(10, 14) * Math.random() * Math.random()) % (max - min)) + min;
+	// 	}
+
+	// 	// rolling the rand
+	// 	async function rollRands1(max: number, rolls: number) {
+	// 		let min: number = 0;
+	// 		let counts: any = {};
+	// 		for (let i = min; i < max; i++) {
+	// 			counts[i.toString()] = 0;
+	// 		}
+	// 		let roll = 0;
+	// 		while (roll < rolls) {
+	// 			counts[genrand1(min, max).toString()]++;
+	// 			roll++;
+	// 		}
+	// 		return counts;
+	// 	}
+
+	// 	/* 
+	// 		New random scheme 2
+	// 	*/
+
+	// 	function genrand2(max: number) {
+	// 		const array = new Uint32Array(10);
+	// 		let rand = crypto.getRandomValues(array);
+	// 		let heroRand = rand.map((number) => number % max);
+	// 		let randomedHero = heroRand[Math.floor(Math.random() * 9)];
+	// 		return randomedHero;
+	// 	}
+
+	// 	async function rollRands2(max: number, rolls: number) {
+	// 		let min: number = 0;
+	// 		let counts: any = {};
+	// 		for (let i = min; i < max; i++) {
+	// 			counts[i.toString()] = 0;
+	// 		}
+	// 		let roll = 0;
+	// 		while (roll < rolls) {
+	// 			counts[genrand2(max).toString()]++;
+	// 			roll++;
+	// 		}
+	// 		return counts;
+	// 	}
+
+	// 	function genrandOld(max: number) {
+	// 		return Math.floor(Math.random() * max);
+	// 	}
+
+	// 	async function rollRandsOld(max: number, rolls: number) {
+	// 		let min: number = 0;
+	// 		let counts: any = {};
+	// 		for (let i = min; i < max; i++) {
+	// 			counts[i.toString()] = 0;
+	// 		}
+	// 		let roll = 0;
+	// 		while (roll < rolls) {
+	// 			counts[genrandOld(max).toString()]++;
+	// 			roll++;
+	// 		}
+	// 		return counts;
+	// 	}
+
+	// 	return await rollRands2($randomStore.availableHeroes.length, 1000000);
+
+	// 	// Promise.all([
+	// 	// 	rollRands1($randomStore.availableHeroes.length, 1000000),
+	// 	// 	rollRands2($randomStore.availableHeroes.length, 1000000),
+	// 	// 	rollRandsOld($randomStore.availableHeroes.length, 1000000)
+	// 	// ])
+	// }
+
 	const generateRandomHero = async () => {
+		console.log(`${$randomStore.availableHeroes.length} available random heroes`);
+
+		function genrandOld(max: number) {
+			return Math.floor(Math.random() * max);
+		}
+
+		function rollRandsOld(max: number, rolls: number) {
+			let min: number = 0;
+			let counts: any = {};
+			for (let i = min; i < max; i++) {
+				counts[i.toString()] = 0;
+			}
+			let roll = 0;
+			while (roll < rolls) {
+				counts[genrandOld(max).toString()]++;
+				roll++;
+			}
+			return counts;
+		}
+
+		console.log("your random generation simulator 1M times: ", rollRandsOld($randomStore.availableHeroes.length, 1000000))
+
 		generatedRandomHero = $randomStore.availableHeroes[Math.floor(Math.random() * $randomStore.availableHeroes.length)];
 
 		$randomStore.randomedHero = generatedRandomHero;
@@ -287,6 +393,19 @@
 		}
 	};
 
+	//https://stackoverflow.com/questions/76933374/svelte-loading-indicator-for-a-synchronous-method
+	// function repaint() {
+	// 	return new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+	// }
+
+	// async function doTheThing() {
+	// 	showLoading = true;
+	// 	await tick();
+	// 	await repaint();
+	// 	doIt();
+	// 	showLoading = false;
+	// }
+
 	//toast settings
 	const t: ToastSettings = {
 		message: `Max bans of ${$randomStore.maxBans} reached!`,
@@ -311,7 +430,7 @@
 			<h1 class="h1 text-primary-700 max-md:font-bold">The Walker Random™</h1>
 			<div class="flex space-x-4">
 				<a href="/random/leaderboard"><button class="btn variant-ghost-primary">Leaderboard</button></a>
-				
+
 				{#if data.session && data.session.user}
 					<div class="text-xs">
 						Logged in as: <p class="text-secondary-500 text-lg font-bold">{data.session.user.username}</p>
@@ -450,6 +569,34 @@
 					<div />
 				{/if}
 
+				<!-- Busted await because its synchronus -->
+				<!-- <div in:slide={{ delay: 250, duration: 300, easing: quintOut, axis: 'x' }}>
+					{#await heroLoading}
+						loading
+					{:then heroVal}
+						{JSON.stringify(heroVal)}
+					{/await}
+
+					{#await heroLoading}
+						<div class="placeholder-circle w-16 animate-bounce" />
+					{:then}
+						{#if generatedRandomHero}
+							<div
+								class="flex flex-col items-center space-y-2 bg-yellow-600/30 rounded-2xl py-4 mb-4"
+								in:slide={{ delay: 250, duration: 300, easing: quintOut, axis: 'x' }}
+							>
+								<h1 class="h1">Your random:</h1>
+								<h1 class="h1 vibrating animate-pulse text-amber-600">
+									{generatedRandomHero.localized_name}
+								</h1>
+								<i class={`vibrating d2mh hero-${generatedRandomHero.id} scale-150`}></i>
+							</div>
+						{:else}
+							<div />
+						{/if}
+					{/await}
+				</div> -->
+
 				<!-- Auto Bans -->
 				<div class="relative">
 					{#if randomFound}
@@ -546,7 +693,6 @@
 				{/if}
 			</div>
 
-
 			<!-- Stats and History -->
 			<div
 				class="w-full h-full max-md:max-w-sm space-y-10 dark:bg-surface-600/30 bg-surface-200/30 border border-surface-200 dark:border-surface-700 rounded-lg relative"
@@ -589,54 +735,8 @@
 				<p>Most randomed wins: Techies</p>
 				<p>Most randomed losses: Broodmother</p> -->
 					</div>
-					<History completedRandoms={completedRandoms} allHeroes={data.heroDescriptions.allHeroes}/>
-					<!-- OLD History-->
-					<!-- <div class="w-full flex flex-col space-y-4">
-						<h2 class="h2 text-primary-500 w-full border-b border-primary-500 border-dashed py-2">History</h2>
-						<div class="h-full">
-							<div class="grid grid-cols-5 text-secondary-500">
-								<div class="col-span-2">Hero</div>
-								<div>Win or Loss</div>
-								<div>Gold</div>
-								<div>Lost Gold</div>
-							</div>
-							<div class="grid grid-cols-5 place-items-center">
-								{#each completedRandoms as random}
-
-									<div class="flex items-center justify-start space-x-2 w-full col-span-2">
-										<i class={`z-0 d2mh hero-${random.randomedHero}`}></i>
-										<p class="inline text-ellipsis overflow-hidden">
-											{data.heroDescriptions.allHeroes.filter((hero) => hero.id === random.randomedHero)[0]
-												.localized_name}
-										</p>
-									</div>
-
-									<div class="flex items-center space-x-2">
-										{#if random.win}
-											<h2 class="h2 text-green-600">W</h2>
-										{:else}
-											<h2 class="h2 text-red-600">L</h2>
-										{/if}
-									</div>
-
-									<div class="flex items-center space-x-2">
-										<div class="text-amber-500 inline font-bold">
-											{random.endGold}g
-											{#if !random.win}
-												<p class="inline text-xs text-secondary-600">(-{random.expectedGold}g)</p>
-											{/if}
-										</div>
-									</div>
-
-									<div class="flex items-center space-x-2">
-										<p class="text-red-500 inline font-bold">{random.modifierTotal}g</p>
-									</div>
-								{/each}
-							</div>
-						</div>
-					</div> -->
+					<History {completedRandoms} allHeroes={data.heroDescriptions.allHeroes} />
 				</div>
-				<!-- {JSON.stringify(data.randoms, null, 4)} -->
 			</div>
 		</div>
 	</div>
