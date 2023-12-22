@@ -1,42 +1,26 @@
-/*
-  Warnings:
+-- CreateTable
+CREATE TABLE "Match" (
+    "id" SERIAL NOT NULL,
+    "match_id" BIGINT NOT NULL,
+    "account_id" INTEGER NOT NULL,
+    "assists" INTEGER NOT NULL,
+    "average_rank" INTEGER,
+    "deaths" INTEGER NOT NULL,
+    "duration" INTEGER NOT NULL,
+    "game_mode" INTEGER NOT NULL,
+    "hero_id" INTEGER NOT NULL,
+    "kills" INTEGER NOT NULL,
+    "leaver_status" INTEGER NOT NULL,
+    "lobby_type" INTEGER NOT NULL,
+    "party_size" INTEGER,
+    "player_slot" INTEGER NOT NULL,
+    "radiant_win" BOOLEAN NOT NULL,
+    "skill" INTEGER,
+    "start_time" BIGINT NOT NULL,
+    "version" INTEGER,
 
-  - The primary key for the `Match` table will be changed. If it partially fails, the table could be left without primary key constraint.
-  - You are about to alter the column `account_id` on the `Match` table. The data in that column could be lost. The data in that column will be cast from `BigInt` to `Integer`.
-  - You are about to alter the column `account_id` on the `User` table. The data in that column could be lost. The data in that column will be cast from `BigInt` to `Integer`.
-  - You are about to drop the `Article` table. If the table is not empty, all the data it contains will be lost.
-  - A unique constraint covering the columns `[match_id,account_id]` on the table `Match` will be added. If there are existing duplicate values, this will fail.
-  - A unique constraint covering the columns `[steam_id]` on the table `User` will be added. If there are existing duplicate values, this will fail.
-  - Added the required column `avatar_url` to the `User` table without a default value. This is not possible if the table is not empty.
-  - Added the required column `profile_url` to the `User` table without a default value. This is not possible if the table is not empty.
-
-*/
--- DropForeignKey
-ALTER TABLE "Article" DROP CONSTRAINT "Article_userId_fkey";
-
--- DropForeignKey
-ALTER TABLE "Match" DROP CONSTRAINT "Match_account_id_fkey";
-
--- DropIndex
-DROP INDEX "Match_match_id_key";
-
--- AlterTable
-ALTER TABLE "Match" DROP CONSTRAINT "Match_pkey",
-ADD COLUMN     "id" SERIAL NOT NULL,
-ALTER COLUMN "account_id" SET DATA TYPE INTEGER,
-ALTER COLUMN "average_rank" DROP NOT NULL,
-ADD CONSTRAINT "Match_pkey" PRIMARY KEY ("id");
-
--- AlterTable
-ALTER TABLE "User" ADD COLUMN     "avatar_url" TEXT NOT NULL,
-ADD COLUMN     "profile_url" TEXT NOT NULL,
-ADD COLUMN     "roles" TEXT,
-ADD COLUMN     "steam_id" BIGINT,
-ALTER COLUMN "name" DROP NOT NULL,
-ALTER COLUMN "account_id" SET DATA TYPE INTEGER;
-
--- DropTable
-DROP TABLE "Article";
+    CONSTRAINT "Match_pkey" PRIMARY KEY ("id")
+);
 
 -- CreateTable
 CREATE TABLE "MatchDetail" (
@@ -126,6 +110,21 @@ CREATE TABLE "Hero" (
 );
 
 -- CreateTable
+CREATE TABLE "User" (
+    "id" TEXT NOT NULL,
+    "name" TEXT,
+    "username" TEXT NOT NULL,
+    "account_id" INTEGER NOT NULL,
+    "steam_id" BIGINT,
+    "profile_url" TEXT NOT NULL,
+    "avatar_url" TEXT NOT NULL,
+    "roles" TEXT,
+    "lastUpdated" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "User_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "UserPrefs" (
     "id" SERIAL NOT NULL,
     "account_id" INTEGER NOT NULL,
@@ -157,6 +156,28 @@ CREATE TABLE "Random" (
     CONSTRAINT "Random_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "Session" (
+    "id" TEXT NOT NULL,
+    "user_id" TEXT NOT NULL,
+    "active_expires" BIGINT NOT NULL,
+    "idle_expires" BIGINT NOT NULL,
+
+    CONSTRAINT "Session_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Key" (
+    "id" TEXT NOT NULL,
+    "hashed_password" TEXT,
+    "user_id" TEXT NOT NULL,
+
+    CONSTRAINT "Key_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Match_match_id_account_id_key" ON "Match"("match_id", "account_id");
+
 -- CreateIndex
 CREATE UNIQUE INDEX "MatchDetail_match_id_key" ON "MatchDetail"("match_id");
 
@@ -173,22 +194,37 @@ CREATE INDEX "DotaUser_account_id_idx" ON "DotaUser"("account_id");
 CREATE UNIQUE INDEX "Hero_id_key" ON "Hero"("id");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "UserPrefs_account_id_name_key" ON "UserPrefs"("account_id", "name");
+CREATE UNIQUE INDEX "User_id_key" ON "User"("id");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Match_match_id_account_id_key" ON "Match"("match_id", "account_id");
+CREATE UNIQUE INDEX "User_username_key" ON "User"("username");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "User_account_id_key" ON "User"("account_id");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "User_steam_id_key" ON "User"("steam_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "UserPrefs_account_id_name_key" ON "UserPrefs"("account_id", "name");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Session_id_key" ON "Session"("id");
+
+-- CreateIndex
+CREATE INDEX "Session_user_id_idx" ON "Session"("user_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Key_id_key" ON "Key"("id");
+
+-- CreateIndex
+CREATE INDEX "Key_user_id_idx" ON "Key"("user_id");
 
 -- AddForeignKey
 ALTER TABLE "PlayersMatchDetail" ADD CONSTRAINT "PlayersMatchDetail_match_id_fkey" FOREIGN KEY ("match_id") REFERENCES "MatchDetail"("match_id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "PlayersMatchDetail" ADD CONSTRAINT "PlayersMatchDetail_account_id_fkey" FOREIGN KEY ("account_id") REFERENCES "User"("account_id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "DotaUser" ADD CONSTRAINT "DotaUser_account_id_fkey" FOREIGN KEY ("account_id") REFERENCES "User"("account_id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "User" ADD CONSTRAINT "User_account_id_fkey" FOREIGN KEY ("account_id") REFERENCES "DotaUser"("account_id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "UserPrefs" ADD CONSTRAINT "UserPrefs_account_id_fkey" FOREIGN KEY ("account_id") REFERENCES "User"("account_id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -198,3 +234,9 @@ ALTER TABLE "Random" ADD CONSTRAINT "Random_account_id_fkey" FOREIGN KEY ("accou
 
 -- AddForeignKey
 ALTER TABLE "Random" ADD CONSTRAINT "Random_endMatchID_fkey" FOREIGN KEY ("endMatchID") REFERENCES "Match"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Session" ADD CONSTRAINT "Session_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Key" ADD CONSTRAINT "Key_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;

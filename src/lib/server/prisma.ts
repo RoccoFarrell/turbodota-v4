@@ -13,11 +13,11 @@ import { env } from '$env/dynamic/private';
 // })
 
 const prisma = new PrismaClient({
-	log: [{ level: 'query', emit: 'event' }]
+	//log: [{ level: 'query', emit: 'event' }]
 });
 
-prisma.$on('query', (e) => {
-	console.log(e);
-});
+// prisma.$on('query', (e) => {
+// 	console.log(e);
+// });
 
 export default prisma;

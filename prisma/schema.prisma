@@ -7,16 +7,16 @@ generator client {
 //   url      = "file:./dev.sqlite"
 // }
 
+// datasource db {
+//   provider = "postgresql"
+//   url      = env("DEV_URL")
+// }
+
 datasource db {
   provider  = "postgresql"
-  url       = env("DEV_URL")
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
-
-// datasource db {
-//   provider  = "postgresql"
-//   url       = env("DATABASE_URL")
-//   directUrl = env("DIRECT_URL")
-// }
 
 model Match {
   id            Int      @id @default(autoincrement())
@@ -111,7 +111,7 @@ model DotaUser {
   lastUpdated DateTime
   oldestMatch DateTime?
   newestMatch DateTime?
-  user        User      @relation(fields: [account_id], references: [account_id])
+  user        User?
 
   @@index([account_id])
 }
@@ -127,20 +127,21 @@ model Hero {
 }
 
 model User {
-  id                   String               @id @unique
-  name                 String?
-  username             String               @unique
-  account_id           Int?                 @unique
-  steam_id             BigInt?              @unique
-  profile_url          String
-  avatar_url           String
-  roles                String?
-  key                  Key[]
-  auth_session         Session[]
-  randoms              Random[]
-  user_prefs           UserPrefs[]
+  id           String      @id @unique
+  name         String?
+  username     String      @unique
+  account_id   Int        @unique
+  steam_id     BigInt?     @unique
+  profile_url  String
+  avatar_url   String
+  roles        String?
+  lastUpdated  DateTime    @default(now())
+  key          Key[]
+  auth_session Session[]
+  randoms      Random[]
+  user_prefs   UserPrefs[]
   //player_match_details PlayersMatchDetail[]
-  dota_user            DotaUser?
+  dota_user    DotaUser? @relation(fields: [account_id], references: [account_id])
 
   //matches      Match[]
 }
