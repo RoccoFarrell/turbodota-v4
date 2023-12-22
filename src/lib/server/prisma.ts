@@ -1,13 +1,23 @@
-import { PrismaClient } from "@prisma/client"
-import { env } from "$env/dynamic/private"
-
-const prisma = global.__prisma || new PrismaClient()
-// const client = new PrismaClient({
-// 	log: ['query', 'info', 'warn', 'error']
-// })
+import { PrismaClient } from '@prisma/client';
+import { env } from '$env/dynamic/private';
 
 // if (env.NODE_ENV === "development") {
-// 	global.__prisma = client
+// 	options = {
+//         log: ['query', 'info', 'warn', 'error']
+//     }
 // }
 
-export default prisma
+// const prisma = new PrismaClient(options)
+// prisma.$on('query', (e) => {
+//     console.log(e)
+// })
+
+const prisma = new PrismaClient({
+	//log: [{ level: 'query', emit: 'event' }]
+});
+
+// prisma.$on('query', (e) => {
+// 	console.log(e);
+// });
+
+export default prisma;

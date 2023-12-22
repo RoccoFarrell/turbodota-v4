@@ -53,6 +53,6 @@ export const GET: RequestHandler = async ({ request, locals, params, url }) => {
     }
 
     //...do something with the data
-    throw redirect(302, '/')
+    redirect(302, '/');
     //return new Response(JSON.stringify({ "user": user }))
 };

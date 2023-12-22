@@ -1,7 +1,6 @@
 import { error } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
 import prisma from '$lib/server/prisma';
-import { match } from 'assert';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unreachable code error
@@ -97,7 +96,7 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
 		//console.log(matchesResult)
 		matchStats = matchesResult;
 		dataSource = 'db';
-	} else if (allowUpdates) {
+	} else if (userResult && allowUpdates) {
 		console.log(`[matches][${account_id}] allow update true, and user was last updated >10 minutes - fetch from OD`);
 
 		//query OD
@@ -134,7 +133,7 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
 			//console.log(match.match_id, account_id, match.match_id.toString() + account_id.toString())
 			return {
 				...match,
-				account_id: BigInt(account_id)
+				account_id: account_id
 			};
 		});
 

@@ -7,5 +7,5 @@ import steam from './steam';
 export const GET: RequestHandler = async ({ params, url }) => {
     console.log('received GET')
     const redirectUrl = await steam.getRedirectUrl();
-    throw redirect(302, redirectUrl)
+    redirect(302, redirectUrl);
 };
