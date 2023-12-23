@@ -26,25 +26,8 @@
 	//images
 	import Lock from '$lib/assets/lock.png';
 
-	// console.log('data: ', data);
-	// $: console.log('store data: ', $randomStore);
-
-	//set user preferences on page
-	if (data.userPreferences && data.userPreferences.length > 0) {
-		let banListPref = data.userPreferences.filter((pref: any) => pref.name === 'randomBanList');
-
-		try {
-			if (banListPref.length > 0 && banListPref[0].value) {
-				let randomBanListParsed = JSON.parse(banListPref[0].value);
-
-				let setList = data.heroDescriptions.allHeroes.filter((hero: Hero) => randomBanListParsed.includes(hero.id));
-
-				randomStore.setBanList(setList);
-			}
-		} catch (e) {
-			console.error('error in setting preferences');
-		}
-	}
+	console.log('data: ', data);
+	$: console.log('store data: ', $randomStore);
 
 	let generatedRandomHero: Hero | null = null;
 
@@ -73,6 +56,7 @@
 		console.log(`bannedHeroes: ${bannedHeroes} selectedRoles: ${selectedRoles} randomedHero: ${randomedHero}`);
 
 		if (typeof bannedHeroes === 'string' && typeof selectedRoles === 'string' && randomedHero) {
+			console.log(`[random/+page.svelte] - setting random store `);
 			randomStore.set({
 				allHeroes: data.heroDescriptions.allHeroes,
 				availableHeroes: availableHeroes.split(',').map((randomID: string) => {
@@ -94,11 +78,11 @@
 				maxBans: 10,
 				randomedHero: allHeroesCopy.filter((hero: Hero) => hero.id === randomedHero)[0]
 			});
+
+			generatedRandomHero = $randomStore.randomedHero;
 		} else {
 			console.error('[set locked random hero] - couldnt set locked random');
 		}
-
-		generatedRandomHero = $randomStore.randomedHero;
 	} else if (data.session && data.session.user) {
 		const t: ToastSettings = {
 			message: `No active randoms found for user`,
@@ -106,6 +90,25 @@
 		};
 
 		toastStore.trigger(t);
+	}
+
+	//set user preferences on page
+	if (data.userPreferences && data.userPreferences.length > 0) {
+		console.log(`[random/+page.svelte] - evaluating userPreferencces`);
+		let banListPref = data.userPreferences.filter((pref: any) => pref.name === 'randomBanList');
+
+		try {
+			if (banListPref.length > 0 && banListPref[0].value) {
+				console.log(`[random/+page.svelte] - evaluating saved ban list`);
+				let randomBanListParsed = JSON.parse(banListPref[0].value);
+
+				let setList = data.heroDescriptions.allHeroes.filter((hero: Hero) => randomBanListParsed.includes(hero.id));
+
+				randomStore.setBanList(setList);
+			}
+		} catch (e) {
+			console.error('error in setting preferences');
+		}
 	}
 
 	//calc random lifetime stats on load
@@ -269,8 +272,8 @@
 	// }
 
 	// async function generateRandomHeroIndex(max: number) {
-	// 	/* 
-	// 	New random scheme 1 
+	// 	/*
+	// 	New random scheme 1
 	// 	*/
 	// 	function genrand1(min: number, max: number) {
 	// 		return (Math.floor(Math.pow(10, 14) * Math.random() * Math.random()) % (max - min)) + min;
@@ -291,7 +294,7 @@
 	// 		return counts;
 	// 	}
 
-	// 	/* 
+	// 	/*
 	// 		New random scheme 2
 	// 	*/
 
@@ -365,7 +368,10 @@
 			return counts;
 		}
 
-		console.log("your random generation simulator 1M times: ", rollRandsOld($randomStore.availableHeroes.length, 1000000))
+		console.log(
+			'your random generation simulator 1M times: ',
+			rollRandsOld($randomStore.availableHeroes.length, 1000000)
+		);
 
 		generatedRandomHero = $randomStore.availableHeroes[Math.floor(Math.random() * $randomStore.availableHeroes.length)];
 

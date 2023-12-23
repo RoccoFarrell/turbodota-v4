@@ -89,11 +89,11 @@ model PlayersMatchDetail {
   aghanims_scepter Int
   aghanims_shard   Int
   moonshard        Int
-  hero_damage      Int
-  tower_damage     Int
-  hero_healing     Int
-  gold             Int
-  gold_spent       Int
+  hero_damage      Int?
+  tower_damage     Int?
+  hero_healing     Int?
+  gold             Int?
+  gold_spent       Int?
   win              Boolean
   lose             Boolean
   total_gold       Int

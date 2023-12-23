@@ -1,0 +1,32 @@
+meta {
+  name: graphql
+  type: http
+  seq: 4
+}
+
+post {
+  url: https://api.stratz.com/graphql
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJTdWJqZWN0IjoiODA1NmE2MzUtNmM4MS00OTlmLThiYTItZDAxMzQ4OWM2NzMxIiwiU3RlYW1JZCI6IjY1MTEwOTY1IiwibmJmIjoxNzAzMzA3OTEyLCJleHAiOjE3MzQ4NDM5MTIsImlhdCI6MTcwMzMwNzkxMiwiaXNzIjoiaHR0cHM6Ly9hcGkuc3RyYXR6LmNvbSJ9.yfQ-Ymoi1q-vUiOq2KMkyAVKeuVq3F9k5nf_lqRDA8g
+}
+
+body:json {
+  {"query": "{\n  match(id: 6716749117) {\n    id,\n    players {\n      steamAccountId\n      gold\n      goldSpent\n      heroDamage\n      towerDamage\n      heroHealing\n      intentionalFeeding\n      award\n      experiencePerMinute\n      steamAccount{\n        name\n      }\n      stats{\n        actionsPerMinute\n        wards {\n          positionX\n          positionY\n        }\n        heroDamageReport{\n          dealtTotal{\n            physicalDamage\n            magicalDamage\n            stunDuration\n            disableDuration\n            slowDuration\n          }\n          receivedTotal{\n            physicalDamage\n            magicalDamage\n            stunDuration\n            disableDuration\n            slowDuration\n          }\n        }\n      }\n    }\n  }\n}"
+  
+  }
+}
+
+body:text {
+  {
+    match(id: 6716749117) {
+      id,
+      players {
+        steamAccountId
+      }
+    }
+  }
+}
