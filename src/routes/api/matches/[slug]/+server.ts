@@ -40,12 +40,15 @@ export const GET: RequestHandler = async ({ params, url }) => {
 	//console.log(matchDetailResult);
 
 	let returnObj: any;
-	let forceUpdate: boolean = true;
+	let forceUpdate: boolean = false;
 	type MatchDetailKeys = keyof typeof returnObj;
 
 	if (matchDetailResult && !forceUpdate) {
 		//return found match
-		returnObj = matchDetailResult;
+		returnObj = {
+			matchDetail: matchDetailResult,
+			source: "db"
+		}
 	}
 	//match not found, get from API
 	else {
@@ -178,6 +181,8 @@ export const GET: RequestHandler = async ({ params, url }) => {
 					console.log(
 						`result_matchDetails: ${matchDetailsWrite} result_playerMatchDetails: ${JSON.stringify(result_playerMatchDetails)}`
 					);
+
+					return result_playerMatchDetails.length
 				} catch (e) {
 					console.error(e);
 				}
@@ -187,11 +192,15 @@ export const GET: RequestHandler = async ({ params, url }) => {
 				timeout: 20000 // default: 5000
 			}
 		);
-		console.log(result_tx);
+		console.log("result_tx: ", result_tx);
 		returnObj = {
 			matchDetail: matchDetailObj,
 			playerMatchDetails: playersArr,
-			test: playersArr[0]
+			inserts: {
+				playerMatchDetails_count: result_tx,
+				matchDetails_count: matchDetailsWrite ? 1 : 0
+			},
+			source: "opendota"
 		};
 	}
 
