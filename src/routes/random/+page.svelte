@@ -376,7 +376,7 @@
 				...$randomStore,
 				availableHeroes: $randomStore.availableHeroes.map((hero: Hero) => hero.id),
 				bannedHeroes: $randomStore.bannedHeroes.map((hero: Hero) => hero.id),
-				randomedHero: $randomStore.randomedHero.id
+				randomedHero: generatedRandomHero.id
 			};
 			//bodyData.availableHeroes = bodyData.availableHeroes.map((hero: Hero) => hero.id);
 			let response = await fetch(`/api/random/${data.session.user.account_id}/create`, {
