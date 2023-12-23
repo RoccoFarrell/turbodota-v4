@@ -57,7 +57,7 @@ model MatchDetail {
   patch                   Int
   radiant_score           Int
   dire_score              Int
-  average_rank            Int
+  average_rank            Int?
   players                 PlayersMatchDetail[]
 }
 
