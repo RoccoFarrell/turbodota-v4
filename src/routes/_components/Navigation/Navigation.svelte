@@ -8,46 +8,68 @@
 
 	//console.log(session);
 
-	console.log($page.url.pathname)
-	console.log(session)
+	console.log($page.url.pathname);
+	console.log(session);
 </script>
 
 <nav class="list-nav p-6">
 	<ul class="w-full">
-		<li class={"flex items-center justify-start rounded-full " + ($page.url.pathname === '/' ? "border border-secondary-500/60" : "")}>
-			
+		<li
+			class={'flex items-center justify-start rounded-full ' +
+				($page.url.pathname === '/' ? 'border border-secondary-500/60' : '')}
+		>
 			<a href="/" data-sveltekit-preload-data="tap" class="w-full">
-				<i class="fi fi-br-house-chimney text-green-500"/>
-				<p class={($page.url.pathname === '/' ? "font-bold" : "")}>Home</p></a
-			>			
+				<i class="fi fi-br-house-chimney text-green-500" />
+				<p class={$page.url.pathname === '/' ? 'font-bold' : ''}>Home</p></a
+			>
 		</li>
-		<li class={"flex items-center justify-start rounded-full " + ($page.url.pathname === '/random' ? "border border-secondary-500/60" : "")}>
+		<li
+			class={'flex items-center justify-start rounded-full ' +
+				($page.url.pathname === '/random' ? 'border border-secondary-500/60' : '')}
+		>
 			<a href="/random" data-sveltekit-preload-data="tap" class="w-full"
 				><i class="fi fi-rr-dice-alt text-purple-500"></i>
-				<p class={($page.url.pathname === '/random' ? "font-bold" : "")}>Random Tracker</p></a
+				<p class={$page.url.pathname === '/random' ? 'font-bold' : ''}>Random Tracker</p></a
 			>
 		</li>
-		<li class={"flex items-center justify-start rounded-full " + ($page.url.pathname === '/random/leaderboard' ? "border border-secondary-500/60" : "")}>
+		<li
+			class={'flex items-center justify-start rounded-full ' +
+				($page.url.pathname === '/random/leaderboard' ? 'border border-secondary-500/60' : '')}
+		>
 			<a href="/random/leaderboard" data-sveltekit-preload-data="tap" class="w-full"
 				><i class="fi fi-rr-trophy-star text-red-500"></i>
-				<p class={($page.url.pathname === '/random/leaderboard' ? "font-bold" : "")}>Leaderboard</p></a
+				<p class={$page.url.pathname === '/random/leaderboard' ? 'font-bold' : ''}>Leaderboard</p></a
 			>
 		</li>
-		<li class={"flex items-center justify-start rounded-full " + ($page.url.pathname === '/turbotown' ? "border border-secondary-500/60" : "")}>
-			<a href="/turbotown" data-sveltekit-preload-data="tap" class="w-full"
-				>
-				<i class="fi fi-br-house-turret text-blue-500"/>
-				<p class={($page.url.pathname === '/turbotown' ? "font-bold" : "")}>Turbo Town</p></a
+		<li
+			class={'flex items-center justify-start rounded-full ' +
+				($page.url.pathname === '/turbotown' ? 'border border-secondary-500/60' : '')}
+		>
+			<a href="/turbotown" data-sveltekit-preload-data="tap" class="w-full">
+				<i class="fi fi-br-house-turret text-blue-500" />
+				<p class={$page.url.pathname === '/turbotown' ? 'font-bold' : ''}>Turbo Town</p></a
 			>
 		</li>
-		
+		<li
+			class={'flex items-center justify-start rounded-full ' +
+				($page.url.pathname === '/leagues' ? 'border border-secondary-500/60' : '')}
+		>
+			<a href="/leagues" data-sveltekit-preload-data="tap" class="w-full">
+				<i class="fi fi-br-users-alt text-teal-500"/>
+				<p class={$page.url.pathname === '/turbotown' ? 'font-bold' : ''}>Leagues</p></a
+			>
+		</li>
+
 		{#if session && session.user && [34940151, 65110965, 68024789, 80636612, 113003047, 423076846].includes(session.user.account_id)}
-		<li class={"flex items-center justify-start rounded-full " + ($page.url.pathname === '/herostats' ? "border border-secondary-500/60" : "")}>
-			<a href="/herostats" data-sveltekit-preload-data="tap" class="w-full"
-				><i class="fi fi-br-chart-histogram dark:text-amber-400 text-amber-600"></i>
-				<p class={($page.url.pathname === '/herostats' ? "font-bold" : "")}>Hero Stats</p></a
+			<li
+				class={'flex items-center justify-start rounded-full ' +
+					($page.url.pathname === '/herostats' ? 'border border-secondary-500/60' : '')}
 			>
-		</li>
+				<a href="/herostats" data-sveltekit-preload-data="tap" class="w-full"
+					><i class="fi fi-br-chart-histogram dark:text-amber-400 text-amber-600"></i>
+					<p class={$page.url.pathname === '/herostats' ? 'font-bold' : ''}>Hero Stats</p></a
+				>
+			</li>
 		{/if}
 		<li class="h-32 lg:h-4"></li>
 		<hr class="!border-t-4" />
