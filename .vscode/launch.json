@@ -16,7 +16,7 @@
 			"request": "launch",
 			"name": "Launch Edge",
 			"url": "http://127.0.0.1:5173",
-			"webRoot": "${workspaceFolder}/turbodota-v3"
+			"webRoot": "${workspaceFolder}/turbodota-v4"
 		}
 	],
 	"compounds": [
