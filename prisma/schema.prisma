@@ -7,16 +7,16 @@ generator client {
 //   url      = "file:./dev.sqlite"
 // }
 
-datasource db {
-  provider = "postgresql"
-  url      = env("DEV_URL")
-}
-
 // datasource db {
-//   provider  = "postgresql"
-//   url       = env("DATABASE_URL")
-//   directUrl = env("DIRECT_URL")
+//   provider = "postgresql"
+//   url      = env("DEV_URL")
 // }
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
 
 model Match {
   id            Int      @id @default(autoincrement())
@@ -111,6 +111,7 @@ model League {
   name String
   lastUpdated DateTime
   creatorID Int
+  creator User @relation(fields: [creatorID], references:[account_id])
   members DotaUser[]
 }
 
@@ -149,6 +150,7 @@ model User {
   auth_session Session[]
   randoms      Random[]
   user_prefs   UserPrefs[]
+  leagues League[]
   //player_match_details PlayersMatchDetail[]
   dota_user    DotaUser? @relation(fields: [account_id], references: [account_id])
 

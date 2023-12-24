@@ -1,9 +1,10 @@
 import { auth } from '$lib/server/lucia';
-import { fail, redirect } from '@sveltejs/kit';
+import { fail, redirect, json } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
+import type { User } from '@prisma/client';
 import prisma from '$lib/server/prisma';
 
-import { createDotaUser } from '../api/helpers';
+//import { createDotaUser } from '../api/helpers';
 
 export const load: PageServerLoad = async ({ locals, parent }) => {
 	const parentData = await parent();
@@ -14,11 +15,12 @@ export const load: PageServerLoad = async ({ locals, parent }) => {
 
 	const leagues = await prisma.league.findMany({
 		include: {
-			members: true
+			members: true,
+			creator: true
 		}
 	});
 
-	const mostCommonFriends = await prisma.$queryRaw`
+	const mostCommonFriends: any = await prisma.$queryRaw`
 	SELECT
 		t1.account_id as account1,
 		t2.account_id as account2,
@@ -26,20 +28,43 @@ export const load: PageServerLoad = async ({ locals, parent }) => {
 	FROM "Match" t1
 	JOIN "Match" t2
 	ON t1.match_id = t2.match_id
-	AND t1.account_id < t2.account_id
-	WHERE t1.account_id = ${session.user.account_id}
+	AND t1.account_id != t2.account_id
+	WHERE t1.account_id = 65110965
 	GROUP BY
 		t1.account_id,
 		t2.account_id
 	ORDER BY 3 DESC
 	LIMIT 10`;
 
-	return { leagues, mostCommonFriends };
+	const commonFriendUsers = await prisma.user.findMany({
+		where: {
+			account_id: { in: mostCommonFriends.map((friend: any) => friend.account2) }
+		}
+	});
+
+	return {
+		leagues,
+		common: {
+			mostCommonFriends,
+			commonFriendUsers,
+			commonCombined: [
+				...commonFriendUsers,
+				...mostCommonFriends
+					.filter(
+						(friend: any) =>
+							commonFriendUsers.filter((userFriend) => userFriend.account_id === friend.account2).length === 0
+					)
+					.map((f: any) => f.account2)
+			]
+		}
+	};
 };
 
 export const actions: Actions = {
 	createLeague: async ({ request, locals }) => {
 		const session = await locals.auth.validate();
+
+		if (!session.user.roles.includes('dev')) return fail(400, { message: 'Not an admin' });
 		const { leagueName, dotaUsersList } = Object.fromEntries(await request.formData()) as Record<string, string>;
 
 		try {
@@ -83,12 +108,18 @@ export const actions: Actions = {
 					lastUpdated: new Date(),
 					creatorID: session.user.account_id,
 					members: {
-						create: createdUserList
+						connectOrCreate: createdUserList.map((user) => {
+							return {
+								where: { account_id: user.account_id },
+								create: user
+							};
+						})
 					}
 				}
 			});
 
 			console.log(leagueCreateResult);
+			if (leagueCreateResult) return { success: true };
 		} catch (err) {
 			console.error(err);
 			return fail(400, { message: 'Could not create league' });
