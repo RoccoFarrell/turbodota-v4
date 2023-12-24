@@ -3,6 +3,11 @@ import type { RequestHandler } from '@sveltejs/kit';
 import type { MatchDetail, PlayersMatchDetail } from '@prisma/client';
 import prisma from '$lib/server/prisma';
 import { match } from 'assert';
+import type { Config } from '@sveltejs/adapter-vercel';
+
+export const config: Config = {
+	runtime: 'edge',
+};
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unreachable code error
