@@ -106,11 +106,21 @@ model PlayersMatchDetail {
   @@unique([match_id, account_id], name: "matchPlusAccount")
 }
 
+model League {
+  id Int @id @default(autoincrement())
+  name String
+  lastUpdated DateTime
+  creatorID Int
+  creator User @relation(fields: [creatorID], references:[account_id])
+  members DotaUser[]
+}
+
 model DotaUser {
   account_id  Int       @id @unique
   lastUpdated DateTime
   oldestMatch DateTime?
   newestMatch DateTime?
+  leagues     League[]
   user        User?
 
   @@index([account_id])
@@ -140,6 +150,7 @@ model User {
   auth_session Session[]
   randoms      Random[]
   user_prefs   UserPrefs[]
+  leagues League[]
   //player_match_details PlayersMatchDetail[]
   dota_user    DotaUser? @relation(fields: [account_id], references: [account_id])
 

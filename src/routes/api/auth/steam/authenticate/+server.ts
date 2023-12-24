@@ -6,6 +6,10 @@ import { auth } from '$lib/server/lucia'
 import { LuciaError } from "lucia";
 import steam from '../steam';
 
+//helpers
+import { createDotaUser } from '../../../helpers';
+import { create } from 'domain';
+
 export const GET: RequestHandler = async ({ request, locals, params, url }) => {
     console.log('received GET to authenticate')
 
@@ -22,22 +26,32 @@ export const GET: RequestHandler = async ({ request, locals, params, url }) => {
     }
 
     if(!dbUser){
-        dbUser = await auth.createUser({
-            userId: steamUser.steamid,
-            key: {
-                providerId: 'steam',
-                providerUserId: steamUser.steamid,
-                password: null
-            },
-            attributes: {
-                name: steamUser.name || "",
-                username: steamUser.username,
-                steam_id: steamUser.steamid,
-                account_id: Number(steamUser.steamid.substr(-16,16)) - 6561197960265728,
-                profile_url: steamUser.profile,
-                avatar_url: steamUser.avatar.small            
-            }
-        })
+
+        //need to create dotaUser for a new user before an actual user can be created
+        let account_id = Number(steamUser.steamid.substr(-16,16)) - 6561197960265728
+        let createDUResult = await createDotaUser(account_id)
+
+        console.log(`[/authenticate] createDUResult: `, createDUResult) 
+
+        if(createDUResult.account_id){
+            dbUser = await auth.createUser({
+                userId: steamUser.steamid,
+                key: {
+                    providerId: 'steam',
+                    providerUserId: steamUser.steamid,
+                    password: null
+                },
+                attributes: {
+                    name: steamUser.name || "",
+                    username: steamUser.username,
+                    steam_id: steamUser.steamid,
+                    account_id: account_id,
+                    profile_url: steamUser.profile,
+                    avatar_url: steamUser.avatar.small            
+                }
+            })
+        } else console.error(`[/authenticate] failed to create dota user so couldnt create normal user`)
+        
     }
 
     if (!locals.auth.validate()) {
