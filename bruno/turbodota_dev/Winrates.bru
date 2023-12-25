@@ -1,0 +1,26 @@
+meta {
+  name: Winrates
+  type: http
+  seq: 6
+}
+
+post {
+  url: http://localhost:5173/api/winrates
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "accountIdsForCalc": [
+      65110965,
+      34940151,
+      80636612,
+      113003047,
+      125251142,
+      423076846,
+      67762413, 
+      68024789
+    ]
+  }
+}

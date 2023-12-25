@@ -1,0 +1,33 @@
+meta {
+  name: Matches with Friends
+  type: graphql
+  seq: 5
+}
+
+post {
+  url: https://api.stratz.com/graphql
+  body: graphql
+  auth: bearer
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJTdWJqZWN0IjoiODA1NmE2MzUtNmM4MS00OTlmLThiYTItZDAxMzQ4OWM2NzMxIiwiU3RlYW1JZCI6IjY1MTEwOTY1IiwibmJmIjoxNzAzMzA3OTEyLCJleHAiOjE3MzQ4NDM5MTIsImlhdCI6MTcwMzMwNzkxMiwiaXNzIjoiaHR0cHM6Ly9hcGkuc3RyYXR6LmNvbSJ9.yfQ-Ymoi1q-vUiOq2KMkyAVKeuVq3F9k5nf_lqRDA8g
+}
+
+body:graphql {
+  {
+    #players(steamAccountIds: [65110965, 34940151, 80636612, 113003047, 125251142, 423076846, 67762413, 68024789]) {
+    players(steamAccountIds: [65110965, 34940151, 80636612, 113003047, 125251142]) {
+      steamAccountId
+      matches(request: {
+        withFriendSteamAccountIds:[65110965, 34940151, 80636612, 113003047, 125251142]
+      	}) {
+        id
+        players{
+          steamAccountId
+          heroId
+        }
+      }
+    }
+  }
+}

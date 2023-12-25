@@ -17,7 +17,7 @@ async function writeRecordsChunked(partialArr: Match[], account_id: number) {
 			try {
 				result_match = await Promise.all(
 					partialArr.map(async (match: Match) => {
-						await tx.match.upsert({
+						return await tx.match.upsert({
 							where: {
 								matchPlusAccount: { match_id: match.match_id, account_id: match.account_id }
 							},
@@ -75,6 +75,13 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
 		//console.log(`d_diff: ${d_diff}`)
 	}
 
+	type ODError = {
+		error: boolean,
+		source?: string,
+		url?: string,
+		code?: number
+	}
+
 	let matchStats: Match[] = [];
 	let allowUpdates: boolean = true;
 	let forceFullUpdate: boolean = false;
@@ -82,7 +89,7 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
 	let dataSource: string = '';
 	let updateInterval = new Date();
 
-	let od_url;
+	let od_url: string = "";
 	updateInterval.setMinutes(rightNow.getMinutes() - 10);
 
 	console.log(`[matches][${account_id}] updateInterval: ${updateInterval}`);
@@ -115,17 +122,34 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
 		}
 		console.log(od_url);
 
+		let odError: ODError = {
+			error: false
+		}
+
 		//perform fetch to OD
 		matchStats = await fetch(od_url, {
 			method: 'get',
 			headers: { 'Content-Type': 'application/json' }
 		})
 			//.then(data => console.log(data))
-			.then((data) => data.json())
-			.then((json) => {
-				//console.log('search results: ', json)
-				return json;
-			});
+			.then((response) => {
+				if(response.status === 200) return response.json()
+				else odError = {
+					error: true,
+					source: "opendota",
+					url: od_url,
+					code: response.status 
+				}
+			})
+			// .then((json) => {
+			// 	//console.log('search results: ', json)
+			// 	return json;
+			// })
+			.catch((e: any) => {
+				console.error(e)
+			})
+				
+		if(odError.error) return new Response(JSON.stringify({ ...odError }))
 
 		console.log(`[matches][${account_id}] ${matchStats.length} matches returned from OpenDota`);
 		//add account ID to all matches
@@ -223,7 +247,7 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
 		'cache-control': 'max-age=' + cacheTimeoutSeconds
 	});
 
-	let newResponse = new Response(JSON.stringify({ dataSource: dataSource, matchData: matchStats, od_url: od_url }), {
+	let newResponse = new Response(JSON.stringify({ account_id, dataSource: dataSource, matchData: matchStats, od_url: od_url }), {
 		headers: {
 			'cache-control': `max-age=${cacheTimeoutSeconds}`
 		}
