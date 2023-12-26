@@ -55,6 +55,9 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
 	console.log(`\n-----------\n[matches] account_id: ${account_id}\n-------------\n`);
 	//let account_id: number = parseInt(url.searchParams.get('account_id') || "80636612")
 
+
+	let forceSource: string = url.searchParams.get('source') || ""
+
 	//check if user was updated recently, otherwise use the database
 	const userResult = await prisma.dotaUser.findUnique({
 		where: {
@@ -93,7 +96,8 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
 	updateInterval.setMinutes(rightNow.getMinutes() - 10);
 
 	console.log(`[matches][${account_id}] updateInterval: ${updateInterval}`);
-	if (userResult && userResult.lastUpdated >= updateInterval && !forceFullUpdate) {
+	if ((userResult && userResult.lastUpdated >= updateInterval && !forceFullUpdate) || forceSource === "db") {
+		if(forceSource === "db") console.log(`[updateMatchesForUser] FORCING source "db"`)
 		console.log(`[matches][${account_id}] user was last updated <10 minutes - fetch from DB`);
 		const matchesResult = await prisma.match.findMany({
 			where: { account_id }
