@@ -152,7 +152,7 @@
 		{/if}
 
 		<div class="p-4 space-y-4">
-
+			<h3 class="h3 p-2 w-full border-b border-primary-700 border-dashed">Create a new League</h3>
 			<form method="POST" class="space-y-8" action="?/createLeague" use:enhance>
 				<!-- <hgroup>
                 <h2>Login</h2>

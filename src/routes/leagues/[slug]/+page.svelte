@@ -40,7 +40,7 @@
 
 		toastStore.trigger(t);
 	}
-	let tabSetOuter: number = 0;
+	let tabSetOuter: number = 1;
 	let tabSetInner: number = 0;
 
 	let friendsString: string = '';
@@ -294,7 +294,29 @@
 							<form method="POST" class="space-y-8" action="?/createSeason" use:enhance>
 								<div>
 									<h4 class="h4 text-amber-500">Manage Seasons</h4>
-
+									<label class="label">
+										<span>Input</span>
+										<input class="input" type="text" placeholder="Input" />
+									</label>
+									<label class="label">
+										<span>Select</span>
+										<select class="select">
+											<option value="1">Option 1</option>
+											<option value="2">Option 2</option>
+											<option value="3">Option 3</option>
+											<option value="4">Option 4</option>
+											<option value="5">Option 5</option>
+										</select>
+									</label>
+									<label class="label">
+										<span>Start Date</span>
+										<input type="date" class="select select-sm variant-ghost-surface w-full" value="2023/11/01"/>
+									</label>
+									<label class="label">
+										<span>Ends Date</span>
+										<input type="date" class="select select-sm variant-ghost-surface w-full"/>
+									</label>
+									
 									
 								</div>
 
