@@ -39,18 +39,21 @@ export const POST: RequestHandler = async ({ request, params, url, locals, fetch
 
 			console.log(`[/winrates] - update user ${account_id} matches`);
 
-			let userMatchData = await response.json();
+            if(response.status === 200){
+                let userMatchData = await response.json();
 
-			//return { account_id, ...userMatchData };
-			return { ...userMatchData, matchCount: userMatchData.matchData.length };
+                //return { account_id, ...userMatchData };
+                return { ...userMatchData, matchCount: userMatchData.matchData.length };
+            } else {
+                return { error: true, response, account_id}
+            }
+			
 		})
 	);
 
 	console.log(`=== userUpdateResult: ${userUpdateResult}`);
 
 	let responseArr: any = [];
-
-	let winratesObj = {};
 
 	type HeroPushObj = {
 		hero_id: number;
@@ -89,39 +92,10 @@ export const POST: RequestHandler = async ({ request, params, url, locals, fetch
             })
 
 			responseArr.push({ account_id: player.account_id, heroesArr });
-		}
+		} else {
+            responseArr.push({...player})
+        }
 	});
-
-	// const matchesResult = await prisma.match.findMany({
-	// 	where: {
-	// 		account_id: { in: accountIdsForCalc }
-	// 	}
-	// });
-
-	// console.log(matchesResult.length);
-
-	//check if user was updated recently, otherwise use the database
-	// const userResult = await prisma.dotaUser.findUnique({
-	// 	where: {
-	// 		account_id
-	// 	}
-	// });
-
-	// const randomResults = await prisma.random.create({
-	//     data: {
-	//         account_id: session.user.account_id,
-	//         active: true,
-	//         status: "active",
-	//         date: new Date(),
-	//         availableHeroes: randomStoreValues.availableHeroes.toString(),
-	//         bannedHeroes: randomStoreValues.bannedHeroes.toString(),
-	//         selectedRoles: randomStoreValues.selectedRoles.toString(),
-	//         expectedGold: randomStoreValues.expectedGold,
-	//         modifierAmount: randomStoreValues.modifierAmount,
-	//         modifierTotal: randomStoreValues.modifierTotal,
-	//         randomedHero: randomStoreValues.randomedHero
-	//     }
-	// })
 
 	let newResponse = new Response(JSON.stringify({ status: 'success', insert: responseArr }));
 	return newResponse;
