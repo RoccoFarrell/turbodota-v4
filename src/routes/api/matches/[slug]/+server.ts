@@ -23,14 +23,29 @@ export const POST: RequestHandler = async ({ request, params, url, locals }) => 
 	return newResponse;
 };
 
-export const GET: RequestHandler = async ({ params, url }) => {
+export const GET: RequestHandler = async ({ params, url}) => {
 	console.log(url);
 	console.log(`[api] - received GET to ${url.href}`);
 	console.log(`params: ${JSON.stringify(params)}`);
+	
 
+	//parse match id from params
 	let match_id: number = parseInt(params.slug || '0');
 	console.log(`\n-----------\n[matches] match_id: ${match_id}\n-------------\n`);
 	//let match_id: number = parseInt(url.searchParams.get('match_id') || "80636612")
+
+	//parse league if it exists
+	let inputLeagueID: number = -1
+	if(url.search && url.search.includes('league=') && url.searchParams.get('league')){
+		inputLeagueID = parseInt(url.searchParams.get('league') || '-1')
+		console.log(`parsed league ID: ${inputLeagueID}`)
+	}
+
+	// if(inputLeagueID > 0){
+	// 	const leagueResult = await prisma.league.findUnique({
+	// 		where: {}
+	// 	})
+	// }
 
 	//check if user was updated recently, otherwise use the database
 	const matchDetailResult = await prisma.matchDetail.findFirst({
@@ -142,31 +157,6 @@ export const GET: RequestHandler = async ({ params, url }) => {
 			async (tx) => {
 				try {
 					//upsert player match details
-					//test single
-
-					// console.log(playersArr[0].account_id)
-					// let playerMatchDetailsWrite = await prisma.playersMatchDetail.upsert({
-					// 	where: {
-					// 		matchPlusAccount: { match_id: matchDetailObj.match_id, account_id: playersArr[0].account_id }
-					// 	},
-					// 	update: { ...playersArr[0] },
-					// 	create: { ...playersArr[0] }
-					// });
-					//loop
-
-					//create
-					// let result_playerMatchDetails = await Promise.all(
-					// 	playersArr.map(async (player: PlayersMatchDetail) => {
-					// 		await tx.playersMatchDetail.create({
-					// 			data: {
-					// 				...player,
-					// 				// match_detail: {
-					// 				// 	connect: { match_id: BigInt(matchDetailsFetch.match_id) }
-					// 				// }
-					// 			}
-					// 		});
-					// 	})
-					// );
 
 					//upsert
 					let result_playerMatchDetails = await Promise.all(

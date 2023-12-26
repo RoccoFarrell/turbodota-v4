@@ -11,9 +11,6 @@
 
 	//skeleton
 	import { TabGroup, Tab, TabAnchor } from '@skeletonlabs/skeleton';
-	import { Table, tableMapperValues } from '@skeletonlabs/skeleton';
-	import type { TableSource } from '@skeletonlabs/skeleton';
-
 	//images
 	import Lock from '$lib/assets/lock.png';
 
@@ -42,31 +39,6 @@
 
 		toastStore.trigger(t);
 	}
-
-	/* 
-        Create league table
-    */
-
-	let leagueTableData = data.leagues.map((league: any) => {
-		return {
-			id: league.id,
-			name: league.name,
-			creatorID: league.creator.username,
-			lastUpdated: dayjs(league.lastUpdated).format('MM/DD/YYYY'),
-			membersCount: league.members.length
-		};
-	});
-	const tableSource: TableSource = {
-		// A list of heading labels.
-		head: ['Name', 'ID', 'Creator', 'Last Updated', 'Members'],
-		// The data visibly shown in your table body UI.
-		body: tableMapperValues(leagueTableData, ['name', 'id', 'creatorID', 'lastUpdated', 'membersCount']),
-		// Optional: The data returned when interactive is enabled and a row is clicked.
-		meta: tableMapperValues(leagueTableData, ['name', 'id', 'creatorID', 'lastUpdated', 'membersCount'])
-		// Optional: A list of footer labels.
-		//foot: ['Total', '', '<code class="code">5</code>']
-	};
-
 	let tabSet: number = 0;
 
 	let friendsString: string = '';
@@ -81,66 +53,7 @@
 <section class="lg:w-3/4 w-full h-screen px-4 lg:mx-auto my-4 space-y-8">
 	<div class="flex justify-center items-center space-x-8">
 		<img src={Trophy_light} class="w-20 h-20" alt="leagues page" />
-		<h2 class="h2">Leagues Admin</h2>
-	</div>
-
-	<div class="space-y-2">
-		<h3 class="h3 text-primary-500">Existing Leagues</h3>
-		{#if leagueTableData.length > 0}
-			<!-- <Table
-				source={tableSource}
-				class="table-compact"
-				regionCell="dark:first:text-amber-500 first:text-amber-600 first:font-bold"
-			/> -->
-
-			<div class="table-container">
-				<!-- Native Table Element -->
-				<table class="table table-hover">
-					<thead>
-						<tr>
-							{#each tableSource.head as header, i}
-								<th>{header}</th>
-							{/each}
-						</tr>
-					</thead>
-					<tbody>
-						{#each tableSource.body as row, i}
-							<tr>
-								<a href={`/leagues/${row[1]}`}
-									><td class="font-bold text-amber-500 hover:underline hover:text-primary-600">{row[0]}</td></a
-								>
-								<td>{row[1]}</td>
-								<td>{row[2]}</td>
-								<td>{row[3]}</td>
-								<td>{row[4]}</td>
-							</tr>
-						{/each}
-					</tbody>
-					<!-- <tfoot>
-						<tr>
-							<td>{row[0]}</td>
-								<td>{row[1]}</td>
-								<td>{row[2]}</td>
-                                <td>{row[3]}</td>
-                                <td>{row[4]}</td>
-						</tr>
-					</tfoot> -->
-				</table>
-			</div>
-		{:else}
-			<div>No leagues found!</div>
-		{/if}
-		<!-- <div class="grid grid-cols-4">
-			<div></div>
-			{#each data.leagues as league}
-				<div>{league.name}</div>
-				<div>{league.members.count}</div>
-				<div>{league.name}</div>
-				<div>{league.name}</div>
-			{/each}
-		</div> -->
-
-		<!-- <div class="w-full border border-dashed border-red-500 p-4">League 1</div> -->
+		<h2 class="h2 text-amber-500 vibrating">{data.selectedLeague.name}</h2>
 	</div>
 
 	<div class="space-y-4 card flex flex-col max-w-screen relative">
