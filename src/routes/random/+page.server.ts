@@ -54,6 +54,7 @@ export const load: PageServerLoad = async ({ locals, parent, url }) => {
 		});
 
 		let responseData = await response.json();
+		console.log(responseData)
 
 		//user has at least 1 active random
 		if (randomsForUser.length > 0 && randomsForUser.filter((random) => random.active).length > 0) {

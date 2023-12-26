@@ -152,7 +152,7 @@
 		{/if}
 
 		<div class="p-4 space-y-4">
-			<h3 class="h3 p-2 w-full border-b border-primary-700 border-dashed">Create a new League</h3>
+
 			<form method="POST" class="space-y-8" action="?/createLeague" use:enhance>
 				<!-- <hgroup>
                 <h2>Login</h2>
@@ -198,36 +198,64 @@
 									<div class="text-secondary-500">Most played with friends</div>
 									<div class="flex w-full flex-wrap">
 										{#if data.common.commonCombined}
-											{#each data.common.commonCombined as friend}
-												<div
-													class="m-1 flex flex-col card card-hover p-4 xl:w-1/4 md:w-1/3 max-md:w-full h-full space-y-2 items-center"
-												>
-													<div class="flex justify-around space-x-2">
-														{#if friend.avatar_url}
-															<header>
-																<img src={friend.avatar_url} alt="friend" />
-															</header>
-														{/if}
-														{#if friend.username}
-															<section>
-																<h5 class="h5 overflow-hidden text-ellipsis whitespace-nowrap">{friend.username}</h5>
-															</section>
-														{:else}
-															<section>
-																<h5 class="h5 overflow-hidden text-ellipsis whitespace-nowrap">{friend}</h5>
-															</section>
-														{/if}
-													</div>
-													<footer>
-														<button
-															class="btn variant-ghost-secondary p-2"
-															disabled={friendsString.includes(friend.account_id ? friend.account_id : friend)}
-															on:click={() => handleAddCommonFriend(friend.account_id ? friend.account_id : friend)}
-															>Add to League</button
-														>
-													</footer>
-												</div>
-											{/each}
+                                        {#each data.common.commonCombined as friend}
+                                        <div
+                                            class="m-1 flex flex-col card card-hover xl:w-[calc(33%-1em)] md:w-[calc(50%-1em)] max-md:w-full h-full space-y-2 items-center"
+                                        >
+                                            <div class="grid grid-cols-4 w-full min-h-[50px]">
+                                                {#if friend.avatar_url}
+                                                    <div class="col-span-1 flex items-center w-full">
+                                                        <header class="rounded-l-full h-full">
+                                                            <img class="rounded-l-full h-full" src={friend.avatar_url} alt="friend" />
+                                                        </header>
+                                                    </div>
+                                                {:else}
+                                                    <div class="col-span-1 flex justify-center items-center w-full">
+                                                        <header class="flex items-center">
+                                                            <i class="scale-150 fi fi-rr-portrait"></i>
+                                                        </header>
+                                                    </div>
+                                                {/if}
+
+                                                <div class="col-span-2">
+                                                    {#if friend.username}
+                                                        <section class="flex items-center h-full">
+                                                            <h5 class="h5 overflow-hidden text-ellipsis whitespace-nowrap">
+                                                                {friend.username}
+                                                            </h5>
+                                                        </section>
+                                                    {:else}
+                                                        <section class="flex items-center h-full">
+                                                            <h5 class="h5 overflow-hidden text-ellipsis whitespace-nowrap">{friend}</h5>
+                                                        </section>
+                                                    {/if}
+                                                </div>
+                                                <div
+                                                    class="variant-filled-success rounded-r-full flex items-center justify-center hover:bg-green-300 hover:cursor-pointer"
+                                                >
+                                                    <button
+                                                        class="p-2"
+                                                        disabled={friendsString.includes(
+                                                            friend.account_id ? friend.account_id : friend
+                                                        )}
+                                                        on:click={() =>
+                                                            handleAddCommonFriend(friend.account_id ? friend.account_id : friend)}
+                                                        ><i class="fi fi-br-add"></i></button
+                                                    >
+                                                </div>
+                                            </div>
+                                            <!-- <div class="flex justify-around space-x-2"></div> -->
+                                            <!-- <footer>
+                                                <button
+                                                    class="btn variant-ghost-secondary p-2"
+                                                    disabled={friendsString.includes(friend.account_id ? friend.account_id : friend)}
+                                                    on:click={() =>
+                                                        handleAddCommonFriend(friend.account_id ? friend.account_id : friend)}
+                                                    >Add to League</button
+                                                >
+                                            </footer> -->
+                                        </div>
+                                    {/each}
 										{/if}
 									</div>
 								</div>

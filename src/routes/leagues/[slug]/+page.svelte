@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import Trophy_light from '$lib/assets/trophy_light.png';
 	import { fade } from 'svelte/transition';
+	import type { User } from '@prisma/client';
 
 	import dayjs from 'dayjs';
 
@@ -39,7 +40,8 @@
 
 		toastStore.trigger(t);
 	}
-	let tabSet: number = 0;
+	let tabSetOuter: number = 0;
+	let tabSetInner: number = 0;
 
 	let friendsString: string = '';
 
@@ -47,6 +49,10 @@
 		if (!friendsString.includes(account_id.toString())) {
 			friendsString += `${account_id},`;
 		}
+	};
+
+	const handleRemoveFromLeague = (user: User) => {
+		console.log(`remove ${user}`);
 	};
 </script>
 
@@ -56,128 +62,252 @@
 		<h2 class="h2 text-amber-500 vibrating">{data.selectedLeague.name}</h2>
 	</div>
 
-	<div class="space-y-4 card flex flex-col max-w-screen relative">
-		{#if !data.session.user.roles || !data.session.user.roles.includes('dev')}
-			<div class="z-50 absolute w-full h-full bg-slate-900/90 flex items-center justify-center rounded-xl">
-				<img src={Lock} class="h-32 w-32 inline" alt="locked" />
-				<h3 class="h3 text-primary-500 rounded-xl m-4 bg-surface-500/90 p-4">Contact an admin to create a league!</h3>
+	<div class="card w-full border border-dashed border-red-500 p-4">
+		<div class="grid grid-cols-3 gap-4 place-items-center">
+			<div class="text-sm">
+				Commissioner: <p class="inline font-semibold text-xl text-primary-500">
+					{data.selectedLeague.creator.username}
+				</p>
 			</div>
-		{/if}
+			<div>
+				Created on: <p class="inline font-semibold text-primary-500">
+					{dayjs(data.selectedLeague.createdDate).format('MM/DD/YYYY')}
+				</p>
+			</div>
+			<div>
+				Members: <p class="inline font-semibold text-primary-500">{data.selectedLeague.members.length}</p>
+			</div>
+		</div>
+	</div>
 
-		<div class="p-4 space-y-4">
-			<h3 class="h3 p-2 w-full border-b border-primary-700 border-dashed">Create a new League</h3>
-			<form method="POST" class="space-y-8" action="?/createLeague" use:enhance>
-				<!-- <hgroup>
-                <h2>Login</h2>
-                <h3>Welcome back!</h3>
-            </hgroup> -->
-				<!-- <label for="username">Username</label>
-            <input type="text" id="username" name="username" required /> -->
-				<div class="flex space-x-4 items-center">
-					<label for="leagueName" class="my-1 text-secondary-500 h4 font-bold">League Name</label>
-					<input
-						type="leagueName"
-						id="leagueName"
-						name="leagueName"
-						placeholder="Turbotown Enjoyers"
-						required
-						class="input w-1/2 p-2"
-					/>
-				</div>
+	<div class="w-full">
+		<TabGroup justify="justify-center">
+			<Tab bind:group={tabSetOuter} name="tab1" value={0}>
+				<svelte:fragment slot="lead"><i class="fi fi-rr-users-alt"></i></svelte:fragment>
+				<span>Members</span>
+			</Tab>
+			<Tab bind:group={tabSetOuter} name="tab2" value={1}
+				><svelte:fragment slot="lead"><i class="fi fi-rr-calendar-star"></i></svelte:fragment>
+				<span>Seasons</span></Tab
+			>
+			<Tab bind:group={tabSetOuter} name="tab3" value={2}
+				><svelte:fragment slot="lead"><i class="fi fi-rr-users-alt"></i></svelte:fragment>
+				<span>History</span></Tab
+			>
+			<!-- Tab Panels --->
+			<svelte:fragment slot="panel">
+				{#if tabSetOuter === 0}
+					<div class="space-y-4 card flex flex-col max-w-screen relative">
+						{#if !data.session.user.roles || !data.session.user.roles.includes('dev')}
+							<div class="z-50 absolute w-full h-full bg-slate-900/90 flex items-center justify-center rounded-xl">
+								<img src={Lock} class="h-32 w-32 inline" alt="locked" />
+								<h3 class="h3 text-primary-500 rounded-xl m-4 bg-surface-500/90 p-4">
+									Contact an admin to manage Members!
+								</h3>
+							</div>
+						{/if}
 
-				<div>
-					<h4 class="h4 text-amber-500">Add friends</h4>
+						<div class="p-4 space-y-4">
+							<form method="POST" class="space-y-8" action="?/createLeague" use:enhance>
+								<div>
+									<h4 class="h4 text-amber-500">Manage League Members</h4>
 
-					<TabGroup>
-						<Tab bind:group={tabSet} name="tab1" value={0}>
-							<svelte:fragment slot="lead"
-								><div class="flex w-full justify-around">
-									<i class="fi fi-rr-following"></i><span class="ml-2">Friends</span>
-								</div></svelte:fragment
-							>
-						</Tab>
-						<Tab bind:group={tabSet} name="tab2" value={1}
-							><svelte:fragment slot="lead"
-								><div class="flex w-full justify-around">
-									<i class="fi fi-rr-search-heart"></i><span class="ml-2">Search</span>
-								</div></svelte:fragment
-							></Tab
-						>
+									<TabGroup>
+										<Tab bind:group={tabSetInner} name="tab1" value={0}>
+											<svelte:fragment slot="lead"
+												><div class="flex w-full justify-around">
+													<i class="fi fi-rr-following"></i><span class="ml-2">Members</span>
+												</div></svelte:fragment
+											>
+										</Tab>
+										<Tab bind:group={tabSetInner} name="tab2" value={1}>
+											<svelte:fragment slot="lead"
+												><div class="flex w-full justify-around">
+													<i class="fi fi-br-user-add"></i><span class="ml-2">Add Friends</span>
+												</div></svelte:fragment
+											>
+										</Tab>
+										<Tab bind:group={tabSetInner} name="tab2" value={2}
+											><svelte:fragment slot="lead"
+												><div class="flex w-full justify-around">
+													<i class="fi fi-rr-search-heart"></i><span class="ml-2">Search for Friends</span>
+												</div></svelte:fragment
+											></Tab
+										>
 
-						<!-- Tab Panels --->
-						<svelte:fragment slot="panel">
-							{#if tabSet === 0}
-								<div class="my-2 space-y-2">
-									<div class="text-secondary-500">Most played with friends</div>
-									<div class="flex w-full flex-wrap">
-										{#if data.common.commonCombined}
-											{#each data.common.commonCombined as friend}
-												<div
-													class="m-1 flex flex-col card card-hover p-4 xl:w-1/4 md:w-1/3 max-md:w-full h-full space-y-2 items-center"
-												>
-													<div class="flex justify-around space-x-2">
-														{#if friend.avatar_url}
-															<header>
-																<img src={friend.avatar_url} alt="friend" />
-															</header>
-														{/if}
-														{#if friend.username}
-															<section>
-																<h5 class="h5 overflow-hidden text-ellipsis whitespace-nowrap">{friend.username}</h5>
-															</section>
-														{:else}
-															<section>
-																<h5 class="h5 overflow-hidden text-ellipsis whitespace-nowrap">{friend}</h5>
-															</section>
+										<!-- Tab Panels --->
+										<svelte:fragment slot="panel">
+											{#if tabSetInner === 0}
+												<div class="flex w-full flex-wrap">
+													<div class="table-container">
+														<!-- Native Table Element -->
+														<table class="table table-hover">
+															<thead>
+																<tr>
+																	<th>Position</th>
+																	<th>Last Turbo</th>
+																	<th>Actions</th>
+																</tr>
+															</thead>
+															<tbody>
+																{#each data.selectedLeague.members as friend}
+																	<tr class="items-center">
+																		<td>{friend?.user?.username || friend.account_id}</td>
+																		<td>{dayjs(friend.newestMatch).format('MM/DD/YYYY')}</td>
+																		<td>
+																			<button
+																				class="btn-icon btn-icon-sm variant-filled-warning hover:translate-y-1 hover:bg-amber-500"
+																				on:click={(e) => {
+																					e.preventDefault();
+																					handleRemoveFromLeague(friend);
+																				}}
+																			>
+																				<i class="fi fi-bs-remove-user"></i>
+																			</button>
+																		</td>
+																	</tr>
+																{/each}
+															</tbody>
+															<!-- <tfoot>
+																<tr>
+																	<th colspan="3">Calculated Total Weight</th>
+																	<td>{totalWeight}</td>
+																</tr>
+															</tfoot> -->
+														</table>
+													</div>
+												</div>
+											{/if}
+											{#if tabSetInner === 1}
+												<div class="flex flex-col space-y-4">
+													<div class="text-secondary-500">Most played with friends</div>
+													<div class="flex w-full flex-wrap">
+														{#if data.common.commonCombined}
+															{#each data.common.commonCombined as friend}
+																<div
+																	class="m-1 flex flex-col card card-hover xl:w-[calc(33%-1em)] md:w-[calc(50%-1em)] max-md:w-full h-full space-y-2 items-center"
+																>
+																	<div class="grid grid-cols-4 w-full min-h-[50px]">
+																		{#if friend.avatar_url}
+																			<div class="col-span-1 flex items-center w-full">
+																				<header class="rounded-l-full h-full">
+																					<img class="rounded-l-full h-full" src={friend.avatar_url} alt="friend" />
+																				</header>
+																			</div>
+																		{:else}
+																			<div class="col-span-1 flex justify-center items-center w-full">
+																				<header class="flex items-center">
+																					<i class="scale-150 fi fi-rr-portrait"></i>
+																				</header>
+																			</div>
+																		{/if}
+
+																		<div class="col-span-2">
+																			{#if friend.username}
+																				<section class="flex items-center h-full">
+																					<h5 class="h5 overflow-hidden text-ellipsis whitespace-nowrap">
+																						{friend.username}
+																					</h5>
+																				</section>
+																			{:else}
+																				<section class="flex items-center h-full">
+																					<h5 class="h5 overflow-hidden text-ellipsis whitespace-nowrap">{friend}</h5>
+																				</section>
+																			{/if}
+																		</div>
+																		<div
+																			class="variant-filled-success rounded-r-full flex items-center justify-center hover:bg-green-300 hover:cursor-pointer"
+																		>
+																			<button
+																				class="p-2"
+																				disabled={friendsString.includes(
+																					friend.account_id ? friend.account_id : friend
+																				)}
+																				on:click={() =>
+																					handleAddCommonFriend(friend.account_id ? friend.account_id : friend)}
+																				><i class="fi fi-br-add"></i></button
+																			>
+																		</div>
+																	</div>
+																	<!-- <div class="flex justify-around space-x-2"></div> -->
+																	<!-- <footer>
+																		<button
+																			class="btn variant-ghost-secondary p-2"
+																			disabled={friendsString.includes(friend.account_id ? friend.account_id : friend)}
+																			on:click={() =>
+																				handleAddCommonFriend(friend.account_id ? friend.account_id : friend)}
+																			>Add to League</button
+																		>
+																	</footer> -->
+																</div>
+															{/each}
 														{/if}
 													</div>
-													<footer>
-														<button
-															class="btn variant-ghost-secondary p-2"
-															disabled={friendsString.includes(friend.account_id ? friend.account_id : friend)}
-															on:click={() => handleAddCommonFriend(friend.account_id ? friend.account_id : friend)}
-															>Add to League</button
-														>
-													</footer>
+													<label class="label">
+														<span>Enter a comma separated list of your friend's Dota Account IDs:</span>
+														<textarea
+															class="textarea"
+															id="dotaUsersList"
+															name="dotaUsersList"
+															rows="4"
+															required
+															placeholder="100001, 20002, 30003, 40004, etc..."
+															bind:value={friendsString}
+														/>
+													</label>
+
+													{#if form?.missing}
+														<!-- <p class="alert-message">Enter at least one valid Dota User ID.</p> -->
+														<aside class="alert variant-ghost-primary" transition:fade|local={{ duration: 200 }}>
+															<div class="alert-message">
+																<h4 class="h4 text-red-600">Enter at least one valid Dota User ID</h4>
+																<p>Total length of valid Dota User IDs was 0.</p>
+															</div>
+														</aside>
+													{/if}
 												</div>
-											{/each}
-										{/if}
-									</div>
+											{:else if tabSetInner === 2}
+												<div class="w-full italic text-center text-xl text-primary-500">Coming soon!</div>
+											{/if}
+										</svelte:fragment>
+									</TabGroup>
 								</div>
-							{:else if tabSet === 1}
-								<div class="w-full italic">Coming soon!</div>
-							{/if}
-						</svelte:fragment>
-					</TabGroup>
-				</div>
 
-				<label class="label">
-					<span>Enter a comma separated list of your friend's Dota Account IDs:</span>
-					<textarea
-						class="textarea"
-						id="dotaUsersList"
-						name="dotaUsersList"
-						rows="4"
-						required
-						placeholder="100001, 20002, 30003, 40004, etc..."
-						bind:value={friendsString}
-					/>
-				</label>
-
-				{#if form?.missing}
-					<!-- <p class="alert-message">Enter at least one valid Dota User ID.</p> -->
-					<aside class="alert variant-ghost-primary" transition:fade|local={{ duration: 200 }}>
-						<div class="alert-message">
-							<h4 class="h4 text-red-600">Enter at least one valid Dota User ID</h4>
-							<p>Total length of valid Dota User IDs was 0.</p>
+								<div class="w-full flex justify-center">
+									<button type="submit" class="btn variant-filled-success w-1/2 mx-auto">Update Members</button>
+								</div>
+							</form>
 						</div>
-					</aside>
-				{/if}
+					</div>
+				{:else if tabSetOuter === 1}
+					<div class="space-y-4 card flex flex-col max-w-screen relative">
+						{#if !data.session.user.roles || !data.session.user.roles.includes('dev')}
+							<div class="z-50 absolute w-full h-full bg-slate-900/90 flex items-center justify-center rounded-xl">
+								<img src={Lock} class="h-32 w-32 inline" alt="locked" />
+								<h3 class="h3 text-primary-500 rounded-xl m-4 bg-surface-500/90 p-4">
+									Contact an admin to manage Seasons!
+								</h3>
+							</div>
+						{/if}
 
-				<div class="w-full flex justify-center">
-					<button type="submit" class="btn variant-filled-success w-1/2 mx-auto">Create League</button>
-				</div>
-			</form>
-		</div>
+						<div class="p-4 space-y-4">
+							<form method="POST" class="space-y-8" action="?/createSeason" use:enhance>
+								<div>
+									<h4 class="h4 text-amber-500">Manage Seasons</h4>
+
+									
+								</div>
+
+								<div class="w-full flex justify-center">
+									<button type="submit" class="btn variant-filled-success w-1/2 mx-auto">Update Members</button>
+								</div>
+							</form>
+						</div>
+					</div>
+				{:else if tabSetOuter === 2}
+					(tab panel 3 contents)
+				{/if}
+			</svelte:fragment>
+		</TabGroup>
 	</div>
 </section>
