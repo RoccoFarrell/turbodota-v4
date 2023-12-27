@@ -59,7 +59,7 @@ export const load: PageServerLoad = async ({ locals, parent, url }) => {
 
 		if (!responseData.matchData || !responseData.matchData.length){
 			error(500, {
-				message: 'Open Dota Failed, no match data'
+				message: `Open Dota Failed, no match data, returned length: ${JSON.stringify(responseData)}`
 			});
 		}
 			
