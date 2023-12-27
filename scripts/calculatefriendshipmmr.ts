@@ -17,8 +17,8 @@ let winrates = await fetch('https://turbodota.com/api/winrates?source=db', {
 	},
 	body: JSON.stringify(data)
 })
-	.then((response) => response.json())
-	.then((data) => {
+	.then((response: any) => response.json())
+	.then((data: any) => {
 		return data
 	});
 
@@ -44,7 +44,7 @@ async function getAllMatches(account_id: number, winrates) {
             //console.log(player)
 			if (playersWeCareAbout.includes(player.account_id) && player.account_id != account_id) {
                 console.log("Found a friend to handle: " + player.account_id)
-                let tempArray = {}
+                let tempArray: any = {}
                 tempArray.account_id = player.account_id
                 tempArray.hero_id = player.hero_id
                 if (player.win == 1) {tempArray.win_or_loss = 1}
@@ -56,23 +56,25 @@ async function getAllMatches(account_id: number, winrates) {
         //console.log(winrates.insert)
 
         for (const item of friendsArray) {
-            let tempArray = {}
+            let tempArray: any = {}
             tempArray.account_id = item.account_id
             tempArray.hero_id = item.hero_id
             tempArray.win_or_loss = item.win_or_loss
-            tempArray.win_rate = .4 // actually get win rates
+            //tempArray.win_rate = .4 // actually get win rates
+            tempArray.win_rate = winrates.insert.filter((rate) => rate.account_id === item.account_id)[0].heroesArr.filter(hero => hero.hero_id === item.hero_id)[0].winrate
 
-            const temp = winrates.insert.filter((rate) => rate.account_id === item.account_id)// && rate.heroesArr.hero_id === item.hero_id)[0]
-            const temp2 = temp.filter((itemm) => itemm.heroesArr.hero_id === item.hero_id)
-            // const temp = friendsArray.map(item => {
-            //     return {
-            //         ...item,
-            //         win_rate: winrates.filter(rate => rate.account_id === item.account_id && rate.heroesArr.hero_id === item.hero_id)[0]
-            // }
-            // })
-            console.log("Temp: "+ JSON.stringify(temp))
-            console.log("Temp2: "+ JSON.stringify(temp2))
-            friendsArray2.push(tempArray)
+            console.log(tempArray)
+            // const temp = winrates.insert.filter((rate) => rate.account_id === item.account_id).map// && rate.heroesArr.hero_id === item.hero_id)[0]
+            // const temp2 = temp.filter((itemm) => itemm.heroesArr.hero_id === item.hero_id)
+            // // const temp = friendsArray.map(item => {
+            // //     return {
+            // //         ...item,
+            // //         win_rate: winrates.filter(rate => rate.account_id === item.account_id && rate.heroesArr.hero_id === item.hero_id)[0]
+            // // }
+            // // })
+            // console.log("Temp: "+ JSON.stringify(temp))
+            // console.log("Temp2: "+ JSON.stringify(temp2))
+            // friendsArray2.push(tempArray)
         }
         //console.log("Friends Array 2 To Handle: " + JSON.stringify(friendsArray2))
 
