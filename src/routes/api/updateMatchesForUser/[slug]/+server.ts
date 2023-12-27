@@ -12,6 +12,10 @@ BigInt.prototype.toJSON = function (): number {
 
 async function writeRecordsChunked(partialArr: Match[], account_id: number) {
 	let result_match;
+	let returnObj = {
+		error: true,
+		message: ""
+	}
 	const result_tx = await prisma.$transaction(
 		async (tx) => {
 			try {
@@ -31,7 +35,15 @@ async function writeRecordsChunked(partialArr: Match[], account_id: number) {
 					})
 				);
 
-				console.log(`result_match: ${result_match}`);
+				console.log(`result_match length: ${result_match.length}`);
+
+				if(result_match.length !== partialArr.length){
+					returnObj.error = true
+					returnObj.message = "[writeRecordsChunked] could not insert all the matches"
+				} else {
+					returnObj.error = false;
+					returnObj.message = `[writeRecordsChunked] Successfully inserted ${result_match.length} matches starting with ${partialArr[0].match_id} and ending with ${partialArr[partialArr.length - 1].match_id}`
+				}
 			} catch (e) {
 				console.error(e);
 			}
@@ -54,6 +66,9 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
 	let account_id: number = parseInt(params.slug || '0');
 	console.log(`\n-----------\n[matches] account_id: ${account_id}\n-------------\n`);
 	//let account_id: number = parseInt(url.searchParams.get('account_id') || "80636612")
+
+
+	let forceSource: string = url.searchParams.get('source') || ""
 
 	//check if user was updated recently, otherwise use the database
 	const userResult = await prisma.dotaUser.findUnique({
@@ -93,7 +108,8 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
 	updateInterval.setMinutes(rightNow.getMinutes() - 10);
 
 	console.log(`[matches][${account_id}] updateInterval: ${updateInterval}`);
-	if (userResult && userResult.lastUpdated >= updateInterval && !forceFullUpdate) {
+	if ((userResult && userResult.lastUpdated >= updateInterval && !forceFullUpdate) || forceSource === "db") {
+		if(forceSource === "db") console.log(`[updateMatchesForUser] FORCING source "db"`)
 		console.log(`[matches][${account_id}] user was last updated <10 minutes - fetch from DB`);
 		const matchesResult = await prisma.match.findMany({
 			where: { account_id }
@@ -133,6 +149,9 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
 		})
 			//.then(data => console.log(data))
 			.then((response) => {
+				//console.log(response.headers)
+				if(response.headers.get("x-rate-limit-remaining-minute")) console.log(`[updateMatchesForUser] RATE LIMIT- Open Dota Minutes: ${response.headers.get("x-rate-limit-remaining-minute")}`)
+				if(response.headers.get("x-rate-limit-remaining-month")) console.log(`[updateMatchesForUser] RATE LIMIT- Open Dota Month: ${response.headers.get("x-rate-limit-remaining-month")}`)
 				if(response.status === 200) return response.json()
 				else odError = {
 					error: true,
@@ -161,6 +180,9 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
 			};
 		});
 
+		//filter abandons
+		matchStats = matchStats.filter(match => match.radiant_win !== null)
+
 		//sort by start time
 		matchStats = matchStats.sort((a, b) => {
 			if (a.start_time <= b.start_time) return -1;
@@ -175,7 +197,7 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
 		console.log(`[matches][${account_id}] - trying to insert ${matchStats.length} match records`);
 
 		let txRecordCount = matchStats.length;
-		let txBlockSize = 1000;
+		let txBlockSize = 100;
 		let loopCount = 0;
 		let chunkInsertFail = false;
 
@@ -203,25 +225,28 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
 				txRecordCount = 0;
 			}
 
-			console.log('loop count: '), loopCount;
+			console.log('loop count: ', loopCount);
 			loopCount++;
 		}
 
 		//updated last updated on Dota User
 		if (!chunkInsertFail) {
+			console.log(`[updateMatchesForUser][${account_id}] - updating Dota User`)
 			let result_dotaUser = await prisma.dotaUser.upsert({
 				where: { account_id: account_id },
 				update: {
 					account_id: account_id,
 					lastUpdated: new Date(),
-					oldestMatch: new Date(Number(matchStats[0].start_time) * 1000),
-					newestMatch: new Date(Number(matchStats[matchStats.length - 1].start_time) * 1000)
+					newestMatch: new Date(Number(matchStats[matchStats.length - 1].start_time) * 1000),
+					newestMatchID: matchStats[matchStats.length - 1].match_id
 				},
 				create: {
 					account_id: account_id,
 					lastUpdated: new Date(),
 					oldestMatch: new Date(Number(matchStats[0].start_time) * 1000),
-					newestMatch: new Date(Number(matchStats[matchStats.length - 1].start_time) * 1000)
+					oldestMatchID: matchStats[0].match_id,
+					newestMatch: new Date(Number(matchStats[matchStats.length - 1].start_time) * 1000),
+					newestMatchID: matchStats[matchStats.length - 1].match_id
 				}
 			});
 			console.log(`result_dotaUser: ${JSON.stringify(result_dotaUser)}`);
@@ -240,6 +265,35 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
 		matchStats = matchesResult;
 		dataSource = 'db';
 	}
+
+	//sort match stats by match_id before return
+	matchStats = matchStats.sort((a: any, b: any) => {
+		if(parseInt(a.match_id) < parseInt(b.match_id)) return 1
+		else return -1
+	})
+
+	/* 
+		used to force update in dotaUser table
+	*/
+	// let result_dotaUser = await prisma.dotaUser.upsert({
+	// 	where: { account_id: account_id },
+	// 	update: {
+	// 		account_id: account_id,
+	// 		lastUpdated: new Date(),
+	// 		newestMatch: new Date(Number(matchStats[0].start_time) * 1000),
+	// 		newestMatchID: matchStats[0].match_id,
+	// 		oldestMatch: new Date(Number(matchStats[matchStats.length - 1].start_time) * 1000),
+	// 		oldestMatchID: matchStats[matchStats.length - 1].match_id
+	// 	},
+	// 	create: {
+	// 		account_id: account_id,
+	// 		lastUpdated: new Date(),
+	// 		oldestMatch: new Date(Number(matchStats[0].start_time) * 1000),
+	// 		oldestMatchID: matchStats[0].match_id,
+	// 		newestMatch: new Date(Number(matchStats[matchStats.length - 1].start_time) * 1000),
+	// 		newestMatchID: matchStats[matchStats.length - 1].match_id
+	// 	}
+	// });
 
 	let cacheTimeoutSeconds = 3600;
 

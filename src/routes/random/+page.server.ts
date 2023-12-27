@@ -57,7 +57,7 @@ export const load: PageServerLoad = async ({ locals, parent, url }) => {
 		console.log(responseData)
 
 		//user has at least 1 active random
-		if (randomsForUser.length > 0 && randomsForUser.filter((random) => random.active).length > 0) {
+		if (randomsForUser.length > 0 && randomsForUser.filter((random) => random.active).length > 0 && responseData.matchData && responseData.matchData.length) {
 			//fetch most recent matches
 			
 			if (responseData.mocked) flags.mocked = true;
@@ -117,6 +117,10 @@ export const load: PageServerLoad = async ({ locals, parent, url }) => {
 			} else {
 				responseComplete = { error: 'couldnt complete random' };
 			}
+		} else {
+			error(500, {
+				message: "Open Dota Failed, no match data"
+			})
 		}
 	}
 

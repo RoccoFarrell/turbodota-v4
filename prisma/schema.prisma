@@ -144,6 +144,8 @@ model DotaUser {
   lastUpdated DateTime
   oldestMatch DateTime?
   newestMatch DateTime?
+  oldestMatchID BigInt?
+  newestMatchID BigInt?
   leagues     League[]
   seasons     Season[]
   user        User?

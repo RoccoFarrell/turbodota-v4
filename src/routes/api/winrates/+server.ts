@@ -27,10 +27,18 @@ export const POST: RequestHandler = async ({ request, params, url, locals, fetch
 
 	console.log(`[api/winrates POST] account_ids received: ${accountIdsForCalc}`);
 
+	let forceSource: string = url.searchParams.get('source') || ""
+
+	
+
+	if(forceSource === "db") console.log(`[/winrates] FORCING source DB, no Open Dota`)
+
 	//update matches for each user
 	const userUpdateResult = await Promise.all(
 		accountIdsForCalc.map(async (account_id: number) => {
-			let response = await fetch(`/api/updateMatchesForUser/${account_id}?account_id=${account_id}`, {
+			let updateMatchesforUser_URL = `/api/updateMatchesForUser/${account_id}?account_id=${account_id}${forceSource === "db" ? "&source=db" : ""}`
+			console.log(`[winrates] querying API ${updateMatchesforUser_URL}`)
+			let response = await fetch(updateMatchesforUser_URL, {
 				method: 'Get',
 				headers: {
 					'content-type': 'application/json'
