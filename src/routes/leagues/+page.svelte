@@ -17,11 +17,11 @@
 	//images
 	import Lock from '$lib/assets/lock.png';
 
-	$: console.log(data);
+	//$: console.log(data);
 
 	export let form;
 
-	$: console.log(form);
+	//$: console.log(form);
 
 	import { getToastStore, storeHighlightJs } from '@skeletonlabs/skeleton';
 	import type { ToastSettings, ToastStore } from '@skeletonlabs/skeleton';

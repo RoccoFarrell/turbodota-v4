@@ -4,10 +4,11 @@ import type { Actions, PageServerLoad } from './$types';
 import type { User } from '@prisma/client';
 import prisma from '$lib/server/prisma';
 import dayjs from "dayjs"
+import type { League } from '@prisma/client';
 
 //import { createDotaUser } from '../api/helpers';
 
-export const load: PageServerLoad = async ({ locals, parent }) => {
+export const load: PageServerLoad = async ({ locals, parent, params }) => {
 	const parentData = await parent();
 	const session = await locals.auth.validate();
 	if (!session) {
