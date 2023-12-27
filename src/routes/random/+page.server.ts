@@ -56,9 +56,16 @@ export const load: PageServerLoad = async ({ locals, parent, url }) => {
 		let responseData = await response.json();
 
 		//user has at least 1 active random
-		if (randomsForUser.length > 0 && randomsForUser.filter((random) => random.active).length > 0 && responseData.matchData && responseData.matchData.length) {
-			//fetch most recent matches
+
+		if (!responseData.matchData || !responseData.matchData.length){
+			error(500, {
+				message: 'Open Dota Failed, no match data'
+			});
+		}
 			
+		if (randomsForUser.length > 0 && randomsForUser.filter((random) => random.active).length > 0) {
+			//fetch most recent matches
+
 			if (responseData.mocked) flags.mocked = true;
 
 			console.log([`[random+page.server.ts] found ${responseData.matchData.length} for user`]);
@@ -84,7 +91,7 @@ export const load: PageServerLoad = async ({ locals, parent, url }) => {
 				match.start_time > activeRandomDate5Minutes;
 			});
 
-			console.log(`activeRandomDate: ${activeRandomDate}, minus 5 minutes: ${activeRandomDate5Minutes}`)
+			console.log(`activeRandomDate: ${activeRandomDate}, minus 5 minutes: ${activeRandomDate5Minutes}`);
 
 			//filter all matches for games in the oldest active random
 			//minus 5 minutes from the random start date to account for picking phase
@@ -116,13 +123,8 @@ export const load: PageServerLoad = async ({ locals, parent, url }) => {
 			} else {
 				responseComplete = { error: 'couldnt complete random' };
 			}
-		} else {
-			error(500, {
-				message: "Open Dota Failed, no match data"
-			})
 		}
 	}
-
 	return {
 		...parentData,
 		randoms: randomsForUser,
