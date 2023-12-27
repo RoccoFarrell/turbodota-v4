@@ -226,7 +226,7 @@
 		</svelte:fragment>
 
 		<!-- Page Route Content -->
-		<div class="h-[calc(100vh-80px)] flex w-full">
+		<div class="h-[calc(100vh-80px)] flex w-full justify-center">
 			{#if $navigating || navigatingTest}
 				<div class="m-8 w-full"><Loading /></div>
 			{:else}
