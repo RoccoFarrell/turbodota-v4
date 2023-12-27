@@ -294,15 +294,15 @@
 							<form method="POST" class="space-y-8" action="?/createSeason" use:enhance>
 								<div>
 									<h4 class="h4 text-amber-500">Manage Seasons</h4>
-									<label class="label">
-										<span>Input</span>
+									<!-- <label class="label">
+										<span>Season Name</span>
 										<input class="input" type="text" placeholder="Input" />
-									</label>
+									</label> -->
 									<label class="label">
 										<span>Select</span>
 										<select class="select">
-											<option value="1">Option 1</option>
-											<option value="2">Option 2</option>
+											<option value="1">Random Romp</option>
+											<option value="2">Snake Draft Survival</option>
 											<option value="3">Option 3</option>
 											<option value="4">Option 4</option>
 											<option value="5">Option 5</option>
