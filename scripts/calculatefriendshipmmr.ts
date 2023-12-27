@@ -22,7 +22,7 @@ let winrates = await fetch('https://turbodota.com/api/winrates?source=db', {
 		return data
 	});
 
-    console.log(winrates)
+    //console.log(winrates)
 
 
 async function getAllMatches(account_id: number, winrates) {
@@ -52,7 +52,8 @@ async function getAllMatches(account_id: number, winrates) {
                 friendsArray.push(tempArray)
             }
 		}
-        console.log("Friends Array To Handle: " + JSON.stringify(friendsArray))
+        //console.log("Friends Array To Handle: " + JSON.stringify(friendsArray))
+        //console.log(winrates.insert)
 
         for (const item of friendsArray) {
             let tempArray = {}
@@ -60,9 +61,20 @@ async function getAllMatches(account_id: number, winrates) {
             tempArray.hero_id = item.hero_id
             tempArray.win_or_loss = item.win_or_loss
             tempArray.win_rate = .4 // actually get win rates
+
+            const temp = winrates.insert.filter((rate) => rate.account_id === item.account_id)// && rate.heroesArr.hero_id === item.hero_id)[0]
+            const temp2 = temp.filter((itemm) => itemm.heroesArr.hero_id === item.hero_id)
+            // const temp = friendsArray.map(item => {
+            //     return {
+            //         ...item,
+            //         win_rate: winrates.filter(rate => rate.account_id === item.account_id && rate.heroesArr.hero_id === item.hero_id)[0]
+            // }
+            // })
+            console.log("Temp: "+ JSON.stringify(temp))
+            console.log("Temp2: "+ JSON.stringify(temp2))
             friendsArray2.push(tempArray)
         }
-        console.log("Friends Array 2 To Handle: " + JSON.stringify(friendsArray2))
+        //console.log("Friends Array 2 To Handle: " + JSON.stringify(friendsArray2))
 
         //Do the math
         let mmrIndividualModifier = 0
@@ -89,7 +101,7 @@ async function getAllMatches(account_id: number, winrates) {
 
 
         console.log("Sleeping till next match")
-        await sleep(30000); //Can make this lower once it works, just used this for testing a single match lazily
+        await sleep(3000); //Can make this lower once it works, just used this for testing a single match lazily
 	}
 	
 }
