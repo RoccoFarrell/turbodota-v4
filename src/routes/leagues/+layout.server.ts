@@ -17,7 +17,12 @@ export const load: LayoutServerLoad = async ({ locals, url, parent }) => {
 					user: true
 				}
 			},
-			creator: true
+			creator: true,
+			seasons: {
+				include: {
+					members: true
+				}
+			}
 		}
 	});
 

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { setContext } from 'svelte'
 	import { enhance } from '$app/forms';
 	import Trophy_light from '$lib/assets/trophy_light.png';
 	import { fade } from 'svelte/transition';
@@ -10,8 +11,14 @@
 	import type { PageData } from './$types';
 	export let data: PageData;
 
-	//skeleton
+	//components //skeleton
 	import { TabGroup, Tab, TabAnchor } from '@skeletonlabs/skeleton';
+	import { getToastStore, storeHighlightJs } from '@skeletonlabs/skeleton';
+	import type { ToastSettings, ToastStore } from '@skeletonlabs/skeleton';
+	import RangeCalendar from '$lib/components/ui/range-calendar/range-calendar.svelte';
+	import { Table, tableMapperValues } from '@skeletonlabs/skeleton';
+	import type { TableSource } from '@skeletonlabs/skeleton';
+
 	//images
 	import Lock from '$lib/assets/lock.png';
 
@@ -21,8 +28,36 @@
 
 	$: console.log(form);
 
-	import { getToastStore, storeHighlightJs } from '@skeletonlabs/skeleton';
-	import type { ToastSettings, ToastStore } from '@skeletonlabs/skeleton';
+	//set active league
+	setContext('selectedLeague', data.selectedLeague)
+
+	/* 
+		Get active seasons
+	*/
+
+	let seasonTableData = data.selectedLeague.seasons.map((season: any) => {
+		return {
+			id: season.id,
+			name: season.name,
+			type: season.type,
+			//creatorID: season.creator.username,
+			startDate: dayjs(season.startDate).format('MM/DD/YYYY'),
+			endDate: dayjs(season.endDate).format('MM/DD/YYYY'),
+			membersCount: season.members.length
+		};
+	});
+
+	const tableSource: TableSource = {
+		// A list of heading labels.
+		head: ['Name', 'ID', 'Type', 'Start Date', 'End Date', 'Members'],
+		// The data visibly shown in your table body UI.
+		body: tableMapperValues(seasonTableData, ['name', 'id', 'type', 'startDate', 'endDate', 'membersCount']),
+		// Optional: The data returned when interactive is enabled and a row is clicked.
+		meta: tableMapperValues(seasonTableData, ['name', 'id', 'type', 'startDate', 'endDate', 'membersCount'])
+		// Optional: A list of footer labels.
+		//foot: ['Total', '', '<code class="code">5</code>']
+	};
+
 	const toastStore = getToastStore();
 
 	$: if (form?.missing) {
@@ -34,7 +69,7 @@
 		toastStore.trigger(t);
 	} else if (form?.success) {
 		const t: ToastSettings = {
-			message: `League created!`,
+			message: `Season created!`,
 			background: 'variant-filled-success'
 		};
 
@@ -54,6 +89,22 @@
 	const handleRemoveFromLeague = (user: User) => {
 		console.log(`remove ${user}`);
 	};
+
+	/* 
+		Calendar
+	*/
+	import { today, getLocalTimeZone } from '@internationalized/date';
+	const start = today(getLocalTimeZone());
+	const end = start.add({ days: 7 });
+	let value = {
+		start,
+		end
+	};
+
+	$: leagueMemberIDs = data.selectedLeague.members.map((member: any) => member.account_id);
+	// $: (value: any) => {
+	// 	FormData.
+	// }
 </script>
 
 <section class="lg:w-3/4 w-full h-screen px-4 lg:mx-auto my-4 space-y-8">
@@ -80,6 +131,55 @@
 		</div>
 	</div>
 
+	<div class="space-y-2">
+		<h3 class="h3 text-primary-500">Active Seasons</h3>
+
+		{#if seasonTableData.length > 0}
+			<!-- <Table
+				source={tableSource}
+				class="table-compact"
+				regionCell="dark:first:text-purple-500 first:text-purple-600 first:font-bold"
+			/> -->
+
+			<div class="table-container">
+				<!-- Native Table Element -->
+				<table class="table table-hover">
+					<thead>
+						<tr>
+							{#each tableSource.head as header, i}
+								<th>{header}</th>
+							{/each}
+						</tr>
+					</thead>
+					<tbody>
+						{#each tableSource.body as row, i}
+							<tr>
+								<a href={`/leagues/${data.selectedLeague.id}/seasons/${row[1]}`}
+									><td class="font-bold text-purple-500 hover:underline hover:text-primary-600">{row[0]}</td></a
+								>
+								<td>{row[1]}</td>
+								<td class="text-amber-500">{row[2]}</td>
+								<td>{row[3]}</td>
+								<td>{row[4]}</td>
+								<td>{row[5]}</td>
+							</tr>
+						{/each}
+					</tbody>
+					<!-- <tfoot>
+						<tr>
+							<td>{row[0]}</td>
+								<td>{row[1]}</td>
+								<td>{row[2]}</td>
+                                <td>{row[3]}</td>
+                                <td>{row[4]}</td>
+						</tr>
+					</tfoot> -->
+				</table>
+			</div>
+		{:else}
+			<div>No leagues found!</div>
+		{/if}
+	</div>
 	<div class="w-full">
 		<TabGroup justify="justify-center">
 			<Tab bind:group={tabSetOuter} name="tab1" value={0}>
@@ -110,7 +210,7 @@
 						<div class="p-4 space-y-4">
 							<form method="POST" class="space-y-8" action="?/createLeague" use:enhance>
 								<div>
-									<h4 class="h4 text-amber-500">Manage League Members</h4>
+									<h4 class="h4 text-purple-500">Manage League Members</h4>
 
 									<TabGroup>
 										<Tab bind:group={tabSetInner} name="tab1" value={0}>
@@ -291,37 +391,136 @@
 						{/if}
 
 						<div class="p-4 space-y-4">
-							<form method="POST" class="space-y-8" action="?/createSeason" use:enhance>
-								<div>
-									<h4 class="h4 text-amber-500">Manage Seasons</h4>
+							<form
+								method="POST"
+								class="space-y-8"
+								action="?/createSeason"
+								use:enhance
+								on:change={(e) => console.log()}
+							>
+								<div class="space-y-8">
+									<h4 class="h4 text-amber-500">Create a Season</h4>
 									<!-- <label class="label">
 										<span>Season Name</span>
 										<input class="input" type="text" placeholder="Input" />
 									</label> -->
-									<label class="label">
-										<span>Select</span>
-										<select class="select">
-											<option value="1">Random Romp</option>
-											<option value="2">Snake Draft Survival</option>
-											<option value="3">Option 3</option>
-											<option value="4">Option 4</option>
-											<option value="5">Option 5</option>
+
+									<div class="grid grid-cols-6 gap-2">
+										<label class="label text-xs col-span-3">
+											<span>League Name</span>
+											<input
+												class="input text-xs"
+												type="text"
+												disabled
+												name="leagueName"
+												bind:value={data.selectedLeague.name}
+											/>
+											<input
+												class="input text-xs"
+												type="text"
+												hidden
+												name="leagueName"
+												bind:value={data.selectedLeague.name}
+											/>
+										</label>
+										<label class="label text-xs">
+											<span>League ID</span>
+											<input
+												class="input text-xs"
+												type="text"
+												disabled
+												name="leagueID"
+												bind:value={data.selectedLeague.id}
+											/>
+											<input
+												class="input text-xs"
+												type="text"
+												hidden
+												name="leagueID"
+												bind:value={data.selectedLeague.id}
+											/>
+										</label>
+										<label class="label text-xs">
+											<span>Creator ID</span>
+											<input
+												class="input text-xs"
+												type="text"
+												disabled
+												name="creatorID"
+												bind:value={data.session.user.account_id}
+											/>
+											<input
+												class="input text-xs"
+												type="text"
+												hidden
+												name="creatorID"
+												bind:value={data.session.user.account_id}
+											/>
+										</label>
+										<label class="label text-xs">
+											<span>Members Count</span>
+											<input
+												class="input text-xs"
+												type="text"
+												disabled
+												name="membersCount"
+												bind:value={data.selectedLeague.members.length}
+											/>
+											<input class="input text-xs" type="text" hidden name="members" bind:value={leagueMemberIDs} />
+										</label>
+									</div>
+									<label class="label" for="seasonType">
+										<span>Season Type</span>
+										<select class="select" name="seasonType">
+											<option value="random">Random Romp</option>
+											<option value="snake" disabled>Snake Draft Survival</option>
+											<option value="none" disabled>More season types to come soon!</option>
+											<!-- <option value="4">Option 4</option>
+											<option value="5">Option 5</option> -->
 										</select>
 									</label>
-									<label class="label">
-										<span>Start Date</span>
-										<input type="date" class="select select-sm variant-ghost-surface w-full" value="2023/11/01"/>
+
+									<!--
+										Hidden form fields 
+									-->
+
+									<label
+										for="seasonDateRange"
+										class="flex flex-col justify-center items-center w-full space-y-8 mx-auto"
+									>
+										<span class="text-primary-500 h4 border-b border-dashed border-secondary-500 w-1/2 text-center p-1"
+											>Season Date Range</span
+										>
+										<div class="flex justify-around w-full">
+											<div class="flex flex-col justify-center items-center">
+												<p class="h4 text-secondary-500">Your season will run from:</p>
+												{#if value.start && value.end}
+													<label class="label" for="seasonStartDate" hidden>
+														<input type="text" name="seasonStartDate" bind:value={value.start} />
+													</label>
+													<p class="font-bold text-green-500">
+														{dayjs(value.start.toString()).format('dddd [-] MM/DD/YYYY')}
+													</p>
+													<p class="text-xs italic">to</p>
+													<label class="label" for="seasonEndDate" hidden>
+														<input type="text" name="seasonEndDate" bind:value={value.end} />
+													</label>
+													<p class="font-bold text-green-500">
+														{dayjs(value.end.toString()).format('dddd [-] MM/DD/YYYY')}
+													</p>
+												{/if}
+											</div>
+											<div class="w-fit">
+												<RangeCalendar bind:value class="border rounded-md" numberOfMonths={2} />
+											</div>
+										</div>
 									</label>
-									<label class="label">
-										<span>Ends Date</span>
-										<input type="date" class="select select-sm variant-ghost-surface w-full"/>
-									</label>
-									
-									
 								</div>
 
 								<div class="w-full flex justify-center">
-									<button type="submit" class="btn variant-filled-success w-1/2 mx-auto">Update Members</button>
+									<button type="submit" class="btn variant-filled-success w-1/2 mx-auto"
+										><i class="fi fi-rr-magic-wand mx-2"></i> Create Season</button
+									>
 								</div>
 							</form>
 						</div>

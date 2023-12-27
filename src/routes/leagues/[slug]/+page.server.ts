@@ -3,6 +3,7 @@ import { fail, redirect, json } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import type { User } from '@prisma/client';
 import prisma from '$lib/server/prisma';
+import dayjs from "dayjs"
 
 //import { createDotaUser } from '../api/helpers';
 
@@ -19,71 +20,72 @@ export const load: PageServerLoad = async ({ locals, parent }) => {
 };
 
 export const actions: Actions = {
-	createLeague: async ({ request, locals }) => {
+	createSeason: async ({ request, locals, url}) => {
 		const session = await locals.auth.validate();
 
+		//console.log(locals)
+
 		if (!session.user.roles.includes('dev')) return fail(400, { message: 'Not an admin' });
-		const { leagueName, dotaUsersList } = Object.fromEntries(await request.formData()) as Record<string, string>;
+
+		console.log(`\n---------\n[FORM createSeason] - submission received \n-----------`)
+		const formData = await request.formData()
 
 		try {
-			console.log(leagueName, dotaUsersList);
+			console.log(formData);
 
-			let parsedDUList = dotaUsersList.split(',');
-			if (!parsedDUList.length || parsedDUList.length === 0) return fail(400, { dotaUsersList, missing: true });
+			//console.log(`dota user list: `, createdUserList);
 
-			//create dotauser list
+			let seasonType = formData.get('seasonType')?.toString() || ""
+			let seasonStartDate = formData.get('seasonStartDate')?.toString() || ""
+			let seasonEndDate = formData.get('seasonEndDate')?.toString() || ""
+			let leagueName = formData.get('leagueName')?.toString() || ""
+			let seasonMembers = JSON.parse(`[${formData.get('members')?.toString()}]`|| "[]")
+			let seasonCreatorID = parseInt(formData.get('creatorID')?.toString() || "0")
+			let leagueID = parseInt(formData.get('leagueID')?.toString() || "0")
 
-			interface createUser {
-				account_id: number;
-				lastUpdated: Date;
-			}
+			let seasonName = leagueName.split(' ').map(word => word[0].toUpperCase()).join("")
 
-			let createdUserList: createUser[] = parsedDUList.map((userID) => {
-				let userObj: createUser = {
-					account_id: parseInt(userID) | 0,
-					lastUpdated: new Date()
-				};
+			let seasonNameFormatted = seasonName + ' - ' + seasonType[0].toUpperCase() + seasonType.slice(1) + ' - ' + dayjs(seasonStartDate).format("MMM YYYY")
 
-				if (parseInt(userID) > 0) {
-					userObj = {
-						account_id: parseInt(userID),
-						lastUpdated: new Date()
-					};
-				}
-				return userObj;
-			});
-
-			createdUserList = createdUserList.filter((cu) => cu.account_id !== 0);
-
-			console.log(`dota user list: `, createdUserList);
-			if (createdUserList.length < 1) {
+			if (!seasonType) {
 				console.log('form failed');
-				return fail(400, { dotaUsersList, missing: true });
+				return fail(400, { seasonType, missing: true });
 			}
-			let leagueCreateResult = await prisma.league.create({
-				data: {
-					name: leagueName,
-					lastUpdated: new Date(),
-					creatorID: session.user.account_id,
-					members: {
-						connectOrCreate: createdUserList.map((user) => {
-							return {
-								where: { account_id: user.account_id },
-								create: user
-							};
-						})
+			if(!seasonStartDate || !seasonEndDate) {
+				console.log('form failed');
+				return fail(400, { seasonStartDate, seasonEndDate, missing: true });
+			}
+			let seasonCreateResult;
+			if(seasonType && seasonStartDate && seasonEndDate && leagueName && seasonMembers && seasonCreatorID && leagueID){
+				seasonCreateResult = await prisma.season.create({
+					data: {
+						name: seasonNameFormatted,
+						creatorID: seasonCreatorID,
+						leagueID,
+						startDate: dayjs(seasonStartDate).toDate(),
+						endDate: dayjs(seasonEndDate).toDate(),
+						type: seasonType,
+						members: {
+							connect: seasonMembers.map((account_id: any) => {
+								return {
+									account_id
+								};
+							})
+						}
 					}
-				}
-			});
-
-			console.log(leagueCreateResult);
-			if (leagueCreateResult) return { success: true };
+				});
+			}
+			
+			if (seasonCreateResult) {
+				console.log(seasonCreateResult);
+				return { success: true };
+			}
 		} catch (err) {
 			console.error(err);
-			return fail(400, { message: 'Could not create league' });
+			return fail(400, { message: 'Could not create season' });
 		}
-		console.log('league created');
+		console.log('season created');
 		//console.log('username:', username, ' password:', password)
-		redirect(302, '/leagues');
+		redirect(302, url.pathname);
 	}
 };

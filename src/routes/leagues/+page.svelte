@@ -163,7 +163,7 @@
 				<div class="flex space-x-4 items-center">
 					<label for="leagueName" class="my-1 text-secondary-500 h4 font-bold">League Name</label>
 					<input
-						type="leagueName"
+						type="text"
 						id="leagueName"
 						name="leagueName"
 						placeholder="Turbotown Enjoyers"
