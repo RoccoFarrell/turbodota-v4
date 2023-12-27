@@ -3,7 +3,9 @@ import { auth } from '$lib/server/lucia';
 import prisma from '$lib/server/prisma';
 import type { Match } from '@prisma/client';
 
-import { STRATZ_TOKEN } from '$env/static/private';
+import { env } from '$env/dynamic/private';
+
+//import { STRATZ_TOKEN } from '$env/static/private';
 
 //helpers
 import winOrLoss from '$lib/helpers/winOrLoss';
@@ -65,7 +67,7 @@ export const POST: RequestHandler = async ({ request, params, url, locals, fetch
 		method: 'POST',
 		headers: new Headers({
 			'Content-Type': 'application/json',
-			Authorization: `Bearer ${STRATZ_TOKEN}`
+			Authorization: `Bearer ${env.STRATZ_TOKEN}`
 		}),
 		body: JSON.stringify({
 			query
