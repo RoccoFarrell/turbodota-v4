@@ -428,7 +428,7 @@
 	let newerStratzMatches: any[] = [];
 	$: console.log(newerStratzMatches);
 	let stratzTimeout: boolean = false;
-	let stratzTimeoutValue: number = 30
+	let stratzTimeoutValue: number = 30;
 	let stratzTimeoutCountdown: number = 0;
 	$: stratzTimeoutCountdown;
 	$: console.log(stratzTimeout);
@@ -700,24 +700,28 @@
 
 								<div class="mt-2">
 									<p class="inline text-orange-500 font-bold">{stratzTimeoutCountdown}s</p>
-									 before you can check again
+									before you can check again
 								</div>
 							</div>
 						{/if}
-						<div class="flex items-center justify-center h-full">
-							<button
-								class="btn variant-filled-success w-full"
-								disabled={stratzTimeout}
-								on:click={() => {
-									stratzLoading = checkForRandomComplete();
-								}}
-							>
-								<i class="fi fi-br-refresh h-fit"></i>
-								<div class="italic">I just completed this random!</div></button
-							>
-						</div>
+						{#if data.session && data.session.user}
+							<div class="flex items-center justify-center h-full">
+								<button
+									class="btn variant-filled-success w-full"
+									disabled={stratzTimeout}
+									on:click={() => {
+										stratzLoading = checkForRandomComplete();
+									}}
+								>
+									<i class="fi fi-br-refresh h-fit"></i>
+									<div class="italic">I just completed this random!</div></button
+								>
+							</div>
+						{/if}
 					{/await}
-					<div class="my-4"><MatchHistory {matchTableData} /></div>
+					{#if data.session && data.session.user}
+						<div class="my-4"><MatchHistory {matchTableData} /></div>
+					{/if}
 				{:else}
 					<div />
 				{/if}
