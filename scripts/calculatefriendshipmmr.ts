@@ -28,8 +28,8 @@ let winrates = await fetch('https://turbodota.com/api/winrates?source=db', {
 	},
 	body: JSON.stringify(data)
 })
-	.then((response) => response.json())
-	.then((data) => {
+	.then((response: any) => response.json())
+	.then((data: any) => {
 		return data
 	});
 
