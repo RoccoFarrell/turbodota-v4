@@ -7,7 +7,7 @@
 	import Observer from '$lib/assets/item_observer.png';
 </script>
 
-<div class="space-y-8 w-full flex flex-col justify-center">
+<div class="space-y-8 w-full flex flex-col">
 	<div class="bg-gradient-to-b dark:from-primary-900 from-primary-500/60 dark:to-surface-900/10 light:to-surface-100/10 px-4 py-10">
 		<div class="flex flex-col items-center w-full text-center space-y-4">
 			<img src={Knight} class="ml-8 max-h-32 aspect-square" alt="knight" />
