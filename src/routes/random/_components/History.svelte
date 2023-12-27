@@ -27,8 +27,8 @@
 			<div>KDA</div>
 		</div>
 		<!-- <div class="grid md:grid-cols-6 max-sm:grid-cols-4 place-items-center"> -->
-			{#each completedRandoms as random}
-            <div class="grid md:grid-cols-6 max-sm:grid-cols-4 place-items-center border-b border-tertiary-500/10 my-1 md:py-2 max-sm:py-1">
+			{#each completedRandoms as random, i}
+            <div class={"grid md:grid-cols-6 max-sm:grid-cols-4 place-items-center my-1 md:py-2 max-sm:py-1" + (i !== completedRandoms.length-1 ? " border-b border-tertiary-500/10":"")}>
 				<!-- Hero-->
 				<div class="flex flex-col w-full col-span-2 justify-start">
 					<div class="flex items-center justify-start space-x-4 w-full">

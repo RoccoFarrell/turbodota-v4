@@ -1,6 +1,10 @@
 <script lang="ts">
 	import { fade, fly, slide } from 'svelte/transition';
 	import { quintOut } from 'svelte/easing';
+	import { flip } from 'svelte/animate';
+	import dayjs from 'dayjs';
+	import LocalizedFormat from 'dayjs/plugin/localizedFormat';
+	dayjs.extend(LocalizedFormat);
 
 	//page data
 	import type { PageData } from './$types';
@@ -16,6 +20,7 @@
 
 	//components
 	import History from './_components/History.svelte';
+	import MatchHistory from '$lib/components/MatchHistory.svelte';
 
 	//constants
 	import { heroRoles } from '$lib/constants/heroRoles';
@@ -32,6 +37,64 @@
 	let generatedRandomHero: Hero | null = null;
 
 	let randomFound = false;
+
+	/* 
+		Calculations from server data
+	*/
+	let last5Matches: Match[] = data.rawMatchData.slice(0, 5);
+	console.log(`LAST 5 MATCHES:`, last5Matches);
+
+	let matchTableData = last5Matches.map((match: any) => {
+		return {
+			match_id: match.match_id,
+			start_time: dayjs(match.start_time).format('llll'),
+			result: winOrLoss(match.player_slot, match.radiant_win),
+			hero: data.heroDescriptions.allHeroes.filter((hero: Hero) => hero.id === match.hero_id)[0].id,
+			kda: ((match.kills + match.assists) / match.deaths).toFixed(2)
+		};
+	});
+
+	//calc random lifetime stats on load
+	let randomLifetimeStats = {
+		wins: 0,
+		losses: 0,
+		totalGoldWon: 0,
+		totalLostGoldModifier: 0
+	};
+
+	let completedRandoms = data.randoms.filter((random) => !random.active);
+	if (completedRandoms.length > 0) {
+		randomLifetimeStats = {
+			wins: completedRandoms.filter((random) => random.win).length || 0,
+			losses: completedRandoms.filter((random) => !random.active && !random.win).length,
+			totalGoldWon: completedRandoms.reduce((acc, cur) => acc + (cur.endGold || 0), 0),
+			totalLostGoldModifier: completedRandoms.reduce((acc, cur) => acc + cur.modifierTotal, 0)
+		};
+	}
+
+	//set user preferences on page
+	if (data.userPreferences && data.userPreferences.length > 0) {
+		console.log(`[random/+page.svelte] - evaluating userPreferencces`);
+		let banListPref = data.userPreferences.filter((pref: any) => pref.name === 'randomBanList');
+
+		try {
+			if (banListPref.length > 0 && banListPref[0].value) {
+				console.log(`[random/+page.svelte] - evaluating saved ban list`);
+				let randomBanListParsed = JSON.parse(banListPref[0].value);
+
+				let setList = data.heroDescriptions.allHeroes.filter((hero: Hero) => randomBanListParsed.includes(hero.id));
+
+				randomStore.setBanList(setList);
+			}
+		} catch (e) {
+			console.error('error in setting preferences');
+		}
+	}
+
+	/* 
+		End Calculations
+	*/
+
 	//evaluate if there is an active random stored in the DB
 	if ('randoms' in data && data?.randoms.length > 0 && data.randoms.filter((random) => random.active).length > 0) {
 		randomFound = true;
@@ -66,7 +129,7 @@
 					bannedHeroes.length > 0
 						? bannedHeroes.split(',').map((randomID: string) => {
 								return allHeroesCopy.filter((hero: Hero) => hero.id === parseInt(randomID))[0];
-						  })
+							})
 						: [],
 				selectedRoles: selectedRoles.split(',') || [],
 				startingGold: 100,
@@ -90,43 +153,6 @@
 		};
 
 		toastStore.trigger(t);
-	}
-
-	//set user preferences on page
-	if (data.userPreferences && data.userPreferences.length > 0) {
-		console.log(`[random/+page.svelte] - evaluating userPreferencces`);
-		let banListPref = data.userPreferences.filter((pref: any) => pref.name === 'randomBanList');
-
-		try {
-			if (banListPref.length > 0 && banListPref[0].value) {
-				console.log(`[random/+page.svelte] - evaluating saved ban list`);
-				let randomBanListParsed = JSON.parse(banListPref[0].value);
-
-				let setList = data.heroDescriptions.allHeroes.filter((hero: Hero) => randomBanListParsed.includes(hero.id));
-
-				randomStore.setBanList(setList);
-			}
-		} catch (e) {
-			console.error('error in setting preferences');
-		}
-	}
-
-	//calc random lifetime stats on load
-	let randomLifetimeStats = {
-		wins: 0,
-		losses: 0,
-		totalGoldWon: 0,
-		totalLostGoldModifier: 0
-	};
-
-	let completedRandoms = data.randoms.filter((random) => !random.active);
-	if (completedRandoms.length > 0) {
-		randomLifetimeStats = {
-			wins: completedRandoms.filter((random) => random.win).length || 0,
-			losses: completedRandoms.filter((random) => !random.active && !random.win).length,
-			totalGoldWon: completedRandoms.reduce((acc, cur) => acc + (cur.endGold || 0), 0),
-			totalLostGoldModifier: completedRandoms.reduce((acc, cur) => acc + cur.modifierTotal, 0)
-		};
 	}
 
 	$: showHeroGrid = true;
@@ -399,6 +425,58 @@
 		}
 	};
 
+	let newerStratzMatches: any[] = [];
+	$: console.log(newerStratzMatches);
+	let stratzTimeout: boolean = false;
+	let stratzTimeoutValue: number = 30
+	let stratzTimeoutCountdown: number = 0;
+	$: stratzTimeoutCountdown;
+	$: console.log(stratzTimeout);
+
+	const checkForRandomComplete = async () => {
+		let responseStratz, responseParse;
+		if (!stratzTimeout) {
+			responseStratz = await fetch(`/api/stratz/players/${data.session.user.account_id}/recentMatches`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					since: data.rawMatchData[0].match_id
+				})
+			});
+
+			responseParse = await updateStratzMatches(responseStratz);
+
+			stratzTimeout = true;
+			stratzTimeoutCountdown = 30;
+			let countdownTimer = setInterval(() => {
+				stratzTimeoutCountdown--;
+				if (stratzTimeoutCountdown === 0) {
+					stratzTimeout = false;
+					clearInterval(countdownTimer);
+				}
+			}, 1000);
+		} else {
+			responseStratz = 'timed out';
+		}
+
+		return Promise.all([responseStratz, responseParse]);
+	};
+
+	const updateStratzMatches = async (stratzPromise: any) => {
+		let stratzHasMatches = await stratzPromise.json();
+
+		console.log(stratzHasMatches);
+		newerStratzMatches = stratzHasMatches.response.data.player.matches;
+
+		console.log(`[checkForRandomComplete] stratzHasMatches:`, stratzHasMatches);
+
+		return newerStratzMatches;
+	};
+
+	let stratzLoading: any = false;
+
 	//https://stackoverflow.com/questions/76933374/svelte-loading-indicator-for-a-synchronous-method
 	// function repaint() {
 	// 	return new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
@@ -413,6 +491,7 @@
 	// }
 
 	//toast settings
+
 	const t: ToastSettings = {
 		message: `Max bans of ${$randomStore.maxBans} reached!`,
 		background: 'variant-filled-warning'
@@ -432,7 +511,7 @@
 
 <div class="container md:m-4 my-4 h-full mx-auto w-full max-sm:mb-20">
 	<div class="flex flex-col items-center text-center space-y-2 md:mx-8 mx-2">
-		<div class="flex max-sm:flex-col max-sm:space-y-2 justify-around items-center w-3/4">
+		<div class="flex max-sm:flex-col max-sm:space-y-2 justify-around items-center w-3/4 my-4">
 			<h1 class="h1 text-primary-700 max-md:font-bold">The Walker Random™</h1>
 			<div class="flex space-x-4">
 				<a href="/random/leaderboard"><button class="btn variant-ghost-primary">Leaderboard</button></a>
@@ -445,7 +524,7 @@
 			</div>
 		</div>
 
-		<div>
+		<!-- <div>
 			{#if randomFound}
 				<div class="w-full">
 					{#if data.randoms}
@@ -455,13 +534,11 @@
 					{/if}
 				</div>
 			{/if}
-		</div>
+		</div> -->
 
-		<div
-			class="lg:grid lg:grid-cols-3 max-sm:flex max-sm:flex-col items-center max-lg:space-y-8 sm:place-content-start lg:gap-x-8"
-		>
+		<div class="lg:grid lg:grid-cols-3 max-sm:flex max-sm:flex-col max-lg:space-y-8 sm:place-content-start lg:gap-x-8">
 			<!-- Hero ban grid -->
-			<div class="w-full flex flex-col items-center sm:h-full relative max-md:max-w-sm">
+			<div class="w-full flex flex-col items-center sm:h-fit relative max-md:max-w-sm">
 				{#if randomFound}
 					<div class="z-50 absolute h-full w-full bg-slate-800/80 flex flex-col items-center justify-center rounded-xl">
 						<h3 class="h3 text-primary-500 rounded-xl m-4 bg-surface-500/90 p-4">
@@ -558,7 +635,7 @@
 
 			<!-- Autobans Roles and Modifiers -->
 			<div
-				class="md:w-full max-sm:w-fit text-center h-full items-center dark:bg-surface-600/30 bg-surface-200/30 border border-surface-200 dark:border-surface-700 shadow-lg rounded-xl px-2 md:py-8 max-sm:py-4"
+				class="md:w-full max-md:max-w-sm text-center h-fit items-center dark:bg-surface-600/30 bg-surface-200/30 border border-surface-200 dark:border-surface-700 shadow-lg rounded-xl px-2 md:py-8 max-sm:py-4"
 			>
 				{#if generatedRandomHero}
 					<div
@@ -571,6 +648,76 @@
 						</h1>
 						<i class={`vibrating d2mh hero-${generatedRandomHero.id} scale-150`}></i>
 					</div>
+					<!-- 
+							<div class="w-fit mx-auto p-4 border border-dashed border-fuchsia-300 my-4 card">
+								<div class="grid grid-cols-3 place-content-start">
+									<p>Pulled {newerStratzMatches.length} matches from Stratz</p>
+									<div class="text-xs">
+										Most recent Stratz match: <p>{newerStratzMatches[0].id}</p>
+									</div>
+									<div class="text-xs mt-2">
+										Most recent Open Dota match: <p>{data.rawMatchData[0].match_id}</p>
+									</div>
+								</div>
+
+								<div><p class="inline text-primary-500">{stratzTimeoutCountdown}s</p> before you can check again</div>
+							</div> -->
+
+					{#await stratzLoading}
+						<div class="flex items-center justify-center h-full">
+							<button class="btn variant-filled-success w-full">
+								<i class="fi fi-br-refresh h-fit animate-spin"></i>
+								<div class="placeholder animate-pulse"></div>
+							</button>
+						</div>
+					{:then stratzData}
+						{#if stratzData}
+							<div class="w-fit mx-auto p-4 border border-dashed border-fuchsia-300 my-4 space-y-4 card">
+								<div>
+									{#if newerStratzMatches[0].id.toString() !== data.rawMatchData[0].match_id.toString()}
+										<div class="flex items-center justify-center p-1 space-x-2 text-green-500">
+											<i class="fi fi-ss-head-side-brain"></i>
+											<p>You may have a point...</p>
+										</div>
+									{:else}
+										<div class="text-amber-500 flex items-center space-x-2 justify-center p-1">
+											<i class="fi fi-br-database mx-2"></i>
+											<p>No new matches found from two sources...</p>
+										</div>
+									{/if}
+								</div>
+								<div class="grid grid-cols-3 place-content-start">
+									<p class="text-xs text-secondary-600">Pulled {newerStratzMatches.length} matches from Stratz</p>
+									<div class="text-xs">
+										Most recent Stratz match: <p class="font-bold text-primary-500">{newerStratzMatches[0].id}</p>
+									</div>
+									<div class="text-xs">
+										Most recent Open Dota match: <p class="font-bold text-primary-500">
+											{data.rawMatchData[0].match_id}
+										</p>
+									</div>
+								</div>
+
+								<div class="mt-2">
+									<p class="inline text-orange-500 font-bold">{stratzTimeoutCountdown}s</p>
+									 before you can check again
+								</div>
+							</div>
+						{/if}
+						<div class="flex items-center justify-center h-full">
+							<button
+								class="btn variant-filled-success w-full"
+								disabled={stratzTimeout}
+								on:click={() => {
+									stratzLoading = checkForRandomComplete();
+								}}
+							>
+								<i class="fi fi-br-refresh h-fit"></i>
+								<div class="italic">I just completed this random!</div></button
+							>
+						</div>
+					{/await}
+					<div class="my-4"><MatchHistory {matchTableData} /></div>
 				{:else}
 					<div />
 				{/if}
@@ -701,7 +848,7 @@
 
 			<!-- Stats and History -->
 			<div
-				class="w-full h-full max-md:max-w-sm space-y-10 dark:bg-surface-600/30 bg-surface-200/30 border border-surface-200 dark:border-surface-700 rounded-lg relative"
+				class="w-full h-fit max-md:max-w-sm space-y-10 dark:bg-surface-600/30 bg-surface-200/30 border border-surface-200 dark:border-surface-700 rounded-lg relative"
 			>
 				{#if !data.session}
 					<div class="z-10 absolute h-full w-full bg-slate-800/80 flex flex-col items-center justify-center rounded-lg">
@@ -741,6 +888,7 @@
 				<p>Most randomed wins: Techies</p>
 				<p>Most randomed losses: Broodmother</p> -->
 					</div>
+					<!-- <div class="my-4"> <MatchHistory matchTableData={matchTableData}/></div> -->
 					<History {completedRandoms} allHeroes={data.heroDescriptions.allHeroes} />
 				</div>
 			</div>
