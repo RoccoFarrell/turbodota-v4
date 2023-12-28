@@ -29,7 +29,7 @@
 	$: console.log(form);
 
 	//set active league
-	setContext('selectedLeague', data.selectedLeague)
+	//setContext('selectedLeague', data.selectedLeague)
 
 	/* 
 		Get active seasons
@@ -108,7 +108,7 @@
 </script>
 
 <section class="lg:w-3/4 w-full h-screen px-4 lg:mx-auto my-4 space-y-8">
-	<div class="flex justify-center items-center space-x-8">
+	<!-- <div class="flex justify-center items-center space-x-8">
 		<img src={Trophy_light} class="w-20 h-20" alt="leagues page" />
 		<h2 class="h2 text-amber-500 vibrating">{data.selectedLeague.name}</h2>
 	</div>
@@ -129,7 +129,7 @@
 				Members: <p class="inline font-semibold text-primary-500">{data.selectedLeague.members.length}</p>
 			</div>
 		</div>
-	</div>
+	</div> -->
 
 	<div class="space-y-2">
 		<h3 class="h3 text-primary-500">Active Seasons</h3>
