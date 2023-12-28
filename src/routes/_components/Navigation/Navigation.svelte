@@ -43,20 +43,20 @@
 		</li>
 		<li
 			class={'flex items-center justify-start rounded-full ' +
+				($page.url.pathname === '/leagues' ? 'border border-secondary-500/60' : '')}
+		>
+			<a href="/leagues" data-sveltekit-preload-data="tap" class="w-full">
+				<i class="fi fi-br-users-alt text-teal-500" />
+				<p class={$page.url.pathname === '/leagues' ? 'font-bold' : ''}>Leagues</p></a
+			>
+		</li>
+		<li
+			class={'flex items-center justify-start rounded-full ' +
 				($page.url.pathname === '/turbotown' ? 'border border-secondary-500/60' : '')}
 		>
 			<a href="/turbotown" data-sveltekit-preload-data="tap" class="w-full">
 				<i class="fi fi-br-house-turret text-blue-500" />
 				<p class={$page.url.pathname === '/turbotown' ? 'font-bold' : ''}>Turbo Town</p></a
-			>
-		</li>
-		<li
-			class={'flex items-center justify-start rounded-full ' +
-				($page.url.pathname === '/leagues' ? 'border border-secondary-500/60' : '')}
-		>
-			<a href="/leagues" data-sveltekit-preload-data="tap" class="w-full">
-				<i class="fi fi-br-users-alt text-teal-500"/>
-				<p class={$page.url.pathname === '/leagues' ? 'font-bold' : ''}>Leagues</p></a
 			>
 		</li>
 
