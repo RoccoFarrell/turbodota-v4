@@ -37,6 +37,7 @@ let winrates = await fetch('https://turbodota.com/api/winrates?source=db', {
 
 
 async function getAllMatches(account_id: number, winrates) {
+    console.log("Running: " + account_id)
 	let player_match_response = await fetch('https://turbodota.com/api/updateMatchesForUser/' + account_id);
 	let player_match_response_object = await player_match_response.json();
 
@@ -58,19 +59,29 @@ async function getAllMatches(account_id: number, winrates) {
     
             for (const player of send_match_for_parse_response_object.matchDetailResult.matchDetail.players) {
                 //console.log(player)
+                if(player.account_id == account_id) {
+                    if (player.win == 1) {
+                        winorlossstring = 1
+                        console.log("Match: " +match.match_id+" resulted in a WIN")
+                    }
+                    else {
+                        winorlossstring = 0 
+                        console.log("Match: " +match.match_id+" resulted in a LOSS")
+                    }
+                }
+ 
                 if (playersWeCareAbout.includes(player.account_id) && player.account_id != account_id) {
-                    console.log("Found a friend to handle: " + player.account_id)
+                    //console.log("Found a friend to handle: " + player.account_id)
                     let tempArray = {}
                     tempArray.account_id = player.account_id
                     tempArray.hero_id = player.hero_id
-                    if (player.win == 1) {
-                        tempArray.win_or_loss = 1
-                        winorlossstring = 1
-                    }
-                    else {
-                        tempArray.win_or_loss = 0
-                        winorlossstring = 0
-                    }
+                    //tempArray.win_or_loss = winorlossstring
+                    // if (player.win == 1) {
+                    //     tempArray.win_or_loss = 1
+                    // }
+                    // else {
+                    //     tempArray.win_or_loss = 0
+                    // }
                     friendsArray.push(tempArray)
                 }
             }
@@ -81,18 +92,18 @@ async function getAllMatches(account_id: number, winrates) {
                 let tempArray = {}
                 tempArray.account_id = item.account_id
                 tempArray.hero_id = item.hero_id
-                tempArray.win_or_loss = item.win_or_loss
+                //tempArray.win_or_loss = item.win_or_loss
                 tempArray.win_rate = winrates.insert.filter((rate) => rate.account_id === item.account_id)[0].heroesArr.filter(hero => hero.hero_id === item.hero_id)[0].winrate
                 friendsArray2.push(tempArray)
             }
-            console.log("Friends Array 2 To Handle: " + JSON.stringify(friendsArray2))
+            //console.log("Friends Array 2 To Handle: " + JSON.stringify(friendsArray2))
     
             //Do the math
             let mmrIndividualModifier = 0
             let mmrTotalMatchModifier = 0
             let i = 0
             for (const item of friendsArray2) {
-                if (item.win_loss_flag == 1){
+                if (winorlossstring == 1){
                     mmrIndividualModifier = 5 + ((item.win_rate-.5)*10*-1)
                     //console.log("Won match! Adding to individual modifier: " + mmrIndividualModifier)
                 }
@@ -124,8 +135,14 @@ async function getAllMatches(account_id: number, winrates) {
 	
 }
 
-let playerID = 65110965;
+let playerID = 68024789;
 getAllMatches(playerID, winrates);
+
+// for (const torunplayer of playersWeCareAbout)
+// {
+//     let playerID = torunplayer;
+//     getAllMatches(playerID, winrates);
+// }
 
 // 80636612   - Martin
 // 34940151   - Roberts
