@@ -120,6 +120,7 @@ model League {
 model Season {
   id             Int            @id @default(autoincrement())
   name           String
+  active         Boolean        @default(true)
   lastUpdated    DateTime       @default(now())
   startDate      DateTime
   endDate        DateTime
