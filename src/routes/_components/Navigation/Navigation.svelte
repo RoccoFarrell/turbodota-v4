@@ -56,7 +56,7 @@
 		>
 			<a href="/leagues" data-sveltekit-preload-data="tap" class="w-full">
 				<i class="fi fi-br-users-alt text-teal-500"/>
-				<p class={$page.url.pathname === '/turbotown' ? 'font-bold' : ''}>Leagues</p></a
+				<p class={$page.url.pathname === '/leagues' ? 'font-bold' : ''}>Leagues</p></a
 			>
 		</li>
 

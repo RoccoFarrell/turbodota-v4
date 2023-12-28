@@ -13,7 +13,7 @@ import { env } from '$env/dynamic/private';
 // })
 
 const prisma = new PrismaClient({
-	//log: [{ level: 'query', emit: 'event' }]
+	log: [{ level: 'query', emit: 'event' }, 'info', 'warn', 'error']
 });
 
 // prisma.$on('query', (e) => {

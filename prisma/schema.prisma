@@ -7,16 +7,16 @@ generator client {
 //   url      = "file:./dev.sqlite"
 // }
 
-// datasource db {
-//   provider = "postgresql"
-//   url      = env("DEV_URL")
-// }
-
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
+  url      = env("DEV_URL")
 }
+
+// datasource db {
+//   provider  = "postgresql"
+//   url       = env("DATABASE_URL")
+//   directUrl = env("DIRECT_URL")
+// }
 
 model Match {
   id            Int      @id @default(autoincrement())
@@ -107,23 +107,50 @@ model PlayersMatchDetail {
 }
 
 model League {
-  id Int @id @default(autoincrement())
-  name String
-  lastUpdated DateTime
-  creatorID Int
-  creator User @relation(fields: [creatorID], references:[account_id])
-  members DotaUser[]
+  id          Int        @id @default(autoincrement())
+  name        String
+  lastUpdated DateTime   @default(now())
+  createdDate DateTime   @default(now())
+  creatorID   Int
+  creator     User       @relation(fields: [creatorID], references: [account_id])
+  members     DotaUser[]
+  seasons     Season[]
+}
+
+model Season {
+  id             Int            @id @default(autoincrement())
+  name           String
+  lastUpdated    DateTime       @default(now())
+  startDate      DateTime
+  endDate        DateTime
+  type           String
+  creatorID      Int
+  leagueID       Int
+  randoms        Random[]
+  league         League         @relation(fields: [leagueID], references: [id])
+  members        DotaUser[]
+  season_results SeasonResult[]
+}
+
+model SeasonResult {
+  id         Int    @id @default(autoincrement())
+  seasonID   Int
+  account_id Int
+  place      Int
+  score      Int
+  season     Season @relation(fields: [seasonID], references: [id])
 }
 
 model DotaUser {
-  account_id  Int       @id @unique
-  lastUpdated DateTime
-  oldestMatch DateTime?
-  newestMatch DateTime?
+  account_id    Int       @id @unique
+  lastUpdated   DateTime
+  oldestMatch   DateTime?
+  newestMatch   DateTime?
   oldestMatchID BigInt?
   newestMatchID BigInt?
-  leagues     League[]
-  user        User?
+  leagues       League[]
+  seasons       Season[]
+  user          User?
 
   @@index([account_id])
 }
@@ -142,7 +169,7 @@ model User {
   id           String      @id @unique
   name         String?
   username     String      @unique
-  account_id   Int        @unique
+  account_id   Int         @unique
   steam_id     BigInt?     @unique
   profile_url  String
   avatar_url   String
@@ -152,9 +179,9 @@ model User {
   auth_session Session[]
   randoms      Random[]
   user_prefs   UserPrefs[]
-  leagues League[]
+  leagues      League[]
   //player_match_details PlayersMatchDetail[]
-  dota_user    DotaUser? @relation(fields: [account_id], references: [account_id])
+  dota_user    DotaUser?   @relation(fields: [account_id], references: [account_id])
 
   //matches      Match[]
 }
@@ -186,6 +213,7 @@ model Random {
   modifierAmount  Int
   modifierTotal   Int
   randomedHero    Int
+  seasons         Season[]
   user            User?     @relation(fields: [account_id], references: [account_id])
   match           Match?    @relation(fields: [endMatchID], references: [id])
 
