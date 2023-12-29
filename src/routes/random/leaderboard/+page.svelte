@@ -155,19 +155,58 @@
 				/* 
                     Sum all KDAs in wins and losses
                 */
+
+				let kdaCalcs = {
+					wins: {
+						kills: 0,
+						deaths: 0,
+						assists: 0
+					},
+					losses: {
+						kills: 0,
+						deaths: 0,
+						assists: 0
+					},
+					total: {
+						kills: 0,
+						deaths: 0,
+						assists: 0
+					}
+				}
 				playerRandoms.forEach((random) => {
 					if (random.match) {
-						kdaTotal += (random.match.kills + random.match.assists) / random.match.deaths;
+						kdaCalcs.total.kills += random.match.kills
+						kdaCalcs.total.deaths += random.match.deaths
+						kdaCalcs.total.assists += random.match.assists
 						if (random.win) {
-							kdaWins += (random.match.kills + random.match.assists) / random.match.deaths;
+							kdaCalcs.wins.kills += random.match.kills
+							kdaCalcs.wins.deaths += random.match.deaths
+							kdaCalcs.wins.assists += random.match.assists
 						} else if (!random.win) {
-							kdaLosses += (random.match.kills + random.match.assists) / random.match.deaths;
+							kdaCalcs.losses.kills += random.match.kills
+							kdaCalcs.losses.deaths += random.match.deaths
+							kdaCalcs.losses.assists += random.match.assists
 						}
 					}
 				});
-				row.kdaTotal = kdaTotal / (winCount + lossCount);
-				row.kdaWins = kdaWins / winCount;
-				row.kdaLosses = kdaLosses / lossCount;
+				row.kdaTotal = (kdaCalcs.total.kills + kdaCalcs.total.assists) / kdaCalcs.total.deaths || 0
+				row.kdaWins = (kdaCalcs.wins.kills + kdaCalcs.wins.assists) / kdaCalcs.wins.deaths || 0
+				row.kdaLosses = (kdaCalcs.losses.kills + kdaCalcs.losses.assists) / kdaCalcs.losses.deaths || 0
+				
+				//old way that results in infinity
+				// playerRandoms.forEach((random) => {
+				// 	if (random.match) {
+				// 		kdaTotal += (random.match.kills + random.match.assists) / random.match.deaths;
+				// 		if (random.win) {
+				// 			kdaWins += (random.match.kills + random.match.assists) / random.match.deaths;
+				// 		} else if (!random.win) {
+				// 			kdaLosses += (random.match.kills + random.match.assists) / random.match.deaths;
+				// 		}
+				// 	}
+				// });
+				// row.kdaTotal = kdaTotal / (winCount + lossCount);
+				// row.kdaWins = kdaWins / winCount;
+				// row.kdaLosses = kdaLosses / lossCount;
 
 				/* 
                     Gold calculations
@@ -308,8 +347,14 @@
 									<td
 										class={`${cellText === 'Total KDA' ? '' : 'max-md:hidden lg:visible'} ${calculateKdaClasses(
 											parseFloat(row[i])
-										)}`}>{parseFloat(row[i]).toFixed(2)}</td
-									>
+										)}`}>
+										{#if parseFloat(row[i]) !== parseFloat("0.00")}
+											{parseFloat(row[i]).toFixed(2)}
+										{:else}
+											<p class="text-xs text-slate-500">-</p>
+										{/if}
+										
+										</td>
 								{:else if [0, 3, 5, 6, 7, 8].includes(i)}
 									<td class="max-md:hidden lg:visible">{row[i]}</td>
 								{:else}

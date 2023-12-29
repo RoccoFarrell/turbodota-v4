@@ -17,11 +17,11 @@
 	//images
 	import Lock from '$lib/assets/lock.png';
 
-	$: console.log(data);
+	//$: console.log(data);
 
 	export let form;
 
-	$: console.log(form);
+	//$: console.log(form);
 
 	import { getToastStore, storeHighlightJs } from '@skeletonlabs/skeleton';
 	import type { ToastSettings, ToastStore } from '@skeletonlabs/skeleton';
@@ -49,6 +49,7 @@
 
 	let leagueTableData = data.leagues.map((league: any) => {
 		return {
+			id: league.id,
 			name: league.name,
 			creatorID: league.creator.username,
 			lastUpdated: dayjs(league.lastUpdated).format('MM/DD/YYYY'),
@@ -57,11 +58,11 @@
 	});
 	const tableSource: TableSource = {
 		// A list of heading labels.
-		head: ['Name', 'Creator', 'Last Updated', 'Members'],
+		head: ['Name', 'ID', 'Creator', 'Last Updated', 'Members'],
 		// The data visibly shown in your table body UI.
-		body: tableMapperValues(leagueTableData, ['name', 'creatorID', 'lastUpdated', 'membersCount']),
+		body: tableMapperValues(leagueTableData, ['name', 'id', 'creatorID', 'lastUpdated', 'membersCount']),
 		// Optional: The data returned when interactive is enabled and a row is clicked.
-		meta: tableMapperValues(leagueTableData, ['name', 'creatorID', 'lastUpdated', 'membersCount'])
+		meta: tableMapperValues(leagueTableData, ['name', 'id', 'creatorID', 'lastUpdated', 'membersCount'])
 		// Optional: A list of footer labels.
 		//foot: ['Total', '', '<code class="code">5</code>']
 	};
@@ -86,7 +87,46 @@
 	<div class="space-y-2">
 		<h3 class="h3 text-primary-500">Existing Leagues</h3>
 		{#if leagueTableData.length > 0}
-			<Table source={tableSource} class="table-compact" regionCell="dark:first:text-amber-500 first:text-amber-600 first:font-bold" />
+			<!-- <Table
+				source={tableSource}
+				class="table-compact"
+				regionCell="dark:first:text-amber-500 first:text-amber-600 first:font-bold"
+			/> -->
+
+			<div class="table-container">
+				<!-- Native Table Element -->
+				<table class="table table-hover">
+					<thead>
+						<tr>
+							{#each tableSource.head as header, i}
+								<th>{header}</th>
+							{/each}
+						</tr>
+					</thead>
+					<tbody>
+						{#each tableSource.body as row, i}
+							<tr>
+								<a href={`/leagues/${row[1]}`}
+									><td class="font-bold text-amber-500 hover:underline hover:text-primary-600">{row[0]}</td></a
+								>
+								<td>{row[1]}</td>
+								<td>{row[2]}</td>
+								<td>{row[3]}</td>
+								<td>{row[4]}</td>
+							</tr>
+						{/each}
+					</tbody>
+					<!-- <tfoot>
+						<tr>
+							<td>{row[0]}</td>
+								<td>{row[1]}</td>
+								<td>{row[2]}</td>
+                                <td>{row[3]}</td>
+                                <td>{row[4]}</td>
+						</tr>
+					</tfoot> -->
+				</table>
+			</div>
 		{:else}
 			<div>No leagues found!</div>
 		{/if}
@@ -123,7 +163,7 @@
 				<div class="flex space-x-4 items-center">
 					<label for="leagueName" class="my-1 text-secondary-500 h4 font-bold">League Name</label>
 					<input
-						type="leagueName"
+						type="text"
 						id="leagueName"
 						name="leagueName"
 						placeholder="Turbotown Enjoyers"
@@ -158,36 +198,64 @@
 									<div class="text-secondary-500">Most played with friends</div>
 									<div class="flex w-full flex-wrap">
 										{#if data.common.commonCombined}
-											{#each data.common.commonCombined as friend}
-												<div
-													class="m-1 flex flex-col card card-hover p-4 xl:w-1/4 md:w-1/3 max-md:w-full h-full space-y-2 items-center"
-												>
-													<div class="flex justify-around space-x-2">
-														{#if friend.avatar_url}
-															<header>
-																<img src={friend.avatar_url} alt="friend" />
-															</header>
-														{/if}
-														{#if friend.username}
-															<section>
-																<h5 class="h5 overflow-hidden text-ellipsis whitespace-nowrap">{friend.username}</h5>
-															</section>
-														{:else}
-															<section>
-																<h5 class="h5 overflow-hidden text-ellipsis whitespace-nowrap">{friend}</h5>
-															</section>
-														{/if}
-													</div>
-													<footer>
-														<button
-															class="btn variant-ghost-secondary p-2"
-															disabled={friendsString.includes(friend.account_id ? friend.account_id : friend)}
-															on:click={() => handleAddCommonFriend(friend.account_id ? friend.account_id : friend)}
-															>Add to League</button
-														>
-													</footer>
-												</div>
-											{/each}
+                                        {#each data.common.commonCombined as friend}
+                                        <div
+                                            class="m-1 flex flex-col card card-hover xl:w-[calc(33%-1em)] md:w-[calc(50%-1em)] max-md:w-full h-full space-y-2 items-center"
+                                        >
+                                            <div class="grid grid-cols-4 w-full min-h-[50px]">
+                                                {#if friend.avatar_url}
+                                                    <div class="col-span-1 flex items-center w-full">
+                                                        <header class="rounded-l-full h-full">
+                                                            <img class="rounded-l-full h-full" src={friend.avatar_url} alt="friend" />
+                                                        </header>
+                                                    </div>
+                                                {:else}
+                                                    <div class="col-span-1 flex justify-center items-center w-full">
+                                                        <header class="flex items-center">
+                                                            <i class="scale-150 fi fi-rr-portrait"></i>
+                                                        </header>
+                                                    </div>
+                                                {/if}
+
+                                                <div class="col-span-2">
+                                                    {#if friend.username}
+                                                        <section class="flex items-center h-full">
+                                                            <h5 class="h5 overflow-hidden text-ellipsis whitespace-nowrap">
+                                                                {friend.username}
+                                                            </h5>
+                                                        </section>
+                                                    {:else}
+                                                        <section class="flex items-center h-full">
+                                                            <h5 class="h5 overflow-hidden text-ellipsis whitespace-nowrap">{friend}</h5>
+                                                        </section>
+                                                    {/if}
+                                                </div>
+                                                <div
+                                                    class="variant-filled-success rounded-r-full flex items-center justify-center hover:bg-green-300 hover:cursor-pointer"
+                                                >
+                                                    <button
+                                                        class="p-2"
+                                                        disabled={friendsString.includes(
+                                                            friend.account_id ? friend.account_id : friend
+                                                        )}
+                                                        on:click={() =>
+                                                            handleAddCommonFriend(friend.account_id ? friend.account_id : friend)}
+                                                        ><i class="fi fi-br-add"></i></button
+                                                    >
+                                                </div>
+                                            </div>
+                                            <!-- <div class="flex justify-around space-x-2"></div> -->
+                                            <!-- <footer>
+                                                <button
+                                                    class="btn variant-ghost-secondary p-2"
+                                                    disabled={friendsString.includes(friend.account_id ? friend.account_id : friend)}
+                                                    on:click={() =>
+                                                        handleAddCommonFriend(friend.account_id ? friend.account_id : friend)}
+                                                    >Add to League</button
+                                                >
+                                            </footer> -->
+                                        </div>
+                                    {/each}
 										{/if}
 									</div>
 								</div>

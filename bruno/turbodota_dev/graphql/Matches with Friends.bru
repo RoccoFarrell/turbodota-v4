@@ -1,7 +1,7 @@
 meta {
   name: Matches with Friends
   type: graphql
-  seq: 5
+  seq: 2
 }
 
 post {
@@ -20,7 +20,7 @@ body:graphql {
     players(steamAccountIds: [65110965, 34940151, 80636612, 113003047, 125251142]) {
       steamAccountId
       matches(request: {
-        withFriendSteamAccountIds:[65110965, 34940151, 80636612, 113003047, 125251142]
+        take: 100
       	}) {
         id
         players{

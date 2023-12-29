@@ -110,19 +110,48 @@ model PlayersMatchDetail {
 model League {
   id          Int        @id @default(autoincrement())
   name        String
-  lastUpdated DateTime
+  lastUpdated DateTime   @default(now())
+  createdDate DateTime   @default(now())
   creatorID   Int
   creator     User       @relation(fields: [creatorID], references: [account_id])
   members     DotaUser[]
+  seasons     Season[]
+}
+
+model Season {
+  id             Int            @id @default(autoincrement())
+  name           String
+  lastUpdated    DateTime       @default(now())
+  startDate      DateTime
+  endDate        DateTime
+  type           String
+  creatorID      Int
+  leagueID       Int
+  randoms        Random[]
+  league         League         @relation(fields: [leagueID], references: [id])
+  members        DotaUser[]
+  season_results SeasonResult[]
+}
+
+model SeasonResult {
+  id         Int    @id @default(autoincrement())
+  seasonID   Int
+  account_id Int
+  place      Int
+  score      Int
+  season     Season @relation(fields: [seasonID], references: [id])
 }
 
 model DotaUser {
-  account_id    Int             @id @unique
-  lastUpdated   DateTime
-  oldestMatch   DateTime?
-  newestMatch   DateTime?
-  leagues       League[]
-  user          User?
+  account_id      Int             @id @unique
+  lastUpdated     DateTime
+  oldestMatch     DateTime?
+  newestMatch     DateTime?
+  oldestMatchID BigInt?
+  newestMatchID BigInt?
+  leagues         League[]
+  seasons       Season[]
+  user            User?
   FriendshipMMR FriendshipMMR[]
 
   @@index([account_id])
@@ -186,6 +215,7 @@ model Random {
   modifierAmount  Int
   modifierTotal   Int
   randomedHero    Int
+  seasons         Season[]
   user            User?     @relation(fields: [account_id], references: [account_id])
   match           Match?    @relation(fields: [endMatchID], references: [id])
 

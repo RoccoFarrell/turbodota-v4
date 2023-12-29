@@ -1,5 +1,5 @@
 <script lang="ts">
-	import '../app.postcss';
+	import '../app.pcss';
 	import {
 		AppShell,
 		AppBar,
@@ -226,7 +226,7 @@
 		</svelte:fragment>
 
 		<!-- Page Route Content -->
-		<div class="h-max flex justify-center w-full">
+		<div class="h-[calc(100vh-80px)] flex w-full justify-center">
 			{#if $navigating || navigatingTest}
 				<div class="m-8 w-full"><Loading /></div>
 			{:else}

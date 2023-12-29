@@ -18,7 +18,7 @@
     "@skeletonlabs/skeleton": "2.5.1",
     "@skeletonlabs/tw-plugin": "0.2.4",
     "@sveltejs/adapter-vercel": "^4.0.3",
-    "@sveltejs/kit": "^2.0.0",
+    "@sveltejs/kit": "^2.0.6",
     "@sveltejs/vite-plugin-svelte": "^3.0.0",
     "@tailwindcss/forms": "0.5.7",
     "@tailwindcss/typography": "0.5.10",
@@ -48,16 +48,22 @@
     "@digitak/esrun": "^3.2.26",
     "@flaticon/flaticon-uicons": "^3.0.0",
     "@floating-ui/dom": "1.5.3",
+    "@internationalized/date": "^3.5.1",
     "@lucia-auth/adapter-prisma": "^3.0.2",
     "@prisma/client": "^5.6.0",
     "@types/d3": "^7.4.3",
     "@types/node-steam-openid": "^1.0.3",
     "@vercel/analytics": "^1.1.1",
+    "bits-ui": "^0.11.8",
+    "clsx": "^2.0.0",
     "d3": "^7.8.5",
     "dayjs": "^1.11.10",
     "dota2-css-hero-sprites": "^2.5.0",
     "lucia": "^2.7.4",
-    "node-steam-openid": "^1.2.1"
+    "node-steam-openid": "^1.2.1",
+    "radix-icons-svelte": "^1.2.1",
+    "tailwind-merge": "^2.2.0",
+    "tailwind-variants": "^0.1.19"
   },
   "msw": {
     "workerDirectory": "static"
