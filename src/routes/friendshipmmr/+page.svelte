@@ -25,9 +25,6 @@
 	export let data;
 	console.log(data);
 
-	let testMMRData: FriendshipMMR[] = [];
-	let testMMRData2: FriendshipMMR[] = [];
-
 	let mmrData = [];
 	let mmrData2 = [];
 
@@ -42,19 +39,24 @@
 		{ playerID: 68024789, playerName: 'Ben', selected: true }
 	];
 
-	//temporary - try building graph for just 2 people first
-	const result = data.streamed.mmr.mmr.filter((val: FriendshipMMR) => val.account_id === 80636612);
-	const result2 = data.streamed.mmr.mmr.filter((val: FriendshipMMR) => val.account_id === 34940151);
+	let newArr = Array();
+	playersWeCareAbout.forEach(function (element, i) {
+		newArr[i] = data.streamed.mmr.mmr.filter((val: FriendshipMMR) => val.account_id === element.playerID);
+	});
 
-	console.log(result);
-	console.log(result2);
+	//newArr.slice(1,2).reverse().forEach((element, i) => {console.log(element)})
+
+	//temporary - try building graph for just 2 people first
+	// const result = data.streamed.mmr.mmr.filter((val: FriendshipMMR) => val.account_id === 80636612);
+	// const result2 = data.streamed.mmr.mmr.filter((val: FriendshipMMR) => val.account_id === 34940151);
+
 
 	//recalculate MMR after each match
 	//need to reverse the data because script outputs data with newest match first
-	result
-		.slice()
-		.reverse()
-		.forEach((element, i = 0) => {
+	newArr
+		.slice(1,2)
+		.reverse()[0]
+		.forEach((element, i) => {
 			if (i == 0) {
 				if (element.win == true) {
 					mmrData[i] = 1000 + element.mmrModifier;
@@ -69,11 +71,13 @@
 			i = i + 1;
 		});
 
+	
+
 	// calculate MMR for second user
-	result2
-		.slice()
-		.reverse()
-		.forEach((element, i = 0) => {
+	newArr
+		.slice(2,3)
+		.reverse()[0]
+		.forEach((element, i) => {
 			if (i == 0) {
 				if (element.win == true) {
 					mmrData2[i] = 1000 + element.mmrModifier;
@@ -88,40 +92,8 @@
 			i = i + 1;
 		});
 
-	//setup graph size and margins
-	let width = 1280;
-	let height = 720;
-	let marginTop = 20;
-	let marginRight = 20;
-	let marginBottom = 20;
-	let marginLeft = 50;
-	$: x = d3.scaleLinear([0, mmrData2.length - 1], [marginLeft, width - marginRight]);
-	$: y = d3.scaleLinear(d3.extent(mmrData2) as [number, number], [height - marginBottom, marginTop]);
-	$: line = d3.line((d, i) => x(i), y);
-
-	//setup axis
-	let gx: any;
-	let gy: any;
-	$: d3.select(gy).call(d3.axisLeft(y));
-	$: d3.select(gx).call(d3.axisBottom(x));
-
-	//display both by default
-	onMount(() => {
-		players.Martin = true;
-		players.Roberts = true;
-	});
-
-	let players: Record<string, boolean> = {
-		Martin: true,
-		Roberts: true
-	};
-
-	function toggle(name: string): void {
-		players[name] = !players[name];
-	}
-
 	let testLineData = {
-		labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
+		labels: newArr[1].map((row) => row.start_time),
 		datasets: [
 			{
 				label: 'My First dataset',
@@ -142,7 +114,7 @@
 				pointHoverBorderWidth: 2,
 				pointRadius: 1,
 				pointHitRadius: 10,
-				data: [65, 59, 80, 81, 56, 55, 40]
+				data: mmrData
 			},
 			{
 				label: 'My Second dataset',
@@ -163,67 +135,16 @@
 				pointHoverBorderWidth: 2,
 				pointRadius: 1,
 				pointHitRadius: 10,
-				data: [28, 48, 40, 19, 86, 27, 90]
+				data: mmrData2
 			}
 		]
 	};
 </script>
 
 <div class="flex flex-col">
-	<div class="flex m-10 font-xl items-center justify-center">
-		{#each playersWeCareAbout as player}
-			<button
-				class="btn variant-filled-primary {player.selected} 'variant-filled' : 'variant-soft'"
-				on:click={() => {
-					toggle(player.playerName);
-				}}
-				on:keypress
-			>
-				{#if player.selected}<span></span>{/if}
-				<span class="capitalize">{player.playerName}</span>
-			</button>
-		{/each}
-	</div>
-
-	<div class="grid grid-cols-2 m-10 gap-10 max-w-[calc(100%-80px)]">
+	<div class="grid grid-cols-1 m-10 max-w-[calc(100%-80px)]">
 		<div>
-			<Line data={testLineData} width={100} height={50} options={{ maintainAspectRatio: false, responsive: true }} />
-		</div>
-		
-
-		<div>
-			<!-- Add chart -->
-			<svg {width} {height}>
-				<!-- Add x-axis -->
-				<g bind:this={gx} transform="translate(0,{height - marginBottom})" color="white" />
-				<!-- Add y-axis -->
-				<g bind:this={gy} transform="translate({marginLeft},0)" color="white" />
-				<!-- Add line -->
-				{#if players.Martin}
-					<path
-						stroke-width="1"
-						fill="none"
-						d={line(mmrData)}
-						stroke="green"
-						transition:draw={{ easing: (t) => t, duration: 500 }}
-					/>
-					<!-- Add data points -->
-				{/if}
-				{#if players.Roberts}
-					<path
-						stroke-width="1"
-						fill="none"
-						d={line(mmrData2)}
-						stroke="red"
-						transition:draw={{ easing: (t) => t, duration: 500 }}
-					/>
-				{/if}
-				<g stroke-width="1.5">
-					{#each mmrData2 as d, i}
-						<!-- <circle cx={x(i)} cy={y(d)} r="2.5" fill="white" /> -->
-					{/each}
-				</g>
-			</svg>
+			<Line data={testLineData} width={1200} height={1080} options={{ maintainAspectRatio: false, responsive: true }} />
 		</div>
 	</div>
 </div>
