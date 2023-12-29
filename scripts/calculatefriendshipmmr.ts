@@ -1,5 +1,7 @@
 import fetch from 'node-fetch';
 import * as fs from 'fs';
+import prisma  from '$lib/server/prisma'
+
 const playersWeCareAbout = [80636612, 34940151, 113003047, 65110965, 68024789, 423076846, 67762413, 125251142];
 const matchesToSkip = [5304085637, 5637793913, 6033233731, 4847351935, 4888455966, 5202511518, 4896520517, 4831897782, 4055542139, 4019523324, 4068856483]
 
@@ -116,7 +118,7 @@ async function getAllMatches(account_id: number, winrates) {
                 i++
             }
             //console.log("mmrTotalMatchModifier is this before adding missing players: " + mmrTotalMatchModifier)
-            mmrTotalMatchModifier = mmrTotalMatchModifier + (5*(5-i))
+            mmrTotalMatchModifier = (mmrTotalMatchModifier + (5*(5-i))).toFixed(2)
             console.log("mmrTotalMatchModifier is this after adding missing players: " + mmrTotalMatchModifier)
     
             //Store the mmrTotalMatchModifier value properly
@@ -135,7 +137,7 @@ async function getAllMatches(account_id: number, winrates) {
 	
 }
 
-let playerID = 68024789;
+let playerID = 80636612;
 getAllMatches(playerID, winrates);
 
 // for (const torunplayer of playersWeCareAbout)

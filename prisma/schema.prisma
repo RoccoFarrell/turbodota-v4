@@ -7,19 +7,19 @@ generator client {
 //   url      = "file:./dev.sqlite"
 // }
 
-// datasource db {
-//   provider = "postgresql"
-//   url      = env("DEV_URL")
-// }
-
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
+  url      = env("DEV_URL")
 }
 
+// datasource db {
+//   provider  = "postgresql"
+//   url       = env("DATABASE_URL")
+//   directUrl = env("DIRECT_URL")
+// }
+
 model Match {
-  id            Int      @id @default(autoincrement())
+  id            Int             @id @default(autoincrement())
   match_id      BigInt
   account_id    Int
   assists       Int
@@ -39,6 +39,7 @@ model Match {
   version       Int?
   randoms       Random[]
   //user          User?   @relation(fields: [account_id], references: [account_id])
+  FriendshipMMR FriendshipMMR[]
 
   @@unique([match_id, account_id], name: "matchPlusAccount")
 }
@@ -107,21 +108,22 @@ model PlayersMatchDetail {
 }
 
 model League {
-  id Int @id @default(autoincrement())
-  name String
+  id          Int        @id @default(autoincrement())
+  name        String
   lastUpdated DateTime
-  creatorID Int
-  creator User @relation(fields: [creatorID], references:[account_id])
-  members DotaUser[]
+  creatorID   Int
+  creator     User       @relation(fields: [creatorID], references: [account_id])
+  members     DotaUser[]
 }
 
 model DotaUser {
-  account_id  Int       @id @unique
-  lastUpdated DateTime
-  oldestMatch DateTime?
-  newestMatch DateTime?
-  leagues     League[]
-  user        User?
+  account_id    Int             @id @unique
+  lastUpdated   DateTime
+  oldestMatch   DateTime?
+  newestMatch   DateTime?
+  leagues       League[]
+  user          User?
+  FriendshipMMR FriendshipMMR[]
 
   @@index([account_id])
 }
@@ -133,14 +135,14 @@ model Hero {
   primary_attr   String
   attack_type    String
   roles          String
-  legs           Int
+  legs           Int?
 }
 
 model User {
   id           String      @id @unique
   name         String?
   username     String      @unique
-  account_id   Int        @unique
+  account_id   Int         @unique
   steam_id     BigInt?     @unique
   profile_url  String
   avatar_url   String
@@ -150,9 +152,9 @@ model User {
   auth_session Session[]
   randoms      Random[]
   user_prefs   UserPrefs[]
-  leagues League[]
+  leagues      League[]
   //player_match_details PlayersMatchDetail[]
-  dota_user    DotaUser? @relation(fields: [account_id], references: [account_id])
+  dota_user    DotaUser?   @relation(fields: [account_id], references: [account_id])
 
   //matches      Match[]
 }
@@ -208,4 +210,17 @@ model Key {
   user            User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@index([user_id])
+}
+
+model FriendshipMMR {
+  id          Int       @id @default(autoincrement())
+  match_id    Int
+  account_id  Int
+  start_time  Int
+  winorloss   Int
+  mmrModifier Float
+  match       Match?    @relation(fields: [match_id], references: [id])
+  dota_user   DotaUser? @relation(fields: [account_id], references: [account_id])
+
+  @@unique([match_id, account_id], name: "matchPlusAccount")
 }
