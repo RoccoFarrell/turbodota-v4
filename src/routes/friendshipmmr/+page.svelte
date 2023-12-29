@@ -29,8 +29,8 @@
 	];
 
 	//temporary - try building graph for just 2 people first
-	const result = data.streamed.mmr.mmr.filter((val: FriendshipMMR) => val.account_id === 34940151);
-	const result2 = data.streamed.mmr.mmr.filter((val: FriendshipMMR) => val.account_id === 80636612);
+	const result = data.streamed.mmr.mmr.filter((val: FriendshipMMR) => val.account_id === 80636612);
+	const result2 = data.streamed.mmr.mmr.filter((val: FriendshipMMR) => val.account_id === 34940151);
 
 	console.log(result)
 	console.log(result2)
@@ -48,9 +48,9 @@
 					mmrData[i] = 1000 - element.mmrModifier;
 				}
 			} else if (element.win == true) {
-				mmrData2[i] = mmrData[i - 1] + element.mmrModifier;
+				mmrData[i] = mmrData[i - 1] + element.mmrModifier;
 			} else if (element.win == 0) {
-				mmrData2[i] = mmrData[i - 1] - element.mmrModifier;
+				mmrData[i] = mmrData[i - 1] - element.mmrModifier;
 			}
 			i = i + 1;
 		});

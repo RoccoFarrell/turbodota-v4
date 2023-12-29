@@ -12,7 +12,6 @@ export const GET: RequestHandler = async ({ params, url }) => {
     let dataSource: string = ""
 
     let mmr: FriendshipMMR[] = []
-    let players: League[] = []
 
     console.log('fetch from DB')
     const mmrResult = await prisma.friendshipMMR.findMany({
