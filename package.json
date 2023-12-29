@@ -26,6 +26,7 @@
     "autoprefixer": "10.4.16",
     "concurrently": "^8.2.2",
     "msw": "^2.0.10",
+    "node-fetch": "^3.3.2",
     "postcss": "8.4.32",
     "prettier": "^3.0.0",
     "prettier-plugin-svelte": "^3.0.0",
