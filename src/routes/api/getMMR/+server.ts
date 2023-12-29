@@ -33,9 +33,19 @@ export const GET: RequestHandler = async ({ params, url }) => {
         }
     })
 
+    let returnMMRData: any = {}
+    mmrResult.forEach(mmrItem => {
+        if(!returnMMRData[mmrItem.account_id.toString()]) {
+            returnMMRData[mmrItem.account_id] = []
+            returnMMRData[mmrItem.account_id].push(mmrItem)  
+        } else {
+            returnMMRData[mmrItem.account_id].push(mmrItem)  
+        }
+    })
+
     //console.log(matchesResult)
     mmr = mmrResult
     dataSource = "db"
 
-    return new Response(JSON.stringify({ mmr, dataSource }))
+    return new Response(JSON.stringify({ returnMMRData, dataSource }))
 };

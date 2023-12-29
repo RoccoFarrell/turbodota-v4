@@ -1,5 +1,4 @@
 <script lang="ts">
-	import * as d3 from 'd3';
 	import type { PageData } from './$types';
 	import { page } from '$app/stores';
 	import { navigating } from '$app/stores';
@@ -17,83 +16,73 @@
 		LineElement,
 		LinearScale,
 		PointElement,
-		CategoryScale
+		CategoryScale,
+		TimeScale
 	} from 'chart.js';
 
-	ChartJS.register(Title, Tooltip, Legend, LineElement, LinearScale, PointElement, CategoryScale);
+	import 'chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm';
+
+	ChartJS.register(Title, Tooltip, Legend, LineElement, LinearScale, PointElement, CategoryScale, TimeScale);
 
 	export let data;
 	console.log(data);
 
-	let mmrData = [];
-	let mmrData2 = [];
+	/* 
+		Start transform data
+	*/
 
-	const playersWeCareAbout = [
-		{ playerID: 65110965, playerName: 'Rocco', selected: true },
-		{ playerID: 34940151, playerName: 'Roberts', selected: true },
-		{ playerID: 80636612, playerName: 'Martin', selected: true },
-		{ playerID: 113003047, playerName: 'Danny', selected: true },
-		{ playerID: 125251142, playerName: 'Matt', selected: true },
-		{ playerID: 423076846, playerName: 'Chris', selected: true },
-		{ playerID: 67762413, playerName: 'Walker', selected: true },
-		{ playerID: 68024789, playerName: 'Ben', selected: true }
-	];
+	let chartData = {...data.streamed.mmr.returnMMRData}
 
-	let newArr = Array();
-	playersWeCareAbout.forEach(function (element, i) {
-		newArr[i] = data.streamed.mmr.mmr.filter((val: FriendshipMMR) => val.account_id === element.playerID);
-	});
+	console.log(`chart data before transformation: `, chartData)
 
-	//newArr.slice(1,2).reverse().forEach((element, i) => {console.log(element)})
+	Object.keys(chartData).forEach((player: string) => {
+		let cumulativeMMR = 1000
+		chartData[player] = chartData[player].map((mmrItem: FriendshipMMR) => {
 
-	//temporary - try building graph for just 2 people first
-	// const result = data.streamed.mmr.mmr.filter((val: FriendshipMMR) => val.account_id === 80636612);
-	// const result2 = data.streamed.mmr.mmr.filter((val: FriendshipMMR) => val.account_id === 34940151);
-
-
-	//recalculate MMR after each match
-	//need to reverse the data because script outputs data with newest match first
-	newArr
-		.slice(1,2)
-		.reverse()[0]
-		.forEach((element, i) => {
-			if (i == 0) {
-				if (element.win == true) {
-					mmrData[i] = 1000 + element.mmrModifier;
-				} else {
-					mmrData[i] = 1000 - element.mmrModifier;
-				}
-			} else if (element.win == true) {
-				mmrData[i] = mmrData[i - 1] + element.mmrModifier;
-			} else if (element.win == 0) {
-				mmrData[i] = mmrData[i - 1] - element.mmrModifier;
+			//12-29-23 i think this is broken, im not adding the mmrs right \/ \/ \/ 
+			return {
+				matchTime: mmrItem.start_time,
+				mmr: mmrItem.win ? cumulativeMMR += mmrItem.mmrModifier : cumulativeMMR -= mmrItem.mmrModifier
 			}
-			i = i + 1;
-		});
+		}).sort((a: any, b: any) => {
+			if(a.matchTime < b.matchTime) return -1
+			else return 1
+		})
+	})
 
-	
+	console.log(`chart data after transformation: `, chartData)
 
-	// calculate MMR for second user
-	newArr
-		.slice(2,3)
-		.reverse()[0]
-		.forEach((element, i) => {
-			if (i == 0) {
-				if (element.win == true) {
-					mmrData2[i] = 1000 + element.mmrModifier;
-				} else {
-					mmrData2[i] = 1000 - element.mmrModifier;
+	//filter by one id for testing
+	// chartData = {
+	// 	65110965: chartData[65110965]
+	// }
+
+	const chartLineData = {
+		datasets: Object.keys(chartData).map((playerID: any) => {
+				return {
+					label: `User ${playerID}`,
+					fill: true,
+					//lineTension: 0.3,
+					backgroundColor: 'rgba(225, 204,230, .3)',
+					borderColor: `rgb(${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)})`,
+					data: chartData[playerID].map((mmrItem: any) => {
+						//console.log(mmrItem)
+						return {
+							x: mmrItem.matchTime,
+							y: mmrItem.mmr
+						}
+					})
 				}
-			} else if (element.win == true) {
-				mmrData2[i] = mmrData2[i - 1] + element.mmrModifier;
-			} else if (element.win == 0) {
-				mmrData2[i] = mmrData2[i - 1] - element.mmrModifier;
-			}
-			i = i + 1;
-		});
+		})
+	}
 
-	let testLineData = {
-		labels: newArr[1].map((row) => row.start_time),
+	console.log(`chartLineData: `, chartLineData)
+
+	/* 
+		End transform data
+	*/
+	const testLineData = {
+		//labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
 		datasets: [
 			{
 				label: 'My First dataset',
@@ -114,7 +103,7 @@
 				pointHoverBorderWidth: 2,
 				pointRadius: 1,
 				pointHitRadius: 10,
-				data: mmrData
+				data: [30, 50, 70, 20, 90, 10, 40]
 			},
 			{
 				label: 'My Second dataset',
@@ -135,16 +124,29 @@
 				pointHoverBorderWidth: 2,
 				pointRadius: 1,
 				pointHitRadius: 10,
-				data: mmrData2
+				data: [28, 48, 40, 19, 86, 27, 90]
 			}
 		]
 	};
+
+	const chartOptions = { maintainAspectRatio: false, responsive: true, 
+		scales: {
+			xAxis: {
+				type: "time",
+			},
+			y: {
+				suggestedMin: 800,
+				suggestedMax: 1200
+			}
+		}
+	}
+	
 </script>
 
 <div class="flex flex-col">
 	<div class="grid grid-cols-1 m-10 max-w-[calc(100%-80px)]">
 		<div>
-			<Line data={testLineData} width={1200} height={1080} options={{ maintainAspectRatio: false, responsive: true }} />
+			<Line data={chartLineData} width={1200} height={1080} options={chartOptions} />
 		</div>
 	</div>
 </div>

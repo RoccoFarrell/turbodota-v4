@@ -243,7 +243,7 @@ if (playersInLeague) {
 									// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 									// @ts-ignore: Unreachable code error
 									update: {
-                                        start_time: dayjs(match.start_time).toDate(),
+                                        start_time: dayjs.unix(match.start_time).toDate(),
                                         win: match.win,
                                         mmrModifier: match.mmrModifier,
 										match: {
@@ -258,7 +258,7 @@ if (playersInLeague) {
 									// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 									// @ts-ignore: Unreachable code error
 									create: {
-                                        start_time: dayjs(match.start_time).toDate(),
+                                        start_time: dayjs.unix(match.start_time).toDate(),
                                         win: match.win,
                                         mmrModifier: match.mmrModifier,
 										match: {
