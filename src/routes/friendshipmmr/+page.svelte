@@ -29,10 +29,11 @@
 	];
 
 	//temporary - try building graph for just 2 people first
-	const result = data.streamed.mmr.mmr.filter((val: FriendshipMMR) => val.account_id === 80636612);
-	const result2 = data.streamed.mmr.mmr.filter((val: FriendshipMMR) => val.account_id === 34940151);
+	const result = data.streamed.mmr.mmr.filter((val: FriendshipMMR) => val.account_id === 34940151);
+	const result2 = data.streamed.mmr.mmr.filter((val: FriendshipMMR) => val.account_id === 80636612);
 
 	console.log(result)
+	console.log(result2)
 
 	//recalculate MMR after each match
 	//need to reverse the data because script outputs data with newest match first

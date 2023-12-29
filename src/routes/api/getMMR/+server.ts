@@ -15,13 +15,20 @@ export const GET: RequestHandler = async ({ params, url }) => {
     let players: League[] = []
 
     console.log('fetch from DB')
-    const mmrResult = await prisma.friendshipMMR.findMany()
-    const playerList = await prisma.league.findMany()
+    const mmrResult = await prisma.friendshipMMR.findMany({
+        include: {
+            match: true,
+            dota_user: {
+                include: {
+                    user: true
+                }
+            }
+        }
+    })
 
     //console.log(matchesResult)
     mmr = mmrResult
-    players = playerList
     dataSource = "db"
 
-    return new Response(JSON.stringify({ mmr, players, dataSource }))
+    return new Response(JSON.stringify({ mmr, dataSource }))
 };
