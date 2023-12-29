@@ -56,6 +56,7 @@
     "@types/node-steam-openid": "^1.0.3",
     "@vercel/analytics": "^1.1.1",
     "bits-ui": "^0.11.8",
+    "chart.js": "^4.4.1",
     "clsx": "^2.0.0",
     "d3": "^7.8.5",
     "dayjs": "^1.11.10",
@@ -63,10 +64,16 @@
     "lucia": "^2.7.4",
     "node-steam-openid": "^1.2.1",
     "radix-icons-svelte": "^1.2.1",
+    "svelte-chartjs": "^3.1.2",
     "tailwind-merge": "^2.2.0",
     "tailwind-variants": "^0.1.19"
   },
   "msw": {
     "workerDirectory": "static"
+  },
+  "overrides": {
+    "svelte-chartjs": {
+      "svelte": ">=4.x"
+    }
   }
 }

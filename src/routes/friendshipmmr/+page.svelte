@@ -7,6 +7,20 @@
 	import { onMount } from 'svelte';
 	//import { playersWeCareAbout } from '$lib/constants/playersWeCareAbout.ts';
 	import type { FriendshipMMR } from '@prisma/client';
+	import { Line } from 'svelte-chartjs';
+
+	import {
+		Chart as ChartJS,
+		Title,
+		Tooltip,
+		Legend,
+		LineElement,
+		LinearScale,
+		PointElement,
+		CategoryScale
+	} from 'chart.js';
+
+	ChartJS.register(Title, Tooltip, Legend, LineElement, LinearScale, PointElement, CategoryScale);
 
 	export let data;
 	console.log(data);
@@ -32,8 +46,8 @@
 	const result = data.streamed.mmr.mmr.filter((val: FriendshipMMR) => val.account_id === 80636612);
 	const result2 = data.streamed.mmr.mmr.filter((val: FriendshipMMR) => val.account_id === 34940151);
 
-	console.log(result)
-	console.log(result2)
+	console.log(result);
+	console.log(result2);
 
 	//recalculate MMR after each match
 	//need to reverse the data because script outputs data with newest match first
@@ -93,8 +107,8 @@
 
 	//display both by default
 	onMount(() => {
-		players.Martin = true
-		players.Roberts = true
+		players.Martin = true;
+		players.Roberts = true;
 	});
 
 	let players: Record<string, boolean> = {
@@ -105,52 +119,111 @@
 	function toggle(name: string): void {
 		players[name] = !players[name];
 	}
+
+	let testLineData = {
+		labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
+		datasets: [
+			{
+				label: 'My First dataset',
+				fill: true,
+				lineTension: 0.3,
+				backgroundColor: 'rgba(225, 204,230, .3)',
+				borderColor: 'rgb(205, 130, 158)',
+				borderCapStyle: 'butt',
+				borderDash: [],
+				borderDashOffset: 0.0,
+				borderJoinStyle: 'miter',
+				pointBorderColor: 'rgb(205, 130,1 58)',
+				pointBackgroundColor: 'rgb(255, 255, 255)',
+				pointBorderWidth: 10,
+				pointHoverRadius: 5,
+				pointHoverBackgroundColor: 'rgb(0, 0, 0)',
+				pointHoverBorderColor: 'rgba(220, 220, 220,1)',
+				pointHoverBorderWidth: 2,
+				pointRadius: 1,
+				pointHitRadius: 10,
+				data: [65, 59, 80, 81, 56, 55, 40]
+			},
+			{
+				label: 'My Second dataset',
+				fill: true,
+				lineTension: 0.3,
+				backgroundColor: 'rgba(184, 185, 210, .3)',
+				borderColor: 'rgb(35, 26, 136)',
+				borderCapStyle: 'butt',
+				borderDash: [],
+				borderDashOffset: 0.0,
+				borderJoinStyle: 'miter',
+				pointBorderColor: 'rgb(35, 26, 136)',
+				pointBackgroundColor: 'rgb(255, 255, 255)',
+				pointBorderWidth: 10,
+				pointHoverRadius: 5,
+				pointHoverBackgroundColor: 'rgb(0, 0, 0)',
+				pointHoverBorderColor: 'rgba(220, 220, 220, 1)',
+				pointHoverBorderWidth: 2,
+				pointRadius: 1,
+				pointHitRadius: 10,
+				data: [28, 48, 40, 19, 86, 27, 90]
+			}
+		]
+	};
 </script>
 
-<!-- Add chart -->
-<svg {width} {height}>
-	<!-- Add x-axis -->
-	<g bind:this={gx} transform="translate(0,{height - marginBottom})" color="white" />
-	<!-- Add y-axis -->
-	<g bind:this={gy} transform="translate({marginLeft},0)" color="white" />
-	<!-- Add line -->
-	{#if players.Martin}
-		<path
-			stroke-width="1"
-			fill="none"
-			d={line(mmrData)}
-			stroke="green"
-			transition:draw={{ easing: (t) => t, duration: 500 }}
-		/>
-		<!-- Add data points -->
-	{/if}
-	{#if players.Roberts}
-		<path
-			stroke-width="1"
-			fill="none"
-			d={line(mmrData2)}
-			stroke="red"
-			transition:draw={{ easing: (t) => t, duration: 500 }}
-		/>
-	{/if}
-	<g stroke-width="1.5">
-		{#each mmrData2 as d, i}
-			<!-- <circle cx={x(i)} cy={y(d)} r="2.5" fill="white" /> -->
+<div class="flex flex-col">
+	<div class="flex m-10 font-xl items-center justify-center">
+		{#each playersWeCareAbout as player}
+			<button
+				class="btn variant-filled-primary {player.selected} 'variant-filled' : 'variant-soft'"
+				on:click={() => {
+					toggle(player.playerName);
+				}}
+				on:keypress
+			>
+				{#if player.selected}<span></span>{/if}
+				<span class="capitalize">{player.playerName}</span>
+			</button>
 		{/each}
-	</g>
-</svg>
+	</div>
 
-<div>
-	{#each playersWeCareAbout as player}
-		<button
-			class="chip {player.selected} 'variant-filled' : 'variant-soft'"
-			on:click={() => {
-				toggle(player.playerName);
-			}}
-			on:keypress
-		>
-			{#if player.selected}<span></span>{/if}
-			<span class="capitalize">{player.playerName}</span>
-		</button>
-	{/each}
+	<div class="grid grid-cols-2 m-10 gap-10 max-w-[calc(100%-80px)]">
+		<div>
+			<Line data={testLineData} width={100} height={50} options={{ maintainAspectRatio: false, responsive: true }} />
+		</div>
+		
+
+		<div>
+			<!-- Add chart -->
+			<svg {width} {height}>
+				<!-- Add x-axis -->
+				<g bind:this={gx} transform="translate(0,{height - marginBottom})" color="white" />
+				<!-- Add y-axis -->
+				<g bind:this={gy} transform="translate({marginLeft},0)" color="white" />
+				<!-- Add line -->
+				{#if players.Martin}
+					<path
+						stroke-width="1"
+						fill="none"
+						d={line(mmrData)}
+						stroke="green"
+						transition:draw={{ easing: (t) => t, duration: 500 }}
+					/>
+					<!-- Add data points -->
+				{/if}
+				{#if players.Roberts}
+					<path
+						stroke-width="1"
+						fill="none"
+						d={line(mmrData2)}
+						stroke="red"
+						transition:draw={{ easing: (t) => t, duration: 500 }}
+					/>
+				{/if}
+				<g stroke-width="1.5">
+					{#each mmrData2 as d, i}
+						<!-- <circle cx={x(i)} cy={y(d)} r="2.5" fill="white" /> -->
+					{/each}
+				</g>
+			</svg>
+		</div>
+	</div>
 </div>
