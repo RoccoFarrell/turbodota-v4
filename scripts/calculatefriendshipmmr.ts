@@ -95,7 +95,13 @@ async function getAllMatches(account_id: number, winrates) {
                 tempArray.account_id = item.account_id
                 tempArray.hero_id = item.hero_id
                 //tempArray.win_or_loss = item.win_or_loss
-                tempArray.win_rate = winrates.insert.filter((rate) => rate.account_id === item.account_id)[0].heroesArr.filter(hero => hero.hero_id === item.hero_id)[0].winrate
+                tempArray.games = winrates.insert.filter((rate) => rate.account_id === item.account_id)[0].heroesArr.filter(hero => hero.hero_id === item.hero_id)[0].games
+                if (tempArray.games <= 7) {
+                    tempArray.win_rate = .5
+                }
+                else {
+                    tempArray.win_rate = winrates.insert.filter((rate) => rate.account_id === item.account_id)[0].heroesArr.filter(hero => hero.hero_id === item.hero_id)[0].winrate
+                }
                 friendsArray2.push(tempArray)
             }
             //console.log("Friends Array 2 To Handle: " + JSON.stringify(friendsArray2))
@@ -137,7 +143,11 @@ async function getAllMatches(account_id: number, winrates) {
 	
 }
 
+<<<<<<< HEAD
 let playerID = 80636612;
+=======
+let playerID = 125251142;
+>>>>>>> 4af9f0253e3f1a2b54881e81f00486811b0c66d4
 getAllMatches(playerID, winrates);
 
 // for (const torunplayer of playersWeCareAbout)
