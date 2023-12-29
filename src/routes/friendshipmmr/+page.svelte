@@ -29,8 +29,10 @@
 	];
 
 	//temporary - try building graph for just 2 people first
-	const result = data.streamed.mmr.mmr.filter((val: FriendshipMMR) => val.account_id === 34940151);
-	const result2 = data.streamed.mmr.mmr.filter((val: FriendshipMMR) => val.account_id === 80636612);
+	const result = data.streamed.mmr.mmr.filter((val: FriendshipMMR) => val.account_id === 80636612);
+	const result2 = data.streamed.mmr.mmr.filter((val: FriendshipMMR) => val.account_id === 34940151);
+
+	console.log(result)
 
 	//recalculate MMR after each match
 	//need to reverse the data because script outputs data with newest match first
@@ -39,15 +41,15 @@
 		.reverse()
 		.forEach((element, i = 0) => {
 			if (i == 0) {
-				if (element.winorloss == 1) {
+				if (element.win == true) {
 					mmrData[i] = 1000 + element.mmrModifier;
 				} else {
 					mmrData[i] = 1000 - element.mmrModifier;
 				}
-			} else if (element.winorloss == 1) {
-				mmrData[i] = mmrData[i - 1] + element.mmrModifier;
-			} else if (element.winorloss == 0) {
-				mmrData[i] = mmrData[i - 1] - element.mmrModifier;
+			} else if (element.win == true) {
+				mmrData2[i] = mmrData[i - 1] + element.mmrModifier;
+			} else if (element.win == 0) {
+				mmrData2[i] = mmrData[i - 1] - element.mmrModifier;
 			}
 			i = i + 1;
 		});
@@ -58,14 +60,14 @@
 		.reverse()
 		.forEach((element, i = 0) => {
 			if (i == 0) {
-				if (element.winorloss == 1) {
+				if (element.win == true) {
 					mmrData2[i] = 1000 + element.mmrModifier;
 				} else {
 					mmrData2[i] = 1000 - element.mmrModifier;
 				}
-			} else if (element.winorloss == 1) {
+			} else if (element.win == true) {
 				mmrData2[i] = mmrData2[i - 1] + element.mmrModifier;
-			} else if (element.winorloss == 0) {
+			} else if (element.win == 0) {
 				mmrData2[i] = mmrData2[i - 1] - element.mmrModifier;
 			}
 			i = i + 1;
@@ -96,7 +98,7 @@
 
 	let players: Record<string, boolean> = {
 		Martin: true,
-		Roberts: false
+		Roberts: true
 	};
 
 	function toggle(name: string): void {
@@ -115,7 +117,7 @@
 		<path
 			stroke-width="1"
 			fill="none"
-			d={line(mmrData2)}
+			d={line(mmrData)}
 			stroke="green"
 			transition:draw={{ easing: (t) => t, duration: 500 }}
 		/>
@@ -125,7 +127,7 @@
 		<path
 			stroke-width="1"
 			fill="none"
-			d={line(mmrData)}
+			d={line(mmrData2)}
 			stroke="red"
 			transition:draw={{ easing: (t) => t, duration: 500 }}
 		/>
