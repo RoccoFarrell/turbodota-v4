@@ -46,7 +46,6 @@
   },
   "type": "module",
   "dependencies": {
-    "@digitak/esrun": "^3.2.26",
     "@flaticon/flaticon-uicons": "^3.0.0",
     "@floating-ui/dom": "1.5.3",
     "@internationalized/date": "^3.5.1",
