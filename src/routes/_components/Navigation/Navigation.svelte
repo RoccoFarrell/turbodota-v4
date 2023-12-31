@@ -52,6 +52,15 @@
 		</li>
 		<li
 			class={'flex items-center justify-start rounded-full ' +
+				($page.url.pathname === '/snakedraft' ? 'border border-secondary-500/60' : '')}
+		>
+			<a href="/snakedraft" data-sveltekit-preload-data="tap" class="w-full">
+				<i class="fi fi-ss-snake text-orange-500" />
+				<p class={$page.url.pathname === '/snakedraft' ? 'font-bold' : ''}>Snake Draft</p></a
+			>
+		</li>
+		<li
+			class={'flex items-center justify-start rounded-full ' +
 				($page.url.pathname === '/turbotown' ? 'border border-secondary-500/60' : '')}
 		>
 			<a href="/turbotown" data-sveltekit-preload-data="tap" class="w-full">
