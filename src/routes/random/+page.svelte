@@ -2,9 +2,15 @@
 	import { fade, fly, slide } from 'svelte/transition';
 	import { quintOut } from 'svelte/easing';
 	import { flip } from 'svelte/animate';
+
+	//prisma types
+	import type { Random } from '@prisma/client'
+
+	//day js
 	import dayjs from 'dayjs';
 	import LocalizedFormat from 'dayjs/plugin/localizedFormat';
 	dayjs.extend(LocalizedFormat);
+
 
 	//page data
 	import type { PageData } from './$types';
@@ -62,7 +68,7 @@
 		totalLostGoldModifier: 0
 	};
 
-	let completedRandoms = data.randoms.filter((random) => !random.active);
+	let completedRandoms: Random[] = data.randoms.filter((random) => !random.active);
 	if (completedRandoms.length > 0) {
 		randomLifetimeStats = {
 			wins: completedRandoms.filter((random) => random.win).length || 0,

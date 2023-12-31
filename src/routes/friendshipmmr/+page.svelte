@@ -1,0 +1,152 @@
+<script lang="ts">
+	import type { PageData } from './$types';
+	import { page } from '$app/stores';
+	import { navigating } from '$app/stores';
+	import { draw, fade } from 'svelte/transition';
+	import { onMount } from 'svelte';
+	//import { playersWeCareAbout } from '$lib/constants/playersWeCareAbout.ts';
+	import type { FriendshipMMR } from '@prisma/client';
+	import { Line } from 'svelte-chartjs';
+
+	import {
+		Chart as ChartJS,
+		Title,
+		Tooltip,
+		Legend,
+		LineElement,
+		LinearScale,
+		PointElement,
+		CategoryScale,
+		TimeScale
+	} from 'chart.js';
+
+	import 'chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm';
+
+	ChartJS.register(Title, Tooltip, Legend, LineElement, LinearScale, PointElement, CategoryScale, TimeScale);
+
+	export let data;
+	console.log(data);
+
+	/* 
+		Start transform data
+	*/
+
+	let chartData = {...data.streamed.mmr.returnMMRData}
+
+	console.log(`chart data before transformation: `, chartData)
+
+	Object.keys(chartData).forEach((player: string) => {
+		let cumulativeMMR = 1000
+		chartData[player] = chartData[player].map((mmrItem: FriendshipMMR) => {
+
+			//12-29-23 i think this is broken, im not adding the mmrs right \/ \/ \/ 
+			return {
+				matchTime: mmrItem.start_time,
+				mmr: mmrItem.win ? cumulativeMMR += mmrItem.mmrModifier : cumulativeMMR -= mmrItem.mmrModifier
+			}
+		}).sort((a: any, b: any) => {
+			if(a.matchTime < b.matchTime) return -1
+			else return 1
+		})
+	})
+
+	console.log(`chart data after transformation: `, chartData)
+
+	//filter by one id for testing
+	// chartData = {
+	// 	65110965: chartData[65110965]
+	// }
+
+	const chartLineData = {
+		datasets: Object.keys(chartData).map((playerID: any) => {
+				return {
+					label: `User ${playerID}`,
+					fill: true,
+					//lineTension: 0.3,
+					backgroundColor: 'rgba(225, 204,230, .3)',
+					borderColor: `rgb(${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)})`,
+					data: chartData[playerID].map((mmrItem: any) => {
+						//console.log(mmrItem)
+						return {
+							x: mmrItem.matchTime,
+							y: mmrItem.mmr
+						}
+					})
+				}
+		})
+	}
+
+	console.log(`chartLineData: `, chartLineData)
+
+	/* 
+		End transform data
+	*/
+	const testLineData = {
+		//labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
+		datasets: [
+			{
+				label: 'My First dataset',
+				fill: true,
+				lineTension: 0.3,
+				backgroundColor: 'rgba(225, 204,230, .3)',
+				borderColor: 'rgb(205, 130, 158)',
+				borderCapStyle: 'butt',
+				borderDash: [],
+				borderDashOffset: 0.0,
+				borderJoinStyle: 'miter',
+				pointBorderColor: 'rgb(205, 130,1 58)',
+				pointBackgroundColor: 'rgb(255, 255, 255)',
+				pointBorderWidth: 10,
+				pointHoverRadius: 5,
+				pointHoverBackgroundColor: 'rgb(0, 0, 0)',
+				pointHoverBorderColor: 'rgba(220, 220, 220,1)',
+				pointHoverBorderWidth: 2,
+				pointRadius: 1,
+				pointHitRadius: 10,
+				data: [30, 50, 70, 20, 90, 10, 40]
+			},
+			{
+				label: 'My Second dataset',
+				fill: true,
+				lineTension: 0.3,
+				backgroundColor: 'rgba(184, 185, 210, .3)',
+				borderColor: 'rgb(35, 26, 136)',
+				borderCapStyle: 'butt',
+				borderDash: [],
+				borderDashOffset: 0.0,
+				borderJoinStyle: 'miter',
+				pointBorderColor: 'rgb(35, 26, 136)',
+				pointBackgroundColor: 'rgb(255, 255, 255)',
+				pointBorderWidth: 10,
+				pointHoverRadius: 5,
+				pointHoverBackgroundColor: 'rgb(0, 0, 0)',
+				pointHoverBorderColor: 'rgba(220, 220, 220, 1)',
+				pointHoverBorderWidth: 2,
+				pointRadius: 1,
+				pointHitRadius: 10,
+				data: [28, 48, 40, 19, 86, 27, 90]
+			}
+		]
+	};
+
+	const chartOptions = { maintainAspectRatio: false, responsive: true, 
+		scales: {
+			xAxis: {
+				type: "time",
+			},
+			y: {
+				suggestedMin: 800,
+				suggestedMax: 1200
+			}
+		}
+	}
+	
+</script>
+
+<div class="flex flex-col">
+	<div class="grid grid-cols-1 m-10 max-w-[calc(100%-80px)]">
+		<div>
+			<Line data={chartLineData} width={1200} height={1080} options={chartOptions} />
+		</div>
+	</div>
+</div>
