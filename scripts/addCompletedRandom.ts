@@ -44,4 +44,4 @@ const matchInsertResult = await prisma.match.upsert({
     create: { ...fakeMatch }
 })
 
-console.log(`[matchInsertResult]: ${matchInsertResult}`)
+console.log(`[matchInsertResult]: `, matchInsertResult)

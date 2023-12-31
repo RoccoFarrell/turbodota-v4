@@ -4,7 +4,7 @@
 	import { flip } from 'svelte/animate';
 
 	//prisma types
-	import type { Random } from '@prisma/client'
+	import type { Random, Hero } from '@prisma/client'
 
 	//day js
 	import dayjs from 'dayjs';
@@ -227,7 +227,7 @@
 	};
 
 	const saveBanList = async () => {
-		if ($randomStore.bannedHeroes.length <= 3) {
+		if ($randomStore.bannedHeroes.length <= 3 && data.session) {
 			let response = await fetch(`/api/preferences/${data.session.user.account_id}`, {
 				method: 'POST',
 				headers: {
@@ -409,7 +409,7 @@
 
 		$randomStore.randomedHero = generatedRandomHero;
 
-		if (data.session) {
+		if (data.session && generatedRandomHero) {
 			let bodyData = {
 				...$randomStore,
 				availableHeroes: $randomStore.availableHeroes.map((hero: Hero) => hero.id),
@@ -428,6 +428,8 @@
 			console.log(response);
 
 			randomFound = true;
+		} else {
+			console.error('couldnt set generated random hero')
 		}
 	};
 
@@ -441,7 +443,7 @@
 
 	const checkForRandomComplete = async () => {
 		let responseStratz, responseParse;
-		if (!stratzTimeout) {
+		if (!stratzTimeout && data.session) {
 			responseStratz = await fetch(`/api/stratz/players/${data.session.user.account_id}/recentMatches`, {
 				method: 'POST',
 				headers: {

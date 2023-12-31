@@ -22,7 +22,7 @@ export const actions: Actions = {
 	createLeague: async ({ request, locals }) => {
 		const session = await locals.auth.validate();
 
-		if (!session.user.roles.includes('dev')) return fail(400, { message: 'Not an admin' });
+		if (!session || !session.user.roles.includes('dev')) return fail(400, { message: 'Not an admin' });
 		const { leagueName, dotaUsersList } = Object.fromEntries(await request.formData()) as Record<string, string>;
 
 		try {

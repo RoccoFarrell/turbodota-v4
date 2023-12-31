@@ -12,13 +12,14 @@
 		"./tests/**/*.js",
 		"./tests/**/*.ts",
 		"./tests/**/*.svelte",
-		"./scripts/*.ts"
+		"./scripts/*.ts",
+		"./@types/*.d.ts",
 	],
 	"exclude": [
-		"./node_modules/**",
-		"./src/service-worker.js",
-		"./src/service-worker.ts",
-		"./src/service-worker.d.ts"
+		"../node_modules/**",
+		"../src/service-worker.js",
+		"../src/service-worker.ts",
+		"../src/service-worker.d.ts",		
 	],
 	"compilerOptions": {
 		"allowJs": true,

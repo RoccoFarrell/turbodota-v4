@@ -1,4 +1,5 @@
 <script lang="ts">
+	import dayjs from 'dayjs';
 	import type { PageData } from './$types';
 	import { page } from '$app/stores';
 	import { navigating } from '$app/stores';
@@ -17,12 +18,23 @@
 		LinearScale,
 		PointElement,
 		CategoryScale,
-		TimeScale
+		TimeScale,
+		Decimation
 	} from 'chart.js';
 
 	import 'chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm';
 
-	ChartJS.register(Title, Tooltip, Legend, LineElement, LinearScale, PointElement, CategoryScale, TimeScale);
+	ChartJS.register(
+		Title,
+		Tooltip,
+		Legend,
+		LineElement,
+		LinearScale,
+		PointElement,
+		CategoryScale,
+		TimeScale,
+		Decimation
+	);
 
 	export let data;
 	console.log(data);
@@ -31,26 +43,33 @@
 		Start transform data
 	*/
 
-	let chartData = {...data.streamed.mmr.returnMMRData}
+	let chartData = { ...data.streamed.mmr.returnMMRData };
 
-	console.log(`chart data before transformation: `, chartData)
+	console.log(`chart data before transformation: `, chartData);
 
 	Object.keys(chartData).forEach((player: string) => {
-		let cumulativeMMR = 1000
-		chartData[player] = chartData[player].map((mmrItem: FriendshipMMR) => {
+		let cumulativeMMR = 1000;
+		chartData[player] = chartData[player]
+			.map((mmrItem: FriendshipMMR, i: any) => {
+				if (mmrItem.win) cumulativeMMR += mmrItem.mmrModifier;
+				else cumulativeMMR -= mmrItem.mmrModifier;
 
-			//12-29-23 i think this is broken, im not adding the mmrs right \/ \/ \/ 
-			return {
-				matchTime: mmrItem.start_time,
-				mmr: mmrItem.win ? cumulativeMMR += mmrItem.mmrModifier : cumulativeMMR -= mmrItem.mmrModifier
-			}
-		}).sort((a: any, b: any) => {
-			if(a.matchTime < b.matchTime) return -1
-			else return 1
-		})
-	})
+				return {
+					matchTime: dayjs(mmrItem.start_time).valueOf(),
+					mmr: cumulativeMMR
+				};
 
-	console.log(`chart data after transformation: `, chartData)
+				//12-29-23 i think this is broken, im not adding the mmrs right \/ \/ \/
+			})
+			.sort((a: any, b: any) => {
+				if (a.matchTime < b.matchTime) return -1;
+				else return 1;
+			});
+
+		chartData[player][0].mmr = 1000
+	});
+
+	console.log(`chart data after transformation: `, chartData);
 
 	//filter by one id for testing
 	// chartData = {
@@ -59,24 +78,28 @@
 
 	const chartLineData = {
 		datasets: Object.keys(chartData).map((playerID: any) => {
-				return {
-					label: `User ${playerID}`,
-					fill: true,
-					//lineTension: 0.3,
-					backgroundColor: 'rgba(225, 204,230, .3)',
-					borderColor: `rgb(${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)})`,
-					data: chartData[playerID].map((mmrItem: any) => {
-						//console.log(mmrItem)
-						return {
-							x: mmrItem.matchTime,
-							y: mmrItem.mmr
-						}
-					})
-				}
+			return {
+				label: `User ${playerID}`,
+				fill: true,
+				indexAxis: 'x',
+				type: 'line',
+				lineTension: 0.1,
+				backgroundColor: 'rgba(225, 204,230, .3)',
+				borderColor: `rgb(${Math.floor(Math.random() * 256)}, ${Math.floor(Math.random() * 256)}, ${Math.floor(
+					Math.random() * 256
+				)})`,
+				data: chartData[playerID].map((mmrItem: any) => {
+					//console.log(mmrItem)
+					return {
+						x: mmrItem.matchTime,
+						y: mmrItem.mmr
+					};
+				})
+			};
 		})
-	}
+	};
 
-	console.log(`chartLineData: `, chartLineData)
+	console.log(`chartLineData: `, chartLineData);
 
 	/* 
 		End transform data
@@ -129,18 +152,28 @@
 		]
 	};
 
-	const chartOptions = { maintainAspectRatio: false, responsive: true, 
+	const chartOptions = {
+		maintainAspectRatio: false,
+		responsive: true,
 		scales: {
 			xAxis: {
-				type: "time",
+				type: 'time'
 			},
 			y: {
 				suggestedMin: 800,
 				suggestedMax: 1200
 			}
+		},
+		parsing: false,
+		plugins: {
+			decimation: {
+				algorithm: 'lttb',
+				enabled: true,
+				samples: 5,
+				threshold: 5
+			}
 		}
-	}
-	
+	};
 </script>
 
 <div class="flex flex-col">
