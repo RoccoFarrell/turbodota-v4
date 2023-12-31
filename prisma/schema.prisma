@@ -3,11 +3,6 @@ generator client {
 }
 
 // datasource db {
-//   provider = "sqlite"
-//   url      = "file:./dev.sqlite"
-// }
-
-// datasource db {
 //   provider = "postgresql"
 //   url      = env("DEV_URL")
 // }
@@ -59,6 +54,7 @@ model MatchDetail {
   dire_score              Int
   average_rank            Int?
   players                 PlayersMatchDetail[]
+  FriendshipMMR           FriendshipMMR[]
 }
 
 model PlayersMatchDetail {
@@ -142,7 +138,7 @@ model SeasonResult {
 }
 
 model DotaUser {
-  account_id    Int       @id @unique
+  account_id    Int             @id @unique
   lastUpdated   DateTime
   oldestMatch   DateTime?
   newestMatch   DateTime?
@@ -151,6 +147,7 @@ model DotaUser {
   leagues       League[]
   seasons       Season[]
   user          User?
+  FriendshipMMR FriendshipMMR[]
 
   @@index([account_id])
 }
@@ -162,7 +159,7 @@ model Hero {
   primary_attr   String
   attack_type    String
   roles          String
-  legs           Int
+  legs           Int?
 }
 
 model User {
@@ -238,4 +235,17 @@ model Key {
   user            User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@index([user_id])
+}
+
+model FriendshipMMR {
+  id          Int         @id @default(autoincrement())
+  match_id    BigInt
+  account_id  Int
+  start_time  DateTime
+  win         Boolean
+  mmrModifier Float
+  match       MatchDetail @relation(fields: [match_id], references: [match_id])
+  dota_user   DotaUser    @relation(fields: [account_id], references: [account_id])
+
+  @@unique([match_id, account_id], name: "matchPlusAccount")
 }

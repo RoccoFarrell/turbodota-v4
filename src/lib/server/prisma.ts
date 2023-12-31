@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { env } from '$env/dynamic/private';
+//import { env } from '$env/dynamic/private';
 
 // if (env.NODE_ENV === "development") {
 // 	options = {

@@ -79,6 +79,9 @@ export const GET: RequestHandler = async ({ params, url }) => {
 				return json;
 			});
 
+		console.log(`[api /matches calling open dota/matches for ${match_id}] status: ${matchDetailsFetch.status}`);
+		if (matchDetailsFetch.status !== 200) console.error('Open Dota shit the bed');
+		
 		let matchDetailObj = {
 			match_id: matchDetailsFetch.match_id,
 			radiant_win: matchDetailsFetch.radiant_win,
@@ -105,7 +108,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
 					// https://www.prisma.io/docs/orm/prisma-client/queries/crud#update-or-create-records
 					let matchDetailsWrite = await tx.matchDetail.upsert({
 						where: { match_id: matchDetailsFetch.match_id },
-						update: {},
+						update: { ...matchDetailObj },
 						create: { ...matchDetailObj }
 					});
 
@@ -187,8 +190,10 @@ export const GET: RequestHandler = async ({ params, url }) => {
 		);
 		console.log('result_tx: ', result_tx);
 		returnObj = {
-			matchDetail: matchDetailObj,
-			playerMatchDetails: playersArr,
+			matchDetail: {
+				...matchDetailObj,
+				players: playersArr
+			},
 			inserts: {
 				playerMatchDetails_count: result_tx?.playerMatchDetailsCount,
 				matchDetails_count: result_tx?.matchDetailsWrite
