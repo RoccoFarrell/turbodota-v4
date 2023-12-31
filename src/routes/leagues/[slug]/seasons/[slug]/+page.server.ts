@@ -1,5 +1,5 @@
 import { fail, redirect, json } from '@sveltejs/kit';
-import type { PageServerLoad } from './$types';
+import type { Actions, PageServerLoad } from './$types';
 import type { Season } from '@prisma/client';
 import prisma from '$lib/server/prisma';
 
@@ -22,3 +22,13 @@ export const load: PageServerLoad = async ({ locals, parent, params }) => {
 		allRandoms
 	};
 };
+
+export const actions: Actions = {
+	updateSeasonRandoms: async ({ request, locals, url}) => {
+		const session = await locals.auth.validate();
+		const formData = await request.formData()
+		console.log("FORM DATA: ", formData)
+
+		let test = formData.get('test')?.toString() || ""
+		console.log('test: ', test)
+	}}

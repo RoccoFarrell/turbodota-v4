@@ -1,11 +1,11 @@
 import { error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
+import type { Hero } from '@prisma/client'
 import prisma from '$lib/server/prisma'
 
 export const GET: RequestHandler = async ({ params, url }) => {
-    console.log(url)
-    console.log(`[api] - received GET to ${url.href}`)
-    console.log(`params: ${JSON.stringify(params)}`)
+    console.log(`-----------\n[api/getHeroes] - received GET to ${url.href}\n-----------`)
+    //console.log(`params: ${JSON.stringify(params)}`)
     //check if user was updated recently, otherwise use the database
 
     let forceUpdate: boolean = false;
@@ -16,14 +16,14 @@ export const GET: RequestHandler = async ({ params, url }) => {
 
     //updateInterval.setMinutes(rightNow.getMinutes() - (60 * 24));
     if (!forceUpdate) {
-        console.log('fetch from DB')
+        console.log('[/api/getHeroes] fetch from DB')
         const heroResult = await prisma.hero.findMany()
 
         //console.log(matchesResult)
         allHeroes = heroResult
         dataSource = "db"
     } else {
-        console.log('fetch from OD')
+        console.log('[/api/getHeroes] fetch from OD')
         dataSource = "od"
 
         allHeroes = await fetch(encodeURI(`https://api.opendota.com/api/heroes`), {
@@ -36,7 +36,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
                 return (json)
             });
 
-        console.log(allHeroes.length)
+        //console.log(allHeroes.length)
 
         // //write to DB
         allHeroes = allHeroes.map(hero => {

@@ -1,9 +1,10 @@
 <script lang="ts">
-	import { setContext } from 'svelte'
+	import { setContext } from 'svelte';
 	import { enhance } from '$app/forms';
 	import Trophy_light from '$lib/assets/trophy_light.png';
 	import { fade } from 'svelte/transition';
-	import type { User } from '@prisma/client';
+	import type { User, League } from '@prisma/client';
+	import { Prisma } from '@prisma/client'
 
 	import dayjs from 'dayjs';
 
@@ -35,7 +36,17 @@
 		Get active seasons
 	*/
 
-	let seasonTableData = data.selectedLeague.seasons.map((season: any) => {
+	type LeagueWithSeasonsAndMembers = Prisma.LeagueGetPayload<{
+		include: { seasons: true, members: {
+			include: {
+				user: true
+			}
+		} };
+	}>;
+
+	let selectedLeague: LeagueWithSeasonsAndMembers = data.selectedLeague;
+
+	let seasonTableData = selectedLeague.seasons.map((season: any) => {
 		return {
 			id: season.id,
 			name: season.name,
@@ -101,7 +112,7 @@
 		end
 	};
 
-	$: leagueMemberIDs = data.selectedLeague.members.map((member: any) => member.account_id);
+	$: leagueMemberIDs = selectedLeague.members.map((member: any) => member.account_id);
 	// $: (value: any) => {
 	// 	FormData.
 	// }
@@ -110,23 +121,23 @@
 <section class="lg:w-3/4 w-full h-screen px-4 lg:mx-auto my-4 space-y-8">
 	<!-- <div class="flex justify-center items-center space-x-8">
 		<img src={Trophy_light} class="w-20 h-20" alt="leagues page" />
-		<h2 class="h2 text-amber-500 vibrating">{data.selectedLeague.name}</h2>
+		<h2 class="h2 text-amber-500 vibrating">{selectedLeague.name}</h2>
 	</div>
 
 	<div class="card w-full border border-dashed border-red-500 p-4">
 		<div class="grid grid-cols-3 gap-4 place-items-center">
 			<div class="text-sm">
 				Commissioner: <p class="inline font-semibold text-xl text-primary-500">
-					{data.selectedLeague.creator.username}
+					{selectedLeague.creator.username}
 				</p>
 			</div>
 			<div>
 				Created on: <p class="inline font-semibold text-primary-500">
-					{dayjs(data.selectedLeague.createdDate).format('MM/DD/YYYY')}
+					{dayjs(selectedLeague.createdDate).format('MM/DD/YYYY')}
 				</p>
 			</div>
 			<div>
-				Members: <p class="inline font-semibold text-primary-500">{data.selectedLeague.members.length}</p>
+				Members: <p class="inline font-semibold text-primary-500">{selectedLeague.members.length}</p>
 			</div>
 		</div>
 	</div> -->
@@ -154,7 +165,7 @@
 					<tbody>
 						{#each tableSource.body as row, i}
 							<tr>
-								<a href={`/leagues/${data.selectedLeague.id}/seasons/${row[1]}`}
+								<a href={`/leagues/${selectedLeague.id}/seasons/${row[1]}`}
 									><td class="font-bold text-purple-500 hover:underline hover:text-primary-600">{row[0]}</td></a
 								>
 								<td>{row[1]}</td>
@@ -250,7 +261,7 @@
 																</tr>
 															</thead>
 															<tbody>
-																{#each data.selectedLeague.members as friend}
+																{#each selectedLeague.members as friend}
 																	<tr class="items-center">
 																		<td>{friend?.user?.username || friend.account_id}</td>
 																		<td>{dayjs(friend.newestMatch).format('MM/DD/YYYY')}</td>
@@ -413,14 +424,14 @@
 												type="text"
 												disabled
 												name="leagueName"
-												bind:value={data.selectedLeague.name}
+												bind:value={selectedLeague.name}
 											/>
 											<input
 												class="input text-xs"
 												type="text"
 												hidden
 												name="leagueName"
-												bind:value={data.selectedLeague.name}
+												bind:value={selectedLeague.name}
 											/>
 										</label>
 										<label class="label text-xs">
@@ -430,15 +441,9 @@
 												type="text"
 												disabled
 												name="leagueID"
-												bind:value={data.selectedLeague.id}
+												bind:value={selectedLeague.id}
 											/>
-											<input
-												class="input text-xs"
-												type="text"
-												hidden
-												name="leagueID"
-												bind:value={data.selectedLeague.id}
-											/>
+											<input class="input text-xs" type="text" hidden name="leagueID" bind:value={selectedLeague.id} />
 										</label>
 										<label class="label text-xs">
 											<span>Creator ID</span>
@@ -464,7 +469,7 @@
 												type="text"
 												disabled
 												name="membersCount"
-												bind:value={data.selectedLeague.members.length}
+												bind:value={selectedLeague.members.length}
 											/>
 											<input class="input text-xs" type="text" hidden name="members" bind:value={leagueMemberIDs} />
 										</label>

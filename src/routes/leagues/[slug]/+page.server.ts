@@ -26,7 +26,7 @@ export const actions: Actions = {
 
 		//console.log(locals)
 
-		if (!session.user.roles.includes('dev')) return fail(400, { message: 'Not an admin' });
+		if (!session || !session.user.roles.includes('dev')) return fail(400, { message: 'Not an admin' });
 
 		console.log(`\n---------\n[FORM createSeason] - submission received \n-----------`)
 		const formData = await request.formData()

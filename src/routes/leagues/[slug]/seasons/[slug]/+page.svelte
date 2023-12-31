@@ -1,4 +1,8 @@
 <script lang="ts">
+    //SVELTE
+    import { enhance } from '$app/forms';
+
+    //day js
 	import dayjs from 'dayjs';
 	import relativeTime from 'dayjs/plugin/relativeTime';
 	dayjs.extend(relativeTime);
@@ -60,6 +64,14 @@
 
     const { selectedDataIds } = pluginStates.select;
 
+    let formDataIds: any;
+    $: {
+        formDataIds = Object.keys($selectedDataIds).map((dataId: any) => {
+            if($selectedDataIds[dataId]) return dataId
+        })
+        console.log('selectedDataIDs', $selectedDataIds)   
+    }
+
 	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 	// @ts-ignore: Unreachable code error
 	BigInt.prototype.toJSON = function (): number {
@@ -71,9 +83,9 @@
 
 <section>
 	<div class="flex flex-col items-center justify-center w-3/4 mx-auto">
-		<div class="flex items-center w-full justify-around space-x-4 border-b border-dashed border-primary-500">
+		<div class="flex items-center w-full justify-around space-x-4 border-b border-dashed border-primary-500 p-4">
 			<div class="flex items-center space-x-4">
-				<p class="text-xs text-tertiary-500">season:</p>
+				<p class="text-sm text-tertiary-500">season:</p>
 				<h2 class="h2 text-primary-500">{data.selectedSeason.name}</h2>
 			</div>
 
@@ -89,8 +101,14 @@
 			</div>
 		</div>
 		<div class="grid grid-cols-2"></div>
-		<div>
-			{JSON.stringify(data.selectedSeason, null, 4)}
+		<div class="flex flex-col w-full space-y-4 my-4">
+            <h2 class="h2">Add Randoms</h2>
+            <form method="POST" class="space-y-8" action="?/updateSeasonRandoms" use:enhance>
+                <button class="btn variant-filled-primary" type="submit">Update Randoms in Season</button>
+                <textarea class="textarea" rows="3" name="selectedDataIds" bind:value={formDataIds}/>
+                <input class="input" name="test" type="text"/>
+            </form>
+			<!-- Data Table -->
 			<div class="rounded-md border">
 				<Table.Root {...$tableAttrs}>
 					<Table.Header>
