@@ -82,21 +82,26 @@ const banHero = (hero: Hero, store: any) => {
 	//console.log(`banning hero:`);
 	//console.log(hero);
 	let banIndex = store.availableHeroes.findIndex((availHero: Hero) => availHero.id === hero.id);
-	if (banIndex > -1) {
-		store.bannedHeroes = [...store.bannedHeroes, hero];
-		let availableIndex = store.availableHeroes.findIndex((availHero: Hero) => availHero.id === hero.id);
-
-		if (availableIndex === -1) {
-			store.availableHeroes.forEach((storeHero: Hero, i: number) => {
-				if (storeHero.id === hero.id) availableIndex = i;
-			});
+	if(store.bannedHeroes.filter((banHero: Hero) => hero.id === banHero.id).length === 0){
+		if (banIndex > -1) {
+			store.bannedHeroes = [...store.bannedHeroes, hero];
+			let availableIndex = store.availableHeroes.findIndex((availHero: Hero) => availHero.id === hero.id);
+	
+			if (availableIndex === -1) {
+				store.availableHeroes.forEach((storeHero: Hero, i: number) => {
+					if (storeHero.id === hero.id) availableIndex = i;
+				});
+			}
+	
+			if (availableIndex > -1) store.availableHeroes.splice(availableIndex, 1);
+		} else {
+			store.bannedHeroes = store.bannedHeroes.filter((arrHero: Hero) => arrHero !== hero);
+			store.availableHeroes.push(hero);
 		}
-
-		if (availableIndex > -1) store.availableHeroes.splice(availableIndex, 1);
 	} else {
-		store.bannedHeroes = store.bannedHeroes.filter((arrHero: Hero) => arrHero !== hero);
-		store.availableHeroes.push(hero);
+		console.warn('[randomStore - banHero] hero is already banned')
 	}
+
 
 	store = updateCalculations(store);
 	return store;
@@ -109,7 +114,7 @@ const setBanList = (inputList: Hero[] | null, store: any) => {
 		inputList.forEach((hero: Hero) => {
 			//console.log('checking hero', hero);
 			//console.log('available heroes', store.availableHeroes, 'indexOf: ', store.availableHeroes.findIndex((availHero: Hero) => availHero.id === hero.id))
-			banHero(hero, store)
+			banHero(hero, store);
 			// if (store.availableHeroes.indexOf(hero) !== -1) {
 			// 	store.availableHeroes.splice(store.availableHeroes.indexOf(hero), 1);
 			// } else console.error('couldnt ban hero', hero);
