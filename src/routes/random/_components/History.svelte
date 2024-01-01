@@ -1,13 +1,15 @@
 <script lang="ts">
 	//page data
 
+	import type { Hero, Random } from '@prisma/client'
+
 	export let allHeroes: Hero[] = [];
 	export let completedRandoms: Random[] = [];
 
 	import { calculateKdaClasses } from '$lib/helpers/tableColors';
     import daysAgoString from '$lib/helpers/daysAgo';
 
-	console.log(completedRandoms);
+	//console.log(completedRandoms);
 
 	completedRandoms = completedRandoms.sort((a: any, b: any) => {
 		if (a.endDate < b.endDate) return 1;
@@ -18,7 +20,7 @@
 <!-- History-->
 <div class="w-full flex flex-col space-y-4">
 	<h2 class="h2 text-primary-500 w-full border-b border-primary-500 border-dashed py-2">History</h2>
-	<div class="h-full">
+	<div class="h-full max-h-screen overflow-scroll">
 		<div class="grid md:grid-cols-6 max-sm:grid-cols-4 text-secondary-500">
 			<div class="col-span-2">Hero</div>
 			<div>Win or Loss</div>

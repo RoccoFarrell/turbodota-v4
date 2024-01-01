@@ -119,8 +119,8 @@
         Get all unique player IDs in random database
     */
 		let uniqueIDs = data.randoms
-			.map((random) => random.account_id)
-			.filter((random, i, arr) => arr.indexOf(random) === i);
+			.map((random: any) => random.account_id)
+			.filter((random: any, i: any, arr: any) => arr.indexOf(random) === i);
 		console.log(uniqueIDs);
 
 		console.log(uniqueIDs);
@@ -132,18 +132,18 @@
 		/* 
             Loop through unique IDs generated above
         */
-		uniqueIDs.forEach((playerID) => {
-			//console.log('looping through playerID: ', playerID);
+		uniqueIDs.forEach((playerID: any) => {
+			console.log('looping through playerID: ', playerID);
 			let row: LeaderboardRow = new LeaderboardRow();
 
-			let playerRandoms = data.randoms.filter((random) => random.account_id === playerID && random.active === false);
+			let playerRandoms = data.randoms.filter((random: any) => random.account_id === playerID && random.active === false);
 			if (playerRandoms.length > 0) {
 				row.player = playerID;
 				row.name = playerRandoms[0].user ? playerRandoms[0].user.username : '';
 
 				/* calculate wins and losses */
-				let winCount = playerRandoms.reduce((acc, cur) => (cur.win ? (acc += 1) : (acc += 0)), 0);
-				let lossCount = playerRandoms.reduce((acc, cur) => (!cur.win ? (acc += 1) : (acc += 0)), 0);
+				let winCount = playerRandoms.reduce((acc: any, cur: any) => (cur.win ? (acc += 1) : (acc += 0)), 0);
+				let lossCount = playerRandoms.reduce((acc: any, cur: any) => (!cur.win ? (acc += 1) : (acc += 0)), 0);
 				row.wins = winCount;
 				row.losses = lossCount;
 				row.win_percentage = row.wins / (row.wins + row.losses);
@@ -173,7 +173,7 @@
 						assists: 0
 					}
 				}
-				playerRandoms.forEach((random) => {
+				playerRandoms.forEach((random: any) => {
 					if (random.match) {
 						kdaCalcs.total.kills += random.match.kills
 						kdaCalcs.total.deaths += random.match.deaths

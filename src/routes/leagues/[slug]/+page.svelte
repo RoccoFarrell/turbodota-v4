@@ -4,7 +4,7 @@
 	import Trophy_light from '$lib/assets/trophy_light.png';
 	import { fade } from 'svelte/transition';
 	import type { User, League } from '@prisma/client';
-	import { Prisma } from '@prisma/client'
+	import { Prisma } from '@prisma/client';
 
 	import dayjs from 'dayjs';
 
@@ -37,11 +37,19 @@
 	*/
 
 	type LeagueWithSeasonsAndMembers = Prisma.LeagueGetPayload<{
-		include: { seasons: true, members: {
-			include: {
-				user: true
-			}
-		} };
+		include: {
+			members: {
+				include: {
+					user: true;
+				};
+			};
+			creator: true;
+			seasons: {
+				include: {
+					members: true;
+				};
+			};
+		};
 	}>;
 
 	let selectedLeague: LeagueWithSeasonsAndMembers = data.selectedLeague;
@@ -209,7 +217,7 @@
 			<svelte:fragment slot="panel">
 				{#if tabSetOuter === 0}
 					<div class="space-y-4 card flex flex-col max-w-screen relative">
-						{#if !data.session.user.roles || !data.session.user.roles.includes('dev')}
+						{#if !data.session || !data.session.user.roles || !data.session.user.roles.includes('dev')}
 							<div class="z-50 absolute w-full h-full bg-slate-900/90 flex items-center justify-center rounded-xl">
 								<img src={Lock} class="h-32 w-32 inline" alt="locked" />
 								<h3 class="h3 text-primary-500 rounded-xl m-4 bg-surface-500/90 p-4">
