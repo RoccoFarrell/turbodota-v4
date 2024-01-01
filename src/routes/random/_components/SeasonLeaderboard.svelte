@@ -221,7 +221,7 @@
 					0
 				);
 
-				console.log(`pushing row for ${row.name}`);
+				//console.log(`pushing row for ${row.name}`);
 				tableData.push(row);
 			}
 		});
@@ -230,7 +230,7 @@
             Set table data
         */
 
-		console.log(tableData);
+		//console.log(tableData);
 
 		/* 
             Sort by gold 

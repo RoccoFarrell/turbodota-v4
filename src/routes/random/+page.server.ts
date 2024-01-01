@@ -170,6 +170,7 @@ export const load: PageServerLoad = async ({ locals, parent, url }) => {
 
 		/* current season leaderboard */
 		if(leagueAndSeasonsResult && leagueAndSeasonsResult[0]) currentSeasonLeaderboard = calculateRandomLeaderboard(leagueAndSeasonsResult[0].seasons[0].randoms)
+		else console.error('could not load season leaderboard in server')
 
 		console.log(currentSeasonLeaderboard)
 	}

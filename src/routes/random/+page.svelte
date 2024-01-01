@@ -52,7 +52,7 @@
 		Calculations from server data
 	*/
 	let last5Matches: Match[] = data.rawMatchData.slice(0, 5);
-	console.log(`LAST 5 MATCHES:`, last5Matches);
+	//console.log(`LAST 5 MATCHES:`, last5Matches);
 
 	let matchTableData = last5Matches.map((match: any) => {
 		return {
@@ -79,6 +79,19 @@
 			losses: completedRandoms.filter((random) => !random.active && !random.win).length,
 			totalGoldWon: completedRandoms.reduce((acc, cur) => acc + (cur.endGold || 0), 0),
 			totalLostGoldModifier: completedRandoms.reduce((acc, cur) => acc + cur.modifierTotal, 0)
+		};
+	}
+
+	//calc leaderboard info for seasons panel
+	let randomSeasonStats = {
+		userPlace: -1
+	};
+	if (data.session && data.session.user) {
+		randomSeasonStats = {
+			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+			// @ts-ignore: Unreachable code error
+			userPlace:
+				data.currentSeasonLeaderboard.findIndex((item: any) => item.player === data.session.user.account_id) + 1
 		};
 	}
 
@@ -433,7 +446,7 @@
 
 			randomFound = true;
 		} else {
-			console.error('couldnt set generated random hero');
+			console.error('couldnt set generated random hero for specific user');
 		}
 	};
 
@@ -522,13 +535,13 @@
 </script>
 
 <div class="container md:m-4 my-4 h-full mx-auto w-full max-sm:mb-20">
-	<div class="flex flex-col items-center text-center space-y-2 md:mx-8 mx-2">
+	<div class="flex flex-col items-center text-center space-y-1 md:mx-8 mx-2">
 		<!-- Header Card -->
 		<div
-			class="md:grid md:grid-cols-3 max-sm:flex max-sm:flex-col max-sm:space-y-2 justify-around items-center w-full my-2 card p-2"
+			class="md:grid md:grid-cols-3 max-sm:flex max-sm:flex-col max-sm:space-y-2 justify-around items-center w-full card p-1"
 		>
 			<div class="flex flex-col space-x-4 md:border-r border-dashed border-primary-500/50">
-				<h2 class="h2 text-primary-500 max-md:font-bold p-4">The Walker Random™</h2>
+				<h2 class="h2 text-primary-500 max-md:font-bold p-2">The Walker Random™</h2>
 				<div class="flex justify-around items-center">
 					<!-- <a href="/random/leaderboard"><button class="btn variant-ghost-primary">Leaderboard</button></a> -->
 
@@ -542,7 +555,7 @@
 
 			<!-- current season info -->
 			{#if data.session && data.session.user && data.leagueAndSeasonsResult[0]}
-				<div class="flex flex-col w-full justify-center col-span-2 p-4">
+				<div class="flex flex-col w-full justify-center col-span-2 p-2">
 					<div class="w-full grid grid-cols-2 p-1">
 						<div class="text-sm text-tertiary-500">
 							<p class="text-xs inline">current league:</p>
@@ -572,8 +585,7 @@
 								<img src={TournamentLight} class="w-24 h-24 rounded-xl p-2" alt="season logo cm and lina" />
 								<div class="flex flex-col items-center justify-center">
 									<p class="h1 font-bold text-amber-500 vibrating">
-										{data.currentSeasonLeaderboard.findIndex((item) => item.player === data?.session.user.account_id) +
-											1}
+										{randomSeasonStats.userPlace}
 									</p>
 									<p>of {data.currentSeasonLeaderboard.length}</p>
 								</div>
@@ -581,12 +593,15 @@
 						</div>
 						<div class="flex flex-col items-center justify-center space-y-1">
 							<div>
-								Season Start: <p class="text-green-300">{dayjs(data.leagueAndSeasonsResult[0].seasons[0].startDate).format('llll')}</p>
+								Season Start: <p class="text-green-300">
+									{dayjs(data.leagueAndSeasonsResult[0].seasons[0].startDate).format('llll')}
+								</p>
 							</div>
 							<div>
-								Season End: <p class="text-red-300">{dayjs(data.leagueAndSeasonsResult[0].seasons[0].endDate).format("llll")}</p>
+								Season End: <p class="text-red-300">
+									{dayjs(data.leagueAndSeasonsResult[0].seasons[0].endDate).format('llll')}
+								</p>
 							</div>
-							
 						</div>
 						<div class="flex justify-center items-center">
 							<a href="/random/leaderboard"><button class="btn variant-ghost-primary">Leaderboard</button></a>
@@ -609,6 +624,117 @@
 				</div>
 			{/if}
 		</div> -->
+		<div class="w-full flex max-md:flex-col">
+			{#if data.session && data.session.user}
+				<div class="my-4 lg:w-1/2"><MatchHistory {matchTableData} /></div>
+			{/if}
+			<div class="lg:w-1/2 p-4">
+				{#if generatedRandomHero}
+				<div class="flex flex-col justify-center items-center w-full h-full">
+					<div
+						class="flex flex-col items-center space-y-2 bg-yellow-600/30 rounded-2xl py-4 mb-4 w-full"
+						in:slide={{ delay: 250, duration: 300, easing: quintOut, axis: 'x' }}
+					>
+						<h1 class="h1">Your random:</h1>
+						<h1 class="h1 vibrating animate-pulse text-amber-600">
+							{generatedRandomHero.localized_name}
+						</h1>
+						<i class={`vibrating d2mh hero-${generatedRandomHero.id} scale-150`}></i>
+					</div>
+					<!-- 
+						<div class="w-fit mx-auto p-4 border border-dashed border-fuchsia-300 my-4 card">
+							<div class="grid grid-cols-3 place-content-start">
+								<p>Pulled {newerStratzMatches.length} matches from Stratz</p>
+								<div class="text-xs">
+									Most recent Stratz match: <p>{newerStratzMatches[0].id}</p>
+								</div>
+								<div class="text-xs mt-2">
+									Most recent Open Dota match: <p>{data.rawMatchData[0].match_id}</p>
+								</div>
+							</div>
+
+							<div><p class="inline text-primary-500">{stratzTimeoutCountdown}s</p> before you can check again</div>
+						</div> -->
+
+					{#await stratzLoading}
+						<div class="flex items-center justify-center h-full">
+							<button class="btn variant-filled-success w-full">
+								<i class="fi fi-br-refresh h-fit animate-spin"></i>
+								<div class="placeholder animate-pulse"></div>
+							</button>
+						</div>
+					{:then stratzData}
+						{#if stratzData}
+							<div class="w-fit mx-auto p-4 border border-dashed border-fuchsia-300 my-4 space-y-4 card">
+								<div>
+									{#if newerStratzMatches[0].id.toString() !== data.rawMatchData[0].match_id.toString()}
+										<div class="flex items-center justify-center p-1 space-x-2 text-green-500">
+											<i class="fi fi-ss-head-side-brain"></i>
+											<p>You may have a point...</p>
+										</div>
+									{:else}
+										<div class="text-amber-500 flex items-center space-x-2 justify-center p-1">
+											<i class="fi fi-br-database mx-2"></i>
+											<p>No new matches found from two sources...</p>
+										</div>
+									{/if}
+								</div>
+								<div class="grid grid-cols-3 place-content-start">
+									<p class="text-xs text-secondary-600">Pulled {newerStratzMatches.length} matches from Stratz</p>
+									<div class="text-xs">
+										Most recent Stratz match: <p class="font-bold text-primary-500">{newerStratzMatches[0].id}</p>
+									</div>
+									<div class="text-xs">
+										Most recent Open Dota match: <p class="font-bold text-primary-500">
+											{data.rawMatchData[0].match_id}
+										</p>
+									</div>
+								</div>
+
+								<div class="mt-2">
+									<p class="inline text-orange-500 font-bold">{stratzTimeoutCountdown}s</p>
+									before you can check again
+								</div>
+							</div>
+						{/if}
+						{#if data.session && data.session.user}
+							<div class="flex items-center justify-center">
+								<button
+									class="btn variant-filled-success w-full"
+									disabled={stratzTimeout}
+									on:click={() => {
+										stratzLoading = checkForRandomComplete();
+									}}
+								>
+									<i class="fi fi-br-refresh h-fit"></i>
+									<div class="italic">I just completed this random!</div></button
+								>
+							</div>
+						{/if}
+					{/await}
+					<!-- {#if data.session && data.session.user}
+					<div class="my-4"><MatchHistory {matchTableData} /></div>
+				{/if} -->
+			</div>
+				{:else}
+					<!-- <div class="my-4"><MatchHistory {matchTableData} /></div> -->
+					<div class="flex flex-col justify-center items-center h-full">
+						<div>
+							<i class="fi fi-sr-person-circle-question text-5xl"></i>
+							<h3 class="h3 text-secondary-500">No random found, get a new one below!</h3>
+						</div>
+						<div class="w-full">
+							<button
+								on:click={generateRandomHero}
+								disabled={randomFound}
+								class="z-50 btn variant-filled-primary w-full my-4 max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:my-8 max-lg:mx-4 max-lg:max-w-[90%] md:max-w-[80%]"
+								>Random me</button
+							>
+						</div>
+					</div>
+				{/if}
+			</div>
+		</div>
 
 		<div class="lg:grid lg:grid-cols-3 max-sm:flex max-sm:flex-col max-lg:space-y-8 sm:place-content-start lg:gap-x-8">
 			<!-- Hero ban grid -->
@@ -711,123 +837,6 @@
 			<div
 				class="md:w-full max-md:max-w-sm text-center h-fit items-center dark:bg-surface-600/30 bg-surface-200/30 border border-surface-200 dark:border-surface-700 shadow-lg rounded-xl px-2 md:py-2 max-sm:py-2"
 			>
-				{#if generatedRandomHero}
-					<div
-						class="flex flex-col items-center space-y-2 bg-yellow-600/30 rounded-2xl py-4 mb-4"
-						in:slide={{ delay: 250, duration: 300, easing: quintOut, axis: 'x' }}
-					>
-						<h1 class="h1">Your random:</h1>
-						<h1 class="h1 vibrating animate-pulse text-amber-600">
-							{generatedRandomHero.localized_name}
-						</h1>
-						<i class={`vibrating d2mh hero-${generatedRandomHero.id} scale-150`}></i>
-					</div>
-					<!-- 
-							<div class="w-fit mx-auto p-4 border border-dashed border-fuchsia-300 my-4 card">
-								<div class="grid grid-cols-3 place-content-start">
-									<p>Pulled {newerStratzMatches.length} matches from Stratz</p>
-									<div class="text-xs">
-										Most recent Stratz match: <p>{newerStratzMatches[0].id}</p>
-									</div>
-									<div class="text-xs mt-2">
-										Most recent Open Dota match: <p>{data.rawMatchData[0].match_id}</p>
-									</div>
-								</div>
-
-								<div><p class="inline text-primary-500">{stratzTimeoutCountdown}s</p> before you can check again</div>
-							</div> -->
-
-					{#await stratzLoading}
-						<div class="flex items-center justify-center h-full">
-							<button class="btn variant-filled-success w-full">
-								<i class="fi fi-br-refresh h-fit animate-spin"></i>
-								<div class="placeholder animate-pulse"></div>
-							</button>
-						</div>
-					{:then stratzData}
-						{#if stratzData}
-							<div class="w-fit mx-auto p-4 border border-dashed border-fuchsia-300 my-4 space-y-4 card">
-								<div>
-									{#if newerStratzMatches[0].id.toString() !== data.rawMatchData[0].match_id.toString()}
-										<div class="flex items-center justify-center p-1 space-x-2 text-green-500">
-											<i class="fi fi-ss-head-side-brain"></i>
-											<p>You may have a point...</p>
-										</div>
-									{:else}
-										<div class="text-amber-500 flex items-center space-x-2 justify-center p-1">
-											<i class="fi fi-br-database mx-2"></i>
-											<p>No new matches found from two sources...</p>
-										</div>
-									{/if}
-								</div>
-								<div class="grid grid-cols-3 place-content-start">
-									<p class="text-xs text-secondary-600">Pulled {newerStratzMatches.length} matches from Stratz</p>
-									<div class="text-xs">
-										Most recent Stratz match: <p class="font-bold text-primary-500">{newerStratzMatches[0].id}</p>
-									</div>
-									<div class="text-xs">
-										Most recent Open Dota match: <p class="font-bold text-primary-500">
-											{data.rawMatchData[0].match_id}
-										</p>
-									</div>
-								</div>
-
-								<div class="mt-2">
-									<p class="inline text-orange-500 font-bold">{stratzTimeoutCountdown}s</p>
-									before you can check again
-								</div>
-							</div>
-						{/if}
-						{#if data.session && data.session.user}
-							<div class="flex items-center justify-center h-full">
-								<button
-									class="btn variant-filled-success w-full"
-									disabled={stratzTimeout}
-									on:click={() => {
-										stratzLoading = checkForRandomComplete();
-									}}
-								>
-									<i class="fi fi-br-refresh h-fit"></i>
-									<div class="italic">I just completed this random!</div></button
-								>
-							</div>
-						{/if}
-					{/await}
-					{#if data.session && data.session.user}
-						<div class="my-4"><MatchHistory {matchTableData} /></div>
-					{/if}
-				{:else if data.session && data.session.user}
-					<div class="my-4"><MatchHistory {matchTableData} /></div>
-				{/if}
-
-				<!-- Busted await because its synchronus -->
-				<!-- <div in:slide={{ delay: 250, duration: 300, easing: quintOut, axis: 'x' }}>
-					{#await heroLoading}
-						loading
-					{:then heroVal}
-						{JSON.stringify(heroVal)}
-					{/await}
-
-					{#await heroLoading}
-						<div class="placeholder-circle w-16 animate-bounce" />
-					{:then}
-						{#if generatedRandomHero}
-							<div
-								class="flex flex-col items-center space-y-2 bg-yellow-600/30 rounded-2xl py-4 mb-4"
-								in:slide={{ delay: 250, duration: 300, easing: quintOut, axis: 'x' }}
-							>
-								<h1 class="h1">Your random:</h1>
-								<h1 class="h1 vibrating animate-pulse text-amber-600">
-									{generatedRandomHero.localized_name}
-								</h1>
-								<i class={`vibrating d2mh hero-${generatedRandomHero.id} scale-150`}></i>
-							</div>
-						{:else}
-							<div />
-						{/if}
-					{/await}
-				</div> -->
-
 				<!-- Auto Bans -->
 				<div class="relative">
 					{#if randomFound}

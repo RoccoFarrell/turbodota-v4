@@ -18,16 +18,16 @@
 </script>
 
 <!-- <Table source={tableMatch}/> -->
-<div class="w-full flex flex-col card p-4 space-y-4 md:w-full max-md:max-w-sm">
-	<h3 class="h3 text-primary-500 w-full border-b border-primary-500 border-dashed py-1">Last 5 Matches</h3>
+<div class="w-full flex flex-col card p-1 space-y-4 md:w-full max-md:max-w-sm">
+	<h5 class="h5 text-primary-500 w-full border-b border-primary-500 border-dashed py-1">Last 5 Matches</h5>
 	<div class="h-full">
         <div class="table-container">
             <!-- Native Table Element -->
-            <table class="table table-hover">
+            <table class="table table-hover table-compact">
                 <thead>
                     <tr>
                         {#each tableMatch.head as header}
-                            <th class="text-center">{header}</th>
+                            <th class="text-center p-0">{header}</th>
                         {/each}
                     </tr>
                 </thead>

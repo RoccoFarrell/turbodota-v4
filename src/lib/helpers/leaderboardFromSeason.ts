@@ -45,7 +45,7 @@ const calculateRandomLeaderboard = (inputRandoms: RandomWithUsersAndMatch[]) => 
             Loop through unique IDs generated above
         */
 	uniqueIDs.forEach((playerID) => {
-		console.log('looping through playerID: ', playerID);
+		//console.log('looping through playerID: ', playerID);
 		let row: LeaderboardRow = new LeaderboardRow();
 
 		let playerRandoms = inputRandoms.filter((random) => random.account_id === playerID && random.active === false);
@@ -115,7 +115,7 @@ const calculateRandomLeaderboard = (inputRandoms: RandomWithUsersAndMatch[]) => 
 				0
 			);
 
-			console.log(`pushing row for ${row.name}`);
+			//console.log(`pushing row for ${row.name}`);
 			tableData.push(row);
 		}
 	});

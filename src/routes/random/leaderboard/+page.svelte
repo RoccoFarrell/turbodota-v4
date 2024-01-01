@@ -133,7 +133,7 @@
             Loop through unique IDs generated above
         */
 		uniqueIDs.forEach((playerID) => {
-			console.log('looping through playerID: ', playerID);
+			//console.log('looping through playerID: ', playerID);
 			let row: LeaderboardRow = new LeaderboardRow();
 
 			let playerRandoms = data.randoms.filter((random) => random.account_id === playerID && random.active === false);
@@ -221,7 +221,7 @@
 					0
 				);
 
-				console.log(`pushing row for ${row.name}`);
+				//console.log(`pushing row for ${row.name}`);
 				tableData.push(row);
 			}
 		});
@@ -230,7 +230,7 @@
             Set table data
         */
 
-		console.log(tableData);
+		//console.log(tableData);
 
 		/* 
             Sort by gold 
