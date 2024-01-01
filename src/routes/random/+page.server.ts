@@ -3,6 +3,7 @@ import { auth } from '$lib/server/lucia';
 import prisma from '$lib/server/prisma';
 import type { Prisma } from '@prisma/client';
 import { error, fail, redirect } from '@sveltejs/kit';
+import { calculateRandomLeaderboard } from '$lib/helpers/leaderboardFromSeason';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unreachable code error
@@ -29,7 +30,15 @@ export const load: PageServerLoad = async ({ locals, parent, url }) => {
 				]
 			},
 			include: {
-				match: true
+				match: true,
+				user: true,
+				seasons: {
+					include: {
+						_count: {
+							select: { randoms: true }
+						}
+					}
+				}
 			}
 		});
 	}
@@ -45,6 +54,8 @@ export const load: PageServerLoad = async ({ locals, parent, url }) => {
 	};
 	let responseComplete: any = null;
 	let matchesSinceRandom: Match[] = [];
+	let leagueAndSeasonsResult: any = null;
+	let currentSeasonLeaderboard: any = [];
 
 	if (session && session.user) {
 		randomsForUser = await getRandomsForUser();
@@ -56,16 +67,18 @@ export const load: PageServerLoad = async ({ locals, parent, url }) => {
 		});
 
 		let responseData = await response.json();
-		console.log(responseData)
+		console.log(responseData);
 
 		//user has at least 1 active random
 
-		if (!responseData.matchData || !responseData.matchData.length){
+		if (!responseData.matchData || !responseData.matchData.length) {
 			error(500, {
 				message: `Open Dota Failed, no match data, returned length: ${JSON.stringify(responseData)}`
 			});
 		}
-			
+
+		rawMatchData = responseData.matchData;
+
 		if (randomsForUser.length > 0 && randomsForUser.filter((random) => random.active).length > 0) {
 			//fetch most recent matches
 
@@ -77,8 +90,6 @@ export const load: PageServerLoad = async ({ locals, parent, url }) => {
 			responseData.matchData.forEach((element: Match) => {
 				element.start_time = new Date(Number(element.start_time) * 1000);
 			});
-
-			rawMatchData = responseData.matchData;
 
 			//a user should only ever have 1 active random, if not, sort by the oldest one for evaluation
 			let activeRandoms = randomsForUser
@@ -127,6 +138,40 @@ export const load: PageServerLoad = async ({ locals, parent, url }) => {
 				responseComplete = { error: 'couldnt complete random' };
 			}
 		}
+
+		/* End get randoms */
+		leagueAndSeasonsResult = await prisma.league.findMany({
+			where: {
+				members: {
+					some: {
+						account_id: session.user.account_id
+					}
+				}
+			},
+			include: {
+				seasons: {
+					where: {
+						AND: [{ type: 'random', active: true }]
+					},
+					include: {
+						randoms: {
+							include: {
+								user: true,
+								match: true
+							}
+						},
+						_count: {
+							select: { randoms: true }
+						}
+					}
+				}
+			}
+		});
+
+		/* current season leaderboard */
+		if(leagueAndSeasonsResult && leagueAndSeasonsResult[0]) currentSeasonLeaderboard = calculateRandomLeaderboard(leagueAndSeasonsResult[0].seasons[0].randoms)
+
+		console.log(currentSeasonLeaderboard)
 	}
 	return {
 		...parentData,
@@ -135,6 +180,9 @@ export const load: PageServerLoad = async ({ locals, parent, url }) => {
 		randomAttempts: filteredMatchData,
 		matchesSinceRandom,
 		flags,
-		responseComplete
+		responseComplete,
+		leagueAndSeasonsResult,
+		//dont know why i have to do this, its a non POJO for some reason
+		currentSeasonLeaderboard: structuredClone(currentSeasonLeaderboard)
 	};
 };

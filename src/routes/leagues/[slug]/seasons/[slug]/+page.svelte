@@ -1,8 +1,8 @@
 <script lang="ts">
-    //SVELTE
-    import { enhance } from '$app/forms';
+	//SVELTE
+	import { enhance } from '$app/forms';
 
-    //day js
+	//day js
 	import dayjs from 'dayjs';
 	import relativeTime from 'dayjs/plugin/relativeTime';
 	dayjs.extend(relativeTime);
@@ -16,10 +16,10 @@
 	import { addSelectedRows } from 'svelte-headless-table/plugins';
 	import { readable } from 'svelte/store';
 	import * as Table from '$lib/components/ui/table';
-    import DataTableCheckbox from "./data-table-checkbox.svelte";
+	import DataTableCheckbox from './data-table-checkbox.svelte';
 
 	export let data;
-	//console.log(data);
+	console.log(`[/seasons/<ID>] data: `, data);
 
 	const table = createTable(readable(data.allRandoms), {
 		select: addSelectedRows()
@@ -56,21 +56,21 @@
 		}),
 		table.column({
 			accessor: ({ id }) => id,
-			header: ''
+			header: 'Random ID'
 		})
 	]);
 
 	const { headerRows, pageRows, tableAttrs, tableBodyAttrs, pluginStates } = table.createViewModel(columns);
 
-    const { selectedDataIds } = pluginStates.select;
+	const { selectedDataIds } = pluginStates.select;
 
-    let formDataIds: any;
-    $: {
-        formDataIds = Object.keys($selectedDataIds).map((dataId: any) => {
-            if($selectedDataIds[dataId]) return dataId
-        })
-        console.log('selectedDataIDs', $selectedDataIds)   
-    }
+	let formDataIds: any;
+	$: {
+		formDataIds = Object.keys($selectedDataIds).map((dataId: any) => {
+			if ($selectedDataIds[dataId]) return data.allRandoms[dataId].id;
+		});
+		console.log('selectedDataIDs', $selectedDataIds);
+	}
 
 	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 	// @ts-ignore: Unreachable code error
@@ -102,12 +102,21 @@
 		</div>
 		<div class="grid grid-cols-2"></div>
 		<div class="flex flex-col w-full space-y-4 my-4">
-            <h2 class="h2">Add Randoms</h2>
-            <form method="POST" class="space-y-8" action="?/updateSeasonRandoms" use:enhance>
-                <button class="btn variant-filled-primary" type="submit">Update Randoms in Season</button>
-                <textarea class="textarea" rows="3" name="selectedDataIds" bind:value={formDataIds}/>
-                <input class="input" name="test" type="text"/>
-            </form>
+			<h2 class="h2">Add Randoms</h2>
+			<form method="POST" class="space-y-8" action="?/updateSeasonRandoms" use:enhance>
+				<button class="btn variant-filled-primary" type="submit">Update Randoms in Season</button>
+				
+				<label class="label w-1/4">
+					<span>League ID</span>
+					<input class="input text-xs" type="text" disabled name="seasonID" bind:value={data.selectedSeason.id} />
+					<input class="input text-xs" type="text" hidden name="seasonID" bind:value={data.selectedSeason.id} />
+				</label>
+				<label class="label">
+					<span>Random IDs</span>
+					<textarea class="textarea" rows="3" name="selectedDataIds" bind:value={formDataIds} />
+				</label>
+				
+			</form>
 			<!-- Data Table -->
 			<div class="rounded-md border">
 				<Table.Root {...$tableAttrs}>

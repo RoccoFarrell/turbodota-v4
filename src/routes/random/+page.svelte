@@ -2,15 +2,15 @@
 	import { fade, fly, slide } from 'svelte/transition';
 	import { quintOut } from 'svelte/easing';
 	import { flip } from 'svelte/animate';
+	import { browser } from '$app/environment';
 
 	//prisma types
-	import type { Random, Hero } from '@prisma/client'
+	import type { Random, Hero } from '@prisma/client';
 
 	//day js
 	import dayjs from 'dayjs';
 	import LocalizedFormat from 'dayjs/plugin/localizedFormat';
 	dayjs.extend(LocalizedFormat);
-
 
 	//page data
 	import type { PageData } from './$types';
@@ -36,9 +36,13 @@
 
 	//images
 	import Lock from '$lib/assets/lock.png';
+	import SeasonLogo from '$lib/assets/seasonLogo.png';
+	import TournamentLight from '$lib/assets/tournament_light.png';
 
-	console.log('data: ', data);
-	$: console.log('store data: ', $randomStore);
+	if (browser) {
+		console.log('data: ', data);
+		console.log('store data: ', $randomStore);
+	}
 
 	let generatedRandomHero: Hero | null = null;
 
@@ -53,7 +57,7 @@
 	let matchTableData = last5Matches.map((match: any) => {
 		return {
 			match_id: match.match_id,
-			start_time: dayjs(match.start_time).format('llll'),
+			start_time: dayjs.unix(match.start_time).format('llll'),
 			result: winOrLoss(match.player_slot, match.radiant_win),
 			hero: data.heroDescriptions.allHeroes.filter((hero: Hero) => hero.id === match.hero_id)[0].id,
 			kda: ((match.kills + match.assists) / match.deaths).toFixed(2)
@@ -240,7 +244,7 @@
 			});
 
 			let prefsResponse = await response.json();
-			console.log(prefsResponse);
+			//console.log(prefsResponse);
 			if (prefsResponse.status === 'success') {
 				const t: ToastSettings = {
 					message: `Bans saved!`,
@@ -258,7 +262,7 @@
 	};
 
 	const handleRoleSelect = (role: string) => {
-		console.log(role);
+		//console.log(role);
 		if (role === 'All') {
 			//if All was already selected, set to empty
 			//if not selected, set to all roles
@@ -425,21 +429,21 @@
 				body: JSON.stringify(bodyData)
 			});
 
-			console.log(response);
+			//console.log(response);
 
 			randomFound = true;
 		} else {
-			console.error('couldnt set generated random hero')
+			console.error('couldnt set generated random hero');
 		}
 	};
 
 	let newerStratzMatches: any[] = [];
-	$: console.log(newerStratzMatches);
+	//$: console.log(newerStratzMatches);
 	let stratzTimeout: boolean = false;
 	let stratzTimeoutValue: number = 30;
 	let stratzTimeoutCountdown: number = 0;
 	$: stratzTimeoutCountdown;
-	$: console.log(stratzTimeout);
+	//$: console.log(stratzTimeout);
 
 	const checkForRandomComplete = async () => {
 		let responseStratz, responseParse;
@@ -519,17 +523,79 @@
 
 <div class="container md:m-4 my-4 h-full mx-auto w-full max-sm:mb-20">
 	<div class="flex flex-col items-center text-center space-y-2 md:mx-8 mx-2">
-		<div class="flex max-sm:flex-col max-sm:space-y-2 justify-around items-center w-3/4 my-4">
-			<h1 class="h1 text-primary-700 max-md:font-bold">The Walker Random™</h1>
-			<div class="flex space-x-4">
-				<a href="/random/leaderboard"><button class="btn variant-ghost-primary">Leaderboard</button></a>
+		<!-- Header Card -->
+		<div
+			class="md:grid md:grid-cols-3 max-sm:flex max-sm:flex-col max-sm:space-y-2 justify-around items-center w-full my-2 card p-2"
+		>
+			<div class="flex flex-col space-x-4 md:border-r border-dashed border-primary-500/50">
+				<h2 class="h2 text-primary-500 max-md:font-bold p-4">The Walker Random™</h2>
+				<div class="flex justify-around items-center">
+					<!-- <a href="/random/leaderboard"><button class="btn variant-ghost-primary">Leaderboard</button></a> -->
 
-				{#if data.session && data.session.user}
-					<div class="text-xs">
-						Logged in as: <p class="text-secondary-500 text-lg font-bold">{data.session.user.username}</p>
-					</div>
-				{/if}
+					{#if data.session && data.session.user}
+						<div class="text-xs">
+							Logged in as: <p class="text-secondary-500 text-lg font-bold">{data.session.user.username}</p>
+						</div>
+					{/if}
+				</div>
 			</div>
+
+			<!-- current season info -->
+			{#if data.session && data.session.user && data.leagueAndSeasonsResult[0]}
+				<div class="flex flex-col w-full justify-center col-span-2 p-4">
+					<div class="w-full grid grid-cols-2 p-1">
+						<div class="text-sm text-tertiary-500">
+							<p class="text-xs inline">current league:</p>
+							<a class="link" href={`/leagues/${data.leagueAndSeasonsResult[0].id}`}>
+								<p class="font-bold inline text-primary-400 text-md hover:text-primary-600 hover:underline">
+									{data.leagueAndSeasonsResult[0].name}
+								</p>
+							</a>
+						</div>
+						<div class="text-sm text-tertiary-500">
+							<p class="text-xs inline">current random season:</p>
+							<a
+								class="link"
+								href={`/leagues/${data.leagueAndSeasonsResult[0].id}/seasons/${data.leagueAndSeasonsResult[0].seasons[0].id}`}
+							>
+								<p class="font-bold inline text-primary-400 text-md hover:text-primary-600 hover:underline">
+									{data.leagueAndSeasonsResult[0].seasons[0].name}
+								</p>
+							</a>
+						</div>
+					</div>
+
+					<div class="flex border-t border-amber-500 p-2 justify-center space-x-8">
+						<div class="flex flex-col rounded-xl p-4">
+							<p class="text-xs">current place:</p>
+							<div class="flex">
+								<img src={TournamentLight} class="w-24 h-24 rounded-xl p-2" alt="season logo cm and lina" />
+								<div class="flex flex-col items-center justify-center">
+									<p class="h1 font-bold text-amber-500 vibrating">
+										{data.currentSeasonLeaderboard.findIndex((item) => item.player === data?.session.user.account_id) +
+											1}
+									</p>
+									<p>of {data.currentSeasonLeaderboard.length}</p>
+								</div>
+							</div>
+						</div>
+						<div class="flex flex-col items-center justify-center space-y-1">
+							<div>
+								Season Start: <p class="text-green-300">{dayjs(data.leagueAndSeasonsResult[0].seasons[0].startDate).format('llll')}</p>
+							</div>
+							<div>
+								Season End: <p class="text-red-300">{dayjs(data.leagueAndSeasonsResult[0].seasons[0].endDate).format("llll")}</p>
+							</div>
+							
+						</div>
+						<div class="flex justify-center items-center">
+							<a href="/random/leaderboard"><button class="btn variant-ghost-primary">Leaderboard</button></a>
+						</div>
+					</div>
+				</div>
+			{:else}
+				<div class="w-full p-4 italic flex items-center justify-center">Couldn't get league or season info</div>
+			{/if}
 		</div>
 
 		<!-- <div>
@@ -608,7 +674,7 @@
 										<button on:click={() => banHero(hero)} class="w-full h-full"></button>
 									</div>
 								{/if}
-								<button on:click={() => banHero(hero)}><i class={`z-0 d2mh hero-${hero.id} scale-150`}></i></button>
+								<button on:click={() => banHero(hero)}><i class={`z-0 d2mh hero-${hero.id} scale-125`}></i></button>
 							</div>
 						{/each}
 					{/if}
@@ -643,7 +709,7 @@
 
 			<!-- Autobans Roles and Modifiers -->
 			<div
-				class="md:w-full max-md:max-w-sm text-center h-fit items-center dark:bg-surface-600/30 bg-surface-200/30 border border-surface-200 dark:border-surface-700 shadow-lg rounded-xl px-2 md:py-8 max-sm:py-4"
+				class="md:w-full max-md:max-w-sm text-center h-fit items-center dark:bg-surface-600/30 bg-surface-200/30 border border-surface-200 dark:border-surface-700 shadow-lg rounded-xl px-2 md:py-2 max-sm:py-2"
 			>
 				{#if generatedRandomHero}
 					<div
@@ -730,8 +796,8 @@
 					{#if data.session && data.session.user}
 						<div class="my-4"><MatchHistory {matchTableData} /></div>
 					{/if}
-				{:else}
-					<div />
+				{:else if data.session && data.session.user}
+					<div class="my-4"><MatchHistory {matchTableData} /></div>
 				{/if}
 
 				<!-- Busted await because its synchronus -->
