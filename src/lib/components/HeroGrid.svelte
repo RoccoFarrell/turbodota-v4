@@ -10,10 +10,8 @@
 
 	const heroClick = (hero: Hero) => {
 		dispatch('heroclick', hero);
-		showHero = false;
 	};
 	let showHeroGrid = true;
-	let showHero=true;
 </script>
 
 <!-- Desktop Hero Grid -->
