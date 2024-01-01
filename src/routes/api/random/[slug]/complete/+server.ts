@@ -38,6 +38,7 @@ export const POST: RequestHandler = async ({ request, params, url, locals }) => 
 
 	let completedRandomWithoutMatch = { ...completedRandom }
 	delete completedRandomWithoutMatch.match
+	delete completedRandomWithoutMatch.id
 
 	const randomCompleteResults = await prisma.random.update({
         where: {
