@@ -38,6 +38,7 @@
 	import Lock from '$lib/assets/lock.png';
 	import SeasonLogo from '$lib/assets/seasonLogo.png';
 	import TournamentLight from '$lib/assets/tournament_light.png';
+	import WantedPoster from '$lib/assets/wantedPoster.png';
 
 	if (browser) {
 		console.log('data: ', data);
@@ -625,23 +626,24 @@
 			{/if}
 		</div> -->
 		<div class="w-full flex max-md:flex-col">
-			{#if data.session && data.session.user}
-				<div class="my-4 lg:w-1/2"><MatchHistory {matchTableData} /></div>
-			{/if}
-			<div class="lg:w-1/2 p-4">
+			<div
+				class={'rounded-xl mx-1 my-2 ' +
+					(!data.session ? ' lg:w-3/4 mx-auto my-4' : 'lg:w-1/2')}
+			>
 				{#if generatedRandomHero}
-				<div class="flex flex-col justify-center items-center w-full h-full">
-					<div
-						class="flex flex-col items-center space-y-2 bg-yellow-600/30 rounded-2xl py-4 mb-4 w-full"
-						in:slide={{ delay: 250, duration: 300, easing: quintOut, axis: 'x' }}
-					>
-						<h1 class="h1">Your random:</h1>
-						<h1 class="h1 vibrating animate-pulse text-amber-600">
-							{generatedRandomHero.localized_name}
-						</h1>
-						<i class={`vibrating d2mh hero-${generatedRandomHero.id} scale-150`}></i>
-					</div>
-					<!-- 
+					<div class="flex flex-col justify-center items-center w-full relative z-0 rounded-xl h-full">
+						<!-- <img src={WantedPoster} alt="wanted" class="rounded-xl absolute"/> -->
+						<div
+							class="bg-blankPoster bg-contain bg-no-repeat bg-center z-50 flex flex-col items-center space-y-2 rounded-2xl p-4 mb-4 w-full h-96 justify-center"
+							in:slide={{ delay: 250, duration: 300, easing: quintOut, axis: 'x' }}
+						>
+							<h1 class="h1 text-slate-900 font-bold">WANTED</h1>
+							<h1 class="h1 vibrating animate-pulse text-amber-600">
+								{generatedRandomHero.localized_name}
+							</h1>
+							<i class={`vibrating d2mh hero-${generatedRandomHero.id} scale-150`}></i>
+						</div>
+						<!-- 
 						<div class="w-fit mx-auto p-4 border border-dashed border-fuchsia-300 my-4 card">
 							<div class="grid grid-cols-3 place-content-start">
 								<p>Pulled {newerStratzMatches.length} matches from Stratz</p>
@@ -656,47 +658,48 @@
 							<div><p class="inline text-primary-500">{stratzTimeoutCountdown}s</p> before you can check again</div>
 						</div> -->
 
-					{#await stratzLoading}
-						<div class="flex items-center justify-center h-full">
-							<button class="btn variant-filled-success w-full">
-								<i class="fi fi-br-refresh h-fit animate-spin"></i>
-								<div class="placeholder animate-pulse"></div>
-							</button>
-						</div>
-					{:then stratzData}
-						{#if stratzData}
-							<div class="w-fit mx-auto p-4 border border-dashed border-fuchsia-300 my-4 space-y-4 card">
-								<div>
-									{#if newerStratzMatches[0].id.toString() !== data.rawMatchData[0].match_id.toString()}
-										<div class="flex items-center justify-center p-1 space-x-2 text-green-500">
-											<i class="fi fi-ss-head-side-brain"></i>
-											<p>You may have a point...</p>
-										</div>
-									{:else}
-										<div class="text-amber-500 flex items-center space-x-2 justify-center p-1">
-											<i class="fi fi-br-database mx-2"></i>
-											<p>No new matches found from two sources...</p>
-										</div>
-									{/if}
-								</div>
-								<div class="grid grid-cols-3 place-content-start">
-									<p class="text-xs text-secondary-600">Pulled {newerStratzMatches.length} matches from Stratz</p>
-									<div class="text-xs">
-										Most recent Stratz match: <p class="font-bold text-primary-500">{newerStratzMatches[0].id}</p>
-									</div>
-									<div class="text-xs">
-										Most recent Open Dota match: <p class="font-bold text-primary-500">
-											{data.rawMatchData[0].match_id}
-										</p>
-									</div>
-								</div>
-
-								<div class="mt-2">
-									<p class="inline text-orange-500 font-bold">{stratzTimeoutCountdown}s</p>
-									before you can check again
-								</div>
+						{#await stratzLoading}
+							<div class="flex items-center justify-center h-full">
+								<button class="btn variant-filled-success w-full">
+									<i class="fi fi-br-refresh h-fit animate-spin"></i>
+									<div class="placeholder animate-pulse"></div>
+								</button>
 							</div>
-						{/if}
+						{:then stratzData}
+							{#if stratzData}
+								<div class="w-fit mx-auto p-4 border border-dashed border-fuchsia-300 my-4 space-y-4 card">
+									<div>
+										{#if newerStratzMatches[0].id.toString() !== data.rawMatchData[0].match_id.toString()}
+											<div class="flex items-center justify-center p-1 space-x-2 text-green-500">
+												<i class="fi fi-ss-head-side-brain"></i>
+												<p>You may have a point...</p>
+											</div>
+										{:else}
+											<div class="text-amber-500 flex items-center space-x-2 justify-center p-1">
+												<i class="fi fi-br-database mx-2"></i>
+												<p>No new matches found from two sources...</p>
+											</div>
+										{/if}
+									</div>
+									<div class="grid grid-cols-3 place-content-start">
+										<p class="text-xs text-secondary-600">Pulled {newerStratzMatches.length} matches from Stratz</p>
+										<div class="text-xs">
+											Most recent Stratz match: <p class="font-bold text-primary-500">{newerStratzMatches[0].id}</p>
+										</div>
+										<div class="text-xs">
+											Most recent Open Dota match: <p class="font-bold text-primary-500">
+												{data.rawMatchData[0].match_id}
+											</p>
+										</div>
+									</div>
+
+									<div class="mt-2">
+										<p class="inline text-orange-500 font-bold">{stratzTimeoutCountdown}s</p>
+										before you can check again
+									</div>
+								</div>
+							{/if}
+						{/await}
 						{#if data.session && data.session.user}
 							<div class="flex items-center justify-center">
 								<button
@@ -711,11 +714,10 @@
 								>
 							</div>
 						{/if}
-					{/await}
-					<!-- {#if data.session && data.session.user}
+						<!-- {#if data.session && data.session.user}
 					<div class="my-4"><MatchHistory {matchTableData} /></div>
 				{/if} -->
-			</div>
+					</div>
 				{:else}
 					<!-- <div class="my-4"><MatchHistory {matchTableData} /></div> -->
 					<div class="flex flex-col justify-center items-center h-full">
@@ -734,6 +736,9 @@
 					</div>
 				{/if}
 			</div>
+			{#if data.session && data.session.user}
+				<div class="m-2 lg:w-1/2"><MatchHistory {matchTableData} /></div>
+			{/if}
 		</div>
 
 		<div class="lg:grid lg:grid-cols-3 max-sm:flex max-sm:flex-col max-lg:space-y-8 sm:place-content-start lg:gap-x-8">

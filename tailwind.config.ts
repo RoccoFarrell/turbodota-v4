@@ -61,6 +61,10 @@ const config = {
 			},
 			fontFamily: {
 				sans: [...fontFamily.sans]
+			},
+			backgroundImage: {
+				'wantedPoster': "url('$lib/assets/wantedPoster.png')",
+				'blankPoster': "url('$lib/assets/blankPoster.png')"
 			}
 		}
 	},
