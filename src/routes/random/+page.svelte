@@ -42,8 +42,10 @@
 
 	if (browser) {
 		console.log('data: ', data);
-		console.log('store data: ', $randomStore);
+		
 	}
+
+	$: console.log('store data: ', $randomStore);
 
 	let generatedRandomHero: Hero | null = null;
 
@@ -58,7 +60,7 @@
 	let matchTableData = last5Matches.map((match: any) => {
 		return {
 			match_id: match.match_id,
-			start_time: dayjs.unix(match.start_time).format('llll'),
+			start_time: dayjs(match.start_time).format('llll'),
 			result: winOrLoss(match.player_slot, match.radiant_win),
 			hero: data.heroDescriptions.allHeroes.filter((hero: Hero) => hero.id === match.hero_id)[0].id,
 			kda: ((match.kills + match.assists) / match.deaths).toFixed(2)

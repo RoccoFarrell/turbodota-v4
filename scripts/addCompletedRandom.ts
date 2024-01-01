@@ -1,7 +1,7 @@
 import prisma from '$lib/server/prisma'
 import dayjs from 'dayjs'
 
-let randomHeroId = 65
+let randomHeroId = 136
 let fakeAccountID = 65110965
 
 const latestMatchResult = await prisma.match.findFirst({

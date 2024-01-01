@@ -45,7 +45,6 @@ export const POST: RequestHandler = async ({ request, params, url, locals }) => 
             id: completedRandom.id
         },
 		data: {
-            ...completedRandomWithoutMatch,
             active: false,
             status: 'completed',
 			win: winOrLoss(completedMatch.player_slot, completedMatch.radiant_win),
