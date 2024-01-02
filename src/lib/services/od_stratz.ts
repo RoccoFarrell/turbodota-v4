@@ -1,3 +1,10 @@
+/* 
+    Calls to cover
+    https://api.opendota.com/api/heroes
+    https://api.opendota.com/api/matches/${match_id}
+    https://api.opendota.com/api/players/${account_id}/matches?significant=0&game_mode=23&date=${d_diff}
+*/
+
 const query3rdPartyAPI = async (provider: string, path: string) => {
     let account_id: number = 65110965
 	console.log(`\n-----------\n[stratz] account_id: ${account_id}\n-------------\n`);

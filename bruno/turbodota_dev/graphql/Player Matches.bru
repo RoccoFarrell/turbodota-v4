@@ -1,0 +1,44 @@
+meta {
+  name: Player Matches
+  type: graphql
+  seq: 3
+}
+
+post {
+  url: https://api.stratz.com/graphql
+  body: graphql
+  auth: bearer
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJTdWJqZWN0IjoiODA1NmE2MzUtNmM4MS00OTlmLThiYTItZDAxMzQ4OWM2NzMxIiwiU3RlYW1JZCI6IjY1MTEwOTY1IiwibmJmIjoxNzAzMzA3OTEyLCJleHAiOjE3MzQ4NDM5MTIsImlhdCI6MTcwMzMwNzkxMiwiaXNzIjoiaHR0cHM6Ly9hcGkuc3RyYXR6LmNvbSJ9.yfQ-Ymoi1q-vUiOq2KMkyAVKeuVq3F9k5nf_lqRDA8g
+}
+
+body:graphql {
+  {player(steamAccountId:65110965) {
+  		steamAccountId
+  		matches(request: {
+  		  take: 10,
+  		  gameModeIds:[23]
+  			}) {
+  		  id
+  		  gameMode
+  		  startDateTime
+  		  endDateTime
+  		  durationSeconds
+  		  isStats
+  		  players(steamAccountId:65110965){
+  			steamAccountId
+  			isRadiant
+  			isVictory
+  			partyId
+  			heroId
+  			kills
+  			assists
+  			deaths
+  			
+  		  }
+  		}
+  	  }
+  	}
+}

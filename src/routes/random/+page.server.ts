@@ -67,7 +67,7 @@ export const load: PageServerLoad = async ({ locals, parent, url }) => {
 		});
 
 		let responseData = await response.json();
-		console.log(responseData);
+		//console.log(responseData);
 
 		//user has at least 1 active random
 
@@ -172,7 +172,7 @@ export const load: PageServerLoad = async ({ locals, parent, url }) => {
 		if(leagueAndSeasonsResult && leagueAndSeasonsResult[0]) currentSeasonLeaderboard = calculateRandomLeaderboard(leagueAndSeasonsResult[0].seasons[0].randoms)
 		else console.error('could not load season leaderboard in server')
 
-		console.log(currentSeasonLeaderboard)
+		//console.log(currentSeasonLeaderboard)
 	}
 	return {
 		...parentData,
