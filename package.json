@@ -10,6 +10,7 @@
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "test": "vitest",
+    "coverage": "npx vitest run --coverage",
     "lint": "prettier --check .",
     "format": "prettier --write .",
     "prisma": "npx prisma generate && npx prisma db push"
@@ -23,6 +24,7 @@
     "@tailwindcss/forms": "0.5.7",
     "@tailwindcss/typography": "0.5.10",
     "@types/node": "20.10.2",
+    "@vitest/coverage-v8": "^1.1.1",
     "autoprefixer": "10.4.16",
     "concurrently": "^8.2.2",
     "msw": "^2.0.10",
