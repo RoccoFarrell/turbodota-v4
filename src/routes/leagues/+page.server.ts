@@ -55,6 +55,12 @@ export const actions: Actions = {
 
 			createdUserList = createdUserList.filter((cu) => cu.account_id !== 0);
 
+			//add user creating league to league
+			createdUserList.push({
+				account_id: session.user.account_id,
+				lastUpdated: new Date()
+			})
+
 			console.log(`dota user list: `, createdUserList);
 			if (createdUserList.length < 1) {
 				console.log('form failed');
