@@ -21,8 +21,8 @@
 <div class="w-full flex flex-col space-y-4">
 	<h2 class="h2 text-primary-500 w-full border-b border-primary-500 border-dashed py-2">History</h2>
 	<div class="h-full max-h-screen overflow-scroll">
-		<div class="grid md:grid-cols-6 max-sm:grid-cols-4 text-secondary-500">
-			<div class="col-span-2">Hero</div>
+		<div class="grid md:grid-cols-7 max-sm:grid-cols-4 text-secondary-500">
+			<div class="col-span-3">Hero</div>
 			<div>Win or Loss</div>
 			<div class="max-sm:hidden">Gold</div>
 			<div class="max-sm:hidden">Lost Gold</div>
@@ -30,13 +30,13 @@
 		</div>
 		<!-- <div class="grid md:grid-cols-6 max-sm:grid-cols-4 place-items-center"> -->
 			{#each completedRandoms as random, i}
-            <div class={"grid md:grid-cols-6 max-sm:grid-cols-4 place-items-center my-1 md:py-2 max-sm:py-1" + (i !== completedRandoms.length-1 ? " border-b border-tertiary-500/10":"")}>
+            <div class={"grid md:grid-cols-7 max-sm:grid-cols-4 place-items-center my-1 md:py-2 max-sm:py-1" + (i !== completedRandoms.length-1 ? " border-b border-tertiary-500/10":"")}>
 				<!-- Hero-->
-				<div class="flex flex-col w-full col-span-2 justify-start">
+				<div class="flex flex-col w-full col-span-3 justify-start">
 					<div class="flex items-center justify-start space-x-4 w-full">
 						<i class={`z-50 d2mh hero-${random.randomedHero}`}></i>
-						<div class="z-0 flex flex-col justify-start">
-							<p class="w-full text-left text-ellipsis overflow-hidden">
+						<div class="z-0 flex flex-col justify-start truncate">
+							<p class="w-full text-left truncate">
 								{allHeroes.filter((hero) => hero.id === random.randomedHero)[0].localized_name}
 							</p>
 							<p class="w-full text-left text-xs text-secondary-500/70">{daysAgoString(random.endDate)}</p>
@@ -69,7 +69,7 @@
 				<div class="flex items-center space-x-2">
 					{#if random.match}
 						<p class={calculateKdaClasses((random.match.kills + random.match.assists) / random.match.deaths)}>
-							{((random.match.kills + random.match.assists) / random.match.deaths).toFixed(2)}
+							{((random.match.kills + random.match.assists) / random.match.deaths).toFixed(2) === "Infinity" ? "∞" : ((random.match.kills + random.match.assists) / random.match.deaths).toFixed(2) }
 						</p>
 					{/if}
 				</div>

@@ -39,8 +39,8 @@ declare global {
 		game_mode: number;
 		hero_id: number;
 		kills: number;
-		leaver_status: number;
-		lobby_type: number;
+		leaver_status?: number;
+		lobby_type?: number;
 		party_size?: number | null;
 		player_slot: number;
 		radiant_win: boolean;

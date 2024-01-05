@@ -18,7 +18,7 @@ BigInt.prototype.toJSON = function (): number {
 	return this.toString();
 };
 
-export const POST: RequestHandler = async ({ request, params, url, locals, fetch, setHeaders }) => {
+export const GET: RequestHandler = async ({ request, params, url, locals, fetch, setHeaders }) => {
 	// const session = await locals.auth.validate();
 
 	// console.log(`session in API call: `, JSON.stringify(session), `params.slug: `, params.slug);
@@ -28,9 +28,9 @@ export const POST: RequestHandler = async ({ request, params, url, locals, fetch
 	let account_id: number = parseInt(params.slug || '0');
 	console.log(`\n-----------\n[stratz] account_id: ${account_id}\n-------------\n`);
 
-	let requestBody = await request.json();
+	//let requestBody = await request.json();
 
-	console.log(requestBody);
+	//console.log(requestBody);
 
 	//generate gql
 
@@ -38,7 +38,7 @@ export const POST: RequestHandler = async ({ request, params, url, locals, fetch
 	query {player(steamAccountId:${account_id}) {
 		steamAccountId
 		matches(request: {
-		  take: 10,
+		  take: 100,
 		  gameModeIds:[23]
 			}) {
 		  id
@@ -85,7 +85,7 @@ export const POST: RequestHandler = async ({ request, params, url, locals, fetch
 		'x-ratelimit-remaining-day': stratz_response.headers.get('x-ratelimit-remaining-day') || "-1"
 	});
 
-	let newResponse = new Response(JSON.stringify({ status: 'success', body: requestBody, response: stratz_data }), {
+	let newResponse = new Response(JSON.stringify({ status: 'success', response: stratz_data }), {
 		headers: {
 			'cache-control': `max-age=${cacheTimeoutSeconds}`
 			

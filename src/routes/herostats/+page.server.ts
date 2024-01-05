@@ -25,19 +25,6 @@ export const load: PageServerLoad = async ({ params, locals, url, setHeaders }) 
 	// 	if(![34940151, 65110965, 68024789, 80636612, 113003047, 423076846].includes(user.account_id)) throw error(401, 'Hero stats for friends only!')
 	// }
 
-	//test random number
-	const randomNumber = async () => {
-		const response = await fetch(`${url.origin}/api/randomNumber`, {
-			method: 'Get',
-			headers: {
-				'content-type': 'application/json'
-			}
-		});
-
-		//(response)
-		return await response.json();
-	};
-
 	//get heroes list
 	const getHeroes = async () => {
 		const response = await fetch(`${url.origin}/api/getHeroes`, {
@@ -52,34 +39,49 @@ export const load: PageServerLoad = async ({ params, locals, url, setHeaders }) 
 		return responseData;
 	};
 
-	//get match stats
-	const getMatchStats = async () => {
-		let userDataArray: MatchStats[] = [];
+	const playersWeCareAbout = [
+		{ playerID: 65110965, playerName: 'Rocco' },
+		{ playerID: 34940151, playerName: 'Roberts' },
+		{ playerID: 80636612, playerName: 'Martin' },
+		{ playerID: 113003047, playerName: 'Danny' },
+		{ playerID: 125251142, playerName: 'Matt' },
+		{ playerID: 423076846, playerName: 'Chris' },
+		{ playerID: 67762413, playerName: 'Walker' },
+		{ playerID: 68024789, playerName: 'Ben' }
+		//{ playerID: 123794823, playerName: 'Steven' },
+		//{ playerID: 214308966, playerName: 'Andy' }
+	];
+	
+	const fetchOneMatchStats = async (playerID: number) => {
+		const apiResponse = await fetch(
+			`${url.origin}/api/updateMatchesForUser/${playerID}?account_id=${playerID}`,
+			{
+				method: 'Get',
+				headers: {
+					'content-type': 'application/json'
+				}
+			}
+		);
 
-		const playersWeCareAbout = [
-			{ playerID: 65110965, playerName: 'Rocco' },
-			{ playerID: 34940151, playerName: 'Roberts' },
-			{ playerID: 80636612, playerName: 'Martin' },
-			{ playerID: 113003047, playerName: 'Danny' },
-			{ playerID: 125251142, playerName: 'Matt' },
-			{ playerID: 423076846, playerName: 'Chris' },
-			{ playerID: 67762413, playerName: 'Walker' },
-			{ playerID: 68024789, playerName: 'Ben' }
-			//{ playerID: 123794823, playerName: 'Steven' },
-			//{ playerID: 214308966, playerName: 'Andy' }
-		];
+		let responseData = await apiResponse.json();
+
+		//convert bigInt to Javascript Date
+		responseData.matchData.forEach((element: Match) => {
+			element.start_time = new Date(Number(element.start_time) * 1000);
+		});
+
+		let playerName = playersWeCareAbout.filter(player => player.playerID === playerID)[0].playerName
+
+		return {...responseData, playerName}
+	}
+
+	const generatePromiseObject = async () => {		
+		let allPlayersStreamed: any = {}
 
 		for (const player of playersWeCareAbout) {
+			
 			try {
-				const response = await fetch(
-					`${url.origin}/api/updateMatchesForUser/${player.playerID}?account_id=${player.playerID}`,
-					{
-						method: 'Get',
-						headers: {
-							'content-type': 'application/json'
-						}
-					}
-				);
+				
 
 				// const response = await fetch(`${url.origin}/api/updateMatchesForUser?account_id=${player.playerID}`, {
 				// 	method: 'Get',
@@ -88,20 +90,7 @@ export const load: PageServerLoad = async ({ params, locals, url, setHeaders }) 
 				// 	},
 				// });
 
-				let responseData = await response.json();
-
-				//convert bigInt to Javascript Date
-				responseData.matchData.forEach((element: Match) => {
-					element.start_time = new Date(Number(element.start_time) * 1000);
-				});
-
-				userDataArray.push({
-					playerID: player.playerID,
-					playerName: player.playerName,
-					matchData: responseData.matchData,
-					dataSource: responseData.dataSource,
-					od_url: responseData.od_url
-				});
+				allPlayersStreamed[player.playerID] = fetchOneMatchStats(player.playerID)
 			} catch (e) {
 				console.error(`Fetch match data for user ${player.playerID} failed: `, e);
 			}
@@ -109,29 +98,18 @@ export const load: PageServerLoad = async ({ params, locals, url, setHeaders }) 
 			//(`responseData: ${JSON.stringify(responseData)}`)
 		}
 
-		return userDataArray;
-	};
+		return allPlayersStreamed;
+	}
 
 	setHeaders({
 		'cache-control': 'max-age=3600'
 	});
 
 	return {
+		playersWeCareAbout,
 		streamed: {
-			matchStats: new Promise<MatchStats[]>((resolve, reject) => {
-				getMatchStats()
-					.then((data) => {
-						let returnData: MatchStats[] = data;
-						return resolve(returnData);
-					})
-					.catch((error) => {
-						console.log(error);
-						return reject(error);
-					});
-			}),
-			//matchStats: await getMatchStats(),
-			randomNumber: await randomNumber(),
-			heroDescriptions: await getHeroes()
+			heroDescriptions: await getHeroes(),
+			separatedMatchStats: await generatePromiseObject(),
 		}
 	};
 };

@@ -78,6 +78,9 @@ https://openmoji.org/
 
 https://discord.com/channels/1004048134218981416/1119986172383469569
 
+### Testing Sveltekit API routes
+https://github.com/sveltejs/kit/issues/983#issuecomment-1091761702
+
 ## Thanks
 
 - @pilcrow on the Lucia Discord

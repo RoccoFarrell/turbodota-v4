@@ -18,7 +18,8 @@ body:graphql {
   {player(steamAccountId:65110965) {
   		steamAccountId
   		matches(request: {
-  		  take: 10,
+  		  take: 100,
+        after: 7517296640,
   		  gameModeIds:[23]
   			}) {
   		  id
@@ -27,6 +28,7 @@ body:graphql {
   		  endDateTime
   		  durationSeconds
   		  isStats
+      	averageRank
   		  players(steamAccountId:65110965){
   			steamAccountId
   			isRadiant
@@ -36,6 +38,11 @@ body:graphql {
   			kills
   			assists
   			deaths
+        award
+        imp
+        heroDamage
+        towerDamage
+        heroHealing
   			
   		  }
   		}

@@ -105,12 +105,13 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
 	let updateInterval = new Date();
 
 	let od_url: string = "";
-	updateInterval.setMinutes(rightNow.getMinutes() - 1);
+	let timeoutInterval: number = 1
+	updateInterval.setMinutes(rightNow.getMinutes() - timeoutInterval);
 
 	console.log(`[matches][${account_id}] updateInterval: ${updateInterval}`);
 	if ((userResult && userResult.lastUpdated >= updateInterval && !forceFullUpdate) || forceSource === "db") {
 		if(forceSource === "db") console.log(`[updateMatchesForUser] FORCING source "db"`)
-		console.log(`[matches][${account_id}] user was last updated <10 minutes - fetch from DB`);
+		console.log(`[matches][${account_id}] user was last updated <${timeoutInterval} minutes - fetch from DB`);
 		const matchesResult = await prisma.match.findMany({
 			where: { account_id }
 		});
@@ -120,10 +121,14 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
 		matchStats = matchesResult;
 		dataSource = 'db';
 	} else if (userResult && allowUpdates) {
-		console.log(`[matches][${account_id}] allow update true, and user was last updated >10 minutes - fetch from OD`);
+		console.log(`[matches][${account_id}] allow update true, and user was last updated >${timeoutInterval} minutes - fetch from OD`);
 
 		//query OD
 		if (d_diff && !forceFullUpdate) {
+
+			//need to pass the new API endpoint a newest match ID
+			let newestMatchID = userResult.newestMatchID
+			
 			console.log(
 				`[matches][${account_id}] d_diff calculated, fetching matches ${d_diff} days back for ${userResult?.account_id}`
 			);

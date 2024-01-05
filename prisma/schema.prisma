@@ -24,8 +24,8 @@ model Match {
   game_mode     Int
   hero_id       Int
   kills         Int
-  leaver_status Int
-  lobby_type    Int
+  leaver_status Int?
+  lobby_type    Int?
   party_size    Int?
   player_slot   Int
   radiant_win   Boolean

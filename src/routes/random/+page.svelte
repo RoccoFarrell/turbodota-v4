@@ -91,9 +91,9 @@
 	};
 	if (data.session && data.session.user) {
 		randomSeasonStats = {
+			userPlace:
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 			// @ts-ignore: Unreachable code error
-			userPlace:
 				data.currentSeasonLeaderboard.findIndex((item: any) => item.player === data.session.user.account_id) + 1
 		};
 	}
@@ -465,13 +465,10 @@
 		let responseStratz, responseParse;
 		if (!stratzTimeout && data.session) {
 			responseStratz = await fetch(`/api/stratz/players/${data.session.user.account_id}/recentMatches`, {
-				method: 'POST',
+				method: 'GET',
 				headers: {
 					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({
-					since: data.rawMatchData[0].match_id
-				})
+				}
 			});
 
 			responseParse = await updateStratzMatches(responseStratz);
