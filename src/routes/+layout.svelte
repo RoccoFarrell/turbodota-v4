@@ -227,7 +227,7 @@
 
 		<!-- Page Route Content -->
 		<div class="h-[calc(100vh-80px)] flex w-full justify-center">
-			{#if $navigating || navigatingTest}
+			{#if ($navigating && !$page.url.pathname.includes('herostats')) || navigatingTest}
 				<div class="m-8 w-full"><Loading /></div>
 			{:else}
 				<slot />
