@@ -315,90 +315,6 @@
 		//console.log($randomStore.selectedRoles);
 	};
 
-	// let heroLoading = generateRandomHeroIndex(124);
-	// function handleRandomClick() {
-	// 	heroLoading = generateRandomHeroIndex(124);
-
-	// 	//heroLoading = generateRandomHeroIndex($randomStore.availableHeroes.length)
-	// 	//generateRandomHero();
-	// }
-
-	// async function generateRandomHeroIndex(max: number) {
-	// 	/*
-	// 	New random scheme 1
-	// 	*/
-	// 	function genrand1(min: number, max: number) {
-	// 		return (Math.floor(Math.pow(10, 14) * Math.random() * Math.random()) % (max - min)) + min;
-	// 	}
-
-	// 	// rolling the rand
-	// 	async function rollRands1(max: number, rolls: number) {
-	// 		let min: number = 0;
-	// 		let counts: any = {};
-	// 		for (let i = min; i < max; i++) {
-	// 			counts[i.toString()] = 0;
-	// 		}
-	// 		let roll = 0;
-	// 		while (roll < rolls) {
-	// 			counts[genrand1(min, max).toString()]++;
-	// 			roll++;
-	// 		}
-	// 		return counts;
-	// 	}
-
-	// 	/*
-	// 		New random scheme 2
-	// 	*/
-
-	// 	function genrand2(max: number) {
-	// 		const array = new Uint32Array(10);
-	// 		let rand = crypto.getRandomValues(array);
-	// 		let heroRand = rand.map((number) => number % max);
-	// 		let randomedHero = heroRand[Math.floor(Math.random() * 9)];
-	// 		return randomedHero;
-	// 	}
-
-	// 	async function rollRands2(max: number, rolls: number) {
-	// 		let min: number = 0;
-	// 		let counts: any = {};
-	// 		for (let i = min; i < max; i++) {
-	// 			counts[i.toString()] = 0;
-	// 		}
-	// 		let roll = 0;
-	// 		while (roll < rolls) {
-	// 			counts[genrand2(max).toString()]++;
-	// 			roll++;
-	// 		}
-	// 		return counts;
-	// 	}
-
-	// 	function genrandOld(max: number) {
-	// 		return Math.floor(Math.random() * max);
-	// 	}
-
-	// 	async function rollRandsOld(max: number, rolls: number) {
-	// 		let min: number = 0;
-	// 		let counts: any = {};
-	// 		for (let i = min; i < max; i++) {
-	// 			counts[i.toString()] = 0;
-	// 		}
-	// 		let roll = 0;
-	// 		while (roll < rolls) {
-	// 			counts[genrandOld(max).toString()]++;
-	// 			roll++;
-	// 		}
-	// 		return counts;
-	// 	}
-
-	// 	return await rollRands2($randomStore.availableHeroes.length, 1000000);
-
-	// 	// Promise.all([
-	// 	// 	rollRands1($randomStore.availableHeroes.length, 1000000),
-	// 	// 	rollRands2($randomStore.availableHeroes.length, 1000000),
-	// 	// 	rollRandsOld($randomStore.availableHeroes.length, 1000000)
-	// 	// ])
-	// }
-
 	const generateRandomHero = async () => {
 		console.log(`${$randomStore.availableHeroes.length} available random heroes`);
 
@@ -502,21 +418,6 @@
 
 	let stratzLoading: any = false;
 
-	//https://stackoverflow.com/questions/76933374/svelte-loading-indicator-for-a-synchronous-method
-	// function repaint() {
-	// 	return new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
-	// }
-
-	// async function doTheThing() {
-	// 	showLoading = true;
-	// 	await tick();
-	// 	await repaint();
-	// 	doIt();
-	// 	showLoading = false;
-	// }
-
-	//toast settings
-
 	const t: ToastSettings = {
 		message: `Max bans of ${$randomStore.maxBans} reached!`,
 		background: 'variant-filled-warning'
@@ -554,7 +455,7 @@
 			</div>
 
 			<!-- current season info -->
-			{#if data.session && data.session.user && data.leagueAndSeasonsResult[0]}
+			{#if data.session && data.session.user && data.leagueAndSeasonsResult[0] && data.leagueAndSeasonsResult[0].seasons.length > 0}
 				<div class="flex flex-col w-full justify-center col-span-2 p-2">
 					<div class="w-full grid grid-cols-2 p-1">
 						<div class="text-sm text-tertiary-500">

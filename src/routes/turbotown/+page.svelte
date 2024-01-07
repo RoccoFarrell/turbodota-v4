@@ -1,14 +1,24 @@
 <script lang="ts">
-	import type { PageData } from './$types';
+	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
+
+	//types
+	import type { PageData } from './$types';
+	import type { ModalSettings } from '@skeletonlabs/skeleton';
+
+	//skeleton
+	import { getModalStore } from '@skeletonlabs/skeleton';
+	const modalStore = getModalStore();
+
 	//images
 	import town_logo_light from '$lib/assets/turbotown_light.png';
 	import town_logo_dark from '$lib/assets/turbotown_dark.png';
 
 	//components
 	import { Avatar, ProgressBar } from '@skeletonlabs/skeleton';
-	import type { Return } from '@prisma/client/runtime/library';
-	import { onMount } from 'svelte';
+	import HeroGrid from '$lib/components/HeroGrid/HeroGrid.svelte';
+
+	//data
 	export let data: PageData;
 
 	console.log(data);
@@ -17,9 +27,9 @@
 	$: progressVal = 0;
 	$: skillCount = 0;
 
-    onMount(() => {
-        if(data.skillCount) skillCount = parseInt(data.skillCount)
-    })
+	onMount(() => {
+		if (data.skillCount) skillCount = parseInt(data.skillCount);
+	});
 
 	$: if (browser) {
 		if (skillCount % 5 === 0) {
@@ -44,9 +54,19 @@
 			clearInterval(interval);
 		}
 	}
+
+	//modal
+	const modal: ModalSettings = {
+		type: 'component',
+		component: 'heroGrid'
+	};
+	modalStore.trigger(modal);
 </script>
 
 <div class="container p-4">
+	<!-- <div>
+		<HeroGrid heroes={data.heroDescriptions.allHeroes}/>
+	</div> -->
 	<div class="flex flex-col space-y-4 justify-center items-center">
 		<div class="flex flex-col md:flex-row items-center text-center w-full justify-center">
 			<h1 class="h1">ONLY THE BEST CAN BECOME MAYOR OF</h1>
@@ -62,11 +82,7 @@
 					{skillCount}
 				</p>
 			</div>
-			<ProgressBar
-				value={progressVal}
-				class="text-primary-500 fill-primary-500"
-				transition="transition-width"
-			/>
+			<ProgressBar value={progressVal} class="text-primary-500 fill-primary-500" transition="transition-width" />
 			<button class="btn variant-filled w-1/4 mx-auto" on:click={() => trainSkill()}>Train!</button>
 		</div>
 	</div>

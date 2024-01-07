@@ -1,5 +1,6 @@
 import { writable } from 'svelte/store';
 import { heroRoles } from '$lib/constants/heroRoles';
+import type { Hero } from '@prisma/client';
 
 function createRandomStore() {
 	const { subscribe, set, update } = writable({

@@ -1,4 +1,5 @@
 import type { LayoutServerLoad } from './$types'
+import type { Hero } from '@prisma/client'
 
 export const load: LayoutServerLoad = async ({ locals, url }) => {
 	const getHeroes = async () => {
@@ -11,7 +12,7 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 
 		let responseData = await response.json();
 
-		console.log(Object.keys(responseData))
+		//console.log(Object.keys(responseData))
 		responseData = {
 			...responseData,
 			allHeroes: responseData.allHeroes.sort((a: Hero,b: Hero) => {

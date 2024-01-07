@@ -2,16 +2,16 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// datasource db {
-//   provider = "postgresql"
-//   url      = env("DEV_URL")
-// }
-
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
+  url      = env("DEV_URL")
 }
+
+// datasource db {
+//   provider  = "postgresql"
+//   url       = env("DATABASE_URL")
+//   directUrl = env("DIRECT_URL")
+// }
 
 model Match {
   id            Int      @id @default(autoincrement())
@@ -127,6 +127,7 @@ model Season {
   league         League         @relation(fields: [leagueID], references: [id])
   members        DotaUser[]
   season_results SeasonResult[]
+  turbotowns     Turbotown[]
 }
 
 model SeasonResult {
@@ -182,6 +183,7 @@ model User {
   dota_user    DotaUser?   @relation(fields: [account_id], references: [account_id])
 
   //matches      Match[]
+  Turbotown Turbotown[]
 }
 
 model UserPrefs {
@@ -216,6 +218,39 @@ model Random {
   match           Match?    @relation(fields: [endMatchID], references: [id])
 
   //@@unique([account_id, active], name: "matchPlusAccount")
+  TurbotownQuest   TurbotownQuest? @relation(fields: [turbotownQuestId], references: [id])
+  turbotownQuestId Int?
+}
+
+model Turbotown {
+  id          Int               @id @default(autoincrement())
+  account_id  Int
+  seasonId    Int
+  lastUpdated DateTime          @default(now())
+  user        User?             @relation(fields: [account_id], references: [account_id])
+  metrics     TurbotownMetric[]
+  quests      TurbotownQuest[]
+  Season      Season?           @relation(fields: [seasonId], references: [id])
+}
+
+model TurbotownMetric {
+  id          Int      @id @default(autoincrement())
+  turbotownId Int
+  lastUpdated DateTime
+  label       String
+  value       Int
+
+  Turbotown Turbotown @relation(fields: [turbotownId], references: [id])
+}
+
+model TurbotownQuest {
+  id          Int      @id @default(autoincrement())
+  turbotownId Int
+  lastUpdated DateTime
+  type        String
+  randoms     Random[]
+
+  Turbotown Turbotown @relation(fields: [turbotownId], references: [id])
 }
 
 model Session {

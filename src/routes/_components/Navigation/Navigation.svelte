@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Session } from 'lucia';
-	export let session: Session;
+	export let session: Session | null;
 
 	import { page } from '$app/stores';
 
