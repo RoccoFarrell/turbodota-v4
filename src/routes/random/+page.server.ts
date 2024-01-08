@@ -18,14 +18,19 @@ export const load: PageServerLoad = async ({ locals, parent, url }) => {
 	const session = await locals.auth.validate();
 	//if (session) throw redirect(302, "/");
 
-	async function getRandomsForUser() {
+	async function getRandomsForUser(seasonID: number) {
 		return await prisma.random.findMany({
 			where: {
 				AND: [
 					{
 						// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 						// @ts-ignore: Unreachable code error
-						account_id: session.user.account_id
+						account_id: session.user.account_id,
+						seasons: {
+							some: {
+								id: seasonID
+							}
+						}
 					}
 				]
 			},
@@ -58,7 +63,51 @@ export const load: PageServerLoad = async ({ locals, parent, url }) => {
 	let currentSeasonLeaderboard: any = [];
 
 	if (session && session.user) {
-		randomsForUser = await getRandomsForUser();
+		/* 
+			Get season info
+		*/
+
+		leagueAndSeasonsResult = await prisma.league.findMany({
+			where: {
+				members: {
+					some: {
+						account_id: session.user.account_id
+					}
+				}
+			},
+			include: {
+				members: {
+					include: {
+						_count: true
+					}
+				},
+				seasons: {
+					where: {
+						AND: [{ type: 'random', active: true }]
+					},
+					include: {
+						randoms: {
+							include: {
+								user: true,
+								match: true
+							}
+						},
+						_count: {
+							select: { randoms: true }
+						}
+					}
+				}
+			}
+		});
+
+		/* current season leaderboard */
+		if(leagueAndSeasonsResult && leagueAndSeasonsResult[0] && leagueAndSeasonsResult[0].seasons.length > 0) currentSeasonLeaderboard = calculateRandomLeaderboard(leagueAndSeasonsResult[0].members, leagueAndSeasonsResult[0].seasons[0].randoms)
+		else console.error('could not load season leaderboard in server')
+
+		/* End get season info */
+		/* ------------------- */
+
+		randomsForUser = await getRandomsForUser(leagueAndSeasonsResult[0].seasons[0].id);
 
 		console.log(`active random length: ${randomsForUser.filter((random) => random.active).length}`);
 
@@ -133,44 +182,14 @@ export const load: PageServerLoad = async ({ locals, parent, url }) => {
 				});
 				let completeResponseData = await completeResponse.json();
 				responseComplete = completeResponseData;
-				randomsForUser = await getRandomsForUser();
+				randomsForUser = await getRandomsForUser(leagueAndSeasonsResult[0].seasons[0].id);
 			} else {
 				responseComplete = { error: 'couldnt complete random' };
 			}
 		}
 
 		/* End get randoms */
-		leagueAndSeasonsResult = await prisma.league.findMany({
-			where: {
-				members: {
-					some: {
-						account_id: session.user.account_id
-					}
-				}
-			},
-			include: {
-				seasons: {
-					where: {
-						AND: [{ type: 'random', active: true }]
-					},
-					include: {
-						randoms: {
-							include: {
-								user: true,
-								match: true
-							}
-						},
-						_count: {
-							select: { randoms: true }
-						}
-					}
-				}
-			}
-		});
 
-		/* current season leaderboard */
-		if(leagueAndSeasonsResult && leagueAndSeasonsResult[0] && leagueAndSeasonsResult[0].seasons.length>0) currentSeasonLeaderboard = calculateRandomLeaderboard(leagueAndSeasonsResult[0].seasons[0].randoms)
-		else console.error('could not load season leaderboard in server')
 
 		//console.log(currentSeasonLeaderboard)
 	}

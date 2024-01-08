@@ -27,6 +27,7 @@
     "@vitest/coverage-v8": "^1.1.1",
     "autoprefixer": "10.4.16",
     "concurrently": "^8.2.2",
+    "mdsvex": "^0.11.0",
     "msw": "^2.0.10",
     "node-fetch": "^3.3.2",
     "postcss": "8.4.32",
