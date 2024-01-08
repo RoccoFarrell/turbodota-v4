@@ -71,6 +71,15 @@
 				>
 			</li>
 		{/if}
+		<li
+			class={'flex items-center justify-start rounded-full ' +
+				($page.url.pathname.includes('/blog') ? 'border border-secondary-500/60' : '')}
+		>
+			<a href="/blog" data-sveltekit-preload-data="tap" class="w-full">
+				<i class="fi fi-rr-blog-text text-pink-500" />
+				<p class={$page.url.pathname === '/blog' ? 'font-bold' : ''}>Blog</p></a
+			>
+		</li>
 		<li class="h-32 lg:h-4"></li>
 		<hr class="!border-t-4" />
 		{#if !session || !session.user}

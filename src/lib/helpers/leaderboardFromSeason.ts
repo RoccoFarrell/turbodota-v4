@@ -1,5 +1,5 @@
 import { Prisma } from '@prisma/client'
-import type { Random } from '@prisma/client';
+import type { Random, DotaUser } from '@prisma/client';
 
 type RandomWithUsersAndMatch = Prisma.RandomGetPayload<{
     include: {
@@ -28,11 +28,12 @@ class LeaderboardRow {
 	goldLost: number = 0;
 }
 
-const calculateRandomLeaderboard = (inputRandoms: RandomWithUsersAndMatch[]) => {
+const calculateRandomLeaderboard = (inputMembers: DotaUser[], inputRandoms: RandomWithUsersAndMatch[]) => {
 	/* 
         Get all unique player IDs in random database
     */
-	let uniqueIDs = inputRandoms.map((random) => random.account_id).filter((random, i, arr) => arr.indexOf(random) === i);
+	//let uniqueIDs = inputRandoms.map((random) => random.account_id).filter((random, i, arr) => arr.indexOf(random) === i);
+	let uniqueIDs = inputMembers.map(member => member.account_id)
 	//console.log(uniqueIDs);
 
 	//console.log(uniqueIDs);

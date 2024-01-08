@@ -67,6 +67,17 @@ declare global {
 		sortObj: SortObj;
 		ascending: boolean;
 	}
+
+	type Categories = 'sveltekit' | 'svelte';
+
+	type Post = {
+		title: string;
+		slug: string;
+		description: string;
+		date: string;
+		categories: Categories[];
+		published: boolean;
+	};
 }
 
 export {};

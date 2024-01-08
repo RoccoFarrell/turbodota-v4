@@ -4,10 +4,8 @@
 	import { quintOut, cubicOut } from 'svelte/easing';
 
 	//page data
-	import type { PageData } from './$types';
-	export let data: PageData;
+	export let randomData: any;
 
-	console.log('data: ', data);
 
 	//constants
 	//import { playersWeCareAbout } from '$lib/constants/playersWeCareAbout';
@@ -114,18 +112,18 @@
 
 	$: tableSource;
 
-	if (data.randoms) {
+	if (randomData) {
 		/* 
         Get all unique player IDs in random database
     */
-		let uniqueIDs = data.randoms
+		let uniqueIDs = randomData
 			.map((random: any) => random.account_id)
 			.filter((random: any, i: any, arr: any) => arr.indexOf(random) === i);
 		console.log(uniqueIDs);
 
 		console.log(uniqueIDs);
 
-		console.log(`Parsing ${data.randoms.length} randoms`);
+		console.log(`Parsing ${randomData.length} randoms`);
 		let randomTotals = {};
 		let tableData: LeaderboardRow[] = [];
 
@@ -136,7 +134,7 @@
 			console.log('looping through playerID: ', playerID);
 			let row: LeaderboardRow = new LeaderboardRow();
 
-			let playerRandoms = data.randoms.filter((random: any) => random.account_id === playerID && random.active === false);
+			let playerRandoms = randomData.filter((random: any) => random.account_id === playerID && random.active === false);
 			if (playerRandoms.length > 0) {
 				row.player = playerID;
 				row.name = playerRandoms[0].user ? playerRandoms[0].user.username : '';
@@ -213,11 +211,11 @@
                 */
 
 				row.goldWon = playerRandoms.reduce(
-					(acc, cur) => (cur.win && cur.endGold ? (acc += cur.endGold) : (acc += 0)),
+					(acc: any, cur: any) => (cur.win && cur.endGold ? (acc += cur.endGold) : (acc += 0)),
 					0
 				);
 				row.goldLost = playerRandoms.reduce(
-					(acc, cur) => (cur.win && cur.modifierTotal ? (acc += cur.modifierTotal) : (acc += 0)),
+					(acc: any, cur: any) => (cur.win && cur.modifierTotal ? (acc += cur.modifierTotal) : (acc += 0)),
 					0
 				);
 
@@ -312,14 +310,21 @@
 			<thead>
 				<tr>
 					{#each tableSource.head as headerText, i}
-						<th
+						<!-- <th
 							id={headerText}
 							class={'text-center hover:bg-surface-500/50' +
 								([0, 3, 5, 6, 7, 8].includes(i) ? ' max-md:hidden lg:visible' : '') +
 								(headerText === sortBy.sortObj.headerText && sortBy.ascending ? ' table-sort-asc' : '') +
 								(headerText === sortBy.sortObj.headerText && !sortBy.ascending ? ' table-sort-dsc' : '')}
 							on:click={() => handleSortHeaderClick(headerText)}>{headerText}</th
-						>
+						> -->
+						<th
+							id={headerText}
+							class={'text-center hover:bg-surface-500/50' +
+								([0, 3, 5, 6, 7, 8].includes(i) ? ' max-md:hidden lg:visible' : '') +
+								(headerText === sortBy.sortObj.headerText && sortBy.ascending ? ' table-sort-asc' : '') +
+								(headerText === sortBy.sortObj.headerText && !sortBy.ascending ? ' table-sort-dsc' : '')}>
+							</th>
 					{/each}
 				</tr>
 			</thead>
@@ -374,7 +379,7 @@
 										transition:blur={{ amount: 20, duration: 400 }}
 									>
 										<History
-											completedRandoms={data.randoms.filter(
+											completedRandoms={randomData.filter(
 												(random) => random.account_id === parseInt(row[0]) && random.active === false
 											)}
 											allHeroes={data.heroDescriptions.allHeroes}
