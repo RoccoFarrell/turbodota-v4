@@ -7,7 +7,15 @@ function createHeroGridStore() {
 		allHeroes: [] as Hero[],
 		availableHeroes: [] as Hero[],
 		bannedHeroes: [] as Hero[],
-		selectedRoles: [] as string[]
+		selectedRoles: [] as string[],
+		startingGold: 100,
+		expectedGold: 100,
+		banMultiplier: 10,
+		modifierAmount: 0,
+		modifierTotal: 0,
+		freeBans: 3,
+		maxBans: 10,
+		randomedHero: {} as Hero | null
 	});
 
 	return {
@@ -33,7 +41,15 @@ function createHeroGridStore() {
 						allHeroes: [...input] as Hero[],
 						availableHeroes: [...input] as Hero[],
 						bannedHeroes: [] as Hero[],
-						selectedRoles: [] as string[]
+						selectedRoles: [] as string[],
+						startingGold: 100,
+						expectedGold: 100,
+						banMultiplier: 10,
+						modifierAmount: 0,
+						modifierTotal: 0,
+						freeBans: 3,
+						maxBans: 10,
+						randomedHero: null
 					})
 			);
 		}
@@ -41,23 +57,23 @@ function createHeroGridStore() {
 }
 
 const updateCalculations = (store: any) => {
-	// store.modifierAmount = store.bannedHeroes.length;
-	// store.modifierTotal =
-	// 	(store.bannedHeroes.length - store.freeBans < 0 ? 0 : store.bannedHeroes.length - store.freeBans) *
-	// 	store.banMultiplier;
+	store.modifierAmount = store.bannedHeroes.length;
+	store.modifierTotal =
+		(store.bannedHeroes.length - store.freeBans < 0 ? 0 : store.bannedHeroes.length - store.freeBans) *
+		store.banMultiplier;
 
-	//store.expectedGold =
+	// store.expectedGold =
 	// store.startingGold - (store.bannedHeroes.length > 3 ? store.modifierTotal : 0) > 25
 	// 	? store.startingGold - store.modifierTotal
 	// 	: 25;
-	// store.expectedGold = store.startingGold - store.modifierTotal > 10 ? store.startingGold - store.modifierTotal : 10;
+	store.expectedGold = store.startingGold - store.modifierTotal > 10 ? store.startingGold - store.modifierTotal : 10;
 	return store;
 };
 
 const banHero = (hero: Hero, store: any) => {
 	console.log(`[herogridStore - banHero] banning hero: ${hero.localized_name}, ${hero.id}`);
 	//console.log(hero);
-	console.log(store);
+	//console.log(store);
 	let banIndex_available = store.availableHeroes.findIndex((availHero: Hero) => availHero.id === hero.id);
 	let banIndex_banned = store.bannedHeroes.findIndex((banHero: Hero) => hero.id === banHero.id);
 
@@ -78,7 +94,8 @@ const banHero = (hero: Hero, store: any) => {
 		store.availableHeroes.push(hero);
 	}
 
-	//store = updateCalculations(store);
+	store = updateCalculations(store);
+	//console.log("after update", store)
 	return store;
 };
 

@@ -67,6 +67,7 @@
 	<!-- <div>
 		<HeroGrid heroes={data.heroDescriptions.allHeroes}/>
 	</div> -->
+	<button class="btn variant-filled" on:click={() => { modalStore.trigger(modal)}}>Modal</button>
 	<div class="flex flex-col space-y-4 justify-center items-center">
 		<div class="flex flex-col md:flex-row items-center text-center w-full justify-center">
 			<h1 class="h1">ONLY THE BEST CAN BECOME MAYOR OF</h1>

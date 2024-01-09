@@ -1,6 +1,8 @@
 <script lang="ts">
 	import '../app.pcss';
 
+	import { setContext } from 'svelte'
+
 	import { dev } from '$app/environment';
 	import { beforeNavigate } from '$app/navigation';
 	import { navigating, page } from '$app/stores';
@@ -96,7 +98,15 @@
 
 	let session: Session | null = data.session || null;
 
+	//set session in context for components
+	setContext('session', session)
+	setContext('userPreferences', data.userPreferences)
+
 	let navigatingTest = false;
+
+	//set context for modal component
+
+	setContext('heroes', data.heroDescriptions.allHeroes)
 
 	//modal
 	const modalStore = getModalStore();
