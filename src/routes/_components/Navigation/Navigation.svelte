@@ -60,6 +60,16 @@
 			>
 		</li>
 
+		<li
+			class={'flex items-center justify-start rounded-full ' +
+				($page.url.pathname === '/turbotown/shop' ? 'border border-secondary-500/60' : '')}
+		>
+			<a href="/turbotown/shop" data-sveltekit-preload-data="tap" class="w-full">
+				<i class="fi fi-rs-shopping-cart text-orange-500 " />
+				<p class={$page.url.pathname === '/turbotown/shop' ? 'font-bold' : ''}>Shop</p></a
+			>
+		</li>
+
 		{#if session && session.user && [34940151, 65110965, 68024789, 80636612, 113003047, 423076846].includes(session.user.account_id)}
 			<li
 				class={'flex items-center justify-start rounded-full ' +
