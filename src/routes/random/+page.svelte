@@ -24,28 +24,46 @@
 	import type { ToastSettings, ToastStore } from '@skeletonlabs/skeleton';
 	const toastStore = getToastStore();
 
+	import { getModalStore } from '@skeletonlabs/skeleton';
+	import type { ModalSettings } from '@skeletonlabs/skeleton';
+	const modalStore = getModalStore();
+
 	//components
 	import History from './_components/History.svelte';
 	import MatchHistory from '$lib/components/MatchHistory.svelte';
+	import GenerateRandom from './_components/GenerateRandom.svelte';
 
 	//constants
 	import { heroRoles } from '$lib/constants/heroRoles';
 
 	//stores
 	import { randomStore } from '$lib/stores/randomStore';
+	import { townStore } from '$lib/stores/townStore';
 
 	//images
 	import Lock from '$lib/assets/lock.png';
+	import QuestBoard from '$lib/assets/questBoard.png';
+	import QuestBoardPoster from '$lib/assets/questBoardPoster.png';
 	import SeasonLogo from '$lib/assets/seasonLogo.png';
 	import TournamentLight from '$lib/assets/tournament_light.png';
 	import WantedPoster from '$lib/assets/wantedPoster.png';
 
 	if (browser) {
 		console.log('data: ', data);
-		
 	}
 
-	$: console.log('store data: ', $randomStore);
+	$: console.log('random store data: ', $randomStore);
+	$: console.log('town store data: ', $townStore);
+	let quest1Store = $townStore.quests.quest1
+	let quest2Store = $townStore.quests.quest2
+	let quest3Store = $townStore.quests.quest3
+	$: console.log('town store quest 1 data: ', $quest1Store);
+	$: console.log('town store quest 2 data: ', $quest2Store);
+	$: console.log('town store quest 3 data: ', $quest3Store);
+
+	quest1Store.setAllHeroes(data.heroDescriptions.allHeroes)
+	quest2Store.setAllHeroes(data.heroDescriptions.allHeroes)
+	quest3Store.setAllHeroes(data.heroDescriptions.allHeroes)
 
 	let generatedRandomHero: Hero | null = null;
 
@@ -92,30 +110,30 @@
 	if (data.session && data.session.user) {
 		randomSeasonStats = {
 			userPlace:
-			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-			// @ts-ignore: Unreachable code error
+				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+				// @ts-ignore: Unreachable code error
 				data.currentSeasonLeaderboard.findIndex((item: any) => item.player === data.session.user.account_id) + 1
 		};
 	}
 
 	//set user preferences on page
-	if (data.userPreferences && data.userPreferences.length > 0) {
-		console.log(`[random/+page.svelte] - evaluating userPreferencces`);
-		let banListPref = data.userPreferences.filter((pref: any) => pref.name === 'randomBanList');
+	// if (data.userPreferences && data.userPreferences.length > 0) {
+	// 	console.log(`[random/+page.svelte] - evaluating userPreferencces`);
+	// 	let banListPref = data.userPreferences.filter((pref: any) => pref.name === 'randomBanList');
 
-		try {
-			if (banListPref.length > 0 && banListPref[0].value) {
-				console.log(`[random/+page.svelte] - evaluating saved ban list`);
-				let randomBanListParsed = JSON.parse(banListPref[0].value);
+	// 	try {
+	// 		if (banListPref.length > 0 && banListPref[0].value) {
+	// 			console.log(`[random/+page.svelte] - evaluating saved ban list`);
+	// 			let randomBanListParsed = JSON.parse(banListPref[0].value);
 
-				let setList = data.heroDescriptions.allHeroes.filter((hero: Hero) => randomBanListParsed.includes(hero.id));
+	// 			let setList = data.heroDescriptions.allHeroes.filter((hero: Hero) => randomBanListParsed.includes(hero.id));
 
-				randomStore.setBanList(setList);
-			}
-		} catch (e) {
-			console.error('error in setting preferences');
-		}
-	}
+	// 			randomStore.setBanList(setList);
+	// 		}
+	// 	} catch (e) {
+	// 		console.error('error in setting preferences');
+	// 	}
+	// }
 
 	/* 
 		End Calculations
@@ -208,112 +226,6 @@
 	};
 
 	$: heroRandom.bannedHeroes;
-
-	const banHero = (hero: Hero) => {
-		let banIndex = $randomStore.bannedHeroes.indexOf(hero);
-
-		if ($randomStore.bannedHeroes.length + 1 > $randomStore.maxBans && banIndex === -1) banLimitErrorVisible = true;
-		else {
-			randomStore.banHero(hero);
-		}
-	};
-
-	let autoBanLists = {
-		garbage: data.heroDescriptions.allHeroes.filter((hero: Hero) =>
-			[
-				'Chen',
-				'Meepo',
-				'Tinker',
-				'Broodmother',
-				'Io',
-				'Naga Siren',
-				'Lone Druid',
-				'Alchemist',
-				'Arc Warden',
-				'Templar Assassin',
-				'Huskar',
-				'Medusa'
-			].includes(hero.localized_name)
-		)
-	};
-
-	const setBanList = (inputList?: string) => {
-		if (typeof inputList === 'string') {
-			if (inputList === 'garbage') randomStore.setBanList(autoBanLists.garbage);
-		} else {
-			randomStore.reset(data.heroDescriptions.allHeroes);
-			//randomStore.setAllHeroes(data.heroDescriptions.allHeroes)
-		}
-	};
-
-	const saveBanList = async () => {
-		if ($randomStore.bannedHeroes.length <= 3 && data.session) {
-			let response = await fetch(`/api/preferences/${data.session.user.account_id}`, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({
-					name: 'randomBanList',
-					value: JSON.stringify($randomStore.bannedHeroes.map((hero: Hero) => hero.id))
-				})
-			});
-
-			let prefsResponse = await response.json();
-			//console.log(prefsResponse);
-			if (prefsResponse.status === 'success') {
-				const t: ToastSettings = {
-					message: `Bans saved!`,
-					background: 'variant-filled-success'
-				};
-				toastStore.trigger(t);
-			}
-		} else {
-			const t: ToastSettings = {
-				message: `Need either 0 or 3 bans selected to save!`,
-				background: 'variant-filled-warning'
-			};
-			toastStore.trigger(t);
-		}
-	};
-
-	const handleRoleSelect = (role: string) => {
-		//console.log(role);
-		if (role === 'All') {
-			//if All was already selected, set to empty
-			//if not selected, set to all roles
-			$randomStore.selectedRoles.includes('All')
-				? ($randomStore.selectedRoles = [])
-				: ($randomStore.selectedRoles = heroRoles);
-		} else {
-			//if not All, remove role if already there
-			//or add role if missing
-			if ($randomStore.selectedRoles.includes(role))
-				$randomStore.selectedRoles = $randomStore.selectedRoles.filter((r) => r !== role && r !== 'All');
-			else $randomStore.selectedRoles.push(role);
-		}
-
-		$randomStore.availableHeroes = data.heroDescriptions.allHeroes.filter((heroDesc: Hero) => {
-			let returnVal = false;
-			$randomStore.selectedRoles.forEach((role) => {
-				if (heroDesc.roles.includes(role)) returnVal = true;
-			});
-			return returnVal;
-		});
-		console.log(`${data.heroDescriptions.allHeroes.length} filtered to ${$randomStore.availableHeroes.length}`);
-
-		$randomStore.bannedHeroes = data.heroDescriptions.allHeroes.filter((heroDesc: Hero) => {
-			let returnVal = true;
-			$randomStore.selectedRoles.forEach((role) => {
-				if (heroDesc.roles.includes(role)) returnVal = false;
-			});
-			return returnVal;
-		});
-
-		if ($randomStore.availableHeroes.length === 0) randomStore.reset(data.heroDescriptions.allHeroes);
-		else randomStore.updateCalculations();
-		//console.log($randomStore.selectedRoles);
-	};
 
 	const generateRandomHero = async () => {
 		console.log(`${$randomStore.availableHeroes.length} available random heroes`);
@@ -433,10 +345,15 @@
 		randomStore.updateCalculations();
 		if (banLimitErrorVisible) toastStore.trigger(t);
 	}
+
+	const modal: ModalSettings = {
+		type: 'component',
+		component: 'heroGrid'
+	};
 </script>
 
 <div class="container md:m-4 my-4 h-full mx-auto w-full max-sm:mb-20">
-	<div class="flex flex-col items-center text-center space-y-1 md:mx-8 mx-2">
+	<div class="flex flex-col items-center text-center md:mx-8 mx-2">
 		<!-- Header Card -->
 		<div
 			class="md:grid md:grid-cols-3 max-sm:flex max-sm:flex-col max-sm:space-y-2 justify-around items-center w-full card p-1"
@@ -525,116 +442,51 @@
 				</div>
 			{/if}
 		</div> -->
-		<div class="w-full flex max-md:flex-col">
-			<div
-				class={'rounded-xl mx-1 my-2 ' +
-					(!data.session ? ' lg:w-3/4 mx-auto my-4' : 'lg:w-1/2')}
+
+		<!-- Action buttons for quest board -->
+		<div class="w-full m-4">
+			<button
+				class="btn variant-filled"
+				on:click={() => {
+					modalStore.trigger(modal);
+				}}>Ban Heroes</button
 			>
-				{#if generatedRandomHero}
-					<div class="flex flex-col justify-center items-center w-full relative z-0 rounded-xl h-full">
-						<!-- <img src={WantedPoster} alt="wanted" class="rounded-xl absolute"/> -->
-						<div
-							class="bg-blankPoster bg-contain bg-no-repeat bg-center z-50 flex flex-col items-center space-y-2 rounded-2xl p-4 mb-4 w-full h-96 justify-center"
-							in:slide={{ delay: 250, duration: 300, easing: quintOut, axis: 'x' }}
-						>
-							<h1 class="h1 text-slate-900 font-bold">WANTED</h1>
-							<h1 class="h1 vibrating animate-pulse text-amber-600">
-								{generatedRandomHero.localized_name}
-							</h1>
-							<i class={`vibrating d2mh hero-${generatedRandomHero.id} scale-150`}></i>
-						</div>
-						<!-- 
-						<div class="w-fit mx-auto p-4 border border-dashed border-fuchsia-300 my-4 card">
-							<div class="grid grid-cols-3 place-content-start">
-								<p>Pulled {newerStratzMatches.length} matches from Stratz</p>
-								<div class="text-xs">
-									Most recent Stratz match: <p>{newerStratzMatches[0].id}</p>
-								</div>
-								<div class="text-xs mt-2">
-									Most recent Open Dota match: <p>{data.rawMatchData[0].match_id}</p>
-								</div>
-							</div>
 
-							<div><p class="inline text-primary-500">{stratzTimeoutCountdown}s</p> before you can check again</div>
-						</div> -->
+			<button class="btn variant-filled">Test</button>
+		</div>
 
-						{#await stratzLoading}
-							<div class="flex items-center justify-center h-full">
-								<button class="btn variant-filled-success w-full">
-									<i class="fi fi-br-refresh h-fit animate-spin"></i>
-									<div class="placeholder animate-pulse"></div>
-								</button>
-							</div>
-						{:then stratzData}
-							{#if stratzData}
-								<div class="w-fit mx-auto p-4 border border-dashed border-fuchsia-300 my-4 space-y-4 card">
-									<div>
-										{#if newerStratzMatches[0].id.toString() !== data.rawMatchData[0].match_id.toString()}
-											<div class="flex items-center justify-center p-1 space-x-2 text-green-500">
-												<i class="fi fi-ss-head-side-brain"></i>
-												<p>You may have a point...</p>
-											</div>
-										{:else}
-											<div class="text-amber-500 flex items-center space-x-2 justify-center p-1">
-												<i class="fi fi-br-database mx-2"></i>
-												<p>No new matches found from two sources...</p>
-											</div>
-										{/if}
-									</div>
-									<div class="grid grid-cols-3 place-content-start">
-										<p class="text-xs text-secondary-600">Pulled {newerStratzMatches.length} matches from Stratz</p>
-										<div class="text-xs">
-											Most recent Stratz match: <p class="font-bold text-primary-500">{newerStratzMatches[0].id}</p>
-										</div>
-										<div class="text-xs">
-											Most recent Open Dota match: <p class="font-bold text-primary-500">
-												{data.rawMatchData[0].match_id}
-											</p>
-										</div>
-									</div>
-
-									<div class="mt-2">
-										<p class="inline text-orange-500 font-bold">{stratzTimeoutCountdown}s</p>
-										before you can check again
-									</div>
-								</div>
-							{/if}
-						{/await}
-						{#if data.session && data.session.user}
-							<div class="flex items-center justify-center">
-								<button
-									class="btn variant-filled-success w-full"
-									disabled={stratzTimeout}
-									on:click={() => {
-										stratzLoading = checkForRandomComplete();
-									}}
-								>
-									<i class="fi fi-br-refresh h-fit"></i>
-									<div class="italic">I just completed this random!</div></button
-								>
-							</div>
-						{/if}
-						<!-- {#if data.session && data.session.user}
-					<div class="my-4"><MatchHistory {matchTableData} /></div>
-				{/if} -->
+		<div class="bg-questBoard h-[700px] bg-no-repeat bg-contain bg-center w-full flex justify-center items-center">
+			<div class="w-[70%] h-full grid grid-cols-3 mx-auto max-h-[75%]">
+				<div
+					class="bg-questBoardPoster bg-no-repeat bg-contain bg-center w-full h-full flex items-center justify-center"
+				>
+					<div class="m-4 h-1/2 w-3/4 my-auto p-4">
+						<h2 class="h2 text-primary-500 font-bold">Wanted</h2>
+						<GenerateRandom {data} questSlot={1}></GenerateRandom>
 					</div>
-				{:else}
-					<!-- <div class="my-4"><MatchHistory {matchTableData} /></div> -->
-					<div class="flex flex-col justify-center items-center h-full">
-						<div>
-							<i class="fi fi-sr-person-circle-question text-5xl"></i>
-							<h3 class="h3 text-secondary-500">No random found, get a new one below!</h3>
-						</div>
-						<div class="w-full">
-							<button
-								on:click={generateRandomHero}
-								disabled={randomFound}
-								class="z-50 btn variant-filled-primary w-full my-4 max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:my-8 max-lg:mx-4 max-lg:max-w-[90%] md:max-w-[80%]"
-								>Random me</button
-							>
-						</div>
+				</div>
+				<div
+					class="bg-questBoardPoster bg-no-repeat bg-contain bg-center w-full h-full flex items-center justify-center"
+				>
+					<div class="m-4 h-1/2 w-3/4 my-auto p-4">
+						<h2 class="h2 text-primary-500 font-bold">Wanted</h2>
+						<GenerateRandom {data} questSlot={2}></GenerateRandom>
 					</div>
-				{/if}
+				</div>
+				<div
+					class="bg-questBoardPoster bg-no-repeat bg-contain bg-center w-full h-full flex items-center justify-center"
+				>
+					<div class="m-4 h-1/2 w-3/4 my-auto p-4">
+						<h2 class="h2 text-primary-500 font-bold">Wanted</h2>
+						<GenerateRandom {data} questSlot={3}></GenerateRandom>
+					</div>
+				</div>
+			</div>
+		</div>
+		<!-- Random button and last 5-->
+		<div class="w-full flex max-md:flex-col">
+			<div class={'rounded-xl mx-1 my-2 ' + (!data.session ? ' lg:w-3/4 mx-auto my-4' : 'lg:w-1/2')}>
+				<GenerateRandom {data}></GenerateRandom>
 			</div>
 			{#if data.session && data.session.user}
 				<div class="m-2 lg:w-1/2"><MatchHistory {matchTableData} /></div>
@@ -642,202 +494,6 @@
 		</div>
 
 		<div class="lg:grid lg:grid-cols-3 max-sm:flex max-sm:flex-col max-lg:space-y-8 sm:place-content-start lg:gap-x-8">
-			<!-- Hero ban grid -->
-			<div class="w-full flex flex-col items-center sm:h-fit relative max-md:max-w-sm">
-				{#if randomFound}
-					<div class="z-50 absolute h-full w-full bg-slate-800/80 flex flex-col items-center justify-center rounded-xl">
-						<h3 class="h3 text-primary-500 rounded-xl m-4 bg-surface-500/90 p-4">
-							Randoming Locked, you have an active random!
-						</h3>
-						<img src={Lock} class="h-32 w-32 inline" alt="locked" />
-					</div>
-				{/if}
-				<div class="mb-4 bg-surface-500/10 p-4 rounded-full w-4/5 shadow-md">
-					<h3 class="h3 dark:text-yellow-500 text-primary-500">1. Ban heroes below</h3>
-					<p class="text-xs">Click a hero to ban!</p>
-				</div>
-
-				<!-- Show hero grid button -->
-				<div
-					class="w-full py-2 bg-primary-200 rounded-t-full text-primary-900 font-bold hover:-translate-y-1 max-w-[95%] shadow-lg md:hidden z-0"
-				>
-					<button
-						class="w-full"
-						on:click={() => {
-							showHeroGrid = !showHeroGrid;
-						}}
-					>
-						{`${!showHeroGrid ? 'Show' : 'Hide'}  Hero Ban Grid`}
-					</button>
-				</div>
-				<!-- Desktop Hero Grid -->
-				<div
-					id="desktopHeroGrid"
-					class={`z-0 flex flex-wrap max-w-[95%] p-4 max-md:hidden xs:visible justify-center overflow-y-auto w-full max-h-[50rem] ${
-						showHeroGrid ? 'visible border border-dashed border-red-500' : 'border-double border-t-4 border-amber-500'
-					}`}
-				>
-					{#if showHeroGrid}
-						{#each data.heroDescriptions.allHeroes as hero}
-							<div class="object-contain m-1 relative">
-								{#if $randomStore.bannedHeroes.indexOf(hero) !== -1}
-									<div class="w-full h-full bg-red-600 rounded-xl z-10 absolute bg-opacity-70">
-										<button on:click={() => banHero(hero)} class="w-full h-full"></button>
-									</div>
-								{/if}
-								<button on:click={() => banHero(hero)}><i class={`z-0 d2mh hero-${hero.id}`}></i></button>
-							</div>
-						{/each}
-					{/if}
-				</div>
-				<!-- Mobile Hero Grid -->
-				<div
-					id="mobileHeroGrid"
-					class={`w-full flex flex-wrap max-w-[95%] p-2 md:hidden max-md:visible justify-center overflow-y-auto max-h-96 ${
-						showHeroGrid ? 'visible border border-dashed border-red-500' : 'border-double border-b-4 border-amber-500'
-					}`}
-				>
-					{#if showHeroGrid}
-						{#each data.heroDescriptions.allHeroes as hero}
-							<div class={`object-contain m-3 relative`}>
-								{#if $randomStore.bannedHeroes.indexOf(hero) !== -1}
-									<div class="w-full h-full bg-red-600 rounded-xl z-10 absolute bg-opacity-70">
-										<button on:click={() => banHero(hero)} class="w-full h-full"></button>
-									</div>
-								{/if}
-								<button on:click={() => banHero(hero)}><i class={`z-0 d2mh hero-${hero.id} scale-125`}></i></button>
-							</div>
-						{/each}
-					{/if}
-				</div>
-
-				<!-- Banned heroes -->
-				<div id="bannedHeroes" class="w-full space-x-1 max-w-[90%] flex-wrap p-2 my-2 md:mb-10">
-					<button
-						class={'btn dark:bg-purple-800/50 bg-purple-500/50 w-3/4'}
-						disabled={!data.session}
-						on:click={() => saveBanList()}
-						>{!data.session ? 'Log In to save 3 Free Bans' : 'Save Bans to account'}</button
-					>
-					<div class="my-2">
-						<h4 class="h4">Banned Heroes:</h4>
-						{#if $randomStore.bannedHeroes.length > 0}
-							<div>
-								{#each $randomStore.bannedHeroes as bannedHero}
-									<span class="badge variant-filled-secondary">{bannedHero?.localized_name}</span>
-								{/each}
-							</div>
-							<button class="btn bg-red-500 w-1/2 my-4" on:click={() => setBanList()}>Clear</button>
-						{:else}
-							<p>none</p>
-						{/if}
-					</div>
-				</div>
-				<!-- {#if !showHeroGrid}
-					<div class="border-double border-b-4 border-amber-500 w-full"></div>
-				{/if} -->
-			</div>
-
-			<!-- Autobans Roles and Modifiers -->
-			<div
-				class="md:w-full max-md:max-w-sm text-center h-fit items-center dark:bg-surface-600/30 bg-surface-200/30 border border-surface-200 dark:border-surface-700 shadow-lg rounded-xl px-2 md:py-2 max-sm:py-2"
-			>
-				<!-- Auto Bans -->
-				<div class="relative">
-					{#if randomFound}
-						<div
-							class="z-40 absolute h-full w-full bg-slate-800/80 flex flex-col items-center justify-center rounded-xl"
-						>
-							<!-- <h2 class="h2 text-primary-500 rounded-full bg-surface-500 p-4">
-							Randoming Locked, you have an active random!
-						</h2> -->
-							<img src={Lock} class="h-32 w-32 inline" alt="locked" />
-						</div>
-					{/if}
-
-					<div class="mb-2 bg-surface-500/10 p-4 rounded-full w-4/5 mx-auto shadow-md">
-						<h3 class="h3 dark:text-yellow-500 text-primary-500">2. Autobans</h3>
-						<p class="text-xs">Use the preset lists below to eliminate the worst.</p>
-					</div>
-
-					<div class="mx-8 md:my-4 my-2">
-						<!-- <h3 class="h3">Auto Bans</h3> -->
-						<button class="btn dark:bg-amber-800 bg-amber-500 w-1/2 my-4" on:click={() => setBanList('garbage')}
-							>Garbage</button
-						>
-					</div>
-
-					<!-- Role filtering -->
-					<div class="mb-2 bg-surface-500/10 p-4 rounded-full w-4/5 mx-auto shadow-md">
-						<h3 class="h3 dark:text-yellow-500 text-primary-500">3. Roles</h3>
-						<p class="text-xs">Filter by role to fit your comp</p>
-					</div>
-
-					<div class="mx-8 md:my-4 my-2">
-						<!-- <h3 class="h3">Auto Bans</h3> -->
-						<!-- <button class="btn dark:bg-amber-800 bg-amber-500 w-1/2 my-4" on:click={() => setBanList('garbage')}>Garbage</button> -->
-
-						<div class="grid grid-cols-3">
-							{#each heroRoles as role}
-								<label class="flex items-center space-x-2">
-									<input
-										class="checkbox"
-										type="checkbox"
-										on:click={() => handleRoleSelect(role)}
-										checked={$randomStore.selectedRoles.includes(role)}
-									/>
-									<p>{role}</p>
-								</label>
-							{/each}
-						</div>
-					</div>
-				</div>
-
-				<!-- Modifier calculation -->
-				<div class="mb-2 bg-surface-500/10 p-4 rounded-full w-4/5 mx-auto shadow-md">
-					<h3 class="h3 dark:text-yellow-500 text-primary-500">4. Modifier Calculations</h3>
-					<p class="text-xs">See how much gold your random will get you on win!</p>
-				</div>
-				<div class="w-fullmax-w-[90%] mx-auto p-4">
-					<!-- <h3 class="h3 border-b border-primary-200 border-dashed py-2">Modifier calculations</h3> -->
-					<div class="grid grid-cols-2">
-						<div>
-							<p>Number of bans:</p>
-							<p>Free bans left (max 3):</p>
-							<p>Heroes in random pool:</p>
-							<p>Modifier amount:</p>
-							<p>Total gold on win:</p>
-						</div>
-						<div>
-							<p>{$randomStore.bannedHeroes.length}</p>
-							<p>
-								{$randomStore.bannedHeroes.length < $randomStore.freeBans
-									? $randomStore.freeBans - $randomStore.bannedHeroes.length
-									: 0}
-							</p>
-							<p class="text-green-600">{$randomStore.availableHeroes.length}</p>
-							<p class="text-red-500">-{$randomStore.modifierTotal}</p>
-							<p class="text-amber-500 font-bold">
-								<!-- {$randomStore.startingGold - $randomStore.modifierTotal > 25
-									? $randomStore.startingGold - $randomStore.modifierTotal
-									: `25 (min)`} -->
-								{$randomStore.expectedGold}
-							</p>
-						</div>
-					</div>
-				</div>
-
-				{#if !randomFound}
-					<!-- Random Button-->
-					<button
-						on:click={generateRandomHero}
-						disabled={randomFound}
-						class="z-50 btn variant-filled-primary w-full my-4 max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:my-8 max-lg:mx-4 max-lg:max-w-[90%] md:max-w-[80%]"
-						>Random me</button
-					>
-				{/if}
-			</div>
-
 			<!-- Stats and History -->
 			<div
 				class="w-full h-fit max-md:max-w-sm space-y-10 dark:bg-surface-600/30 bg-surface-200/30 border border-surface-200 dark:border-surface-700 rounded-lg relative"

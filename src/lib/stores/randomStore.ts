@@ -2,7 +2,7 @@ import { writable } from 'svelte/store';
 import { heroRoles } from '$lib/constants/heroRoles';
 import type { Hero } from '@prisma/client';
 
-function createRandomStore() {
+export function createRandomStore() {
 	const { subscribe, set, update } = writable({
 		allHeroes: [] as Hero[],
 		availableHeroes: [] as Hero[],
@@ -110,7 +110,7 @@ const banHero = (hero: Hero, store: any) => {
 
 const setBanList = (inputList: Hero[] | null, store: any) => {
 	if (inputList) {
-		console.log(`[setBanList] - banning ${inputList.length} heroes: ${inputList}`);
+		console.log(`[setBanList] - banning ${inputList.length}`);
 		//sets the garbage preset
 		inputList.forEach((hero: Hero) => {
 			//console.log('checking hero', hero);

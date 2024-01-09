@@ -2,16 +2,16 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// datasource db {
-//   provider = "postgresql"
-//   url      = env("DEV_URL")
-// }
-
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
+  url      = env("DEV_URL")
 }
+
+// datasource db {
+//   provider  = "postgresql"
+//   url       = env("DATABASE_URL")
+//   directUrl = env("DIRECT_URL")
+// }
 
 model Match {
   id            Int      @id @default(autoincrement())
@@ -247,6 +247,7 @@ model TurbotownQuest {
   id          Int      @id @default(autoincrement())
   turbotownId Int
   lastUpdated DateTime
+  questSlot   Int
   type        String
   randoms     Random[]
 
