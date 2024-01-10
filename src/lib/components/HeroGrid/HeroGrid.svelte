@@ -48,12 +48,12 @@
 				console.log(`[random/+page.svelte] - evaluating saved ban list`);
 				let randomBanListParsed = JSON.parse(banListPref[0].value);
 
-				console.log(randomBanListParsed);
+				//console.log(randomBanListParsed);
 
-				console.log(heroes);
+				//console.log(heroes);
 				let setList = heroes.filter((hero: Hero) => randomBanListParsed.includes(hero.id));
 
-				console.log(setList);
+				//console.log(setList);
 				herogridStore.setBanList(setList);
 			}
 		} catch (e) {

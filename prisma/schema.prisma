@@ -230,7 +230,7 @@ model Turbotown {
   user        User?             @relation(fields: [account_id], references: [account_id])
   metrics     TurbotownMetric[]
   quests      TurbotownQuest[]
-  Season      Season?           @relation(fields: [seasonId], references: [id])
+  season      Season?           @relation(fields: [seasonId], references: [id])
 }
 
 model TurbotownMetric {

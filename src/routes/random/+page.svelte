@@ -55,9 +55,11 @@
 	let quest1Store = $townStore.quests.quest1;
 	let quest2Store = $townStore.quests.quest2;
 	let quest3Store = $townStore.quests.quest3;
-	// $: console.log('town store quest 1 data: ', $quest1Store);
-	// $: console.log('town store quest 2 data: ', $quest2Store);
-	// $: console.log('town store quest 3 data: ', $quest3Store);
+	$: if(browser && $quest1Store){
+		console.log('town store quest 1 store: ', $quest1Store);
+		console.log('town store quest 2 store: ', $quest2Store);
+		console.log('town store quest 3 store: ', $quest3Store);
+	}
 
 	quest1Store.setAllHeroes(data.heroDescriptions.allHeroes);
 	quest2Store.setAllHeroes(data.heroDescriptions.allHeroes);
@@ -115,23 +117,26 @@
 	}
 
 	//set user preferences on page
-	// if (data.userPreferences && data.userPreferences.length > 0) {
-	// 	console.log(`[random/+page.svelte] - evaluating userPreferencces`);
-	// 	let banListPref = data.userPreferences.filter((pref: any) => pref.name === 'randomBanList');
+	if (data.userPreferences && data.userPreferences.length > 0) {
+		console.log(`[random/+page.svelte] - evaluating userPreferencces`);
+		let banListPref = data.userPreferences.filter((pref: any) => pref.name === 'randomBanList');
 
-	// 	try {
-	// 		if (banListPref.length > 0 && banListPref[0].value) {
-	// 			console.log(`[random/+page.svelte] - evaluating saved ban list`);
-	// 			let randomBanListParsed = JSON.parse(banListPref[0].value);
+		try {
+			if (banListPref.length > 0 && banListPref[0].value) {
+				console.log(`[random/+page.svelte] - evaluating saved ban list`);
+				let randomBanListParsed = JSON.parse(banListPref[0].value);
 
-	// 			let setList = data.heroDescriptions.allHeroes.filter((hero: Hero) => randomBanListParsed.includes(hero.id));
+				let setList = data.heroDescriptions.allHeroes.filter((hero: Hero) => randomBanListParsed.includes(hero.id));
 
-	// 			randomStore.setBanList(setList);
-	// 		}
-	// 	} catch (e) {
-	// 		console.error('error in setting preferences');
-	// 	}
-	// }
+				randomStore.setBanList(setList);
+				quest1Store.setBanList(setList)
+				quest2Store.setBanList(setList);
+				quest3Store.setBanList(setList);
+			}
+		} catch (e) {
+			console.error('error in setting preferences');
+		}
+	}
 
 	/* 
 		End Calculations

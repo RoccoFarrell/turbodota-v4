@@ -13,7 +13,7 @@ BigInt.prototype.toJSON = function (): number {
 export const POST: RequestHandler = async ({ request, params, url, locals }) => {
 	const session = await locals.auth.validate();
 
-	console.log(`session in API call: `, JSON.stringify(session), `params.slug: `, params.slug);
+	console.log(`[/api/random/${params.slug}/create] session in API call: `, JSON.stringify(session), `params.slug: `, params.slug);
 	//reject the call if the user is not authenticated
 
     let randomCreateResult;
