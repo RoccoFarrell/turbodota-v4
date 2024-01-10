@@ -42,7 +42,7 @@ export const POST: RequestHandler = async ({ request, params, url, locals }) => 
 
 		let seasonID = -1;
 		if (userResult && userResult.seasons) {
-			let randomSeasonIndex = userResult.seasons.findIndex((season) => season.type === 'random');
+			let randomSeasonIndex = userResult.seasons.findIndex((season) => season.type === 'random' && season.active);
 			if (randomSeasonIndex !== -1) {
 				seasonID = userResult.seasons[randomSeasonIndex].id;
 			} else {
