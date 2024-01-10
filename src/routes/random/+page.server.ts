@@ -107,7 +107,9 @@ export const load: PageServerLoad = async ({ locals, parent, url }) => {
 		/* End get season info */
 		/* ------------------- */
 
-		randomsForUser = await getRandomsForUser(leagueAndSeasonsResult[0].seasons[0].id);
+		if(leagueAndSeasonsResult[0] && leagueAndSeasonsResult[0].seasons.length > 0){randomsForUser = await getRandomsForUser(leagueAndSeasonsResult[0].seasons[0].id);}
+		else randomsForUser = []
+		
 
 		console.log(`active random length: ${randomsForUser.filter((random) => random.active).length}`);
 

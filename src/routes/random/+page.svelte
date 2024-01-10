@@ -42,8 +42,6 @@
 
 	//images
 	import Lock from '$lib/assets/lock.png';
-	import QuestBoard from '$lib/assets/questBoard.png';
-	import QuestBoardPoster from '$lib/assets/questBoardPoster.png';
 	import SeasonLogo from '$lib/assets/seasonLogo.png';
 	import TournamentLight from '$lib/assets/tournament_light.png';
 	import WantedPoster from '$lib/assets/wantedPoster.png';
@@ -52,18 +50,18 @@
 		console.log('data: ', data);
 	}
 
-	$: console.log('random store data: ', $randomStore);
-	$: console.log('town store data: ', $townStore);
-	let quest1Store = $townStore.quests.quest1
-	let quest2Store = $townStore.quests.quest2
-	let quest3Store = $townStore.quests.quest3
-	$: console.log('town store quest 1 data: ', $quest1Store);
-	$: console.log('town store quest 2 data: ', $quest2Store);
-	$: console.log('town store quest 3 data: ', $quest3Store);
+	// $: console.log('random store data: ', $randomStore);
+	// $: console.log('town store data: ', $townStore);
+	let quest1Store = $townStore.quests.quest1;
+	let quest2Store = $townStore.quests.quest2;
+	let quest3Store = $townStore.quests.quest3;
+	// $: console.log('town store quest 1 data: ', $quest1Store);
+	// $: console.log('town store quest 2 data: ', $quest2Store);
+	// $: console.log('town store quest 3 data: ', $quest3Store);
 
-	quest1Store.setAllHeroes(data.heroDescriptions.allHeroes)
-	quest2Store.setAllHeroes(data.heroDescriptions.allHeroes)
-	quest3Store.setAllHeroes(data.heroDescriptions.allHeroes)
+	quest1Store.setAllHeroes(data.heroDescriptions.allHeroes);
+	quest2Store.setAllHeroes(data.heroDescriptions.allHeroes);
+	quest3Store.setAllHeroes(data.heroDescriptions.allHeroes);
 
 	let generatedRandomHero: Hero | null = null;
 
@@ -455,7 +453,9 @@
 			<button class="btn variant-filled">Test</button>
 		</div>
 
-		<div class="bg-questBoard h-[700px] bg-no-repeat bg-contain bg-center w-full flex justify-center items-center">
+		<div
+			class="bg-questBoard 2xl:h-[700px] xl:h-[600px] md:h-[500px] bg-no-repeat bg-contain bg-center w-full flex justify-center items-center"
+		>
 			<div class="w-[70%] h-full grid grid-cols-3 mx-auto max-h-[75%]">
 				<div
 					class="bg-questBoardPoster bg-no-repeat bg-contain bg-center w-full h-full flex items-center justify-center"
@@ -485,16 +485,12 @@
 		</div>
 		<!-- Random button and last 5-->
 		<div class="w-full flex max-md:flex-col">
-			<div class={'rounded-xl mx-1 my-2 ' + (!data.session ? ' lg:w-3/4 mx-auto my-4' : 'lg:w-1/2')}>
+			<!-- <div class={'rounded-xl mx-1 my-2 ' + (!data.session ? ' lg:w-3/4 mx-auto my-4' : 'lg:w-1/2')}>
 				<GenerateRandom {data}></GenerateRandom>
-			</div>
+			</div> -->
 			{#if data.session && data.session.user}
 				<div class="m-2 lg:w-1/2"><MatchHistory {matchTableData} /></div>
 			{/if}
-		</div>
-
-		<div class="lg:grid lg:grid-cols-3 max-sm:flex max-sm:flex-col max-lg:space-y-8 sm:place-content-start lg:gap-x-8">
-			<!-- Stats and History -->
 			<div
 				class="w-full h-fit max-md:max-w-sm space-y-10 dark:bg-surface-600/30 bg-surface-200/30 border border-surface-200 dark:border-surface-700 rounded-lg relative"
 			>
