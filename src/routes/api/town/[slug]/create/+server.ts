@@ -13,20 +13,20 @@ BigInt.prototype.toJSON = function (): number {
 export const POST: RequestHandler = async ({ request, params, url, locals }) => {
 	const session = await locals.auth.validate();
 
-	console.log(`[/api/town/${params.slug}/create] session in API call: `,session, JSON.stringify(session), `params.slug: `, params.slug);
+	//console.log(`[/api/town/${params.slug}/create] session in API call: `,session, JSON.stringify(session), `params.slug: `, params.slug);
 	
 	let townCreateResult;
 
 	if (session && session.user) {
-        console.log(`session: `, JSON.stringify(session))
+        //console.log(`session: `, JSON.stringify(session))
         //reject the call if the user is not authenticated
 		if (params.slug?.toString() !== session.user.account_id.toString())
 			return new Response(JSON.stringify({ status: 'unauthorized' }), { status: 401 });
 
-		console.log(`params: ${JSON.stringify(params)}`);
+		//console.log(`params: ${JSON.stringify(params)}`);
 
 		let account_id: number = parseInt(params.slug || '0');
-		console.log(`\n-----------\n[matches] account_id: ${account_id}\n-------------\n`);
+		console.log(`\n-----------\n[/api/town/${account_id}/create] account_id: ${account_id}\n-------------\n`);
 
 		//let townValues = await request.json();
 		//console.log('request json: ', townValues);
@@ -40,8 +40,13 @@ export const POST: RequestHandler = async ({ request, params, url, locals }) => 
 			},
 			include: {
 				seasons: {
+                    where: {
+                        active: true
+                    },
 					include: {
-						turbotowns: true
+						turbotowns: {
+                            where: {account_id: account_id}
+                        }
 					}
 				}
 			}
@@ -56,44 +61,24 @@ export const POST: RequestHandler = async ({ request, params, url, locals }) => 
 				console.warn('[town create] randomSeasonIndex was -1');
 			}
 		}
-        console.log(`[town create] season found: ${seasonID}`)
 
-		// if (seasonID !== -1) {
-		// 	townCreateResult = await prisma.random.create({
-		// 		data: {
-		// 			account_id: session.user.account_id,
-		// 			active: true,
-		// 			status: 'active',
-		// 			date: new Date(),
-		// 			availableHeroes: randomStoreValues.availableHeroes.toString(),
-		// 			bannedHeroes: randomStoreValues.bannedHeroes.toString(),
-		// 			selectedRoles: randomStoreValues.selectedRoles.toString(),
-		// 			expectedGold: randomStoreValues.expectedGold,
-		// 			modifierAmount: randomStoreValues.modifierAmount,
-		// 			modifierTotal: randomStoreValues.modifierTotal,
-		// 			randomedHero: randomStoreValues.randomedHero,
-		// 			seasons: {
-		// 				connect: { id: seasonID }
-		// 			}
-		// 		}
-		// 	});
-		// } else {
-		// 	townCreateResult = await prisma.random.create({
-		// 		data: {
-		// 			account_id: session.user.account_id,
-		// 			active: true,
-		// 			status: 'active',
-		// 			date: new Date(),
-		// 			availableHeroes: randomStoreValues.availableHeroes.toString(),
-		// 			bannedHeroes: randomStoreValues.bannedHeroes.toString(),
-		// 			selectedRoles: randomStoreValues.selectedRoles.toString(),
-		// 			expectedGold: randomStoreValues.expectedGold,
-		// 			modifierAmount: randomStoreValues.modifierAmount,
-		// 			modifierTotal: randomStoreValues.modifierTotal,
-		// 			randomedHero: randomStoreValues.randomedHero
-		// 		}
-		// 	});
-		// }
+        let season = userResult ? userResult.seasons.filter(season => season.id === seasonID)[0] : null
+
+        if(season){
+            console.log(`[town create] season found: ${seasonID}`, season)
+            console.log(`[town create] turbotowns found: ${season.turbotowns}`)
+    
+            if(season.turbotowns.length === 0){
+                townCreateResult = await prisma.turbotown.create({
+                    data: {
+                        account_id,
+                        seasonID
+                    }
+                })
+            } else {
+                console.log('[town create] town already found for user')
+            }
+        }
 	} else {
 		return new Response(JSON.stringify({ status: 'unauthorized to create town for this user' }), { status: 401 });
 	}

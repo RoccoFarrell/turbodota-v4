@@ -95,7 +95,15 @@ export const load: PageServerLoad = async ({ locals, parent, url, fetch }) => {
 								match: true
 							}
 						},
-						turbotowns: true,
+						turbotowns: {
+							include: {
+								quests: {
+									include: {
+										random: true
+									}
+								}
+							}
+						},
 						_count: {
 							select: { randoms: true }
 						}
@@ -143,7 +151,7 @@ export const load: PageServerLoad = async ({ locals, parent, url, fetch }) => {
 			const response = await fetch(`/api/town/${session.user.account_id}/create`, {
 				method: 'POST'
 			});
-			console.log("create town response: ", response)
+			//console.log("create town response: ", response)
 		}
 
 		/* End town info */

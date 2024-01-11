@@ -197,7 +197,7 @@ model UserPrefs {
 }
 
 model Random {
-  id              Int       @id @default(autoincrement())
+  id              Int              @id @default(autoincrement())
   account_id      Int
   active          Boolean
   status          String
@@ -214,44 +214,48 @@ model Random {
   modifierTotal   Int
   randomedHero    Int
   seasons         Season[]
-  user            User?     @relation(fields: [account_id], references: [account_id])
-  match           Match?    @relation(fields: [endMatchID], references: [id])
+  quests          TurbotownQuest[]
+  user            User?            @relation(fields: [account_id], references: [account_id])
+  match           Match?           @relation(fields: [endMatchID], references: [id])
 
   //@@unique([account_id, active], name: "matchPlusAccount")
-  TurbotownQuest   TurbotownQuest? @relation(fields: [turbotownQuestId], references: [id])
-  turbotownQuestId Int?
 }
 
 model Turbotown {
   id          Int               @id @default(autoincrement())
   account_id  Int
-  seasonId    Int
+  seasonID    Int
   lastUpdated DateTime          @default(now())
   user        User?             @relation(fields: [account_id], references: [account_id])
   metrics     TurbotownMetric[]
   quests      TurbotownQuest[]
-  season      Season?           @relation(fields: [seasonId], references: [id])
+  season      Season?           @relation(fields: [seasonID], references: [id])
 }
 
 model TurbotownMetric {
   id          Int      @id @default(autoincrement())
-  turbotownId Int
+  turbotownID Int
   lastUpdated DateTime
   label       String
   value       Int
 
-  Turbotown Turbotown @relation(fields: [turbotownId], references: [id])
+  Turbotown Turbotown @relation(fields: [turbotownID], references: [id])
 }
 
 model TurbotownQuest {
-  id          Int      @id @default(autoincrement())
-  turbotownId Int
-  lastUpdated DateTime
+  id          Int       @id @default(autoincrement())
+  active      Boolean
+  status      String
+  endDate     DateTime?
+  xp          Int
+  gold        Int
+  turbotownID Int
+  lastUpdated DateTime  @default(now())
   questSlot   Int
   type        String
-  randoms     Random[]
-
-  Turbotown Turbotown @relation(fields: [turbotownId], references: [id])
+  randomID    Int
+  random      Random    @relation(fields: [randomID], references: [id], onDelete: Cascade)
+  Turbotown   Turbotown @relation(fields: [turbotownID], references: [id])
 }
 
 model Session {

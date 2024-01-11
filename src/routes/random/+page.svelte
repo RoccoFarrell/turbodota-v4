@@ -5,7 +5,7 @@
 	import { browser } from '$app/environment';
 
 	//prisma types
-	import type { Random, Hero } from '@prisma/client';
+	import type { Random, Hero, TurbotownQuest } from '@prisma/client';
 
 	//day js
 	import dayjs from 'dayjs';
@@ -35,6 +35,7 @@
 
 	//constants
 	import { heroRoles } from '$lib/constants/heroRoles';
+	import { constant_startingGold, constant_banMultiplier, constant_freeBans, constant_maxBans } from "$lib/constants/random"
 
 	//stores
 	import { randomStore } from '$lib/stores/randomStore';
@@ -61,13 +62,92 @@
 		console.log('town store quest 3 store: ', $quest3Store);
 	}
 
-	quest1Store.setAllHeroes(data.heroDescriptions.allHeroes);
-	quest2Store.setAllHeroes(data.heroDescriptions.allHeroes);
-	quest3Store.setAllHeroes(data.heroDescriptions.allHeroes);
+	//loop through quests and set stores
+	let quest1 = data.quests.filter((quest: TurbotownQuest) => quest.questSlot === 1)
+	console.log('quest1: ', quest1)
+	let quest2 = data.quests.filter((quest: TurbotownQuest) => quest.questSlot === 2)
+	console.log('quest3: ', quest2)
+	let quest3 = data.quests.filter((quest: TurbotownQuest) => quest.questSlot === 3)
+	console.log('quest3: ', quest3)
+	if(quest1.length > 0){
+		let allHeroesCopy = [...data.heroDescriptions.allHeroes];
+		quest1 = quest1[0]
+		quest1Store.set({
+				allHeroes: data.heroDescriptions.allHeroes,
+				availableHeroes: quest1.random.availableHeroes.split(',').map((randomID: string) => {
+					return allHeroesCopy.filter((hero: Hero) => hero.id === parseInt(randomID))[0];
+				}),
+				bannedHeroes:
+					quest1.random.bannedHeroes.length > 0
+						? quest1.random.bannedHeroes.split(',').map((randomID: string) => {
+								return allHeroesCopy.filter((hero: Hero) => hero.id === parseInt(randomID))[0];
+							})
+						: [],
+				selectedRoles: quest1.random.selectedRoles.split(',') || [],
+				startingGold: constant_startingGold,
+				expectedGold: quest1.random.expectedGold,
+				banMultiplier: constant_banMultiplier,
+				modifierAmount: quest1.random.modifierAmount,
+				modifierTotal: quest1.random.modifierTotal,
+				freeBans: constant_freeBans,
+				maxBans: constant_maxBans,
+				randomedHero: allHeroesCopy.filter((hero: Hero) => hero.id === quest1.random.randomedHero)[0]
+			});
+	} else quest1Store.setAllHeroes(data.heroDescriptions.allHeroes);
 
-	let generatedRandomHero: Hero | null = null;
+	if(quest2.length > 0){
+		let allHeroesCopy = [...data.heroDescriptions.allHeroes];
+		quest2 = quest2[0]
+		quest2Store.set({
+				allHeroes: data.heroDescriptions.allHeroes,
+				availableHeroes: quest2.random.availableHeroes.split(',').map((randomID: string) => {
+					return allHeroesCopy.filter((hero: Hero) => hero.id === parseInt(randomID))[0];
+				}),
+				bannedHeroes:
+					quest2.random.bannedHeroes.length > 0
+						? quest2.random.bannedHeroes.split(',').map((randomID: string) => {
+								return allHeroesCopy.filter((hero: Hero) => hero.id === parseInt(randomID))[0];
+							})
+						: [],
+				selectedRoles: quest2.random.selectedRoles.split(',') || [],
+				startingGold: constant_startingGold,
+				expectedGold: quest2.random.expectedGold,
+				banMultiplier: constant_banMultiplier,
+				modifierAmount: quest2.random.modifierAmount,
+				modifierTotal: quest2.random.modifierTotal,
+				freeBans: constant_freeBans,
+				maxBans: constant_maxBans,
+				randomedHero: allHeroesCopy.filter((hero: Hero) => hero.id === quest2.random.randomedHero)[0]
+			});
+	} else quest2Store.setAllHeroes(data.heroDescriptions.allHeroes);
 
-	let randomFound = false;
+	if(quest3.length > 0){
+		let allHeroesCopy = [...data.heroDescriptions.allHeroes];
+		quest3 = quest3[0]
+		quest3Store.set({
+				allHeroes: data.heroDescriptions.allHeroes,
+				availableHeroes: quest3.random.availableHeroes.split(',').map((randomID: string) => {
+					return allHeroesCopy.filter((hero: Hero) => hero.id === parseInt(randomID))[0];
+				}),
+				bannedHeroes:
+					quest3.random.bannedHeroes.length > 0
+						? quest3.random.bannedHeroes.split(',').map((randomID: string) => {
+								return allHeroesCopy.filter((hero: Hero) => hero.id === parseInt(randomID))[0];
+							})
+						: [],
+				selectedRoles: quest3.random.selectedRoles.split(',') || [],
+				startingGold: constant_startingGold,
+				expectedGold: quest3.random.expectedGold,
+				banMultiplier: constant_banMultiplier,
+				modifierAmount: quest3.random.modifierAmount,
+				modifierTotal: quest3.random.modifierTotal,
+				freeBans: constant_freeBans,
+				maxBans: constant_maxBans,
+				randomedHero: allHeroesCopy.filter((hero: Hero) => hero.id === quest3.random.randomedHero)[0]
+			});
+	} else quest3Store.setAllHeroes(data.heroDescriptions.allHeroes);
+
+	//end set stores
 
 	/* 
 		Calculations from server data
@@ -143,195 +223,90 @@
 	*/
 
 	//evaluate if there is an active random stored in the DB
-	if ('randoms' in data && data?.randoms.length > 0 && data.randoms.filter((random) => random.active).length > 0) {
-		randomFound = true;
-		const { availableHeroes, bannedHeroes, selectedRoles, expectedGold, modifierAmount, modifierTotal, randomedHero } =
-			data.randoms
-				.filter((random) => random.active)
-				.sort((a: any, b: any) => {
-					if (a.start_time < b.start_time) return -1;
-					else return 1;
-				})[0];
+	// if ('randoms' in data && data?.randoms.length > 0 && data.randoms.filter((random) => random.active).length > 0) {
+	// 	randomFound = true;
+	// 	const { availableHeroes, bannedHeroes, selectedRoles, expectedGold, modifierAmount, modifierTotal, randomedHero } =
+	// 		data.randoms
+	// 			.filter((random) => random.active)
+	// 			.sort((a: any, b: any) => {
+	// 				if (a.start_time < b.start_time) return -1;
+	// 				else return 1;
+	// 			})[0];
 
-		let allHeroesCopy = [...data.heroDescriptions.allHeroes];
-		// console.log(availableHeroes.split(','));
-		// console.log(
-		// 	availableHeroes.split(',').map((randomID: string) => {
-		// 		return allHeroesCopy.filter((hero: Hero) => hero.id === parseInt(randomID))[0];
-		// 	})
-		// );
+	// 	let allHeroesCopy = [...data.heroDescriptions.allHeroes];
+	// 	// console.log(availableHeroes.split(','));
+	// 	// console.log(
+	// 	// 	availableHeroes.split(',').map((randomID: string) => {
+	// 	// 		return allHeroesCopy.filter((hero: Hero) => hero.id === parseInt(randomID))[0];
+	// 	// 	})
+	// 	// );
 
-		//console.log("randomed hero: ", allHeroesCopy.filter((hero: Hero) => hero.id === randomedHero)[0])
+	// 	//console.log("randomed hero: ", allHeroesCopy.filter((hero: Hero) => hero.id === randomedHero)[0])
 
-		console.log(`bannedHeroes: ${bannedHeroes} selectedRoles: ${selectedRoles} randomedHero: ${randomedHero}`);
+	// 	console.log(`bannedHeroes: ${bannedHeroes} selectedRoles: ${selectedRoles} randomedHero: ${randomedHero}`);
 
-		if (typeof bannedHeroes === 'string' && typeof selectedRoles === 'string' && randomedHero) {
-			console.log(`[random/+page.svelte] - setting random store `);
-			randomStore.set({
-				allHeroes: data.heroDescriptions.allHeroes,
-				availableHeroes: availableHeroes.split(',').map((randomID: string) => {
-					return allHeroesCopy.filter((hero: Hero) => hero.id === parseInt(randomID))[0];
-				}),
-				bannedHeroes:
-					bannedHeroes.length > 0
-						? bannedHeroes.split(',').map((randomID: string) => {
-								return allHeroesCopy.filter((hero: Hero) => hero.id === parseInt(randomID))[0];
-							})
-						: [],
-				selectedRoles: selectedRoles.split(',') || [],
-				startingGold: 100,
-				expectedGold,
-				banMultiplier: 8,
-				modifierAmount,
-				modifierTotal,
-				freeBans: 3,
-				maxBans: 10,
-				randomedHero: allHeroesCopy.filter((hero: Hero) => hero.id === randomedHero)[0]
-			});
+	// 	if (typeof bannedHeroes === 'string' && typeof selectedRoles === 'string' && randomedHero) {
+	// 		console.log(`[random/+page.svelte] - setting random store `);
+	// 		randomStore.set({
+	// 			allHeroes: data.heroDescriptions.allHeroes,
+	// 			availableHeroes: availableHeroes.split(',').map((randomID: string) => {
+	// 				return allHeroesCopy.filter((hero: Hero) => hero.id === parseInt(randomID))[0];
+	// 			}),
+	// 			bannedHeroes:
+	// 				bannedHeroes.length > 0
+	// 					? bannedHeroes.split(',').map((randomID: string) => {
+	// 							return allHeroesCopy.filter((hero: Hero) => hero.id === parseInt(randomID))[0];
+	// 						})
+	// 					: [],
+	// 			selectedRoles: selectedRoles.split(',') || [],
+	// 			startingGold: 100,
+	// 			expectedGold,
+	// 			banMultiplier: 8,
+	// 			modifierAmount,
+	// 			modifierTotal,
+	// 			freeBans: 3,
+	// 			maxBans: 10,
+	// 			randomedHero: allHeroesCopy.filter((hero: Hero) => hero.id === randomedHero)[0]
+	// 		});
 
-			generatedRandomHero = $randomStore.randomedHero;
-		} else {
-			console.error('[set locked random hero] - couldnt set locked random');
-		}
-	} else if (data.session && data.session.user) {
-		const t: ToastSettings = {
-			message: `No active randoms found for user`,
-			background: 'variant-filled-warning'
-		};
+	// 		generatedRandomHero = $randomStore.randomedHero;
+	// 	} else {
+	// 		console.error('[set locked random hero] - couldnt set locked random');
+	// 	}
+	// } else if (data.session && data.session.user) {
+	// 	const t: ToastSettings = {
+	// 		message: `No active randoms found for user`,
+	// 		background: 'variant-filled-warning'
+	// 	};
 
-		toastStore.trigger(t);
-	}
+	// 	toastStore.trigger(t);
+	// }
 
-	$: showHeroGrid = true;
+	// interface HeroRandom {
+	// 	availableHeroes: Hero[];
+	// 	bannedHeroes: Hero[];
+	// 	selectedRoles: string[];
+	// 	startingGold: number;
+	// 	expectedGold: number;
+	// 	banMultiplier: number;
+	// 	modifierAmount: number;
+	// 	modifierTotal: number;
+	// 	maxBans: number;
+	// }
 
-	interface HeroRandom {
-		availableHeroes: Hero[];
-		bannedHeroes: Hero[];
-		selectedRoles: string[];
-		startingGold: number;
-		expectedGold: number;
-		banMultiplier: number;
-		modifierAmount: number;
-		modifierTotal: number;
-		maxBans: number;
-	}
+	// let heroRandom: HeroRandom = {
+	// 	availableHeroes: [...data.heroDescriptions.allHeroes],
+	// 	bannedHeroes: [],
+	// 	selectedRoles: [],
+	// 	startingGold: 100,
+	// 	expectedGold: 100,
+	// 	banMultiplier: 8,
+	// 	modifierAmount: 0,
+	// 	modifierTotal: 0,
+	// 	maxBans: 10
+	// };
 
-	let heroRandom: HeroRandom = {
-		availableHeroes: [...data.heroDescriptions.allHeroes],
-		bannedHeroes: [],
-		selectedRoles: [],
-		startingGold: 100,
-		expectedGold: 100,
-		banMultiplier: 8,
-		modifierAmount: 0,
-		modifierTotal: 0,
-		maxBans: 10
-	};
-
-	$: heroRandom.bannedHeroes;
-
-	const generateRandomHero = async () => {
-		console.log(`${$randomStore.availableHeroes.length} available random heroes`);
-
-		function genrandOld(max: number) {
-			return Math.floor(Math.random() * max);
-		}
-
-		function rollRandsOld(max: number, rolls: number) {
-			let min: number = 0;
-			let counts: any = {};
-			for (let i = min; i < max; i++) {
-				counts[i.toString()] = 0;
-			}
-			let roll = 0;
-			while (roll < rolls) {
-				counts[genrandOld(max).toString()]++;
-				roll++;
-			}
-			return counts;
-		}
-
-		console.log(
-			'your random generation simulator 1M times: ',
-			rollRandsOld($randomStore.availableHeroes.length, 1000000)
-		);
-
-		generatedRandomHero = $randomStore.availableHeroes[Math.floor(Math.random() * $randomStore.availableHeroes.length)];
-
-		$randomStore.randomedHero = generatedRandomHero;
-
-		if (data.session && generatedRandomHero) {
-			let bodyData = {
-				...$randomStore,
-				availableHeroes: $randomStore.availableHeroes.map((hero: Hero) => hero.id),
-				bannedHeroes: $randomStore.bannedHeroes.map((hero: Hero) => hero.id),
-				randomedHero: generatedRandomHero.id
-			};
-			//bodyData.availableHeroes = bodyData.availableHeroes.map((hero: Hero) => hero.id);
-			let response = await fetch(`/api/random/${data.session.user.account_id}/create`, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify(bodyData)
-			});
-
-			//console.log(response);
-
-			randomFound = true;
-		} else {
-			console.error('couldnt set generated random hero for specific user');
-		}
-	};
-
-	let newerStratzMatches: any[] = [];
-	//$: console.log(newerStratzMatches);
-	let stratzTimeout: boolean = false;
-	let stratzTimeoutValue: number = 30;
-	let stratzTimeoutCountdown: number = 0;
-	$: stratzTimeoutCountdown;
-	//$: console.log(stratzTimeout);
-
-	const checkForRandomComplete = async () => {
-		let responseStratz, responseParse;
-		if (!stratzTimeout && data.session) {
-			responseStratz = await fetch(`/api/stratz/players/${data.session.user.account_id}/recentMatches`, {
-				method: 'GET',
-				headers: {
-					'Content-Type': 'application/json'
-				}
-			});
-
-			responseParse = await updateStratzMatches(responseStratz);
-
-			stratzTimeout = true;
-			stratzTimeoutCountdown = 30;
-			let countdownTimer = setInterval(() => {
-				stratzTimeoutCountdown--;
-				if (stratzTimeoutCountdown === 0) {
-					stratzTimeout = false;
-					clearInterval(countdownTimer);
-				}
-			}, 1000);
-		} else {
-			responseStratz = 'timed out';
-		}
-
-		return Promise.all([responseStratz, responseParse]);
-	};
-
-	const updateStratzMatches = async (stratzPromise: any) => {
-		let stratzHasMatches = await stratzPromise.json();
-
-		console.log(stratzHasMatches);
-		newerStratzMatches = stratzHasMatches.response.data.player.matches;
-
-		console.log(`[checkForRandomComplete] stratzHasMatches:`, stratzHasMatches);
-
-		return newerStratzMatches;
-	};
-
-	let stratzLoading: any = false;
+	// $: heroRandom.bannedHeroes;
 
 	const t: ToastSettings = {
 		message: `Max bans of ${$randomStore.maxBans} reached!`,
@@ -465,24 +440,21 @@
 				<div
 					class="bg-questBoardPoster bg-no-repeat bg-contain bg-center w-full h-full flex items-center justify-center"
 				>
-					<div class="m-4 h-1/2 w-3/4 my-auto p-4">
-						<h2 class="h2 text-primary-500 font-bold">Wanted</h2>
+					<div class="m-4 h-3/4 w-3/4 my-auto p-4">
 						<GenerateRandom {data} questSlot={1}></GenerateRandom>
 					</div>
 				</div>
 				<div
 					class="bg-questBoardPoster bg-no-repeat bg-contain bg-center w-full h-full flex items-center justify-center"
 				>
-					<div class="m-4 h-1/2 w-3/4 my-auto p-4">
-						<h2 class="h2 text-primary-500 font-bold">Wanted</h2>
+					<div class="m-4 h-3/4 w-3/4 my-auto p-4">
 						<GenerateRandom {data} questSlot={2}></GenerateRandom>
 					</div>
 				</div>
 				<div
 					class="bg-questBoardPoster bg-no-repeat bg-contain bg-center w-full h-full flex items-center justify-center"
 				>
-					<div class="m-4 h-1/2 w-3/4 my-auto p-4">
-						<h2 class="h2 text-primary-500 font-bold">Wanted</h2>
+					<div class="m-4 h-3/4 w-3/4 my-auto p-4">
 						<GenerateRandom {data} questSlot={3}></GenerateRandom>
 					</div>
 				</div>

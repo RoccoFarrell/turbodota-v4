@@ -6,12 +6,21 @@
 	import { setContext, getContext } from 'svelte';
 
 	//prisma types
-	import type { Random, Hero } from '@prisma/client';
+	import type { Random, Hero, UserPrefs, Session } from '@prisma/client';
 
 	//day js
 	import dayjs from 'dayjs';
 	import LocalizedFormat from 'dayjs/plugin/localizedFormat';
 	dayjs.extend(LocalizedFormat);
+
+	//skeleton
+	import { popup } from '@skeletonlabs/skeleton';
+	import type { PopupSettings } from '@skeletonlabs/skeleton';
+	const popupClick: PopupSettings = {
+		event: 'click',
+		target: 'popupClick',
+		placement: 'bottom'
+	};
 
 	//page data
 	import type { PageData } from '../$types';
@@ -23,13 +32,13 @@
 
 	//component props
 	export let session: Session | null = null;
-	export let questSlot: number = 1
+	export let questSlot: number = 1;
 
 	let randomStore = $townStore.quests.quest1;
-	console.log('questSlot', questSlot)
-	if(questSlot === 1) randomStore = $townStore.quests.quest1
-	else if(questSlot === 2) randomStore = $townStore.quests.quest2
-	else if(questSlot === 3) randomStore = $townStore.quests.quest3
+	console.log('questSlot', questSlot);
+	if (questSlot === 1) randomStore = $townStore.quests.quest1;
+	else if (questSlot === 2) randomStore = $townStore.quests.quest2;
+	else if (questSlot === 3) randomStore = $townStore.quests.quest3;
 
 	/* Get session from context */
 	if (!session) session = getContext('session');
@@ -41,9 +50,10 @@
 	// 	console.log('data: ', data);
 	// }
 
-	// $: console.log('store data: ', $townStore);
+	$: console.log('store data in component: ', $randomStore);
 
 	let generatedRandomHero: Hero | null = null;
+	if ($randomStore.randomedHero && $randomStore.randomedHero.id) generatedRandomHero = $randomStore.randomedHero;
 
 	let randomFound = false;
 
@@ -51,9 +61,7 @@
 		End Calculations
 	*/
 	const generateRandomHero = async () => {
-
-
-		console.log('randomStore in generate random', randomStore)
+		console.log('randomStore in generate random', randomStore);
 		console.log(`${$randomStore.availableHeroes.length} available random heroes`);
 
 		function genrandOld(max: number) {
@@ -88,7 +96,8 @@
 				...$randomStore,
 				availableHeroes: $randomStore.availableHeroes.map((hero: Hero) => hero.id),
 				bannedHeroes: $randomStore.bannedHeroes.map((hero: Hero) => hero.id),
-				randomedHero: generatedRandomHero.id
+				randomedHero: generatedRandomHero.id,
+				questSlot
 			};
 			//bodyData.availableHeroes = bodyData.availableHeroes.map((hero: Hero) => hero.id);
 			let response = await fetch(`/api/random/${data.session.user.account_id}/create`, {
@@ -161,14 +170,16 @@
 	<div class="flex flex-col justify-center items-center w-full relative z-0 rounded-xl h-full">
 		<!-- <img src={WantedPoster} alt="wanted" class="rounded-xl absolute"/> -->
 		<div
-			class="z-50 flex flex-col items-center space-y-2 rounded-2xl p-4 mb-4 w-full h-96 justify-center"
+			class="z-50 flex flex-col items-center rounded-2xl p-4 w-full h-full justify-around"
 			in:slide={{ delay: 250, duration: 300, easing: quintOut, axis: 'x' }}
 		>
-			<h1 class="h1 text-slate-900 font-bold">WANTED</h1>
-			<h1 class="h1 vibrating animate-pulse text-amber-600">
+			<!-- <h1 class="h1 text-slate-900 font-bold">WANTED</h1> -->
+			<h2 class="h2 text-primary-500 font-bold">Wanted</h2>
+			<i class={`d2mh hero-${generatedRandomHero.id} scale-[3]`}></i>
+			<h1 class="h1 animate-pulse text-amber-600">
 				{generatedRandomHero.localized_name}
 			</h1>
-			<i class={`vibrating d2mh hero-${generatedRandomHero.id} scale-150`}></i>
+			<!-- <i class={`vibrating d2mh hero-${generatedRandomHero.id} scale-150`}></i> -->
 		</div>
 		<!-- 
 						<div class="w-fit mx-auto p-4 border border-dashed border-fuchsia-300 my-4 card">
@@ -185,7 +196,7 @@
 							<div><p class="inline text-primary-500">{stratzTimeoutCountdown}s</p> before you can check again</div>
 						</div> -->
 
-		{#await stratzLoading}
+		<!-- {#await stratzLoading}
 			<div class="flex items-center justify-center h-full">
 				<button class="btn variant-filled-success w-full">
 					<i class="fi fi-br-refresh h-fit animate-spin"></i>
@@ -226,18 +237,18 @@
 					</div>
 				</div>
 			{/if}
-		{/await}
+		{/await} -->
 		{#if data.session && data.session.user}
 			<div class="flex items-center justify-center">
 				<button
 					class="btn variant-filled-success w-full"
-					disabled={stratzTimeout}
+					use:popup={popupClick}
 					on:click={() => {
 						stratzLoading = checkForRandomComplete();
 					}}
 				>
 					<i class="fi fi-br-refresh h-fit"></i>
-					<div class="italic">I just completed this random!</div></button
+					<div class="italic">Completed?</div></button
 				>
 			</div>
 		{/if}
@@ -257,8 +268,71 @@
 				on:click={generateRandomHero}
 				disabled={randomFound}
 				class="z-50 btn variant-filled-primary w-full my-4 max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:my-8 max-lg:mx-4 max-lg:max-w-[90%] md:max-w-[80%]"
-				>Random me</button
 			>
+				<div class="flex items-center space-x-2">
+					<i class="h-5 w-5 fi fi-rs-treasure-chest text-amber-200"></i>
+					<p>Get Quest</p>
+				</div>
+			</button>
 		</div>
 	</div>
 {/if}
+
+<div class="z-50" data-popup="popupClick">
+	{#await stratzLoading}
+		<div class="flex items-center justify-center h-full">
+			<button class="btn variant-filled-success w-full">
+				<i class="fi fi-br-refresh h-fit animate-spin"></i>
+				<div class="placeholder animate-pulse"></div>
+			</button>
+		</div>
+	{:then stratzData}
+		{#if stratzData}
+			<div class="w-fit mx-auto p-4 border border-dashed border-fuchsia-300 my-4 space-y-4 card">
+				<div>
+					{#if newerStratzMatches[0].id.toString() !== data.rawMatchData[0].match_id.toString()}
+						<div class="flex items-center justify-center p-1 space-x-2 text-green-500">
+							<i class="fi fi-ss-head-side-brain"></i>
+							<p>You may have a point...</p>
+						</div>
+					{:else}
+						<div class="text-amber-500 flex items-center space-x-2 justify-center p-1">
+							<i class="fi fi-br-database mx-2"></i>
+							<p>No new matches found from two sources...</p>
+						</div>
+					{/if}
+				</div>
+				<div class="grid grid-cols-3 place-content-start">
+					<p class="text-xs text-secondary-600">Pulled {newerStratzMatches.length} matches from Stratz</p>
+					<div class="text-xs">
+						Most recent Stratz match: <p class="font-bold text-primary-500">{newerStratzMatches[0].id}</p>
+					</div>
+					<div class="text-xs">
+						Most recent Open Dota match: <p class="font-bold text-primary-500">
+							{data.rawMatchData[0].match_id}
+						</p>
+					</div>
+				</div>
+
+				<div class="mt-2">
+					<p class="inline text-orange-500 font-bold">{stratzTimeoutCountdown}s</p>
+					before you can check again
+				</div>
+				{#if data.session && data.session.user}
+					<div class="flex items-center justify-center">
+						<button
+							class="btn variant-filled-success w-full"
+							disabled={stratzTimeout}
+							on:click={() => {
+								stratzLoading = checkForRandomComplete();
+							}}
+						>
+							<i class="fi fi-br-refresh h-fit"></i>
+							<div class="italic">Completed?</div></button
+						>
+					</div>
+				{/if}
+			</div>
+		{/if}
+	{/await}
+</div>
