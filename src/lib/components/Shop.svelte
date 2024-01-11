@@ -133,12 +133,12 @@
 			(currentItem: ShopItem) => item.id === currentItem.id
 		).length;
 		console.log(item, currentItemQuantity);
-		if (mode === 'add') {
+		if (mode === 'add' && item.active) {
 			if (currentItemQuantity < item.quantityAvailable) {
 				userShoppingCart.itemList.push(item);
 				userShoppingCart.totalCost += item.goldCost;
 			}
-		} else if (mode === 'remove') {
+		} else if (mode === 'remove' && item.active) {
 			let findIndex = userShoppingCart.itemList.findIndex((item: ShopItem) => item.name === itemName);
 			if (findIndex !== -1) {
 				userShoppingCart.itemList.splice(findIndex, 1);
@@ -163,16 +163,17 @@
 </script>
 
 <div
-	class="text-center h-fit items-center dark:bg-surface-600/30 bg-surface-200/30 border border-surface-200 dark:border-surface-700 shadow-lg rounded-xl px-2 md:py-2 max-sm:py-2 w-full"
+	class="grid grid-cols-3 container p-4 gap-4"
 >
-	<div class="flex flex-col md:flex-row items-center text-center w-full justify-center">
+	<div class="flex flex-col text-center w-full h-full justify-start space-y-4">
+		<img class="px-8 h-64 max-w-full rounded-lg object-contain" src={shopkeeper} alt="" />
 		<h1 class="h1 text-primary-700 max-md:font-bold">Welcome to the Turbo Town Secret Shop</h1>
-		<img class="px-8 h-64 max-w-full rounded-lg" src={shopkeeper} alt="" />
+		
 	</div>
 
-	<div class="flex md:m-4 y-4 h-full mx-auto w-full max-sm:mb-20">
+	<div class="flex h-full mx-auto w-full max-sm:mb-20">
 		<div
-			class="md:w-full my-4 max-md:max-w-sm text-center h-fit items-center dark:bg-surface-600/30 bg-surface-200/30 border border-surface-200 dark:border-surface-700 shadow-lg rounded-xl px-2 md:py-2 max-sm:py-2"
+			class="md:w-full max-md:max-w-sm text-center h-fit items-center dark:bg-surface-600/30 bg-surface-200/30 border border-surface-200 dark:border-surface-700 shadow-lg rounded-xl px-2 md:py-2 max-sm:py-2"
 		>
 			<div class="mb-2 bg-surface-500/10 p-4 rounded-full w-4/5 mx-auto shadow-md">
 				<h3 class="h3 dark:text-yellow-500 text-primary-500">Items</h3>
@@ -203,14 +204,14 @@
 								class="relative"
 								tabindex={i}
 							>
-								{#if availableItems[i].active === false}
-									<p
-										class="absolute w-full h-full bg-slate-900/90 flex items-center justify-center h3 text-primary-500 bg-surface-500/90 p-4"
+								<!-- {#if availableItems[i].active === false}
+									<td
+										class="absolute w-full h-full flex items-center justify-center h3 text-primary-500 bg-surface-500/90 p-4"
 									>
 										Coming Soon!
 										<img src={Lock} class="h-16 w-16 inline" alt="locked" />
-					</p>
-								{/if}
+									</td>
+								{/if} -->
 								<td class="hidden">{row[0]}</td>
 								<td class="">
 									<div class="rounded-full flex flex-col space-y-4">
@@ -219,8 +220,16 @@
 										</div>
 
 										<p class="font-semibold text-tertiary-300 text-lg">{row[0]}</p>
-									</div></td
-								>
+									</div>
+									{#if availableItems[i].active === false}
+										<div
+											class="absolute w-full h-full flex items-center justify-center h3 text-primary-500 bg-surface-500/90 p-4 top-0 left-0"
+										>
+											Coming Soon!
+											<img src={Lock} class="h-16 w-16 inline" alt="locked" />
+										</div>
+									{/if}
+								</td>
 								<td class="h-full">
 									<p class="font-bold text-amber-500">{row[1]}</p>
 								</td>
@@ -244,38 +253,32 @@
 					</tbody>
 					<tfoot>
 						<tr>
-							<td>Total {userShoppingCart.totalCost}</td>
+							<td>Total: {userShoppingCart.totalCost}</td>
 						</tr>
 					</tfoot>
 				</table>
-				{#if userShoppingCart.itemList.length > 0}
 					<button
-						disabled={false}
-						class="btn variant-filled-primary w-full my-16 max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:my-8 max-lg:mx-4 max-lg:max-w-[90%] md:max-w-[80%]"
-						on:click={() => purchaseClickHandler()}>Purchase</button
-					>
-				{:else}
-					<button
-						disabled={true}
-						class="btn variant-filled-primary w-full my-16 max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:my-8 max-lg:mx-4 max-lg:max-w-[90%] md:max-w-[80%]"
+						disabled={userShoppingCart.itemList.length === 0}
+						class="btn variant-filled-primary w-full max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:my-8 max-lg:mx-4 max-lg:max-w-[90%] md:max-w-[80%]"
+						on:click={() => purchaseClickHandler()}
 						>Purchase</button
 					>
-				{/if}
 			</div>
 		</div>
-		<div class="flex md:m-4 px-8 my-4 h-full mx-auto w-full max-sm:mb-20">
-			<div
-				class="md:w-full max-md:max-w-sm text-center h-fit items-center dark:bg-surface-600/30 bg-surface-200/30 border border-surface-200 dark:border-surface-700 shadow-lg rounded-xl px-2 md:py-2 max-sm:py-2"
-			>
-				<div class="mb-2 bg-surface-500/10 p-4 rounded-full w-4/5 mx-auto shadow-md">
-					<h3 class="h3 dark:text-yellow-500 text-primary-500">Item Details</h3>
-					<p class="text-m text-center">Click an item to see its details</p>
-				</div>
-				<!-- {#if activeItem.id !== -1} -->
-				<p class="text-m text-left">Item: {selectedDetailItem.name}</p>
-				<p class="text-m text-left">Description: {selectedDetailItem.description}</p>
-				<p class="text-m text-left dark:text-yellow-500">Gold Cost: {selectedDetailItem.goldCost}</p>
+
+	</div>
+	<div class="flex h-full mx-auto w-full max-sm:mb-20">
+		<div
+			class="md:w-full max-md:max-w-sm text-center h-fit items-center dark:bg-surface-600/30 bg-surface-200/30 border border-surface-200 dark:border-surface-700 shadow-lg rounded-xl px-2 md:py-2 max-sm:py-2"
+		>
+			<div class="mb-2 bg-surface-500/10 p-4 rounded-full w-4/5 mx-auto shadow-md">
+				<h3 class="h3 dark:text-yellow-500 text-primary-500">Item Details</h3>
+				<p class="text-m text-center">Click an item to see its details</p>
 			</div>
+			<!-- {#if activeItem.id !== -1} -->
+			<p class="text-m text-left">Item: {selectedDetailItem.name}</p>
+			<p class="text-m text-left">Description: {selectedDetailItem.description}</p>
+			<p class="text-m text-left dark:text-yellow-500">Gold Cost: {selectedDetailItem.goldCost}</p>
 		</div>
 	</div>
 </div>

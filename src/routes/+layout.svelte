@@ -217,13 +217,13 @@
 			<!-- --- -->
 		</svelte:fragment>
 
-		<svelte:fragment slot="pageFooter">
+		<!-- <svelte:fragment slot="pageFooter">
 			{#if $page.url.pathname.includes('turbotown')}
 				<div class="flex h-32 w-full justify-center m-auto border border-red-500">
 					<p class="text-xs text-slate-300 dark:text-slate-700">Copyright No Salt Studios 2023</p>
 				</div>
 			{/if}
-		</svelte:fragment>
+		</svelte:fragment> -->
 
 		<!-- Page Route Content -->
 		<div class="h-[calc(100vh-80px)] flex w-full justify-center">
