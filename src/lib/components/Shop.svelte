@@ -269,7 +269,7 @@
 		>
 			<div class="mb-2 bg-surface-500/10 p-4 rounded-full w-4/5 mx-auto shadow-md">
 				<h3 class="h3 dark:text-yellow-500 text-primary-500">Item Details</h3>
-				<p class="text-m text-center">Click an item to see its details</p>
+				<p class="text-m text-center">Hover over an item to see its details</p>
 			</div>
 			<!-- {#if activeItem.id !== -1} -->
 			<p class="text-m text-left">Item: {selectedDetailItem.name}</p>
