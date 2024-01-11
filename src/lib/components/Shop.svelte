@@ -1,11 +1,14 @@
 <script lang="ts">
-	import shopkeeper from '$lib/assets/shopkeeper.png';
 	import { popup } from '@skeletonlabs/skeleton';
 	import type { PopupSettings } from '@skeletonlabs/skeleton';
 	import { Table, tableMapperValues } from '@skeletonlabs/skeleton';
 	import type { TableSource } from '@skeletonlabs/skeleton';
 	import { Modal, getModalStore } from '@skeletonlabs/skeleton';
 	import type { ModalSettings, ModalComponent, ModalStore } from '@skeletonlabs/skeleton';
+
+	//images
+	import shopkeeper from '$lib/assets/shopkeeper.png';
+	import Lock from '$lib/assets/lock.png';
 
 	const modalStore = getModalStore();
 	const modal: ModalSettings = {
@@ -66,10 +69,21 @@
 		active: true
 	};
 
+	let divineRapier: ShopItem = new ShopItem();
+	divineRapier = {
+		id: 3,
+		name: 'Divine Rapier',
+		description: 'This item delete a user from the current season.  Permadeath.',
+		imgSrc: 'https://cdn.dota2.com/apps/dota2/images/items/rapier_lg.png',
+		goldCost: 99999999,
+		quantityAvailable: 1,
+		active: false
+	};
+
 	availableItems.push(observerWard);
 	availableItems.push(lotusOrb);
 	availableItems.push(linkensSphere);
-	
+	availableItems.push(divineRapier);
 
 	const tableSource: TableSource = {
 		// A list of heading labels.
@@ -77,7 +91,15 @@
 		// The data visibly shown in your table body UI.
 		body: tableMapperValues(availableItems, ['name', 'goldCost', 'quantityAvailable']),
 		// Optional: The data returned when interactive is enabled and a row is clicked.
-		meta: tableMapperValues(availableItems, ['id', 'name', 'description', 'imgSrc', 'goldCost', 'quantityAvailable'])
+		meta: tableMapperValues(availableItems, [
+			'id',
+			'name',
+			'description',
+			'imgSrc',
+			'goldCost',
+			'quantityAvailable',
+			'active'
+		])
 		// Optional: A list of footer labels.
 		//foot: ['Total', '', '<code class="code">5</code>']
 	};
@@ -126,7 +148,7 @@
 	};
 
 	const rowFocusHandler = (itemName: string) => {
-		console.log('item focused', itemName)
+		console.log('item focused', itemName);
 		let item = availableItems.filter((item: ShopItem) => item.name === itemName)[0];
 		selectedDetailItem = item;
 	};
@@ -174,16 +196,22 @@
 					</thead>
 					<tbody>
 						{#each tableSource.body as row, i}
-							<tr on:click={() => rowFocusHandler(row[0])} 
-								on:mouseover={() => rowFocusHandler(row[0])} 
-								on:focus={()=>{console.log('this row is focused', row[0])}} 
-								class="h-full focus:bg-red-500"
+							<tr
+								on:click={() => rowFocusHandler(row[0])}
+								on:mouseover={() => rowFocusHandler(row[0])}
+								on:focus={() => {}}
+								class="relative"
 								tabindex={i}
 							>
-							<!-- <tr on:click={() => rowFocusHandler(row[0])} 
-								class="h-full"
-							> -->
-								<td class="hidden">row[0]</td>
+								{#if availableItems[i].active === false}
+									<p
+										class="absolute w-full h-full bg-slate-900/90 flex items-center justify-center h3 text-primary-500 bg-surface-500/90 p-4"
+									>
+										Coming Soon!
+										<img src={Lock} class="h-16 w-16 inline" alt="locked" />
+					</p>
+								{/if}
+								<td class="hidden">{row[0]}</td>
 								<td class="">
 									<div class="rounded-full flex flex-col space-y-4">
 										<div class="rounded-full">
