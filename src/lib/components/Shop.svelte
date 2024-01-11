@@ -22,6 +22,7 @@
 		imgSrc: string = '';
 		goldCost: number = 0;
 		quantityAvailable: number = 0;
+		active: boolean = false;
 	}
 
 	class ShoppingCart {
@@ -39,7 +40,8 @@
 		description: 'This item will reflect back any attempted debuff applied to you',
 		imgSrc: 'https://cdn.dota2.com/apps/dota2/images/items/lotus_orb_lg.png',
 		goldCost: 500,
-		quantityAvailable: 10
+		quantityAvailable: 10,
+		active: false
 	};
 
 	let linkensSphere: ShopItem = new ShopItem();
@@ -49,7 +51,8 @@
 		description: 'This item will block any attempted debuff applied to you',
 		imgSrc: 'https://cdn.dota2.com/apps/dota2/images/items/sphere_lg.png',
 		goldCost: 1000,
-		quantityAvailable: 5
+		quantityAvailable: 5,
+		active: false
 	};
 
 	let observerWard: ShopItem = new ShopItem();
@@ -59,12 +62,14 @@
 		description: 'This item will let you pick from a selection of 3 random heroes',
 		imgSrc: 'https://cdn.dota2.com/apps/dota2/images/items/ward_observer_lg.png',
 		goldCost: 100,
-		quantityAvailable: 100
+		quantityAvailable: 100,
+		active: true
 	};
 
+	availableItems.push(observerWard);
 	availableItems.push(lotusOrb);
 	availableItems.push(linkensSphere);
-	availableItems.push(observerWard);
+	
 
 	const tableSource: TableSource = {
 		// A list of heading labels.
@@ -100,50 +105,39 @@
 	// 	console.log(selectedItems);
 	// };
 
-	const quantityMinusClickHandler = (inputTableSource: TableSource, inputRow: number) => {
-		//let itemSubstract = availableItems.filter((item: ShopItem) => item.id == Number(inputTableSource.meta[inputRow][0]))
-		const findIndex = userShoppingCart.itemList.findIndex(
-			(item) => item.id === Number(inputTableSource.meta[inputRow][0])
-		);
-		let goldCost = Number(inputTableSource.meta[inputRow][4]);
-
-		if (findIndex !== -1) {
-			userShoppingCart.itemList.splice(findIndex, 1);
-			userShoppingCart.totalCost -= goldCost;
+	const modifyCart = (itemName: string, mode: string) => {
+		let item = availableItems.filter((item: ShopItem) => item.name === itemName)[0];
+		let currentItemQuantity = userShoppingCart.itemList.filter(
+			(currentItem: ShopItem) => item.id === currentItem.id
+		).length;
+		console.log(item, currentItemQuantity);
+		if (mode === 'add') {
+			if (currentItemQuantity < item.quantityAvailable) {
+				userShoppingCart.itemList.push(item);
+				userShoppingCart.totalCost += item.goldCost;
+			}
+		} else if (mode === 'remove') {
+			let findIndex = userShoppingCart.itemList.findIndex((item: ShopItem) => item.name === itemName);
+			if (findIndex !== -1) {
+				userShoppingCart.itemList.splice(findIndex, 1);
+				userShoppingCart.totalCost -= item.goldCost;
+			}
 		}
-
-		//console.log('shopping cart', userShoppingCart.itemList);
-		//console.log('total cost', userShoppingCart.totalCost);
 	};
 
-	const quantityPlusClickHandler = (inputTableSource: TableSource, inputRow: number) => {
-		const findIndex = availableItems.findIndex((item) => item.id === Number(inputTableSource.meta[inputRow][0]));
-		let itemAdd = availableItems.filter((item: ShopItem) => item.id == Number(inputTableSource.meta[inputRow][0]));
-		let goldCost = Number(inputTableSource.meta[inputRow][4]);
-
-		if (
-			itemAdd[0].quantityAvailable >
-			userShoppingCart.itemList.filter((item: ShopItem) => item.id == Number(inputTableSource.meta[inputRow][0])).length
-		) {
-			userShoppingCart.itemList.push(itemAdd[0]);
-			userShoppingCart.totalCost += goldCost;
-		}
-
-		//console.log('shopping cart', userShoppingCart.itemList);
-		//console.log('total cost', userShoppingCart.totalCost);
-	};
-
-	const rowClickHandler = (inputTableSource: TableSource, inputRow: number) => {
-		selectedDetailItem.id = Number(inputTableSource.meta[inputRow][0]);
-		selectedDetailItem.name = inputTableSource.meta[inputRow][1];
-		selectedDetailItem.description = inputTableSource.meta[inputRow][2];
-		selectedDetailItem.goldCost = Number(inputTableSource.meta[inputRow][4]);
+	const rowFocusHandler = (itemName: string) => {
+		console.log('item focused', itemName)
+		let item = availableItems.filter((item: ShopItem) => item.name === itemName)[0];
+		selectedDetailItem = item;
 	};
 
 	const purchaseClickHandler = () => {
 		modalStore.trigger(modal);
 		userShoppingCart = new ShoppingCart();
 	};
+
+	$: console.log('user cart: ', userShoppingCart);
+	$: console.log('table source: ', tableSource);
 </script>
 
 <div
@@ -174,25 +168,49 @@
 					<thead>
 						<tr>
 							{#each tableSource.head as header, i}
-								<th>{header}</th>
+								<th class="text-center">{header}</th>
 							{/each}
 						</tr>
 					</thead>
 					<tbody>
 						{#each tableSource.body as row, i}
-							<tr on:click={() => rowClickHandler(tableSource, i)}>
-								<td class="text-left"><img class="h-auto max-w-full rounded-lg inline-table" src={availableItems[i].imgSrc} alt="" />{row[0]}</td>
-								<td>{row[1]}</td>
-								<td>{row[2]}</td>
-								<td
-									><button class="btn-icon" on:click={() => quantityMinusClickHandler(tableSource, i)}>
-										<i class="fi fi-sr-square-minus" /></button
-									>
-									{userShoppingCart.itemList.filter((item) => item.id == Number(tableSource.meta[i][0])).length}
-									<button class="btn-icon" on:click={() => quantityPlusClickHandler(tableSource, i)}>
-										<i class="fi fi-sr-square-plus" /></button
-									></td
+							<tr on:click={() => rowFocusHandler(row[0])} 
+								on:mouseover={() => rowFocusHandler(row[0])} 
+								on:focus={()=>{console.log('this row is focused', row[0])}} 
+								class="h-full focus:bg-red-500"
+								tabindex={i}
+							>
+							<!-- <tr on:click={() => rowFocusHandler(row[0])} 
+								class="h-full"
+							> -->
+								<td class="hidden">row[0]</td>
+								<td class="">
+									<div class="rounded-full flex flex-col space-y-4">
+										<div class="rounded-full">
+											<img class="h-16 object-contain rounded-2xl inline-table" src={availableItems[i].imgSrc} alt="" />
+										</div>
+
+										<p class="font-semibold text-tertiary-300 text-lg">{row[0]}</p>
+									</div></td
 								>
+								<td class="h-full">
+									<p class="font-bold text-amber-500">{row[1]}</p>
+								</td>
+								<td class="align-middle text-center">{row[2]}</td>
+								<td class="">
+									<div class="h-full flex items-center justify-center">
+										<button class="btn-icon" on:click={() => modifyCart(row[0], 'remove')}>
+											<i class="fi fi-sr-square-minus" /></button
+										>
+										<p>{userShoppingCart.itemList.filter((item) => item.name === row[0]).length}</p>
+										<!-- <button class="btn-icon" on:click={() => quantityPlusClickHandler(tableSource, i)}>
+											<i class="fi fi-sr-square-plus" />
+										</button> -->
+										<button class="btn-icon" on:click={() => modifyCart(row[0], 'add')}>
+											<i class="fi fi-sr-square-plus" />
+										</button>
+									</div>
+								</td>
 							</tr>
 						{/each}
 					</tbody>
@@ -224,7 +242,6 @@
 				<div class="mb-2 bg-surface-500/10 p-4 rounded-full w-4/5 mx-auto shadow-md">
 					<h3 class="h3 dark:text-yellow-500 text-primary-500">Item Details</h3>
 					<p class="text-m text-center">Click an item to see its details</p>
-
 				</div>
 				<!-- {#if activeItem.id !== -1} -->
 				<p class="text-m text-left">Item: {selectedDetailItem.name}</p>
