@@ -101,7 +101,7 @@
 			'active'
 		])
 		// Optional: A list of footer labels.
-		//foot: ['Total', '', '<code class="code">5</code>']
+		//foot:
 	};
 
 	let selectedDetailItem = new ShopItem();
@@ -132,7 +132,7 @@
 		let currentItemQuantity = userShoppingCart.itemList.filter(
 			(currentItem: ShopItem) => item.id === currentItem.id
 		).length;
-		console.log(item, currentItemQuantity);
+		//console.log(item, currentItemQuantity);
 		if (mode === 'add' && item.active) {
 			if (currentItemQuantity < item.quantityAvailable) {
 				userShoppingCart.itemList.push(item);
@@ -148,7 +148,7 @@
 	};
 
 	const rowFocusHandler = (itemName: string) => {
-		console.log('item focused', itemName);
+		//console.log('item focused', itemName);
 		let item = availableItems.filter((item: ShopItem) => item.name === itemName)[0];
 		selectedDetailItem = item;
 	};
@@ -158,17 +158,14 @@
 		userShoppingCart = new ShoppingCart();
 	};
 
-	$: console.log('user cart: ', userShoppingCart);
-	$: console.log('table source: ', tableSource);
+	//$: console.log('user cart: ', userShoppingCart);
+	//$: console.log('table source: ', tableSource);
 </script>
 
-<div
-	class="grid grid-cols-3 container p-4 gap-4"
->
+<div class="grid grid-cols-3 container p-4 gap-4">
 	<div class="flex flex-col text-center w-full h-full justify-start space-y-4">
 		<img class="px-8 h-64 max-w-full rounded-lg object-contain" src={shopkeeper} alt="" />
 		<h1 class="h1 text-primary-700 max-md:font-bold">Welcome to the Turbo Town Secret Shop</h1>
-		
 	</div>
 
 	<div class="flex h-full mx-auto w-full max-sm:mb-20">
@@ -253,19 +250,18 @@
 					</tbody>
 					<tfoot>
 						<tr>
-							<td>Total: {userShoppingCart.totalCost}</td>
+							<td class="h3 dark:text-yellow-500 text-primary-500">Total:</td>
+							<td class="h3 dark:text-yellow-500 text-primary-500">{userShoppingCart.totalCost}</td>
 						</tr>
 					</tfoot>
 				</table>
-					<button
-						disabled={userShoppingCart.itemList.length === 0}
-						class="btn variant-filled-primary w-full max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:my-8 max-lg:mx-4 max-lg:max-w-[90%] md:max-w-[80%]"
-						on:click={() => purchaseClickHandler()}
-						>Purchase</button
-					>
+				<button
+					disabled={userShoppingCart.itemList.length === 0}
+					class="btn variant-filled-primary w-full max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:my-8 max-lg:mx-4 max-lg:max-w-[90%] md:max-w-[80%]"
+					on:click={() => purchaseClickHandler()}>Purchase</button
+				>
 			</div>
 		</div>
-
 	</div>
 	<div class="flex h-full mx-auto w-full max-sm:mb-20">
 		<div
