@@ -1,4 +1,9 @@
 <script lang="ts">
+
+	//svelte
+	import { blur } from 'svelte/transition';
+	import type { SvelteComponent } from 'svelte';
+
 	import { popup } from '@skeletonlabs/skeleton';
 	import type { PopupSettings } from '@skeletonlabs/skeleton';
 	import { Table, tableMapperValues } from '@skeletonlabs/skeleton';
@@ -6,7 +11,6 @@
 	import { Modal, getModalStore } from '@skeletonlabs/skeleton';
 	import type { ModalSettings, ModalComponent, ModalStore } from '@skeletonlabs/skeleton';
 	import { ListBox, ListBoxItem } from '@skeletonlabs/skeleton';
-	import type { SvelteComponent } from 'svelte';
 	import { clickOutside } from '$lib/helpers/clickOutside.ts';
 	//images
 	import shopkeeper from '$lib/assets/shopkeeper.png';
@@ -111,7 +115,8 @@
 		selectedItem = availableItems.filter((item: ShopItem) => item.name === itemName)[0];
 	};
 
-	const useClickHandler = () => {
+	const useClickHandler = (item: any) => {
+		console.log('in click', item);
 		modalStore.trigger(modal);
 	};
 
@@ -121,21 +126,44 @@
 		//------------- potential race condition, need to clear selectedItem after applying the item via database ------------------
 		//
 		//
-		selectedItem = new ShopItem();
+		//selectedItem = new ShopItem();
 	};
+
+	$: console.log("modal Store", $modalStore)
+
+	// let isFocused = false;
+	// //const onFocus = () => (isFocused = true);
+	
+	// $: console.log(selectedItem)
+	// $: console.log(isFocused)
+	// $: (isFocused: boolean) => {
+	// 	console.log(`isFocused ${isFocused}`)
+	// 	if(!isFocused) selectedItem = new ShopItem();
+	// 	console.log(`selectedItem`, selectedItem)
+	// }
+
+	//$: !isFocused ? selectedItem = new ShopItem() : ''
+	// const onBlur =()=>isFocused=false;
+	// const onFocus = (e: any) => {
+	// 	console.log(e)
+	// 	console.log(e.target.tabIndex)
+	// 	console.log("in on Focus" , selectedItem)
+	// 	isFocused = true
+	// 	return isFocused
+	// }
 </script>
 
-<div class="grid grid-cols-2 container p-4 gap-8">
+<div class="bg-surface-700 w-full h-full">
 	<div class="flex h-full mx-auto w-full max-sm:mb-20">
 		<div
-			class="md:w-full max-md:max-w-sm text-center h-fit items-center dark:bg-surface-600/30 bg-surface-200/30 border border-surface-200 dark:border-surface-700 shadow-lg rounded-xl px-2 md:py-2 max-sm:py-2"
+			class="w-full grid grid-cols-4"
 		>
-			<div class="mb-2 bg-surface-500/10 p-4 rounded-full w-4/5 mx-auto shadow-md">
+			<div class="mb-2 bg-surface-500/10 p-4 rounded-full w-4/5 mx-auto shadow-md col-span-1">
 				<h3 class="h3 dark:text-yellow-500 text-primary-500">Inventory</h3>
 			</div>
 
-			<div class="">
-				<table class="table table-hover table-interactive mb-4">
+			<div class="col-span-3">
+				<table class="table table-hover table-interactive mb-4 table-compact">
 					<thead>
 						<tr>
 							{#each tableSource.head as header, i}
@@ -144,16 +172,24 @@
 						</tr>
 					</thead>
 					<tbody use:clickOutside on:click_outside={handleClickOutside}>
+					<tbody>
 						{#each tableSource.body as row, i}
 							<tr
 								on:click={() => rowFocusHandler(row[0])}
 								class="relative focus:outline-none focus:ring focus:ring-red-500"
 								tabindex={i}
 							>
+							<!-- <tr
+								on:click={() => rowFocusHandler(row[0])}
+								on:focus={onFocus}
+								on:blur={onBlur}
+								class="relative focus:outline-none focus:ring focus:ring-red-500"
+								tabindex={i}
+							> -->
 								<td>
-									<div class="rounded-full flex flex-col space-y-4">
+									<div class="rounded-full flex space-x-4">
 										<div class="rounded-full">
-											<img class="h-16 object-contain rounded-2xl inline-table" src={availableItems[i].imgSrc} alt="" />
+											<img class="h-8 object-contain rounded-2xl inline-table" src={availableItems[i].imgSrc} alt="" />
 										</div>
 
 										<p class="font-semibold text-tertiary-300 text-lg">{row[0]}</p>
@@ -166,14 +202,16 @@
 							</tr>
 						{/each}
 					</tbody>
+					<tfoot>
+						<button
+							transition:blur={{ amount: 100 }}
+							disabled={selectedItem.id === -1}
+							class="btn variant-filled-primary w-full max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:my-8 max-lg:mx-4 max-lg:max-w-[90%] md:max-w-[80%]"
+							on:click={() => useClickHandler(selectedItem)}
+							>Use
+						</button>
+					</tfoot>
 				</table>
-
-				<button
-					disabled={selectedItem.id === -1}
-					class="btn variant-filled-primary w-full max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:my-8 max-lg:mx-4 max-lg:max-w-[90%] md:max-w-[80%]"
-					on:click={() => useClickHandler()}
-					>Use
-				</button>
 			</div>
 		</div>
 	</div>

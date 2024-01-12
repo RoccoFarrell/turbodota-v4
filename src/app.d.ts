@@ -10,6 +10,7 @@ declare global {
 		// interface Platform {}
 	}
 
+	//cooking
 	declare namespace svelteHTML {
         interface HTMLAttributes<T> {
             'on:click_outside'?: CompositionEventHandler<T>;
