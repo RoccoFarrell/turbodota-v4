@@ -4,9 +4,20 @@
 
 	import Shop from '$lib/components/Shop.svelte';
 	import Inventory from '$lib/components/Inventory.svelte';
+	import Observer from '$lib/components/Observer.svelte';
 
 	//helpers
 	import { clickOutside } from '$lib/helpers/clickOutside.ts';
+
+	//page data
+	import type { PageData } from './$types';
+	export let data: PageData;
+
+	console.log(data);
+
+	const onHeroSelect = (heroEvent: CustomEvent) => {
+		console.log(heroEvent.detail);
+	};
 
 	let showInventory = false;
 	const collapse = () => {
@@ -17,6 +28,7 @@
 		console.log('blurring')
 		showInventory = false;
 	}
+	
 </script>
 
 <div class="flex flex-col h-full">
@@ -50,3 +62,8 @@
 		</div>
 	{/if}
 </div>
+
+<!-- <Observer on:heroselect={onHeroSelect}></Observer> -->
+
+
+

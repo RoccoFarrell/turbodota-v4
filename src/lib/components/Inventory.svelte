@@ -1,5 +1,4 @@
 <script lang="ts">
-
 	//svelte
 	import { blur } from 'svelte/transition';
 	import type { SvelteComponent } from 'svelte';
@@ -15,13 +14,17 @@
 	//images
 	import shopkeeper from '$lib/assets/shopkeeper.png';
 	import Lock from '$lib/assets/lock.png';
+	import Observer from './Observer.svelte';
+
+	const modalComponent: ModalComponent = { 
+		ref: Observer,
+		props: {test: 'test'}
+	};
 
 	const modalStore = getModalStore();
 	const modal: ModalSettings = {
-		type: 'alert',
-		// Data
-		title: 'Confirmed',
-		body: 'You have used an item'
+		type: 'component',
+		component: modalComponent
 	};
 
 	class ShopItem {
@@ -94,7 +97,7 @@
 
 	const tableSource: TableSource = {
 		// A list of heading labels.
-		head: ['Item Name', 'Description', 'Quantity Available'],
+		head: ['Item Name', 'Description', 'Quantity Available', 'Action'],
 		// The data visibly shown in your table body UI.
 		body: tableMapperValues(userInventory, ['name', 'description', 'quantityAvailable']),
 		// Optional: The data returned when interactive is enabled and a row is clicked.
@@ -117,6 +120,7 @@
 
 	const useClickHandler = (item: any) => {
 		console.log('in click', item);
+		//toggleModal(Observer)
 		modalStore.trigger(modal);
 	};
 
@@ -129,11 +133,11 @@
 		//selectedItem = new ShopItem();
 	};
 
-	$: console.log("modal Store", $modalStore)
+	$: console.log('modal Store', $modalStore);
 
 	// let isFocused = false;
 	// //const onFocus = () => (isFocused = true);
-	
+
 	// $: console.log(selectedItem)
 	// $: console.log(isFocused)
 	// $: (isFocused: boolean) => {
@@ -155,9 +159,7 @@
 
 <div class="bg-surface-700 w-full h-full">
 	<div class="flex h-full mx-auto w-full max-sm:mb-20">
-		<div
-			class="w-full grid grid-cols-4"
-		>
+		<div class="w-full grid grid-cols-4">
 			<div class="mb-2 bg-surface-500/10 p-4 rounded-full w-4/5 mx-auto shadow-md col-span-1">
 				<h3 class="h3 dark:text-yellow-500 text-primary-500">Inventory</h3>
 			</div>
@@ -171,15 +173,10 @@
 							{/each}
 						</tr>
 					</thead>
-					<tbody use:clickOutside on:click_outside={handleClickOutside}>
 					<tbody>
 						{#each tableSource.body as row, i}
-							<tr
-								on:click={() => rowFocusHandler(row[0])}
-								class="relative focus:outline-none focus:ring focus:ring-red-500"
-								tabindex={i}
-							>
-							<!-- <tr
+							<tr class="relative" tabindex={i}>
+								<!-- <tr
 								on:click={() => rowFocusHandler(row[0])}
 								on:focus={onFocus}
 								on:blur={onBlur}
@@ -199,22 +196,17 @@
 									<p class="">{row[1]}</p>
 								</td>
 								<td class="align-middle text-center">{row[2]}</td>
+								<button
+									class="btn variant-filled-primary w-full max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:my-8 max-lg:mx-4 max-lg:max-w-[90%] md:max-w-[80%]"
+									on:click={() => rowFocusHandler(row[0])}
+									on:click={() => useClickHandler(selectedItem)}
+									>Use
+								</button>
 							</tr>
 						{/each}
 					</tbody>
-					<tfoot>
-						<button
-							transition:blur={{ amount: 100 }}
-							disabled={selectedItem.id === -1}
-							class="btn variant-filled-primary w-full max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:my-8 max-lg:mx-4 max-lg:max-w-[90%] md:max-w-[80%]"
-							on:click={() => useClickHandler(selectedItem)}
-							>Use
-						</button>
-					</tfoot>
 				</table>
 			</div>
 		</div>
 	</div>
 </div>
-
-<Modal></Modal>
