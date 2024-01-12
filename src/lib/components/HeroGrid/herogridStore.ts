@@ -2,7 +2,7 @@ import { writable } from 'svelte/store';
 import { heroRoles } from '$lib/constants/heroRoles';
 import type { Hero } from '@prisma/client';
 
-export function createRandomStore() {
+function createHeroGridStore() {
 	const { subscribe, set, update } = writable({
 		allHeroes: [] as Hero[],
 		availableHeroes: [] as Hero[],
@@ -32,7 +32,7 @@ export function createRandomStore() {
 					})
 			),
 		banHero: (input: Hero) => update((n) => (n = banHero(input, n))),
-		updateCalculations: () => update((n) => (n = updateCalculations(n))),
+		setBanList: (input: Hero[]) => update((n) => (n = setBanList(input, n))),
 		reset: (input: Hero[]) => {
 			console.log(` reset length ${input.length}`);
 			update(
@@ -52,16 +52,7 @@ export function createRandomStore() {
 						randomedHero: null
 					})
 			);
-		},
-		setBanList: (input: Hero[]) => update((n) => (n = setBanList(input, n)))
-		// setSelectedPlayer: (input: string) => update(n => n = {
-		//     ...n,
-		//     selectedPlayer: input
-		// }),
-		// setSortHeader: (input: string) => update(n => n = {
-		//     ...n,
-		//     sortHeader: input
-		// }),
+		}
 	};
 }
 
@@ -71,7 +62,7 @@ const updateCalculations = (store: any) => {
 		(store.bannedHeroes.length - store.freeBans < 0 ? 0 : store.bannedHeroes.length - store.freeBans) *
 		store.banMultiplier;
 
-	//store.expectedGold =
+	// store.expectedGold =
 	// store.startingGold - (store.bannedHeroes.length > 3 ? store.modifierTotal : 0) > 25
 	// 	? store.startingGold - store.modifierTotal
 	// 	: 25;
@@ -80,37 +71,37 @@ const updateCalculations = (store: any) => {
 };
 
 const banHero = (hero: Hero, store: any) => {
-	//console.log(`banning hero:`);
+	console.log(`[herogridStore - banHero] banning hero: ${hero.localized_name}, ${hero.id}`);
 	//console.log(hero);
-	let banIndex = store.availableHeroes.findIndex((availHero: Hero) => availHero.id === hero.id);
-	if(store.bannedHeroes.filter((banHero: Hero) => hero.id === banHero.id).length === 0){
-		if (banIndex > -1) {
-			store.bannedHeroes = [...store.bannedHeroes, hero];
-			let availableIndex = store.availableHeroes.findIndex((availHero: Hero) => availHero.id === hero.id);
-	
-			if (availableIndex === -1) {
-				store.availableHeroes.forEach((storeHero: Hero, i: number) => {
-					if (storeHero.id === hero.id) availableIndex = i;
-				});
-			}
-	
-			if (availableIndex > -1) store.availableHeroes.splice(availableIndex, 1);
-		} else {
-			store.bannedHeroes = store.bannedHeroes.filter((arrHero: Hero) => arrHero !== hero);
-			store.availableHeroes.push(hero);
+	//console.log(store);
+	let banIndex_available = store.availableHeroes.findIndex((availHero: Hero) => availHero.id === hero.id);
+	let banIndex_banned = store.bannedHeroes.findIndex((banHero: Hero) => hero.id === banHero.id);
+
+	if (banIndex_available > -1 && banIndex_banned === -1) {
+		store.bannedHeroes = [...store.bannedHeroes, hero];
+		let availableIndex = store.availableHeroes.findIndex((availHero: Hero) => availHero.id === hero.id);
+
+		if (availableIndex === -1) {
+			store.availableHeroes.forEach((storeHero: Hero, i: number) => {
+				if (storeHero.id === hero.id) availableIndex = i;
+			});
 		}
-	} else {
-		console.warn('[randomStore - banHero] hero is already banned')
+
+		if (availableIndex > -1) store.availableHeroes.splice(availableIndex, 1);
+	} else if (banIndex_banned > -1 && banIndex_available === -1) {
+		console.warn('[herogridStore - banHero] hero is already banned');
+		store.bannedHeroes = store.bannedHeroes.filter((arrHero: Hero) => arrHero !== hero);
+		store.availableHeroes.push(hero);
 	}
 
-
 	store = updateCalculations(store);
+	//console.log("after update", store)
 	return store;
 };
 
 const setBanList = (inputList: Hero[] | null, store: any) => {
 	if (inputList) {
-		console.log(`[setBanList] - banning ${inputList.length}`);
+		console.log(`[setBanList] - banning ${inputList.length} heroes: ${inputList}`);
 		//sets the garbage preset
 		inputList.forEach((hero: Hero) => {
 			//console.log('checking hero', hero);
@@ -130,6 +121,6 @@ const setBanList = (inputList: Hero[] | null, store: any) => {
 	}
 };
 
-const handleRoleChange = (roleList: string[]) => {};
+// const handleRoleChange = (roleList: string[]) => {};
 
-export const randomStore = createRandomStore();
+export const herogridStore = createHeroGridStore();

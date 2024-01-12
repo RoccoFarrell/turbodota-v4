@@ -67,8 +67,10 @@ const config = {
 				sans: [...fontFamily.sans]
 			},
 			backgroundImage: {
-				wantedPoster: "url('$lib/assets/wantedPoster.png')",
-				blankPoster: "url('$lib/assets/blankPoster.png')"
+				'wantedPoster': "url('$lib/assets/wantedPoster.png')",
+				'blankPoster': "url('$lib/assets/blankPoster.png')",
+				'questBoard': "url('$lib/assets/questBoard.png')",
+				'questBoardPoster': "url('$lib/assets/questBoardPoster2.png')"
 			}
 		}
 	},

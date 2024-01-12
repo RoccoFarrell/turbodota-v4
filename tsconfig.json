@@ -32,6 +32,7 @@
 		"strict": true,
 		"moduleResolution": "bundler",
 		"allowImportingTsExtensions": true,
+		"types": ["vitest/globals"],
 		"paths": {
 			"$mocks": [
 				"./src/mocks"

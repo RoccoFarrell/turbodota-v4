@@ -1,5 +1,14 @@
 <script lang="ts">
 	import '../app.pcss';
+
+	import { setContext } from 'svelte'
+
+	import { dev } from '$app/environment';
+	import { beforeNavigate } from '$app/navigation';
+	import { navigating, page } from '$app/stores';
+	import { browser } from '$app/environment';
+
+	//skeleton
 	import {
 		AppShell,
 		AppBar,
@@ -7,13 +16,13 @@
 		initializeStores,
 		Drawer,
 		getDrawerStore,
+		Modal,
+		getModalStore,
 		Toast
 	} from '@skeletonlabs/skeleton';
-	import { dev } from '$app/environment';
-
-	import { beforeNavigate } from '$app/navigation';
-	import { navigating, page } from '$app/stores';
-	import { browser } from '$app/environment';
+	import type { ModalComponent } from '@skeletonlabs/skeleton';
+	//must be called in root layout, one time
+	initializeStores();
 
 	//types
 	import type { PageData } from './$types';
@@ -22,18 +31,18 @@
 	//components
 	import Navigation from './_components/Navigation/Navigation.svelte';
 	import Loading from '$lib/components/Loading.svelte';
+	import HeroGrid from '$lib/components/HeroGrid/HeroGrid.svelte';
 
 	//assets
-	import "@flaticon/flaticon-uicons/css/all/all.css";
+	import '@flaticon/flaticon-uicons/css/all/all.css';
 	//import HeroSprites from 'dota2-css-hero-sprites/assets/stylesheets/dota2minimapheroes.css'
 	import 'dota2-css-hero-sprites/assets/stylesheets/dota2minimapheroes.css';
-
 
 	//images
 	import steam_logo from '$lib/assets/steam_logo.png';
 	import turbo_logo from '$lib/assets/turbologo.png';
 
-	import ogImage from '$lib/assets/turbodota_1200-630.png'
+	import ogImage from '$lib/assets/turbodota_1200-630.png';
 	// Floating UI for Popups
 	import { computePosition, autoUpdate, flip, shift, offset, arrow } from '@floating-ui/dom';
 	import { storePopup } from '@skeletonlabs/skeleton';
@@ -87,12 +96,28 @@
 
 	export let data: PageData;
 
-	let session: Session = data.session || null;
+	let session: Session | null = data.session || null;
+
+	//set session in context for components
+	setContext('session', session)
+	setContext('userPreferences', data.userPreferences)
 
 	let navigatingTest = false;
 
+	//set context for modal component
+
+	setContext('heroes', data.heroDescriptions.allHeroes)
+
+	//modal
+	const modalStore = getModalStore();
+
+	const modalRegistry: Record<string, ModalComponent> = {
+		// Set a unique modal ID, then pass the component reference
+		heroGrid: { ref: HeroGrid }
+		// ...
+	};
+
 	//drawer
-	initializeStores();
 
 	const drawerStore = getDrawerStore();
 
@@ -126,10 +151,7 @@
 	<meta property="og:type" content="website" />
 	<meta property="og:title" content="Turbodota - The Tracker for Turbo" />
 	<meta property="og:description" content="Track your randoms, and compete to become Mayor of Turbotown!" />
-	<meta
-		property="og:image"
-		content={ogImage}
-	/>
+	<meta property="og:image" content={ogImage} />
 
 	<!-- Twitter Meta Tags -->
 	<meta name="twitter:card" content="summary_large_image" />
@@ -137,10 +159,7 @@
 	<meta property="twitter:url" content="https://new.turbodota.com" />
 	<meta name="twitter:title" content="Turbodota - The Tracker for Turbo" />
 	<meta name="twitter:description" content="Track your randoms, and compete to become Mayor of Turbotown!" />
-	<meta
-		name="twitter:image"
-		content={ogImage}
-	/>
+	<meta name="twitter:image" content={ogImage} />
 </svelte:head>
 
 <!-- App Shell -->
@@ -148,6 +167,7 @@
 	<div>Registering service worker {isReady}</div>
 {:then}
 	<Toast />
+	<Modal components={modalRegistry} />
 	<Drawer><Navigation {session} /></Drawer>
 	<AppShell slotSidebarLeft="bg-surface-500/10 w-0 lg:w-64">
 		<svelte:fragment slot="header">

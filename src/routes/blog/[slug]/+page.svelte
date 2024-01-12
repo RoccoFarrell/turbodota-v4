@@ -12,15 +12,15 @@
 </svelte:head>
 
 <article class="p-8">
-	<div class="container flex flex-col space-y-8">
+	<div class="container flex flex-col">
 		<!-- Title -->
-		<hgroup>
+		<hgroup class="mb-8">
 			<h1 class="h1 font-bold">{data.meta.title}</h1>
             <h4 class="h4 text-amber-500 text-center">{data.meta.description}</h4>
 			
 		</hgroup>
 
-		<div class="flex justify-between items-center">
+		<div class="flex justify-between items-center my-4">
             
 			<!-- Tags -->
 			<div class="tags">
@@ -31,9 +31,9 @@
             <p class="text-tertiary-500 italic">Published on {formatDate(data.meta.date)}</p>
 		</div>
 
-        <div class="w-full border-b border-dashed border-primary-500"></div>
+        <div class="w-full border-b border-dashed border-primary-500 my-4"></div>
 		<!-- Post -->
-		<div class="prose dark:prose-invert">
+		<div class="prose dark:prose-invert mb-20">
 			<svelte:component this={data.content} />
 		</div>
 	</div>

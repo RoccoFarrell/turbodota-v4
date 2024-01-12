@@ -67,6 +67,6 @@ export const GET: RequestHandler = async ({ request, locals, params, url }) => {
     }
 
     //...do something with the data
-    redirect(302, '/');
+    redirect(302, '/random');
     //return new Response(JSON.stringify({ "user": user }))
 };

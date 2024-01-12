@@ -2,16 +2,16 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// datasource db {
-//   provider = "postgresql"
-//   url      = env("DEV_URL")
-// }
-
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
+  url      = env("DEV_URL")
 }
+
+// datasource db {
+//   provider  = "postgresql"
+//   url       = env("DATABASE_URL")
+//   directUrl = env("DIRECT_URL")
+// }
 
 model Match {
   id            Int      @id @default(autoincrement())
@@ -127,6 +127,7 @@ model Season {
   league         League         @relation(fields: [leagueID], references: [id])
   members        DotaUser[]
   season_results SeasonResult[]
+  turbotowns     Turbotown[]
 }
 
 model SeasonResult {
@@ -182,6 +183,7 @@ model User {
   dota_user    DotaUser?   @relation(fields: [account_id], references: [account_id])
 
   //matches      Match[]
+  Turbotown Turbotown[]
 }
 
 model UserPrefs {
@@ -195,7 +197,7 @@ model UserPrefs {
 }
 
 model Random {
-  id              Int       @id @default(autoincrement())
+  id              Int              @id @default(autoincrement())
   account_id      Int
   active          Boolean
   status          String
@@ -212,10 +214,48 @@ model Random {
   modifierTotal   Int
   randomedHero    Int
   seasons         Season[]
-  user            User?     @relation(fields: [account_id], references: [account_id])
-  match           Match?    @relation(fields: [endMatchID], references: [id])
+  quests          TurbotownQuest[]
+  user            User?            @relation(fields: [account_id], references: [account_id])
+  match           Match?           @relation(fields: [endMatchID], references: [id])
 
   //@@unique([account_id, active], name: "matchPlusAccount")
+}
+
+model Turbotown {
+  id          Int               @id @default(autoincrement())
+  account_id  Int
+  seasonID    Int
+  lastUpdated DateTime          @default(now())
+  user        User?             @relation(fields: [account_id], references: [account_id])
+  metrics     TurbotownMetric[]
+  quests      TurbotownQuest[]
+  season      Season?           @relation(fields: [seasonID], references: [id])
+}
+
+model TurbotownMetric {
+  id          Int      @id @default(autoincrement())
+  turbotownID Int
+  lastUpdated DateTime
+  label       String
+  value       Int
+
+  Turbotown Turbotown @relation(fields: [turbotownID], references: [id])
+}
+
+model TurbotownQuest {
+  id          Int       @id @default(autoincrement())
+  active      Boolean
+  status      String
+  xp          Int
+  gold        Int
+  questSlot   Int
+  type        String
+  endDate     DateTime?
+  lastUpdated DateTime  @default(now())
+  randomID    Int
+  turbotownID Int
+  random      Random    @relation(fields: [randomID], references: [id], onDelete: Cascade)
+  Turbotown   Turbotown @relation(fields: [turbotownID], references: [id])
 }
 
 model Session {
