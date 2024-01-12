@@ -9,6 +9,13 @@ declare global {
 		// interface PageData {}
 		// interface Platform {}
 	}
+
+	declare namespace svelteHTML {
+        interface HTMLAttributes<T> {
+            'on:click_outside'?: CompositionEventHandler<T>;
+        }
+    }
+	
 	var __prisma: PrismaClient;
 
 	/// <reference types="lucia" />

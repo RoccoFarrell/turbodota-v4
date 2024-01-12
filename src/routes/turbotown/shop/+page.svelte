@@ -1,8 +1,11 @@
 <script lang="ts">
-import Shop from "$lib/components/Shop.svelte";
-
+	import Shop from '$lib/components/Shop.svelte';
+	import Inventory from '$lib/components/Inventory.svelte';
 </script>
 
-<Shop>
-
-</Shop>
+<div>
+	<Shop></Shop>
+	<div>
+		<Inventory></Inventory>
+	</div>
+</div>
