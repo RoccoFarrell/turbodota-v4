@@ -93,7 +93,7 @@
 				maxBans: constant_maxBans,
 				randomedHero: allHeroesCopy.filter((hero: Hero) => hero.id === quest1.random.randomedHero)[0]
 			});
-	} else quest1Store.setAllHeroes(data.heroDescriptions.allHeroes);
+	} else quest1Store.reset(data.heroDescriptions.allHeroes);
 
 	if(quest2.length > 0){
 		let allHeroesCopy = [...data.heroDescriptions.allHeroes];
@@ -119,7 +119,7 @@
 				maxBans: constant_maxBans,
 				randomedHero: allHeroesCopy.filter((hero: Hero) => hero.id === quest2.random.randomedHero)[0]
 			});
-	} else quest2Store.setAllHeroes(data.heroDescriptions.allHeroes);
+	} else quest2Store.reset(data.heroDescriptions.allHeroes);
 
 	if(quest3.length > 0){
 		let allHeroesCopy = [...data.heroDescriptions.allHeroes];
@@ -145,7 +145,7 @@
 				maxBans: constant_maxBans,
 				randomedHero: allHeroesCopy.filter((hero: Hero) => hero.id === quest3.random.randomedHero)[0]
 			});
-	} else quest3Store.setAllHeroes(data.heroDescriptions.allHeroes);
+	} else quest3Store.reset(data.heroDescriptions.allHeroes);
 
 	//end set stores
 

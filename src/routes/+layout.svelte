@@ -189,7 +189,7 @@
 						<strong class="text-sm lg:text-xl uppercase ml-4 text-center">Turbodota v4</strong>
 						{#if dev}
 							<div class="mx-8 flex flex-col">
-								<p>{`isReady: ${JSON.stringify(isReady)}`}</p>
+								<!-- <p>{`isReady: ${JSON.stringify(isReady)}`}</p> -->
 								<p>{`env: ${process.env.NODE_ENV}`}</p>
 							</div>
 						{/if}

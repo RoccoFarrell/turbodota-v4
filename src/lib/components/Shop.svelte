@@ -162,10 +162,24 @@
 	//$: console.log('table source: ', tableSource);
 </script>
 
-<div class="grid grid-cols-3 container p-4 gap-4">
+<div class="grid grid-cols-2 container p-4 gap-4">
 	<div class="flex flex-col text-center w-full h-full justify-start space-y-4">
 		<img class="px-8 h-64 max-w-full rounded-lg object-contain" src={shopkeeper} alt="" />
 		<h1 class="h1 text-primary-700 max-md:font-bold">Welcome to the Turbo Town Secret Shop</h1>
+		<div class="flex h-full mx-auto w-full max-sm:mb-20">
+			<div
+				class="md:w-full max-md:max-w-sm text-center h-fit items-center dark:bg-surface-600/30 bg-surface-200/30 border border-surface-200 dark:border-surface-700 shadow-lg rounded-xl px-2 md:py-2 max-sm:py-2"
+			>
+				<div class="mb-2 bg-surface-500/10 p-4 rounded-full w-4/5 mx-auto shadow-md">
+					<h3 class="h3 dark:text-yellow-500 text-primary-500">Item Details</h3>
+					<p class="text-m text-center">Hover over an item to see its details</p>
+				</div>
+				<!-- {#if activeItem.id !== -1} -->
+				<p class="text-m text-left">Item: {selectedDetailItem.name}</p>
+				<p class="text-m text-left">Description: {selectedDetailItem.description}</p>
+				<p class="text-m text-left dark:text-yellow-500">Gold Cost: {selectedDetailItem.goldCost}</p>
+			</div>
+		</div>
 	</div>
 
 	<div class="flex h-full mx-auto w-full max-sm:mb-20">
@@ -184,7 +198,7 @@
 		/> -->
 
 			<div class="table-container">
-				<table class="table table-hover table-interactive">
+				<table class="table table-hover table-interactive table-compact">
 					<thead>
 						<tr>
 							{#each tableSource.head as header, i}
@@ -211,9 +225,9 @@
 								{/if} -->
 								<td class="hidden">{row[0]}</td>
 								<td class="">
-									<div class="rounded-full flex flex-col space-y-4">
+									<div class="rounded-full flex space-x-4">
 										<div class="rounded-full">
-											<img class="h-16 object-contain rounded-2xl inline-table" src={availableItems[i].imgSrc} alt="" />
+											<img class="h-10 object-contain rounded-2xl inline-table" src={availableItems[i].imgSrc} alt="" />
 										</div>
 
 										<p class="font-semibold text-tertiary-300 text-lg">{row[0]}</p>
@@ -261,20 +275,6 @@
 					on:click={() => purchaseClickHandler()}>Purchase</button
 				>
 			</div>
-		</div>
-	</div>
-	<div class="flex h-full mx-auto w-full max-sm:mb-20">
-		<div
-			class="md:w-full max-md:max-w-sm text-center h-fit items-center dark:bg-surface-600/30 bg-surface-200/30 border border-surface-200 dark:border-surface-700 shadow-lg rounded-xl px-2 md:py-2 max-sm:py-2"
-		>
-			<div class="mb-2 bg-surface-500/10 p-4 rounded-full w-4/5 mx-auto shadow-md">
-				<h3 class="h3 dark:text-yellow-500 text-primary-500">Item Details</h3>
-				<p class="text-m text-center">Hover over an item to see its details</p>
-			</div>
-			<!-- {#if activeItem.id !== -1} -->
-			<p class="text-m text-left">Item: {selectedDetailItem.name}</p>
-			<p class="text-m text-left">Description: {selectedDetailItem.description}</p>
-			<p class="text-m text-left dark:text-yellow-500">Gold Cost: {selectedDetailItem.goldCost}</p>
 		</div>
 	</div>
 </div>
