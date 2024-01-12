@@ -1,8 +1,6 @@
 <script lang="ts">
-	import { fade, fly, slide } from 'svelte/transition';
+	import { slide } from 'svelte/transition';
 	import { quintOut } from 'svelte/easing';
-	import { flip } from 'svelte/animate';
-	import { browser } from '$app/environment';
 	import { setContext, getContext } from 'svelte';
 
 	//prisma types

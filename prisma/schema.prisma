@@ -246,14 +246,14 @@ model TurbotownQuest {
   id          Int       @id @default(autoincrement())
   active      Boolean
   status      String
-  endDate     DateTime?
   xp          Int
   gold        Int
-  turbotownID Int
-  lastUpdated DateTime  @default(now())
   questSlot   Int
   type        String
+  endDate     DateTime?
+  lastUpdated DateTime  @default(now())
   randomID    Int
+  turbotownID Int
   random      Random    @relation(fields: [randomID], references: [id], onDelete: Cascade)
   Turbotown   Turbotown @relation(fields: [turbotownID], references: [id])
 }
