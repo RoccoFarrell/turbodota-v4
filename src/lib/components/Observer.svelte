@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { setContext, getContext } from 'svelte';
+	import { setContext, getContext, onMount } from 'svelte';
 	import type { Hero } from '@prisma/client';
 	import type { SvelteComponent } from 'svelte';
 
@@ -8,16 +8,18 @@
 	const modalStore = getModalStore();
 
 	let heroes: Hero[] = getContext('heroes');
+	let randomHeroList: Array<Hero> = new Array<Hero>();
+
 	let generatedRandomHero1 = heroes[Math.floor(Math.random() * heroes.length)];
 	let generatedRandomHero2 = heroes[Math.floor(Math.random() * heroes.length)];
 	let generatedRandomHero3 = heroes[Math.floor(Math.random() * heroes.length)];
+	console.log('random heroes:', generatedRandomHero1, generatedRandomHero2, generatedRandomHero3);
 
-	let randomHeroList: Array<Hero> = new Array<Hero>();
 	randomHeroList.push(generatedRandomHero1);
 	randomHeroList.push(generatedRandomHero2);
 	randomHeroList.push(generatedRandomHero3);
 
-	console.log('random heroes:', generatedRandomHero1, generatedRandomHero2, generatedRandomHero3);
+	//$: console.log('rhl: ', randomHeroList);
 
 	// Handle Form Submission
 	function onFormSubmit(heroSelect: Hero): void {
@@ -25,10 +27,10 @@
 		modalStore.close();
 	}
 
-	console.log(randomHeroList);
+	//console.log(randomHeroList);
 </script>
 
-<div class="h1 card w-screen flex flex-col justify-center items-center p-4">
+<div id="observerModal" class="h1 card w-screen flex flex-col justify-center items-center p-4">
 	Select Your Random Hero!
 	<div class="w-[70%] h-full grid grid-cols-3 mx-auto max-h-[755%] my-8">
 		{#each randomHeroList as hero, i}

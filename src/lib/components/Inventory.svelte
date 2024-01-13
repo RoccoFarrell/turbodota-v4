@@ -23,7 +23,7 @@
 		ref: Observer,
 	};
 	
-	const oberverModal: ModalSettings = {
+	const observerModal: ModalSettings = {
 		type: 'component',
 		component: modalComponent,
 		response: (r: any) => {
@@ -118,19 +118,16 @@
 		//foot:
 	};
 
-	const rowFocusHandler = (itemName: string) => {
-		selectedItem = availableItems.filter((item: ShopItem) => item.name === itemName)[0];
-	};
-
-	const useClickHandler = (item: any) => {
+	const useClickHandler = (item: string) => {
 		console.log('in click', item);
 		//toggleModal(Observer)
-		if (item.name == "Observer Ward") {
-			modalStore.trigger(oberverModal)
+		if (item === "Observer Ward") {
+			console.log('triggering modal in click handler')
+			modalStore.trigger(observerModal)
 		}
 		else
 		{
-			console.log(item.name, "is in development")
+			console.log(item, " is in development")
 		}
 		
 	};
@@ -202,8 +199,7 @@
 								<td class="align-middle text-center">{row[2]}</td>
 								<button
 									class="btn variant-filled-primary w-full max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:my-8 max-lg:mx-4 max-lg:max-w-[90%] md:max-w-[80%]"
-									on:click={() => rowFocusHandler(row[0])}
-									on:click={() => useClickHandler(selectedItem)}
+									on:click={() => useClickHandler(row[0])}
 									>Use
 								</button>
 							</tr>

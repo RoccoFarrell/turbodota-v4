@@ -279,8 +279,6 @@
 	</div>
 </div>
 
-<Modal />
-
 <!-- <section class="flex justify-center gap-8">
     <div>
         <img
