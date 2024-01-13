@@ -119,7 +119,7 @@
 		}
 	};
 
-	//$: console.log('user cart: ', userShoppingCart);
+	$: console.log('user cart: ', userShoppingCart);
 	//$: console.log('table source: ', tableSource);
 </script>
 
@@ -216,12 +216,21 @@
 							</tfoot>
 						</table>
 						<form method="POST" class="space-y-8" action="/turbotown/shop?/createItem" use:enhance>
+							<!-- <button
+								type="submit"
+								disabled={userShoppingCart.itemList.length === 0}
+								class="btn variant-filled-primary w-full max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:my-8 max-lg:mx-4 max-lg:max-w-[90%] md:max-w-[80%]"
+								on:click={() => purchaseClickHandler()}>
+								Purchase
+							</button> -->
+							<input type="hidden" name="shoppingCart" value={JSON.stringify(userShoppingCart)}/>
 							<button
 								type="submit"
 								disabled={userShoppingCart.itemList.length === 0}
 								class="btn variant-filled-primary w-full max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:my-8 max-lg:mx-4 max-lg:max-w-[90%] md:max-w-[80%]"
-								on:click={() => purchaseClickHandler()}>Purchase</button
-							>
+								>
+								Purchase
+							</button>
 						</form>
 					</div>
 				</div>
@@ -241,46 +250,3 @@
 		</div>
 	</div>
 {/if}
-
-<!-- <section class="flex justify-center gap-8">
-    <div>
-        <img
-            class="h-auto max-w-full rounded-lg"
-            on:mouseenter={() => hoverHandler(lotusOrb)}
-            on:click={() => clickHandler(lotusOrb)}
-            src={lotusOrb.imgSrc}
-            alt=""
-        />
-    </div>
-    <div>
-        <img
-            class="h-auto max-w-full rounded-lg"
-            on:mouseenter={() => hoverHandler(linkensSphere)}
-            on:click={() => clickHandler(linkensSphere)}
-            src={linkensSphere.imgSrc}
-            alt=""
-        />
-    </div>
-    <div>
-        <img
-            class="h-auto max-w-full rounded-lg"
-            on:mouseenter={() => hoverHandler(observerWard)}
-            on:click={() => clickHandler(observerWard)}
-            src={observerWard.imgSrc}
-            alt=""
-        />
-    </div>
-</section>
-{#if selectedItems}
-    <button
-        disabled={false}
-        class="btn variant-filled-primary w-full my-16 max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:my-8 max-lg:mx-4 max-lg:max-w-[90%] md:max-w-[80%]"
-        >Purchase Item</button
-    >
-{:else}
-    <button
-        disabled={true}
-        class="btn variant-filled-primary w-full my-16 max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:my-8 max-lg:mx-4 max-lg:max-w-[90%] md:max-w-[80%]"
-        >Purchase Item</button
-    >
-{/if} -->

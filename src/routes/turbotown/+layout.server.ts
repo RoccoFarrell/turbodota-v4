@@ -150,10 +150,10 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 			});
 		}
 
-		console.log(`[random page.server.ts] - current town: `, currentTown);
+		//console.log(`[turbotown page.server.ts] - current town: `, currentTown);
 
 		if (!currentTown) {
-			console.log(`[random page.server.ts] - creating town for: ${session.user.account_id}`);
+			console.log(`[turbotown page.server.ts] - creating town for: ${session.user.account_id}`);
 			const response = await fetch(`/api/town/${session.user.account_id}/create`, {
 				method: 'POST'
 			});

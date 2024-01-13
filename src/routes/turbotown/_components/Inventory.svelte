@@ -3,6 +3,7 @@
 	import { blur } from 'svelte/transition';
 	import type { SvelteComponent } from 'svelte';
 
+	import { browser } from '$app/environment'
 	import { popup } from '@skeletonlabs/skeleton';
 	import type { PopupSettings } from '@skeletonlabs/skeleton';
 	import { Table, tableMapperValues } from '@skeletonlabs/skeleton';
@@ -20,7 +21,10 @@
 	import Observer from './Observer.svelte';
 
 	export let data: any;
-	console.log(data);
+	if(browser){
+		console.log(data);
+	}
+	
 	let itemList: Item[] = data.town.items
 	let items: Item[];
 	//console.log(itemList.filter((item: Item) => item.id === 1))

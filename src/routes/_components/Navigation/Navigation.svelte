@@ -9,8 +9,8 @@
 
 	//console.log(session);
 
-	console.log($page.url.pathname);
-	console.log(session);
+	//console.log($page.url.pathname);
+	//console.log(session);
 </script>
 
 <nav class="list-nav p-6">
@@ -24,13 +24,35 @@
 				<p class={$page.url.pathname === '/' ? 'font-bold' : ''}>Home</p></a
 			>
 		</li>
+
+		<!-- Town Routes -->
+		<hr class="!border-t-4" />
 		<li
 			class={'flex items-center justify-start rounded-full ' +
-				($page.url.pathname === '/random' ? 'border border-secondary-500/60' : '')}
+				($page.url.pathname === '/turbotown' ? 'border border-secondary-500/60' : '')}
 		>
-			<a href="/random" data-sveltekit-preload-data="tap" class="w-full"
+			<a href="/turbotown" data-sveltekit-preload-data="tap" class="w-full">
+				<i class="fi fi-br-house-turret text-blue-500" />
+				<p class={$page.url.pathname === '/turbotown' ? 'font-bold' : ''}>Turbo Town</p></a
+			>
+		</li>
+		<li
+			class={'flex items-center justify-start rounded-full ' +
+				($page.url.pathname === '/turbotown/quests' ? 'border border-secondary-500/60' : '')}
+		>
+			<a href="/turbotown/quests" data-sveltekit-preload-data="tap" class="w-full"
 				><i class="fi fi-rr-dice-alt text-purple-500"></i>
-				<p class={$page.url.pathname === '/random' ? 'font-bold' : ''}>Random Tracker</p></a
+				<p class={$page.url.pathname === '/turbotown/quests' ? 'font-bold' : ''}>Quests</p></a
+			>
+		</li>
+
+		<li
+			class={'flex items-center justify-start rounded-full ' +
+				($page.url.pathname === '/turbotown/shop' ? 'border border-secondary-500/60' : '')}
+		>
+			<a href="/turbotown/shop" data-sveltekit-preload-data="tap" class="w-full">
+				<i class="fi fi-rs-shopping-cart text-orange-500" />
+				<p class={$page.url.pathname === '/turbotown/shop' ? 'font-bold' : ''}>Shop</p></a
 			>
 		</li>
 		<li
@@ -42,6 +64,8 @@
 				<p class={$page.url.pathname === '/random/leaderboard' ? 'font-bold' : ''}>Leaderboard</p></a
 			>
 		</li>
+		<hr class="!border-t-4" />
+
 		<li
 			class={'flex items-center justify-start rounded-full ' +
 				($page.url.pathname === '/leagues' ? 'border border-secondary-500/60' : '')}
@@ -49,25 +73,6 @@
 			<a href="/leagues" data-sveltekit-preload-data="tap" class="w-full">
 				<i class="fi fi-br-users-alt text-teal-500" />
 				<p class={$page.url.pathname === '/leagues' ? 'font-bold' : ''}>Leagues</p></a
-			>
-		</li>
-		<li
-			class={'flex items-center justify-start rounded-full ' +
-				($page.url.pathname === '/turbotown' ? 'border border-secondary-500/60' : '')}
-		>
-			<a href="/turbotown" data-sveltekit-preload-data="tap" class="w-full">
-				<i class="fi fi-br-house-turret text-blue-500" />
-				<p class={$page.url.pathname === '/turbotown' ? 'font-bold' : ''}>Turbo Town</p></a
-			>
-		</li>
-
-		<li
-			class={'flex items-center justify-start rounded-full ' +
-				($page.url.pathname === '/turbotown/shop' ? 'border border-secondary-500/60' : '')}
-		>
-			<a href="/turbotown/shop" data-sveltekit-preload-data="tap" class="w-full">
-				<i class="fi fi-rs-shopping-cart text-orange-500" />
-				<p class={$page.url.pathname === '/turbotown/shop' ? 'font-bold' : ''}>Shop</p></a
 			>
 		</li>
 

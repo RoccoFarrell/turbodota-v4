@@ -9,7 +9,6 @@ import prisma from '$lib/server/prisma';
 
 export const load: PageServerLoad = async ({ locals, parent }) => {
     const parentData = await parent();
-    console.log('parent data', parentData)
     const session = await locals.auth.validate();
     if (!session) {
         redirect(302, '/');
@@ -22,9 +21,16 @@ export const load: PageServerLoad = async ({ locals, parent }) => {
 
 export const actions: Actions = {
     createItem: async ({ request, locals }) => {
+        //console.log('received form post')
         const session = await locals.auth.validate();
         if (!session) return fail(400, { message: 'Not logged in, cannot create item' });
-        const { leagueName, dotaUsersList } = Object.fromEntries(await request.formData()) as Record<string, string>;
+        const formData = await request.formData()
+    
+        let shoppingCart = JSON.parse(formData.get('shoppingCart'))
+
+        console.log('user trying to buy', session.user.account_id)
+        console.log('shopping cart in form: ')
+        console.log(JSON.stringify(shoppingCart))
 
         try {
             //console.log(leagueName, dotaUsersList);
@@ -64,6 +70,13 @@ export const actions: Actions = {
                 return fail(400, { createItemList, missing: true });
             }
 
+            //this needs to become a transaction that checks
+            // 1. user has enough gold
+            // 2. increment turbotownItems
+            // 3. decrement gold
+
+            //https://www.prisma.io/docs/orm/prisma-client/queries/transactions
+
             let turbotownItemCreateResult = await prisma.turbotownItem.create({
                 data: {
                     lastUpdated: new Date(),
@@ -72,6 +85,41 @@ export const actions: Actions = {
                     status: 'applied'
                 }
             });
+
+            // let tx_result = prisma.$transaction(async (tx) => {
+            //     // 1. Decrement amount from the sender.
+            //     const sender = await tx.account.update({
+            //       data: {
+            //         balance: {
+            //           decrement: amount,
+            //         },
+            //       },
+            //       where: {
+            //         email: from,
+            //       },
+            //     })
+            
+            //     // 2. Verify that the sender's balance didn't go below zero.
+            //     if (sender.balance < 0) {
+            //       throw new Error(`${from} doesn't have enough to send ${amount}`)
+            //     }
+            
+            //     // 3. Increment the recipient's balance by amount
+            //     const recipient = await tx.account.update({
+            //       data: {
+            //         balance: {
+            //           increment: amount,
+            //         },
+            //       },
+            //       where: {
+            //         email: to,
+            //       },
+            //     })
+            
+            //     return recipient
+            //   })
+
+
 
             console.log(turbotownItemCreateResult);
             if (turbotownItemCreateResult) return { success: true };

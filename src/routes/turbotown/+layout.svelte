@@ -44,10 +44,10 @@
 	{#if data.session && data.league && data.town && data.town.turbotown}
 		<div class="fixed top-20 left-[256px] w-[calc(100vw-256px)] h-24">
 			<div class="grid grid-cols-4 p-1 h-24">
-				<div id="turbotownPageHeader" class="flex items-center justify-center border border-primary-500">
+				<div id="turbotownPageHeader" class="flex items-center justify-center border-r border-dashed border-primary-500">
 					<h1 class="h1 text-primary-700 max-md:font-bold text-center">Shop</h1>
 				</div>
-				<div class="col-span-2 border border-orange-500"></div>
+				<div class="col-span-2"></div>
 
 				<div id="turbotownProfile" class="card rounded-xl grid grid-cols-4 py-1 px-2 shadow-2xl">
 					<div id="townProfileImage" class="flex flex-col justify-center items-center">
@@ -82,7 +82,7 @@
 				<!-- <i class="fi fi-sr-backpack text-8xl text-yellow-500"></i> -->
 			</div>
 		</div>
-		<div class="mt-24 mb-16 p-4">
+		<div class="mt-24 mb-16 py-4 px-2">
 			<slot />
 		</div>
 
