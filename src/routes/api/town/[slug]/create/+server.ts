@@ -16,6 +16,7 @@ export const POST: RequestHandler = async ({ request, params, url, locals }) => 
 	//console.log(`[/api/town/${params.slug}/create] session in API call: `,session, JSON.stringify(session), `params.slug: `, params.slug);
 	
 	let townCreateResult;
+	let status: string = ''
 
 	if (session && session.user) {
         //console.log(`session: `, JSON.stringify(session))
@@ -72,17 +73,27 @@ export const POST: RequestHandler = async ({ request, params, url, locals }) => 
                 townCreateResult = await prisma.turbotown.create({
                     data: {
                         account_id,
-                        seasonID
+                        seasonID,
+						metrics: {
+							create: [
+								{ label: 'gold', value: 10000 },
+								{ label: 'xp', value: 0 }
+							]
+						}
                     }
                 })
+
+				if(townCreateResult) status = "created a town"
+			
             } else {
                 console.log('[town create] town already found for user')
+				status = "already has a town"
             }
         }
 	} else {
 		return new Response(JSON.stringify({ status: 'unauthorized to create town for this user' }), { status: 401 });
 	}
 
-	let newResponse = new Response(JSON.stringify({ status: 'success', insert: townCreateResult }));
+	let newResponse = new Response(JSON.stringify({ status, insert: townCreateResult }));
 	return newResponse;
 };

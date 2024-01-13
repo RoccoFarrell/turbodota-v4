@@ -236,7 +236,7 @@ model Turbotown {
 model TurbotownMetric {
   id          Int      @id @default(autoincrement())
   turbotownID Int
-  lastUpdated DateTime
+  lastUpdated DateTime @default(now())
   label       String
   value       Int
 

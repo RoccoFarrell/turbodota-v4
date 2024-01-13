@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Shop from '$lib/components/Shop.svelte';
+	import Shop from '../_components/Shop.svelte';
 
 	//page data
 	import type { PageData } from './$types';

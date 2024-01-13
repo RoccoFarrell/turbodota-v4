@@ -60,7 +60,7 @@
 		type: 'component',
 		component: 'heroGrid'
 	};
-	modalStore.trigger(modal);
+	//modalStore.trigger(modal);
 </script>
 
 <div class="container p-4">

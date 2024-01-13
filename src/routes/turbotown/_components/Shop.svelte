@@ -11,13 +11,10 @@
 	import shopkeeper from '$lib/assets/shopkeeper.png';
 	import Lock from '$lib/assets/lock.png';
 	import type { Item } from '@prisma/client';
-	import DataTableCheckbox from '../../routes/leagues/[slug]/seasons/[slug]/data-table-checkbox.svelte';
+	import DataTableCheckbox from '../../leagues/[slug]/seasons/[slug]/data-table-checkbox.svelte';
 
 	export let data: any;
-	let items: Item[] = data.items;
-
-	console.log(data);
-	let avatarURL = data.session.user.avatar_url.replace('.jpg', '_full.jpg');
+	let items: Item[] = data.town.items;
 
 	const modalStore = getModalStore();
 	const modal: ModalSettings = {
@@ -113,140 +110,117 @@
 	//$: console.log('table source: ', tableSource);
 </script>
 
-<div class="flex flex-row">
-	<div class="basis-3/4 bg-surface-600/10 justify-center">
-		<h1 class="h1 text-primary-700 max-md:font-bold text-center">Welcome to the Turbo Town Secret Shop</h1>
-	</div>
-	<div class="basis-1/4 flex justify-evenly bg-surface-600/10 shadow-md p-4 justify-end">
-		<img class="h-24 w-24" src={avatarURL} alt="" />
-
-		<div>
-			<p class="mr-8 dark:text-red-500">
-				{data.session.user.username}
-			</p>
-
-			<i class="fi fi-rr-coins text-yellow-500">
-				{data.turbotown.metrics[0].value}
-			</i>
-
-			<p class="dark:text-yellow-500">
-				XP: {data.turbotown.metrics[0].value}
-			</p>
-			<p class="dark:text-yellow-500">Level: 1</p>
-			<ProgressBar label="Progress Bar" value={50} max={100} />
+{#if data.town.turbotown}
+	<div id="shopComponent" class="w-full grid grid-cols-3 container gap-4">
+		<!-- Shop keeper image -->
+		<div class="text-center w-full h-full justify-start space-y-4 px-1">
+			<div class="h-full mx-auto w-full max-sm:mb-20">
+				<img class="max-w-full rounded-3xl object-contain shadow-amber-500 shadow-[0_0_10px_1px]" src={shopkeeper} alt="" />
+			</div>
 		</div>
-		<i class="fi fi-sr-backpack text-8xl text-yellow-500"></i>
-	</div>
-</div>
-
-<div class="grid grid-cols-3 container p-4 gap-4">
-	<div class="text-center w-full h-full justify-start space-y-4">
-		<div class="h-full mx-auto w-full max-sm:mb-20">
-			<img class="px-8 max-w-full rounded-lg object-contain" src={shopkeeper} alt="" />
-		</div>
-	</div>
-	<div class="flex h-full mx-auto w-full max-sm:mb-20">
 		<div class="flex h-full mx-auto w-full max-sm:mb-20">
-			<div
-				class="md:w-full max-md:max-w-sm text-center h-fit items-center dark:bg-surface-600/30 bg-surface-200/30 border border-surface-200 dark:border-surface-700 shadow-lg rounded-xl px-2 md:py-2 max-sm:py-2"
-			>
-				<div class="mb-2 bg-surface-500/10 p-4 rounded-full w-4/5 mx-auto shadow-md">
-					<h3 class="h3 dark:text-yellow-500 text-primary-500">Items</h3>
-				</div>
+			<div class="flex h-full mx-auto w-full max-sm:mb-20">
+				<div
+					class="md:w-full max-md:max-w-sm text-center h-fit items-center dark:bg-surface-600/30 bg-surface-200/30 border border-surface-200 dark:border-surface-700 shadow-lg rounded-xl px-2 md:py-2 max-sm:py-2"
+				>
+					<div class="mb-2 bg-surface-500/10 p-4 rounded-full w-4/5 mx-auto shadow-md">
+						<h3 class="h3 dark:text-yellow-500 text-primary-500">Items</h3>
+					</div>
 
-				<!-- <Table
+					<!-- <Table
 				interactive={true}
 				source={tableSource}
 				on:selected={}
 				regionHeadCell={'text-center text-primary-500 font-semibold'}
 			/> -->
 
-				<div class="table-container">
-					<table class="table table-hover table-interactive table-compact">
-						<thead>
-							<tr>
-								{#each tableSource.head as header, i}
-									<th class="text-center">{header}</th>
-								{/each}
-							</tr>
-						</thead>
-						<tbody>
-							{#each tableSource.body as row, i}
-								<tr
-									on:click={() => rowFocusHandler(row[0])}
-									on:mouseover={() => rowFocusHandler(row[0])}
-									on:focus={() => {}}
-									class="relative"
-									tabindex={i}
-								>
-									<td class="hidden">{row[0]}</td>
-									<td class="">
-										<div class="rounded-full flex space-x-4">
-											<div class="rounded-full">
-												<img class="h-10 object-contain rounded-2xl inline-table" src={items[i].imgSrc} alt="" />
-											</div>
+					<div class="table-container">
+						<table class="table table-hover table-interactive table-compact">
+							<thead>
+								<tr>
+									{#each tableSource.head as header, i}
+										<th class="text-center">{header}</th>
+									{/each}
+								</tr>
+							</thead>
+							<tbody>
+								{#each tableSource.body as row, i}
+									<tr
+										on:click={() => rowFocusHandler(row[0])}
+										on:mouseover={() => rowFocusHandler(row[0])}
+										on:focus={() => {}}
+										class="relative"
+										tabindex={i}
+									>
+										<td class="hidden">{row[0]}</td>
+										<td class="">
+											<div class="rounded-full flex space-x-4">
+												<div class="rounded-full">
+													<img class="h-10 object-contain rounded-2xl inline-table" src={items[i].imgSrc} alt="" />
+												</div>
 
-											<p class="font-semibold text-tertiary-300 text-lg">{row[0]}</p>
-										</div>
-										{#if items[i].active === false}
-											<div
-												class="absolute w-full h-full flex items-center justify-center h3 text-primary-500 bg-surface-500/90 p-4 top-0 left-0"
-											>
-												Coming Soon!
-												<img src={Lock} class="h-16 w-16 inline" alt="locked" />
+												<p class="font-semibold text-tertiary-300 text-lg">{row[0]}</p>
 											</div>
-										{/if}
-									</td>
-									<td class="h-full">
-										<p class="font-bold text-amber-500">{row[1]}</p>
-									</td>
-									<td class="align-middle text-center">{row[2]}</td>
-									<td class="">
-										<div class="h-full flex items-center justify-center">
-											<button class="btn-icon" on:click={() => modifyCart(row[0], 'remove')}>
-												<i class="fi fi-sr-square-minus" /></button
-											>
-											<p>{userShoppingCart.itemList.filter((item) => item.name === row[0]).length}</p>
-											<!-- <button class="btn-icon" on:click={() => quantityPlusClickHandler(tableSource, i)}>
+											{#if items[i].active === false}
+												<div
+													class="absolute w-full h-full flex items-center justify-center h3 text-primary-500 bg-surface-500/90 p-4 top-0 left-0"
+												>
+													Coming Soon!
+													<img src={Lock} class="h-16 w-16 inline" alt="locked" />
+												</div>
+											{/if}
+										</td>
+										<td class="h-full">
+											<p class="font-bold text-amber-500">{row[1]}</p>
+										</td>
+										<td class="align-middle text-center">{row[2]}</td>
+										<td class="">
+											<div class="h-full flex items-center justify-center">
+												<button class="btn-icon" on:click={() => modifyCart(row[0], 'remove')}>
+													<i class="fi fi-sr-square-minus" /></button
+												>
+												<p>{userShoppingCart.itemList.filter((item) => item.name === row[0]).length}</p>
+												<!-- <button class="btn-icon" on:click={() => quantityPlusClickHandler(tableSource, i)}>
 												<i class="fi fi-sr-square-plus" />
 											</button> -->
-											<button class="btn-icon" on:click={() => modifyCart(row[0], 'add')}>
-												<i class="fi fi-sr-square-plus" />
-											</button>
-										</div>
-									</td>
+												<button class="btn-icon" on:click={() => modifyCart(row[0], 'add')}>
+													<i class="fi fi-sr-square-plus" />
+												</button>
+											</div>
+										</td>
+									</tr>
+								{/each}
+							</tbody>
+							<tfoot>
+								<tr>
+									<td class="h3 dark:text-yellow-500 text-primary-500">Total:</td>
+									<td class="h3 dark:text-yellow-500 text-primary-500">{userShoppingCart.totalCost}</td>
 								</tr>
-							{/each}
-						</tbody>
-						<tfoot>
-							<tr>
-								<td class="h3 dark:text-yellow-500 text-primary-500">Total:</td>
-								<td class="h3 dark:text-yellow-500 text-primary-500">{userShoppingCart.totalCost}</td>
-							</tr>
-						</tfoot>
-					</table>
-					<button
-						disabled={userShoppingCart.itemList.length === 0}
-						class="btn variant-filled-primary w-full max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:my-8 max-lg:mx-4 max-lg:max-w-[90%] md:max-w-[80%]"
-						on:click={() => purchaseClickHandler()}>Purchase</button
-					>
+							</tfoot>
+						</table>
+						<button
+							disabled={userShoppingCart.itemList.length === 0}
+							class="btn variant-filled-primary w-full max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:my-8 max-lg:mx-4 max-lg:max-w-[90%] md:max-w-[80%]"
+							on:click={() => purchaseClickHandler()}>Purchase</button
+						>
+					</div>
 				</div>
 			</div>
 		</div>
-	</div>
-	<div
-		class="md:w-full max-md:max-w-sm text-center h-fit items-center dark:bg-surface-600/30 bg-surface-200/30 border border-surface-200 dark:border-surface-700 shadow-lg rounded-xl px-2 md:py-2 max-sm:py-2"
-	>
-		<div class="mb-2 bg-surface-500/10 p-4 rounded-full w-4/5 mx-auto shadow-md">
-			<h3 class="h3 dark:text-yellow-500 text-primary-500">Item Details</h3>
-			<p class="text-m text-center">Hover over an item to see its details</p>
+		<div
+			class="md:w-full max-md:max-w-sm text-center h-fit items-center dark:bg-surface-600/30 bg-surface-200/30 border border-surface-200 dark:border-surface-700 shadow-lg rounded-xl px-2 md:py-2 max-sm:py-2"
+		>
+			<div class="mb-2 bg-surface-500/10 p-4 rounded-full w-4/5 mx-auto shadow-md">
+				<h3 class="h3 dark:text-yellow-500 text-primary-500">Item Details</h3>
+				<p class="text-m text-center">Hover over an item to see its details</p>
+			</div>
+			<!-- {#if activeItem.id !== -1} -->
+			<p class="text-m text-left">Item: {selectedDetailItem.name}</p>
+			<p class="text-m text-left">Description: {selectedDetailItem.description}</p>
+			<p class="text-m text-left dark:text-yellow-500">Gold Cost: {selectedDetailItem.goldCost}</p>
 		</div>
-		<!-- {#if activeItem.id !== -1} -->
-		<p class="text-m text-left">Item: {selectedDetailItem.name}</p>
-		<p class="text-m text-left">Description: {selectedDetailItem.description}</p>
-		<p class="text-m text-left dark:text-yellow-500">Gold Cost: {selectedDetailItem.goldCost}</p>
 	</div>
-</div>
+{/if}
 
 <!-- <section class="flex justify-center gap-8">
     <div>
