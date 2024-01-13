@@ -19,7 +19,16 @@
 	import Lock from '$lib/assets/lock.png';
 	import Observer from './Observer.svelte';
 
-	export let items: Item[]
+	export let data: any;
+	console.log(data);
+	let itemList: Item[] = data.town.items
+	let items: Item[];
+	//console.log(itemList.filter((item: Item) => item.id === 1))
+	items = itemList.filter((item: Item) => item.id === 1);
+	// data.town.turbotown.items.forEach(inventoryItem => {
+	// 	let i = 0;
+	// 	//items.push(itemList.filter((item: Item) => item.id === inventoryItem.id))
+	// });
 
 	const modalStore = getModalStore();
 

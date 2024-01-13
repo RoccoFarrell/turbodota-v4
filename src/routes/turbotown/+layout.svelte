@@ -5,6 +5,7 @@
 	import type { LayoutData } from './$types';
 
 	import type { Item } from '@prisma/client';
+	import type { TurbotownItem } from '@prisma/client';
 
 	//helpers
 	import { clickOutside } from '$lib/helpers/clickOutside.ts';
@@ -117,7 +118,7 @@
 				</div>
 				{#if showInventory}
 					<div class="h-full" transition:slide={{ delay: 250, duration: 300, easing: quintOut, axis: 'y' }}>
-						<Inventory items={data.town.items} />
+						<Inventory {data}/>
 					</div>
 				{/if}
 			</div>

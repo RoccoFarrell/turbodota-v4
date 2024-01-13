@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { popup } from '@skeletonlabs/skeleton';
 	import type { PopupSettings } from '@skeletonlabs/skeleton';
+	import { enhance } from '$app/forms';
 	import { Table, tableMapperValues } from '@skeletonlabs/skeleton';
 	import type { TableSource } from '@skeletonlabs/skeleton';
 	import { Modal, getModalStore } from '@skeletonlabs/skeleton';
@@ -17,11 +18,18 @@
 	let items: Item[] = data.town.items;
 
 	const modalStore = getModalStore();
-	const modal: ModalSettings = {
+	const purchaseConfirmModal: ModalSettings = {
 		type: 'alert',
 		// Data
 		title: 'Purchase Confirmed',
 		body: 'Thank you for purchasing, come again!'
+	};
+
+	const purchaseDeniedModal: ModalSettings = {
+		type: 'alert',
+		// Data
+		title: 'Purchase Failed',
+		body: 'Not enough gold for purchase!'
 	};
 
 	class ShopItem {
@@ -102,8 +110,13 @@
 	};
 
 	const purchaseClickHandler = () => {
-		modalStore.trigger(modal);
-		userShoppingCart = new ShoppingCart();
+		if (data.town.turbotown.metrics[0].value >= userShoppingCart.totalCost) {
+			//user has enough gold for purchase
+			modalStore.trigger(purchaseConfirmModal);
+			userShoppingCart = new ShoppingCart();
+		} else {
+			modalStore.trigger(purchaseDeniedModal);
+		}
 	};
 
 	//$: console.log('user cart: ', userShoppingCart);
@@ -115,7 +128,11 @@
 		<!-- Shop keeper image -->
 		<div class="text-center w-full h-full justify-start space-y-4 px-1">
 			<div class="h-full mx-auto w-full max-sm:mb-20">
-				<img class="max-w-full rounded-3xl object-contain shadow-amber-500 shadow-[0_0_10px_1px]" src={shopkeeper} alt="" />
+				<img
+					class="max-w-full rounded-3xl object-contain shadow-amber-500 shadow-[0_0_10px_1px]"
+					src={shopkeeper}
+					alt=""
+				/>
 			</div>
 		</div>
 		<div class="flex h-full mx-auto w-full max-sm:mb-20">
@@ -198,11 +215,14 @@
 								</tr>
 							</tfoot>
 						</table>
-						<button
-							disabled={userShoppingCart.itemList.length === 0}
-							class="btn variant-filled-primary w-full max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:my-8 max-lg:mx-4 max-lg:max-w-[90%] md:max-w-[80%]"
-							on:click={() => purchaseClickHandler()}>Purchase</button
-						>
+						<form method="POST" class="space-y-8" action="/turbotown/shop?/createItem" use:enhance>
+							<button
+								type="submit"
+								disabled={userShoppingCart.itemList.length === 0}
+								class="btn variant-filled-primary w-full max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:my-8 max-lg:mx-4 max-lg:max-w-[90%] md:max-w-[80%]"
+								on:click={() => purchaseClickHandler()}>Purchase</button
+							>
+						</form>
 					</div>
 				</div>
 			</div>
