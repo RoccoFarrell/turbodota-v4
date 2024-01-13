@@ -2,6 +2,7 @@ import { auth } from '$lib/server/lucia'
 import { fail, redirect } from '@sveltejs/kit'
 import type { Actions, PageServerLoad } from './$types'
 import { createDotaUser } from '../../api/helpers';
+import { findRandomDotaUser } from '$lib/helpers/randomDotaUser'
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const session = await locals.auth.validate()
@@ -17,28 +18,31 @@ export const actions: Actions = {
 			string
 		>
 		try {
-			let account_id = Math.floor(Math.random() * 90000000)
-			let createDUResult = await createDotaUser(account_id)
+			let account_id = await findRandomDotaUser()
+			if(account_id){
+				let createDUResult = await createDotaUser(account_id)
 
-			const user = await auth.createUser({
-				key: {
-					providerId: 'username',
-					providerUserId: username,
-					password
-				},
-				attributes: {
-					name,
-					username,
-					account_id 
-				}
-			})
+				const user = await auth.createUser({
+					key: {
+						providerId: 'username',
+						providerUserId: username,
+						password
+					},
+					attributes: {
+						name,
+						username,
+						account_id 
+					}
+				})
+	
+				const session = await auth.createSession({
+					userId: user.userId,
+					attributes: {}
+				});
+	
+				locals.auth.setSession(session)
+			}
 
-			const session = await auth.createSession({
-				userId: user.userId,
-				attributes: {}
-			});
-
-			locals.auth.setSession(session)
 		} catch (err) {
 			console.error(err)
 			return fail(400, { message: 'Could not register user' })

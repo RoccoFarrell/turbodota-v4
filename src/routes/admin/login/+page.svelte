@@ -1,3 +1,11 @@
+<script lang="ts">
+	import type { PageData } from "./$types";
+
+	export let data: PageData
+
+	$: console.log("data: ", data)
+</script>
+
 <div class="card container w-1/2 h-1/2 my-auto p-4">
 	<form method="POST">
 		<hgroup>
