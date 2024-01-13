@@ -3,7 +3,6 @@
 	import { quintOut, expoIn, expoOut } from 'svelte/easing';
 
 	import Inventory from '$lib/components/Inventory.svelte';
-	import Observer from '$lib/components/Observer.svelte';
 
 	//helpers
 	import { clickOutside } from '$lib/helpers/clickOutside.ts';
