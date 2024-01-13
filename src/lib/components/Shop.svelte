@@ -9,7 +9,9 @@
 	//images
 	import shopkeeper from '$lib/assets/shopkeeper.png';
 	import Lock from '$lib/assets/lock.png';
+	import type { Item } from '@prisma/client';
 
+	export let items: Item[]
 	const modalStore = getModalStore();
 	const modal: ModalSettings = {
 		type: 'alert',
@@ -34,64 +36,14 @@
 	}
 
 	let userShoppingCart: ShoppingCart = new ShoppingCart();
-	let availableItems: Array<ShopItem> = [];
-
-	let lotusOrb: ShopItem = new ShopItem();
-	lotusOrb = {
-		id: 0,
-		name: 'Lotus Orb',
-		description: 'This item will reflect back any attempted debuff applied to you',
-		imgSrc: 'https://cdn.dota2.com/apps/dota2/images/items/lotus_orb_lg.png',
-		goldCost: 500,
-		quantityAvailable: 10,
-		active: false
-	};
-
-	let linkensSphere: ShopItem = new ShopItem();
-	linkensSphere = {
-		id: 1,
-		name: "Linken's Sphere",
-		description: 'This item will block any attempted debuff applied to you',
-		imgSrc: 'https://cdn.dota2.com/apps/dota2/images/items/sphere_lg.png',
-		goldCost: 1000,
-		quantityAvailable: 5,
-		active: false
-	};
-
-	let observerWard: ShopItem = new ShopItem();
-	observerWard = {
-		id: 2,
-		name: 'Observer Ward',
-		description: 'This item will let you pick from a selection of 3 random heroes',
-		imgSrc: 'https://cdn.dota2.com/apps/dota2/images/items/ward_observer_lg.png',
-		goldCost: 100,
-		quantityAvailable: 100,
-		active: true
-	};
-
-	let divineRapier: ShopItem = new ShopItem();
-	divineRapier = {
-		id: 3,
-		name: 'Divine Rapier',
-		description: 'This item delete a user from the current season.  Permadeath.',
-		imgSrc: 'https://cdn.dota2.com/apps/dota2/images/items/rapier_lg.png',
-		goldCost: 99999999,
-		quantityAvailable: 1,
-		active: false
-	};
-
-	availableItems.push(observerWard);
-	availableItems.push(lotusOrb);
-	availableItems.push(linkensSphere);
-	availableItems.push(divineRapier);
 
 	const tableSource: TableSource = {
 		// A list of heading labels.
 		head: ['Item Name', 'Gold', 'Quantity Available', 'Quantity'],
 		// The data visibly shown in your table body UI.
-		body: tableMapperValues(availableItems, ['name', 'goldCost', 'quantityAvailable']),
+		body: tableMapperValues(items, ['name', 'goldCost', 'quantityAvailable']),
 		// Optional: The data returned when interactive is enabled and a row is clicked.
-		meta: tableMapperValues(availableItems, [
+		meta: tableMapperValues(items, [
 			'id',
 			'name',
 			'description',
@@ -128,7 +80,7 @@
 	// };
 
 	const modifyCart = (itemName: string, mode: string) => {
-		let item = availableItems.filter((item: ShopItem) => item.name === itemName)[0];
+		let item = items.filter((item: ShopItem) => item.name === itemName)[0];
 		let currentItemQuantity = userShoppingCart.itemList.filter(
 			(currentItem: ShopItem) => item.id === currentItem.id
 		).length;
@@ -149,7 +101,7 @@
 
 	const rowFocusHandler = (itemName: string) => {
 		//console.log('item focused', itemName);
-		let item = availableItems.filter((item: ShopItem) => item.name === itemName)[0];
+		let item = items.filter((item: ShopItem) => item.name === itemName)[0];
 		selectedDetailItem = item;
 	};
 
@@ -215,24 +167,16 @@
 								class="relative"
 								tabindex={i}
 							>
-								<!-- {#if availableItems[i].active === false}
-									<td
-										class="absolute w-full h-full flex items-center justify-center h3 text-primary-500 bg-surface-500/90 p-4"
-									>
-										Coming Soon!
-										<img src={Lock} class="h-16 w-16 inline" alt="locked" />
-									</td>
-								{/if} -->
 								<td class="hidden">{row[0]}</td>
 								<td class="">
 									<div class="rounded-full flex space-x-4">
 										<div class="rounded-full">
-											<img class="h-10 object-contain rounded-2xl inline-table" src={availableItems[i].imgSrc} alt="" />
+											<img class="h-10 object-contain rounded-2xl inline-table" src={items[i].imgSrc} alt="" />
 										</div>
 
 										<p class="font-semibold text-tertiary-300 text-lg">{row[0]}</p>
 									</div>
-									{#if availableItems[i].active === false}
+									{#if items[i].active === false}
 										<div
 											class="absolute w-full h-full flex items-center justify-center h3 text-primary-500 bg-surface-500/90 p-4 top-0 left-0"
 										>

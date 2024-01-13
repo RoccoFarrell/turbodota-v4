@@ -12,24 +12,28 @@
 	import { ListBox, ListBoxItem } from '@skeletonlabs/skeleton';
 	import { clickOutside } from '$lib/helpers/clickOutside.ts';
 	import type { Hero } from '@prisma/client';
+	import type { Item } from '@prisma/client';
+
 	//images
 	import shopkeeper from '$lib/assets/shopkeeper.png';
 	import Lock from '$lib/assets/lock.png';
 	import Observer from './Observer.svelte';
 
+	export let items: Item[]
+
 	const modalStore = getModalStore();
-	
+
 	const modalComponent: ModalComponent = {
-		ref: Observer,
+		ref: Observer
 	};
-	
+
 	const observerModal: ModalSettings = {
 		type: 'component',
 		component: modalComponent,
 		response: (r: any) => {
-			console.log(r)
+			console.log(r);
 		}
-	};	
+	};
 
 	class ShopItem {
 		id: number = -1;
@@ -41,63 +45,11 @@
 		active: boolean = false;
 	}
 
-	let userInventory: Array<ShopItem> = [];
-	let availableItems: Array<ShopItem> = [];
+	let availableItems = items;
+	let userInventory = items;
 	let selectedItem: ShopItem = new ShopItem();
 
-	let lotusOrb: ShopItem = new ShopItem();
-	lotusOrb = {
-		id: 0,
-		name: 'Lotus Orb',
-		description: 'This item will reflect back any attempted debuff applied to you',
-		imgSrc: 'https://cdn.dota2.com/apps/dota2/images/items/lotus_orb_lg.png',
-		goldCost: 500,
-		quantityAvailable: 10,
-		active: false
-	};
-
-	let linkensSphere: ShopItem = new ShopItem();
-	linkensSphere = {
-		id: 1,
-		name: "Linken's Sphere",
-		description: 'This item will block any attempted debuff applied to you',
-		imgSrc: 'https://cdn.dota2.com/apps/dota2/images/items/sphere_lg.png',
-		goldCost: 1000,
-		quantityAvailable: 5,
-		active: false
-	};
-
-	let observerWard: ShopItem = new ShopItem();
-	observerWard = {
-		id: 2,
-		name: 'Observer Ward',
-		description: 'This item will let you pick from a selection of 3 random heroes',
-		imgSrc: 'https://cdn.dota2.com/apps/dota2/images/items/ward_observer_lg.png',
-		goldCost: 100,
-		quantityAvailable: 100,
-		active: true
-	};
-
-	let divineRapier: ShopItem = new ShopItem();
-	divineRapier = {
-		id: 3,
-		name: 'Divine Rapier',
-		description: 'This item delete a user from the current season.  Permadeath.',
-		imgSrc: 'https://cdn.dota2.com/apps/dota2/images/items/rapier_lg.png',
-		goldCost: 99999999,
-		quantityAvailable: 1,
-		active: false
-	};
-
-	availableItems.push(observerWard);
-	availableItems.push(lotusOrb);
-	availableItems.push(linkensSphere);
-	availableItems.push(divineRapier);
-
-	userInventory.push(observerWard);
-	userInventory.push(lotusOrb);
-	userInventory.push(linkensSphere);
-	userInventory.push(divineRapier);
+	//items = 
 
 	const tableSource: TableSource = {
 		// A list of heading labels.
@@ -121,17 +73,13 @@
 	const useClickHandler = (item: string) => {
 		console.log('in click', item);
 		//toggleModal(Observer)
-		if (item === "Observer Ward") {
-			console.log('triggering modal in click handler')
-			modalStore.trigger(observerModal)
+		if (item === 'Observer Ward') {
+			console.log('triggering modal in click handler');
+			modalStore.trigger(observerModal);
+		} else {
+			console.log(item, ' is in development');
 		}
-		else
-		{
-			console.log(item, " is in development")
-		}
-		
 	};
-
 
 	//$: console.log('modal Store', $modalStore[0]);
 
@@ -155,7 +103,6 @@
 	// 	isFocused = true
 	// 	return isFocused
 	// }
-
 </script>
 
 <div class="bg-surface-700 w-full h-full">
