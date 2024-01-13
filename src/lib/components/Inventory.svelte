@@ -123,7 +123,7 @@
 	};
 
 	const useClickHandler = (item: any) => {
-		console.log('in click', item);
+		//console.log('in click', item);
 		//toggleModal(Observer)
 		if (item.name == "Observer Ward") {
 			modalStore.trigger(oberverModal)

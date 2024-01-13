@@ -13,7 +13,7 @@
 	};
 
 	const onBlur = () => {
-		console.log('blurring');
+		//console.log('blurring');
 		showInventory = false;
 	};
 </script>
