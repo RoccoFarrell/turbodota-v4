@@ -7,9 +7,7 @@
 
 	console.log(data);
 
-	const onHeroSelect = (heroEvent: CustomEvent) => {
-		console.log(heroEvent.detail);
-	};
+
 
 
 	
@@ -20,8 +18,6 @@
 	<!-- <div class="relative w-full bg-primary-500">test</div> -->
 
 </div>
-
-<!-- <Observer on:heroselect={onHeroSelect}></Observer> -->
 
 
 

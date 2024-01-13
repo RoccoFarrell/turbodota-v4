@@ -11,21 +11,25 @@
 	import type { ModalSettings, ModalComponent, ModalStore } from '@skeletonlabs/skeleton';
 	import { ListBox, ListBoxItem } from '@skeletonlabs/skeleton';
 	import { clickOutside } from '$lib/helpers/clickOutside.ts';
+	import type { Hero } from '@prisma/client';
 	//images
 	import shopkeeper from '$lib/assets/shopkeeper.png';
 	import Lock from '$lib/assets/lock.png';
 	import Observer from './Observer.svelte';
 
-	const modalComponent: ModalComponent = { 
-		ref: Observer,
-		props: {test: 'test'}
-	};
-
 	const modalStore = getModalStore();
-	const modal: ModalSettings = {
-		type: 'component',
-		component: modalComponent
+	
+	const modalComponent: ModalComponent = {
+		ref: Observer,
 	};
+	
+	const oberverModal: ModalSettings = {
+		type: 'component',
+		component: modalComponent,
+		response: (r: any) => {
+			console.log(r)
+		}
+	};	
 
 	class ShopItem {
 		id: number = -1;
@@ -121,19 +125,18 @@
 	const useClickHandler = (item: any) => {
 		console.log('in click', item);
 		//toggleModal(Observer)
-		modalStore.trigger(modal);
+		if (item.name == "Observer Ward") {
+			modalStore.trigger(oberverModal)
+		}
+		else
+		{
+			console.log(item.name, "is in development")
+		}
+		
 	};
 
-	const handleClickOutside = () => {
-		//
-		//
-		//------------- potential race condition, need to clear selectedItem after applying the item via database ------------------
-		//
-		//
-		//selectedItem = new ShopItem();
-	};
 
-	$: console.log('modal Store', $modalStore);
+	//$: console.log('modal Store', $modalStore[0]);
 
 	// let isFocused = false;
 	// //const onFocus = () => (isFocused = true);
@@ -155,6 +158,7 @@
 	// 	isFocused = true
 	// 	return isFocused
 	// }
+
 </script>
 
 <div class="bg-surface-700 w-full h-full">
