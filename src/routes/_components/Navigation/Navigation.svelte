@@ -3,6 +3,7 @@
 	export let session: Session | null;
 
 	import { page } from '$app/stores';
+	import { dev } from '$app/environment';
 
 	import steam_logo from '$lib/assets/steam_logo.png';
 
@@ -65,7 +66,7 @@
 				($page.url.pathname === '/turbotown/shop' ? 'border border-secondary-500/60' : '')}
 		>
 			<a href="/turbotown/shop" data-sveltekit-preload-data="tap" class="w-full">
-				<i class="fi fi-rs-shopping-cart text-orange-500 " />
+				<i class="fi fi-rs-shopping-cart text-orange-500" />
 				<p class={$page.url.pathname === '/turbotown/shop' ? 'font-bold' : ''}>Shop</p></a
 			>
 		</li>
@@ -90,6 +91,29 @@
 				<p class={$page.url.pathname === '/blog' ? 'font-bold' : ''}>Blog</p></a
 			>
 		</li>
+		{#if dev}
+			<hr class="!border-t-4" />
+			<li class="text-center text-orange-500">Dev Routes</li>
+			<li class="h-32 lg:h-4"></li>
+			<li
+				class={'flex items-center justify-start rounded-full ' +
+					($page.url.pathname.includes('/admin/login') ? 'border border-secondary-500/60' : '')}
+			>
+				<a href="/admin/login" data-sveltekit-preload-data="tap" class="w-full flex items-center space-x-8">
+					<i class="fi fi-br-binary h-4 text-sky-500" />
+					<p class={$page.url.pathname === '/admin/login' ? 'font-bold' : ''}>Login</p></a
+				>
+			</li>
+			<li
+				class={'flex items-center justify-start rounded-full ' +
+					($page.url.pathname.includes('/admin/register') ? 'border border-secondary-500/60' : '')}
+			>
+				<a href="/admin/register" data-sveltekit-preload-data="tap" class="w-full flex items-center space-x-8">
+					<i class="fi fi-br-binary h-4 text-sky-500" />
+					<p class={$page.url.pathname === '/admin/register' ? 'font-bold' : ''}>Register</p></a
+				>
+			</li>
+		{/if}
 		<li class="h-32 lg:h-4"></li>
 		<hr class="!border-t-4" />
 		{#if !session || !session.user}

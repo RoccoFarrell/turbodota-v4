@@ -170,8 +170,8 @@ model User {
   username     String      @unique
   account_id   Int         @unique
   steam_id     BigInt?     @unique
-  profile_url  String
-  avatar_url   String
+  profile_url  String?
+  avatar_url   String?
   roles        String?
   lastUpdated  DateTime    @default(now())
   key          Key[]
