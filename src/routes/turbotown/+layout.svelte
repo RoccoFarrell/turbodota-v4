@@ -1,11 +1,14 @@
-<script>
+<script lang="ts">
 	import { slide } from 'svelte/transition';
 	import { quintOut, expoIn, expoOut } from 'svelte/easing';
 
 	import Inventory from '$lib/components/Inventory.svelte';
+	import type { Item } from '@prisma/client';
 
 	//helpers
 	import { clickOutside } from '$lib/helpers/clickOutside.ts';
+
+	export let data: PageData;
 
 	let showInventory = false;
 	const collapse = () => {
@@ -52,7 +55,7 @@
 			</div>
 			{#if showInventory}
 				<div class="h-full" transition:slide={{ delay: 250, duration: 300, easing: quintOut, axis: 'y' }}>
-					<Inventory />
+					<Inventory items={data.items}/>
 				</div>
 			{/if}
 		</div>

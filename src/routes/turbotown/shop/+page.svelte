@@ -14,7 +14,7 @@
 </script>
 
 <div class="flex flex-col h-full">
-	<Shop></Shop>
+	<Shop items={data.items}></Shop>
 	<!-- <div class="relative w-full bg-primary-500">test</div> -->
 
 </div>
