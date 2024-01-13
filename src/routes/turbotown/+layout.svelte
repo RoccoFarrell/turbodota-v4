@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { slide } from 'svelte/transition';
 	import { quintOut, expoIn, expoOut } from 'svelte/easing';
-
+	import type { PageData } from './$types';
 	import Inventory from '$lib/components/Inventory.svelte';
 	import type { Item } from '@prisma/client';
 
@@ -55,7 +55,7 @@
 			</div>
 			{#if showInventory}
 				<div class="h-full" transition:slide={{ delay: 250, duration: 300, easing: quintOut, axis: 'y' }}>
-					<Inventory items={data.items}/>
+					<Inventory items={data.items} />
 				</div>
 			{/if}
 		</div>

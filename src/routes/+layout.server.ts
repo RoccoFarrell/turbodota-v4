@@ -43,7 +43,5 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 		userPreferences = responseData
 	}
 
-	const items = await prisma.item.findMany()
-
-	return { session, heroDescriptions: await getHeroes(), userPreferences, items }
+	return { session, heroDescriptions: await getHeroes(), userPreferences }
 }

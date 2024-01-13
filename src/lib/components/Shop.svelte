@@ -5,13 +5,20 @@
 	import type { TableSource } from '@skeletonlabs/skeleton';
 	import { Modal, getModalStore } from '@skeletonlabs/skeleton';
 	import type { ModalSettings, ModalComponent, ModalStore } from '@skeletonlabs/skeleton';
+	import { ProgressBar } from '@skeletonlabs/skeleton';
 
 	//images
 	import shopkeeper from '$lib/assets/shopkeeper.png';
 	import Lock from '$lib/assets/lock.png';
 	import type { Item } from '@prisma/client';
+	import DataTableCheckbox from '../../routes/leagues/[slug]/seasons/[slug]/data-table-checkbox.svelte';
 
-	export let items: Item[]
+	export let data;
+	let items: Item = data.items;
+
+	console.log(data);
+	let avatarURL = data.session.user.avatar_url.replace('.jpg', '_full.jpg');
+
 	const modalStore = getModalStore();
 	const modal: ModalSettings = {
 		type: 'alert',
@@ -35,7 +42,7 @@
 		totalCost: number = 0;
 	}
 
-	let userShoppingCart: ShoppingCart = new ShoppingCart();
+	export let userShoppingCart: ShoppingCart = new ShoppingCart();
 
 	const tableSource: TableSource = {
 		// A list of heading labels.
@@ -43,15 +50,7 @@
 		// The data visibly shown in your table body UI.
 		body: tableMapperValues(items, ['name', 'goldCost', 'quantityAvailable']),
 		// Optional: The data returned when interactive is enabled and a row is clicked.
-		meta: tableMapperValues(items, [
-			'id',
-			'name',
-			'description',
-			'imgSrc',
-			'goldCost',
-			'quantityAvailable',
-			'active'
-		])
+		meta: tableMapperValues(items, ['id', 'name', 'description', 'imgSrc', 'goldCost', 'quantityAvailable', 'active'])
 		// Optional: A list of footer labels.
 		//foot:
 	};
@@ -113,6 +112,25 @@
 	//$: console.log('user cart: ', userShoppingCart);
 	//$: console.log('table source: ', tableSource);
 </script>
+
+<div class="flex gap-4 mb-2 bg-surface-600/10 shadow-md justify-end">
+	<img class="object-contain h-24 w-48" src={avatarURL} alt="" />
+
+	<div>
+		<p class="grid dark:text-red-500">
+			{data.session.user.username}
+		</p>
+
+		<i class="fi fi-rr-coins text-yellow-500">
+			{data.turbotown.metrics[0].value}
+		</i>
+
+		<p class="dark:text-yellow-500">
+			XP: {data.turbotown.metrics[0].value}
+		</p>
+		<ProgressBar label="Progress Bar" value={50} max={100} />
+	</div>
+</div>
 
 <div class="grid grid-cols-2 container p-4 gap-4">
 	<div class="flex flex-col text-center w-full h-full justify-start space-y-4">

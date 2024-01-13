@@ -47,9 +47,6 @@
 
 	let availableItems = items;
 	let userInventory = items;
-	let selectedItem: ShopItem = new ShopItem();
-
-	//items = 
 
 	const tableSource: TableSource = {
 		// A list of heading labels.
