@@ -13,7 +13,7 @@ export const actions: Actions = {
         const session = await locals.auth.validate();
         if (!session) return fail(400, { message: 'Not logged in, cannot use item' });
         const formData = await request.formData()
-        let hero = JSON.parse(formData.get('observerSelect'))
+        let hero = JSON.parse(formData.get('observerSelect')?.toString() || "")
         console.log('random hero select:', hero)
 
         console.log('user trying to use item', session.user.account_id)

@@ -26,7 +26,7 @@ export const actions: Actions = {
         if (!session) return fail(400, { message: 'Not logged in, cannot create item' });
         const formData = await request.formData()
 
-        let shoppingCart = JSON.parse(formData.get('shoppingCart'))
+        let shoppingCart = JSON.parse(formData.get('shoppingCart')?.toString() || "")
 
         console.log('user trying to buy', session.user.account_id)
         console.log('shopping cart in form: ')
