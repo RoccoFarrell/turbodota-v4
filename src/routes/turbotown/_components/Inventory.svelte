@@ -12,7 +12,7 @@
 	import type { ModalSettings, ModalComponent, ModalStore } from '@skeletonlabs/skeleton';
 	import { ListBox, ListBoxItem } from '@skeletonlabs/skeleton';
 	import { clickOutside } from '$lib/helpers/clickOutside.ts';
-	import type { Hero } from '@prisma/client';
+	import type { Hero, TurbotownItem } from '@prisma/client';
 	import type { Item } from '@prisma/client';
 
 	//images
@@ -25,14 +25,7 @@
 		console.log(data);
 	}
 	
-	let itemList: Item[] = data.town.items
-	let items: Item[];
-	//console.log(itemList.filter((item: Item) => item.id === 1))
-	items = itemList.filter((item: Item) => item.id === 1);
-	// data.town.turbotown.items.forEach(inventoryItem => {
-	// 	let i = 0;
-	// 	//items.push(itemList.filter((item: Item) => item.id === inventoryItem.id))
-	// });
+	let items: TurbotownItem[] = data.town.turbotown.items;
 
 	const modalStore = getModalStore();
 
@@ -59,13 +52,13 @@
 	}
 
 	let availableItems = items;
-	let userInventory = items;
+	let userInventory = items.map((item: any) => item.item);
 
 	const tableSource: TableSource = {
 		// A list of heading labels.
 		head: ['Item Name', 'Description', 'Quantity Available', 'Action'],
 		// The data visibly shown in your table body UI.
-		body: tableMapperValues(userInventory, ['name', 'description', 'quantityAvailable']),
+		body: tableMapperValues(userInventory, ['name', 'description', 'quantityAvailable', 'imgSrc']),
 		// Optional: The data returned when interactive is enabled and a row is clicked.
 		meta: tableMapperValues(userInventory, [
 			'id',
@@ -144,7 +137,7 @@
 								<td>
 									<div class="rounded-full flex space-x-4">
 										<div class="rounded-full">
-											<img class="h-8 object-contain rounded-2xl inline-table" src={availableItems[i].imgSrc} alt="" />
+											<img class="h-8 object-contain rounded-2xl inline-table" src={row[3]} alt="" />
 										</div>
 
 										<p class="font-semibold text-tertiary-300 text-lg">{row[0]}</p>

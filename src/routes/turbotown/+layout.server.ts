@@ -145,7 +145,11 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 					metrics: true,
 					quests: true,
 					season: true,
-					items: true
+					items: {
+						include: {
+							item: true
+						}
+					}
 				}
 			});
 		}

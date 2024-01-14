@@ -1,7 +1,7 @@
 import { auth } from '$lib/server/lucia';
 import { fail, redirect, json } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import type { User } from '@prisma/client';
+import type { TurbotownMetric, TurbotownItem, User } from '@prisma/client';
 import type { Item } from '@prisma/client';
 import prisma from '$lib/server/prisma';
 
@@ -25,7 +25,7 @@ export const actions: Actions = {
         const session = await locals.auth.validate();
         if (!session) return fail(400, { message: 'Not logged in, cannot create item' });
         const formData = await request.formData()
-    
+
         let shoppingCart = JSON.parse(formData.get('shoppingCart'))
 
         console.log('user trying to buy', session.user.account_id)
@@ -33,41 +33,10 @@ export const actions: Actions = {
         console.log(JSON.stringify(shoppingCart))
 
         try {
-            //console.log(leagueName, dotaUsersList);
 
-            // let parsedDUList = dotaUsersList.split(',');
-            // if (!parsedDUList.length || parsedDUList.length === 0) return fail(400, { dotaUsersList, missing: true });
-
-            //create dotauser list
-
-            // interface createItem {
-            // 	account_id: number;
-            // 	lastUpdated: Date;
-            // }
-
-            let testItem = {
-                id: 1,
-                name: 'test',
-                description: 'test',
-                imgSrc: 'test',
-                goldCost: 10,
-                quantityAvailable: 10,
-                active: true,
-            };
-
-            //parentData.town.items;
-            let createItemList: Item[] = [testItem, testItem]
-
-            // let createItemList: createUser[] = parsedDUList.map((userID) => {
-            //     let userObj: createUser = {
-            //         account_id: parseInt(userID) | 0,
-            //         lastUpdated: new Date()
-            //     };
-
-            console.log(`item list: `, createItemList);
-            if (createItemList.length < 1) {
+            if (shoppingCart.itemList.length < 1) {
                 console.log('form failed');
-                return fail(400, { createItemList, missing: true });
+                return fail(400, { shoppingCart, missing: true });
             }
 
             //this needs to become a transaction that checks
@@ -77,52 +46,48 @@ export const actions: Actions = {
 
             //https://www.prisma.io/docs/orm/prisma-client/queries/transactions
 
-            let turbotownItemCreateResult = await prisma.turbotownItem.create({
-                data: {
-                    lastUpdated: new Date(),
-                    turbotownID: 1,
-                    itemID: 1,
-                    status: 'applied'
+            let tx_result = prisma.$transaction(async (tx) => {
+                // 1. Decrement amount from the user
+                const sender = await tx.turbotownMetric.update({
+                    data: {
+                        value: {
+                            decrement: shoppingCart.totalCost,
+                        },
+                    },
+                    where: {
+                        id: 1
+                    },
+                })
+
+                // 2. Verify that the users balance didn't go below zero.
+                if (sender.value < 0) {
+                    throw new Error(`${session.user.account_id} doesn't have enough to buy selected items`)
                 }
-            });
-
-            // let tx_result = prisma.$transaction(async (tx) => {
-            //     // 1. Decrement amount from the sender.
-            //     const sender = await tx.account.update({
-            //       data: {
-            //         balance: {
-            //           decrement: amount,
-            //         },
-            //       },
-            //       where: {
-            //         email: from,
-            //       },
-            //     })
-            
-            //     // 2. Verify that the sender's balance didn't go below zero.
-            //     if (sender.balance < 0) {
-            //       throw new Error(`${from} doesn't have enough to send ${amount}`)
-            //     }
-            
-            //     // 3. Increment the recipient's balance by amount
-            //     const recipient = await tx.account.update({
-            //       data: {
-            //         balance: {
-            //           increment: amount,
-            //         },
-            //       },
-            //       where: {
-            //         email: to,
-            //       },
-            //     })
-            
-            //     return recipient
-            //   })
 
 
+                // 3. Add items to user's inventory
+                let recordData: Array<any> = new Array();
+                shoppingCart.itemList.forEach((item: any, i: number) => {
+                    let pushObj = {
+                        itemID: item.id,
+                        lastUpdated: new Date(),
+                        status: 'inactive',
+                        turbotownID: 1
+                    }
+                    recordData.push(pushObj)
+                });
 
-            console.log(turbotownItemCreateResult);
-            if (turbotownItemCreateResult) return { success: true };
+                console.log('record data:', recordData)
+
+                const recipient = await tx.turbotownItem.createMany({
+                    data: recordData
+                })
+
+                return recipient
+            })
+
+            if (await tx_result) return { success: true };
+
         } catch (err) {
             console.error(err);
             return fail(400, { message: 'Could not create item' });
