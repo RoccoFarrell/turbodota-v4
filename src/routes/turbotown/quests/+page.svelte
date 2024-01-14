@@ -168,7 +168,7 @@
 	let matchTableData = last5Matches.map((match: any) => {
 		return {
 			match_id: match.match_id,
-			start_time: dayjs.unix(match.start_time).format('llll'),
+			start_time: typeof(match.start_time) === "number" ? dayjs.unix(match.start_time).format('llll') : dayjs(match.start_time).format('llll'),
 			result: winOrLoss(match.player_slot, match.radiant_win),
 			hero: data.heroDescriptions.allHeroes.filter((hero: Hero) => hero.id === match.hero_id)[0].id,
 			kda: ((match.kills + match.assists) / match.deaths).toFixed(2)
@@ -251,6 +251,35 @@
 		type: 'component',
 		component: 'heroGrid'
 	};
+
+	export let form;
+	$: console.log('form in quests page.svelte: ', form);
+
+	function onFormSuccess(form: any) {
+		if (form && form.success) {
+			console.log('sending toast');
+
+			if (form.action === 'use item') {
+				const t: ToastSettings = {
+					message: `Used ${form?.result?.action}`,
+					background: 'variant-filled-success'
+				};
+
+				toastStore.trigger(t);
+			}
+
+			if (form.action === 'buy item') {
+				const t: ToastSettings = {
+					message: `Bought ${form?.result?.count} items`,
+					background: 'variant-filled-success'
+				};
+
+				toastStore.trigger(t);
+			}
+		}
+	}
+
+	$: onFormSuccess(form);
 </script>
 
 <div class="container h-full mx-auto w-full max-sm:mb-20">

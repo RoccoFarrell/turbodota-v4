@@ -27,8 +27,6 @@
 	//data
 	export let data: PageData;
 
-	console.log(data);
-
 	$: training = false;
 	$: progressVal = 0;
 	$: skillCount = 0;

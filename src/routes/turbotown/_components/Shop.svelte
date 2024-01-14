@@ -15,6 +15,8 @@
 	import DataTableCheckbox from '../../leagues/[slug]/seasons/[slug]/data-table-checkbox.svelte';
 
 	export let data: any;
+	export let form: any;
+
 	let items: Item[] = data.town.items;
 
 	const modalStore = getModalStore();
@@ -47,7 +49,7 @@
 		totalCost: number = 0;
 	}
 
-	export let userShoppingCart: ShoppingCart = new ShoppingCart();
+	let userShoppingCart: ShoppingCart = new ShoppingCart();
 
 	const tableSource: TableSource = {
 		// A list of heading labels.
@@ -87,6 +89,14 @@
 		let item = items.filter((item: ShopItem) => item.name === itemName)[0];
 		selectedDetailItem = item;
 	};
+
+	$: clearCart(form)
+	const clearCart = (form: any) => {
+		if(form && form.success){
+			userShoppingCart.itemList = [],
+			userShoppingCart.totalCost = 0
+		}
+	}
 
 	const purchaseClickHandler = () => {
 		if (data.town.turbotown.metrics[0].value >= userShoppingCart.totalCost) {
@@ -202,6 +212,7 @@
 								on:click={() => purchaseClickHandler()}>
 								Purchase
 							</button> -->
+							<input type="hidden" name="turbotownID" value={data.town.turbotown.id}/>
 							<input type="hidden" name="shoppingCart" value={JSON.stringify(userShoppingCart)}/>
 							<button
 								type="submit"

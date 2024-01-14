@@ -4,7 +4,13 @@
 	import type { SvelteComponent } from 'svelte';
 	import { enhance } from '$app/forms';
 
+	//skeleton
 	import { ListBox, ListBoxItem, getModalStore } from '@skeletonlabs/skeleton';
+
+	//skeleton
+	import { getToastStore, storeHighlightJs } from '@skeletonlabs/skeleton';
+	import type { ToastSettings, ToastStore } from '@skeletonlabs/skeleton';
+	const toastStore = getToastStore();
 
 	const modalStore = getModalStore();
 
@@ -27,8 +33,16 @@
 		randomHeroSelect = inputHeroSelect;
 		if ($modalStore[0].response) $modalStore[0].response(inputHeroSelect);
 		modalStore.close();
+
+		const t: ToastSettings = {
+			message: `Used Observer`,
+			background: 'variant-filled-success'
+		};
+
+		toastStore.trigger(t);
 	}
 
+	$: console.log(randomHeroSelect);
 	//console.log(randomHeroList);
 </script>
 

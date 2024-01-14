@@ -15,7 +15,7 @@ BigInt.prototype.toJSON = function (): number {
 export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => {
 	const parentData = await parent();
 	const session = await locals.auth.validate();
-	console.log('[random page.server] - session in page server: ', session);
+	//console.log('[turbotown page.server] - session in page server: ', session);
 	//if (session) throw redirect(302, "/");
 
 	//get static list of items

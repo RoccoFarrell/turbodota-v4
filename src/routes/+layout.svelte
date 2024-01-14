@@ -131,12 +131,6 @@
 </script>
 
 <svelte:head>
-	<!-- <link
-		rel="stylesheet"
-		type="text/css"
-		href={HeroSprites}
-	/> -->
-
 	<!-- 
 
 		OG Meta Stuff
@@ -192,6 +186,7 @@
 								<!-- <p>{`isReady: ${JSON.stringify(isReady)}`}</p> -->
 								<p>{`env: ${process.env.NODE_ENV}`}</p>
 							</div>
+							<button class="btn variant-ghost-warning">Admin tools</button>
 						{/if}
 					</div>
 				</svelte:fragment>
