@@ -3,6 +3,7 @@
 	import { quintOut, expoIn, expoOut } from 'svelte/easing';
 	import { browser } from '$app/environment';
 	import type { LayoutData } from './$types';
+	import { page } from "$app/stores"
 
 	import type { Item } from '@prisma/client';
 	import type { TurbotownItem } from '@prisma/client';
@@ -17,6 +18,10 @@
 	import Inventory from './_components/Inventory.svelte';
 	import TownLoginGate from './_components/TownLoginGate.svelte';
 
+	//images
+	import town_logo_light from '$lib/assets/turbotown_light.png';
+	import town_logo_dark from '$lib/assets/turbotown_dark.png';
+
 	export let data: LayoutData;
 
 	//avatar
@@ -24,6 +29,9 @@
 	if (data.session && data.session.user.avatar_url) {
 		avatarURL = data.session.user.avatar_url.replace('.jpg', '_full.jpg');
 	}
+
+	let pagePath = $page.url.pathname.split('/turbotown/')[1] || ""
+	let routeName = pagePath !== "" ? pagePath.charAt(0).toUpperCase() + pagePath.slice(1) : "Town"
 
 	if (browser) {
 		console.log('data in town layout: ', data);
@@ -42,14 +50,16 @@
 
 <div id="#townLayout" class="w-full flex justify-center">
 	{#if data.session && data.league && data.town && data.town.turbotown}
-		<div class="fixed top-20 left-[256px] w-[calc(100vw-256px)] h-24">
+		<div id="#turbotownHeader" class="fixed top-20 left-[256px] w-[calc(100vw-256px)] h-24 card rounded-t-none shadow-xl border-primary-500 border-b z-50">
 			<div class="grid grid-cols-4 p-1 h-24">
-				<div id="turbotownPageHeader" class="flex items-center justify-center border-r border-dashed border-primary-500">
-					<h1 class="h1 text-primary-700 max-md:font-bold text-center">Shop</h1>
+				<div id="turbotownPageHeader" class="flex items-center justify-around border-r border-dashed border-primary-500">
+					<img class="block dark:hidden w-32" alt="TurboTownLight" src={town_logo_light} />
+					<img class="hidden dark:block w-32" alt="TurboTownDark" src={town_logo_dark} />
+					<h1 class="h1 text-amber-500 max-md:font-bold text-center">{routeName}</h1>
 				</div>
-				<div class="col-span-2"></div>
+				<div class="col-span-2 border-r border-dashed border-primary-500"></div>
 
-				<div id="turbotownProfile" class="card rounded-xl grid grid-cols-4 py-1 px-2 shadow-2xl">
+				<div id="turbotownProfile" class="rounded-xl grid grid-cols-4 py-1 px-2">
 					<div id="townProfileImage" class="flex flex-col justify-center items-center">
 						{#if avatarURL}
 							<img class="h-12 w-12 rounded-xl" src={avatarURL} alt="" />
@@ -82,7 +92,7 @@
 				<!-- <i class="fi fi-sr-backpack text-8xl text-yellow-500"></i> -->
 			</div>
 		</div>
-		<div class="mt-24 mb-16 py-4 px-2">
+		<div class="w-full mt-24 mb-16 py-4 px-2">
 			<slot />
 		</div>
 
@@ -106,7 +116,7 @@
 		{#if showInventory}
 			<div
 				transition:slide={{ delay: 50, duration: 400, easing: expoIn, axis: 'y' }}
-				class={'fixed bottom-0 left-[256px] w-[calc(100vw-256px)] h-[500px]'}
+				class={'fixed bottom-0 left-[256px] w-[calc(100vw-256px)] h-[500px] z-50'}
 				on:blur={onBlur}
 				use:clickOutside
 				on:click_outside={onBlur}

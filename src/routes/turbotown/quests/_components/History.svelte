@@ -34,7 +34,7 @@
 				<!-- Hero-->
 				<div class="flex flex-col w-full col-span-3 justify-start">
 					<div class="flex items-center justify-start space-x-4 w-full">
-						<i class={`z-50 d2mh hero-${random.randomedHero}`}></i>
+						<i class={`z-0 d2mh hero-${random.randomedHero}`}></i>
 						<div class="z-0 flex flex-col justify-start truncate">
 							<p class="w-full text-left truncate">
 								{allHeroes.filter((hero) => hero.id === random.randomedHero)[0].localized_name}

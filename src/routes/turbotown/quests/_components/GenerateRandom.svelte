@@ -123,6 +123,7 @@
 	//$: console.log(stratzTimeout);
 
 	const checkForRandomComplete = async () => {
+		console.log('checking for random complete');
 		let responseStratz, responseParse;
 		if (!stratzTimeout && data.session) {
 			responseStratz = await fetch(`/api/stratz/players/${data.session.user.account_id}/recentMatches`, {
@@ -173,8 +174,8 @@
 		>
 			<!-- <h1 class="h1 text-slate-900 font-bold">WANTED</h1> -->
 			<h2 class="h2 text-primary-500 font-bold">Wanted</h2>
-			<i class={`d2mh hero-${generatedRandomHero.id} scale-[3]`}></i>
-			<h1 class="h1 animate-pulse text-amber-600">
+			<i class={`d2mh hero-${generatedRandomHero.id} xl:scale-[3] lg:scale-[2.5] md:scale-[2]`}></i>
+			<h1 class="xl-h1 h3 animate-pulse text-amber-600">
 				{generatedRandomHero.localized_name}
 			</h1>
 			<!-- <i class={`vibrating d2mh hero-${generatedRandomHero.id} scale-150`}></i> -->
@@ -187,7 +188,7 @@
 									Most recent Stratz match: <p>{newerStratzMatches[0].id}</p>
 								</div>
 								<div class="text-xs mt-2">
-									Most recent Open Dota match: <p>{data.rawMatchData[0].match_id}</p>
+									Most recent Open Dota match: <p>{data.match.rawMatchData[0].match_id}</p>
 								</div>
 							</div>
 
@@ -205,7 +206,7 @@
 			{#if stratzData}
 				<div class="w-fit mx-auto p-4 border border-dashed border-fuchsia-300 my-4 space-y-4 card">
 					<div>
-						{#if newerStratzMatches[0].id.toString() !== data.rawMatchData[0].match_id.toString()}
+						{#if newerStratzMatches[0].id.toString() !== data.match.rawMatchData[0].match_id.toString()}
 							<div class="flex items-center justify-center p-1 space-x-2 text-green-500">
 								<i class="fi fi-ss-head-side-brain"></i>
 								<p>You may have a point...</p>
@@ -224,7 +225,7 @@
 						</div>
 						<div class="text-xs">
 							Most recent Open Dota match: <p class="font-bold text-primary-500">
-								{data.rawMatchData[0].match_id}
+								{data.match.rawMatchData[0].match_id}
 							</p>
 						</div>
 					</div>
@@ -238,13 +239,14 @@
 		{/await} -->
 		{#if data.session && data.session.user}
 			<div class="flex items-center justify-center">
-				<button
+				<button class="btn variant-filled-success w-full" use:popup={popupClick}>
+					<!-- <button
 					class="btn variant-filled-success w-full"
 					use:popup={popupClick}
 					on:click={() => {
 						stratzLoading = checkForRandomComplete();
 					}}
-				>
+				> -->
 					<i class="fi fi-br-refresh h-fit"></i>
 					<div class="italic">Completed?</div></button
 				>
@@ -277,60 +279,64 @@
 {/if}
 
 <div class="z-50" data-popup="popupClick">
-	{#await stratzLoading}
-		<div class="flex items-center justify-center h-full">
-			<button class="btn variant-filled-success w-full">
-				<i class="fi fi-br-refresh h-fit animate-spin"></i>
-				<div class="placeholder animate-pulse"></div>
-			</button>
-		</div>
-	{:then stratzData}
-		{#if stratzData}
-			<div class="w-fit mx-auto p-4 border border-dashed border-fuchsia-300 my-4 space-y-4 card">
-				<div>
-					{#if newerStratzMatches[0].id.toString() !== data.rawMatchData[0].match_id.toString()}
-						<div class="flex items-center justify-center p-1 space-x-2 text-green-500">
-							<i class="fi fi-ss-head-side-brain"></i>
-							<p>You may have a point...</p>
+	<div class="w-fit mx-auto p-4 border border-dashed border-fuchsia-300 my-4 space-y-4 card">
+		{#await stratzLoading}
+			<div class="flex items-center justify-center h-full">
+				<button class="btn variant-filled-success w-full">
+					<i class="fi fi-br-refresh h-fit animate-spin"></i>
+					<div class="placeholder animate-pulse"></div>
+				</button>
+			</div>
+		{:then stratzData}
+			{#if stratzData}
+				<div class="w-fit mx-auto p-4 border border-dashed border-fuchsia-300 my-4 space-y-4 card">
+					<div>
+						{#if newerStratzMatches[0].id.toString() !== data.match.rawMatchData[0].match_id.toString()}
+							<div class="flex items-center justify-center p-1 space-x-2 text-green-500">
+								<i class="fi fi-ss-head-side-brain"></i>
+								<p>You may have a point...</p>
+							</div>
+						{:else}
+							<div class="text-amber-500 flex items-center space-x-2 justify-center p-1">
+								<i class="fi fi-br-database mx-2"></i>
+								<p>No new matches found from two sources...</p>
+							</div>
+						{/if}
+					</div>
+					<div class="grid grid-cols-3 place-content-start">
+						<p class="text-xs text-secondary-600">Pulled {newerStratzMatches.length} matches from Stratz</p>
+						<div class="text-xs">
+							Most recent Stratz match: <p class="font-bold text-primary-500">{newerStratzMatches[0].id}</p>
 						</div>
-					{:else}
-						<div class="text-amber-500 flex items-center space-x-2 justify-center p-1">
-							<i class="fi fi-br-database mx-2"></i>
-							<p>No new matches found from two sources...</p>
+						<div class="text-xs">
+							Most recent Open Dota match: <p class="font-bold text-primary-500">
+								{data.match.rawMatchData[0].match_id}
+							</p>
+						</div>
+					</div>
+
+					<div class="mt-2">
+						<p class="inline text-orange-500 font-bold">{stratzTimeoutCountdown}s</p>
+						before you can check again
+					</div>
+					{#if data.session && data.session.user}
+						<div class="flex items-center justify-center">
+							<button
+								class="btn variant-filled-success w-full"
+								disabled={stratzTimeout}
+								on:click={() => {
+									stratzLoading = checkForRandomComplete();
+								}}
+							>
+								<i class="fi fi-br-refresh h-fit"></i>
+								<div class="italic">Completed?</div></button
+							>
 						</div>
 					{/if}
 				</div>
-				<div class="grid grid-cols-3 place-content-start">
-					<p class="text-xs text-secondary-600">Pulled {newerStratzMatches.length} matches from Stratz</p>
-					<div class="text-xs">
-						Most recent Stratz match: <p class="font-bold text-primary-500">{newerStratzMatches[0].id}</p>
-					</div>
-					<div class="text-xs">
-						Most recent Open Dota match: <p class="font-bold text-primary-500">
-							{data.rawMatchData[0].match_id}
-						</p>
-					</div>
-				</div>
-
-				<div class="mt-2">
-					<p class="inline text-orange-500 font-bold">{stratzTimeoutCountdown}s</p>
-					before you can check again
-				</div>
-				{#if data.session && data.session.user}
-					<div class="flex items-center justify-center">
-						<button
-							class="btn variant-filled-success w-full"
-							disabled={stratzTimeout}
-							on:click={() => {
-								stratzLoading = checkForRandomComplete();
-							}}
-						>
-							<i class="fi fi-br-refresh h-fit"></i>
-							<div class="italic">Completed?</div></button
-						>
-					</div>
-				{/if}
-			</div>
-		{/if}
-	{/await}
+			{:else}
+				<div>didnt work</div>
+			{/if}
+		{/await}
+	</div>
 </div>

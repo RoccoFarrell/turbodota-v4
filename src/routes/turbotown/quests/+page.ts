@@ -7,11 +7,11 @@ export const load: PageLoad = async ({ parent, data }) => {
 
 	randomStore.setAllHeroes([...layoutData.heroDescriptions.allHeroes])
 	let quests = []
-	// if(data.league.leagueAndSeasonsResult && data.leagueAndSeasonsResult[0] && data.leagueAndSeasonsResult[0].seasons[0].turbotowns[0].quests.length > 0){
-	// 	quests = data.leagueAndSeasonsResult[0].seasons[0].turbotowns[0].quests
-	// 	console.log(`[random page.ts] found ${quests.length} quests`, quests)
-	// }
+	if(data.league.leagueAndSeasonsResult && data.league.leagueAndSeasonsResult[0] && data.league.leagueAndSeasonsResult[0].seasons[0].turbotowns[0].quests.length > 0){
+		quests = data.league.leagueAndSeasonsResult[0].seasons[0].turbotowns[0].quests
+		console.log(`[random page.ts] found ${quests.length} quests`, quests)
+	}
 
-	//return {...layoutData, ...data, quests };
-	return {...layoutData}
+	return {...layoutData, ...data, quests };
+	//return {...layoutData, ...data}
 };
