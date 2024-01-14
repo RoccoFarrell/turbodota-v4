@@ -241,6 +241,7 @@ model TurbotownMetric {
   value       Int
 
   Turbotown Turbotown @relation(fields: [turbotownID], references: [id])
+  @@unique([turbotownID, label], name: "townPlusLabel")
 }
 
 model TurbotownQuest {

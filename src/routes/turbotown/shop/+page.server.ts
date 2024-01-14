@@ -55,7 +55,7 @@ export const actions: Actions = {
                         },
                     },
                     where: {
-                        id: 1
+                        townPlusLabel: { turbotownID: 1, label: "gold" }
                     },
                 })
 
