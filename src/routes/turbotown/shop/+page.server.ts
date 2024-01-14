@@ -48,12 +48,14 @@ export const actions: Actions = {
 
             let tx_result = prisma.$transaction(async (tx) => {
                 // 1. Decrement amount from the user
+                
                 const sender = await tx.turbotownMetric.update({
                     data: {
                         value: {
                             decrement: shoppingCart.totalCost,
                         },
                     },
+                    // need to fix hardcoded values
                     where: {
                         townPlusLabel: { turbotownID: 1, label: "gold" }
                     },

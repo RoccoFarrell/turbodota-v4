@@ -241,6 +241,7 @@ model TurbotownMetric {
   value       Int
 
   Turbotown Turbotown @relation(fields: [turbotownID], references: [id])
+
   @@unique([turbotownID, label], name: "townPlusLabel")
 }
 
@@ -312,4 +313,9 @@ model Item {
   quantityAvailable Int
   active            Boolean
   TurbotownItem     TurbotownItem[]
+}
+
+model TurbotownActions {
+  id     Int    @id @default(autoincrement())
+  action String
 }

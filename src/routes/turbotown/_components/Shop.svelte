@@ -61,27 +61,6 @@
 	};
 
 	let selectedDetailItem = new ShopItem();
-	//let selectedItem = new ShopItem();
-
-	// const hoverHandler = (inputItem: ShopItem) => {
-	// 	hoverItem.id = inputItem.id;
-	// 	hoverItem.name = inputItem.name;
-	// 	hoverItem.description = inputItem.description;
-	// 	hoverItem.goldCost = inputItem.goldCost;
-
-	// 	//console.log(activeItem);
-	// };
-
-	// const clickHandler = (inputItem: ShopItem) => {
-	// 	console.log(selectedItems);
-	// 	if (selectedItems.filter((item: ShopItem) => item.id == inputItem.id).length > 0) {
-	// 		console.log('item detected');
-	// 	} else {
-	// 		console.log('item added');
-	// 		selectedItems.push(inputItem);
-	// 	}
-	// 	console.log(selectedItems);
-	// };
 
 	const modifyCart = (itemName: string, mode: string) => {
 		let item = items.filter((item: ShopItem) => item.name === itemName)[0];
@@ -119,7 +98,7 @@
 		}
 	};
 
-	$: console.log('user cart: ', userShoppingCart);
+	//$: console.log('user cart: ', userShoppingCart);
 	//$: console.log('table source: ', tableSource);
 </script>
 

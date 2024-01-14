@@ -2,6 +2,7 @@
 	import { setContext, getContext, onMount } from 'svelte';
 	import type { Hero } from '@prisma/client';
 	import type { SvelteComponent } from 'svelte';
+	import { enhance } from '$app/forms';
 
 	import { ListBox, ListBoxItem, getModalStore } from '@skeletonlabs/skeleton';
 
@@ -20,35 +21,39 @@
 	randomHeroList.push(generatedRandomHero3);
 
 	//$: console.log('rhl: ', randomHeroList);
-
+	let randomHeroSelect: Hero;
 	// Handle Form Submission
-	function onFormSubmit(heroSelect: Hero): void {
-		if ($modalStore[0].response) $modalStore[0].response(heroSelect);
+	function onFormSubmit(inputHeroSelect: Hero): void {
+		randomHeroSelect = inputHeroSelect;
+		if ($modalStore[0].response) $modalStore[0].response(inputHeroSelect);
 		modalStore.close();
 	}
 
 	//console.log(randomHeroList);
 </script>
 
-<div id="observerModal" class="h1 card w-screen flex flex-col justify-center items-center p-4">
-	Select Your Random Hero!
-	<div class="w-[70%] h-full grid grid-cols-3 mx-auto max-h-[755%] my-8">
-		{#each randomHeroList as hero, i}
-			<div class="flex flex-col justify-center items-center w-full relative z-0 rounded-xl h-full">
-				<h2 class="h2 animate-pulse text-amber-600">
-					{hero.localized_name}
-				</h2>
-				<i class={`d2mh hero-${hero.id} scale-[3] m-12`}></i>
+<form method="POST" class="" action="/turbotown?/useItem" use:enhance>
+	<input type="hidden" name="observerSelect" value={JSON.stringify(randomHeroSelect)} />
+	<div id="observerModal" class="h1 card w-screen flex flex-col justify-center items-center p-4">
+		Select Your Random Hero!
+		<div class="w-[70%] h-full grid grid-cols-3 mx-auto max-h-[755%] my-8">
+			{#each randomHeroList as hero, i}
+				<div class="flex flex-col justify-center items-center w-full relative z-0 rounded-xl h-full">
+					<h2 class="h2 animate-pulse text-amber-600">
+						{hero.localized_name}
+					</h2>
+					<i class={`d2mh hero-${hero.id} scale-[3] m-12`}></i>
 
-				<div class="flex items-center justify-center">
-					<button class="btn variant-filled-primary w-full" on:click={() => onFormSubmit(hero)}>
-						<div class="italic">Select</div></button
-					>
+					<div class="flex items-center justify-center">
+						<button class="btn variant-filled-primary w-full" on:click={() => onFormSubmit(hero)}>
+							<div class="italic">Select</div></button
+						>
+					</div>
 				</div>
-			</div>
-		{/each}
+			{/each}
+		</div>
 	</div>
-</div>
+</form>
 
 <!-- <div class="card w-screen flex flex-col justify-center items-center p-4">
 	<div class="mb-2 bg-surface-500/10 p-4 rounded-full mx-auto shadow-md col-span-1">
