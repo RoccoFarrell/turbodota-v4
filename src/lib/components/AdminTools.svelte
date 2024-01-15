@@ -1,10 +1,17 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+    import { getContext } from 'svelte';
 
 	//dayjs
 	import dayjs from 'dayjs';
 	import relativeTime from 'dayjs/plugin/relativeTime';
 	dayjs.extend(relativeTime);
+
+    //modal
+    import { getModalStore } from '@skeletonlabs/skeleton';
+	const modalStore = getModalStore();
+
+    let session: any = getContext('session')
 
 	let activeOptionID: number = 0;
 
@@ -19,7 +26,7 @@
 	<div class="h-3/4 card p-8 top-10 mt-32">
 		<div class="flex justify-between border-b border-dashed border-primary-500 p-4">
 			<h1 class="h1 text-amber-500">Admin Tools</h1>
-			<button class="btn rounded-full variant-filled-primary">X</button>
+			<button class="btn rounded-full variant-filled-primary" on:click={() => modalStore.close()}>X</button>
 		</div>
 
 		<div class="grid grid-cols-2 my-4 h-4/5">
@@ -67,13 +74,15 @@
 			</div>
 			<div class="h-full m-4 border-l border-dashed border-orange-500">
 				<div class="h-full m-4 card p-4">
-					Active Option: {activeOptionID}
+                    {#if activeOptionID === 0}
+                        <h4 class="h4 text-amber-500">Add a Fake Match</h4>
+                    
 
-					<form method="POST" class="" action="/turbotown?/adminAction" use:enhance>
+					<form method="POST" class="" action="/turbotown?/addFakeMatch" use:enhance>
 						<div class="flex flex-col space-y-2">
 							<label class="label">
 								<span class="font-semibold text-primary-500">User ID</span>
-								<input class="input" title="userID" name="userID" value=65110965 type="text" placeholder="65110965" />
+								<input class="input" title="account_id" name="account_id" value={session.user.account_id} type="text" placeholder="65110965" />
 							</label>
 							<label class="label">
 								<span class="font-semibold text-primary-500">Hero ID</span>
@@ -81,7 +90,7 @@
 							</label>
 							<label class="label">
 								<span class="font-semibold text-primary-500">Win?</span>
-								<select class="select" title="win">
+								<select class="select" title="win" name="win">
 									<option value="1">Win</option>
 									<option value="2">Loss</option>
 								</select>
@@ -94,20 +103,22 @@
 									class="input"
 									title="timestamp"
 									type="text"
+                                    name="matchTS"
 									placeholder="1705278870"
 									bind:value={matchTimestamp}
 								/>
 							</label>
 						</div>
-						<input type="hidden" name="activeOptionID" value={activeOptionID} />
-						<input type="hidden" name="actionData" value={activeOptionID} />
 						<button
 							type="submit"
-							class="btn variant-filled-primary w-full max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:my-8 max-lg:mx-4 max-lg:max-w-[90%] md:max-w-[80%]"
+							class="btn variant-filled-primary w-3/4 my-4"
 						>
 							Submit
 						</button>
 					</form>
+                    {:else}
+                        <h3 class="h3">Coming soon.</h3>
+                    {/if}
 				</div>
 			</div>
 		</div>

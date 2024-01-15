@@ -15,6 +15,10 @@
 	import { getModalStore } from '@skeletonlabs/skeleton';
 	const modalStore = getModalStore();
 
+	import { getToastStore, storeHighlightJs } from '@skeletonlabs/skeleton';
+	import type { ToastSettings, ToastStore } from '@skeletonlabs/skeleton';
+	const toastStore = getToastStore();
+
 	//images
 	import town_logo_light from '$lib/assets/turbotown_light.png';
 	import town_logo_dark from '$lib/assets/turbotown_dark.png';
@@ -26,6 +30,7 @@
 
 	//data
 	export let data: PageData;
+	export let form;
 
 	$: training = false;
 	$: progressVal = 0;
@@ -78,6 +83,23 @@
 		component: 'heroGrid'
 	};
 	//modalStore.trigger(modal);
+
+	$: console.log(form)
+	$: if (form?.missing) {
+		const t: ToastSettings = {
+			message: `Enter at least one valid Dota User ID`,
+			background: 'variant-filled-error'
+		};
+
+		toastStore.trigger(t);
+	} else if (form?.success) {
+		const t: ToastSettings = {
+			message: `League created!`,
+			background: 'variant-filled-success'
+		};
+
+		toastStore.trigger(t);
+	}
 </script>
 
 <div class="container">

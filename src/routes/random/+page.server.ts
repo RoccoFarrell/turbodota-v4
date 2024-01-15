@@ -241,8 +241,6 @@ export const load: PageServerLoad = async ({ locals, parent, url, fetch }) => {
 		}
 
 		/* End get randoms */
-
-		//console.log(currentSeasonLeaderboard)
 	}
 	return {
 		...parentData,
