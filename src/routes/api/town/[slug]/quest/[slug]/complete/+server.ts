@@ -2,6 +2,7 @@ import type { RequestHandler } from '@sveltejs/kit';
 import { auth } from '$lib/server/lucia';
 import prisma from '$lib/server/prisma';
 import winOrLoss from '$lib/helpers/winOrLoss';
+import dayjs from 'dayjs';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unreachable code error
@@ -40,57 +41,114 @@ export const POST: RequestHandler = async ({ request, params, url, locals, fetch
 
 		console.log('[api/town/${account_id}/quest/${questID}/complete] requestData: ', requestData);
 
-
-
 		console.log(`[api/town/${account_id}/quest/${questID}/complete] - checking random for: ${session.user.account_id}`);
-		const response = await fetch(`/api/players/${session.user.account_id}/randoms/${requestData.random.id}/complete`, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json'
-			},
-			body: JSON.stringify({random: requestData.random})
-		});
-		console.log(`[api/town/${account_id}/quest/${questID}/complete] check random response: `, response);
 
-		//check if user was updated recently, otherwise use the database
-		// const randomsForUser = await prisma.random.findMany({
-		// 	where: {
-		// 		account_id: session.user.account_id
-		// 	}
-		// });
+		let randomStatusComplete: boolean = false;
+		if (requestData.random.status === 'active') {
+			const response = await fetch(
+				`/api/players/${session.user.account_id}/randoms/${requestData.random.id}/complete`,
+				{
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({ random: requestData.random })
+				}
+			);
+			console.log(`[api/town/${account_id}/quest/${questID}/complete] check random response: `, response);
 
-		// console.log(`[api/town/${account_id}/quest/${}/complete] completing quest for: randomID - ${completedRandom.id} randomedHero - ${completedRandom.randomedHero} in match - ${completedMatch.match_id}`);
+			let responseData = await response.json();
+			if (responseData.success) {
+				randomStatusComplete = true;
+			}
+		} else {
+			if (requestData.random.status === 'completed') randomStatusComplete = true;
+		}
 
-		// let completedRandomWithoutMatch = { ...completedRandom }
-		// delete completedRandomWithoutMatch.match
-		// delete completedRandomWithoutMatch.id
+		if (randomStatusComplete) {
+			console.log('random was completed, time to complete quest');
 
-		// const randomCompleteResults = await prisma.random.update({
-		//     where: {
-		//         id: completedRandom.id
-		//     },
-		// 	data: {
-		//         active: false,
-		//         status: 'completed',
-		// 		win: winOrLoss(completedMatch.player_slot, completedMatch.radiant_win),
-		//         endDate: new Date(),
-		//         endMatchID: completedMatch.id,
-		// 		endGold: winOrLoss(completedMatch.player_slot, completedMatch.radiant_win) ? completedRandomWithoutMatch.expectedGold : 0
-		// 		// account_id: session.user.account_id,
-		// 		// active: true,
-		// 		// status: 'active',
-		// 		// date: new Date(),
-		// 		// availableHeroes: randomStoreValues.availableHeroes.toString(),
-		// 		// bannedHeroes: randomStoreValues.bannedHeroes.toString(),
-		// 		// selectedRoles: randomStoreValues.selectedRoles.toString(),
-		// 		// expectedGold: randomStoreValues.expectedGold,
-		// 		// modifierAmount: randomStoreValues.modifierAmount,
-		// 		// modifierTotal: randomStoreValues.modifierTotal,
-		// 		// randomedHero: randomStoreValues.randomedHero
-		// 	}
-		// });
+			const tx_result = prisma.$transaction(async (tx) => {
+				const townQuestUpdateResult = await tx.turbotown.update({
+					where: {
+						account_id
+					},
+					data: {
+						quests: {
+							update: {
+								where: {
+									id: questID
+								},
+								data: {
+									active: false,
+									status: 'completed',
+									endDate: dayjs().toDate()
+								}
+							}
+						}
+					},
+					include: {
+						metrics: true,
+						quests: true
+					}
+				});
+
+				let metrics_gold = townQuestUpdateResult.metrics.filter((metric) => metric.label === 'gold')[0];
+				let metrics_xp = townQuestUpdateResult.metrics.filter((metric) => metric.label === 'xp')[0];
+				let completedQuest = townQuestUpdateResult.quests.filter((quest) => quest.id === questID)[0];
+
+				const townGoldUpdateResult = await tx.turbotown.update({
+					where: {
+						account_id
+					},
+					data: {
+						metrics: {
+							update: {
+								where: {
+									id: metrics_gold.id
+								},
+								data: {
+									value: metrics_gold.value + completedQuest.gold
+								}
+							}
+						}
+					}
+				});
+
+				const townXPUpdateResult = await tx.turbotown.update({
+					where: {
+						account_id
+					},
+					data: {
+						metrics: {
+							update: {
+								where: {
+									id: metrics_xp.id
+								},
+								data: {
+									value: metrics_xp.value + completedQuest.xp
+								}
+							}
+						}
+					},
+					include: {
+						metrics: true,
+						quests: true
+					}
+				});
+
+				return townXPUpdateResult;
+			});
+
+			if (tx_result) {
+				let newResponse = new Response(JSON.stringify({ status: 'success', success: true, tx_result }));
+				return newResponse;
+			} else {
+				let newResponse = new Response(
+					JSON.stringify({ status: 'fail', message: 'couldnt update town', success: false, tx_result })
+				);
+				return newResponse;
+			}
+		}
 	}
-
-	let newResponse = new Response(JSON.stringify({ status: 'success' }));
-	return newResponse;
 };

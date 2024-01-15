@@ -29,9 +29,9 @@
 	const modalStore = getModalStore();
 
 	//components
-	import History from './_components/History.svelte';
+	import History from '../turbotown/quests/_components/History.svelte';
 	import MatchHistory from '$lib/components/MatchHistory.svelte';
-	import GenerateRandom from './_components/GenerateRandom.svelte';
+	import GenerateRandom from '../turbotown/quests/_components/GenerateRandom.svelte';
 
 	//constants
 	import { heroRoles } from '$lib/constants/heroRoles';

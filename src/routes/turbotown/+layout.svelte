@@ -89,11 +89,11 @@
 
 	//loop through quests and set stores
 	if (data.town && data.quests) {
-		let quest1arr: QuestWithRandom[] = data.quests.filter((quest: QuestWithRandom) => quest.questSlot === 1);
+		let quest1arr: QuestWithRandom[] = data.quests.filter((quest: QuestWithRandom) => quest.questSlot === 1 && quest.status === "active");
 		//console.log('quest1: ', quest1arr);
-		let quest2arr: QuestWithRandom[] = data.quests.filter((quest: QuestWithRandom) => quest.questSlot === 2);
+		let quest2arr: QuestWithRandom[] = data.quests.filter((quest: QuestWithRandom) => quest.questSlot === 2 && quest.status === "active");
 		//console.log('quest3: ', quest2arr);
-		let quest3arr: QuestWithRandom[] = data.quests.filter((quest: QuestWithRandom) => quest.questSlot === 3);
+		let quest3arr: QuestWithRandom[] = data.quests.filter((quest: QuestWithRandom) => quest.questSlot === 3 && quest.status === "active");
 		//console.log('quest3: ', quest3arr);
 
 		let quest1: QuestWithRandom, quest2: QuestWithRandom, quest3: QuestWithRandom;
