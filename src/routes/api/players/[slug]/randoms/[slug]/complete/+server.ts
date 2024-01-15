@@ -35,7 +35,7 @@ export const POST: RequestHandler = async ({ request, params, url, locals, fetch
 			where: {
 				AND: [
 					{ account_id },
-					{ hero_id: random.hero_id },
+					{ hero_id: random.randomedHero },
 					{
 						start_time: {
 							gt: dayjs(random.date).subtract(5, 'minute').unix()
