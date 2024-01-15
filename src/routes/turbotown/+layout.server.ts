@@ -1,5 +1,5 @@
 import type { LayoutServerLoad } from './$types';
-import type { Prisma, Turbotown, Season } from '@prisma/client';
+import type { Prisma, Turbotown, Season, TurbotownQuest } from '@prisma/client';
 import prisma from '$lib/server/prisma';
 import { error, fail, redirect } from '@sveltejs/kit';
 import { calculateRandomLeaderboard } from '$lib/helpers/leaderboardFromSeason';
@@ -52,6 +52,11 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 	}
 
 	type RandomsForUser = Prisma.PromiseReturnType<typeof getRandomsForUser>;
+	type QuestWithRandom = Prisma.TurbotownQuestGetPayload<{
+		include: {
+			random: true
+		}
+	  }>
 	let randomsForUser: RandomsForUser = [];
 	let filteredMatchData: Match[] = [];
 	let rawMatchData: Match[] = [];
@@ -64,6 +69,7 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 	let currentSeason: Season | null = null;
 	let currentSeasonLeaderboard: any = [];
 	let currentTown: Turbotown | null = null;
+	let quests: QuestWithRandom[] = []
 
 	if (session && session.user) {
 		/* 
@@ -126,6 +132,13 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 		/* End get season info */
 		/* ------------------- */
 
+		//quests
+		
+		if(leagueAndSeasonsResult && leagueAndSeasonsResult[0] && leagueAndSeasonsResult[0].seasons[0].turbotowns[0].quests.length > 0){
+			quests = leagueAndSeasonsResult[0].seasons[0].turbotowns[0].quests
+			console.log(`[random page.ts] found ${quests.length} quests`, quests)
+		}
+
 		/* Get current Town Info */
 		/* ------------------- */
 
@@ -145,6 +158,7 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 					metrics: true,
 					quests: true,
 					season: true,
+					statuses: true,
 					items: {
 						include: {
 							item: true
@@ -266,6 +280,7 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 		meta: {
 			flags,
 		},
+		quests,
 		league: {
 			leagueAndSeasonsResult,
 			currentSeason,

@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { slide } from 'svelte/transition';
 	import { quintOut, expoIn, expoOut } from 'svelte/easing';
+	import { setContext } from 'svelte';
 	import { browser } from '$app/environment';
 	import type { LayoutData } from './$types';
-	import { page } from "$app/stores"
-	import { enhance } from '$app/forms';
-	import type { Item } from '@prisma/client';
-	import type { TurbotownItem } from '@prisma/client';
+	import { page } from '$app/stores';
+	import type { Item, TurbotownItem, TurbotownQuest, Hero } from '@prisma/client';
+	import { Prisma } from '@prisma/client';
 
 	//helpers
 	import { clickOutside } from '$lib/helpers/clickOutside.ts';
@@ -22,6 +22,17 @@
 	import town_logo_light from '$lib/assets/turbotown_light.png';
 	import town_logo_dark from '$lib/assets/turbotown_dark.png';
 
+	//stores
+	import { townStore } from '$lib/stores/townStore';
+
+	//constants
+	import {
+		constant_startingGold,
+		constant_banMultiplier,
+		constant_freeBans,
+		constant_maxBans
+	} from '$lib/constants/random';
+
 	export let data: LayoutData;
 
 	//avatar
@@ -30,8 +41,8 @@
 		avatarURL = data.session.user.avatar_url.replace('.jpg', '_full.jpg');
 	}
 
-	let pagePath = $page.url.pathname.split('/turbotown/')[1] || ""
-	let routeName = pagePath !== "" ? pagePath.charAt(0).toUpperCase() + pagePath.slice(1) : "Town"
+	let pagePath = $page.url.pathname.split('/turbotown/')[1] || '';
+	let routeName = pagePath !== '' ? pagePath.charAt(0).toUpperCase() + pagePath.slice(1) : 'Town';
 
 	if (browser) {
 		console.log('data in town layout: ', data);
@@ -46,13 +57,138 @@
 		//console.log('blurring');
 		showInventory = false;
 	};
+
+	//set towninfo
+	if(data.session && data.session.user){
+		console.log('account_id found in turbotown layout')
+		setContext('account_id', data.session.user.account_id)
+	} else {
+		console.error('no account_id found in turbotown layout')
+	}
+	
+	//set quests
+	type QuestWithRandom = Prisma.TurbotownQuestGetPayload<{
+		include: {
+			random: true;
+		};
+	}>;
+
+	let quest1Store = $townStore.quests.quest1;
+	let quest2Store = $townStore.quests.quest2;
+	let quest3Store = $townStore.quests.quest3;
+	$: if (browser && $quest1Store) {
+		console.log('town store quest 1 store: ', $quest1Store);
+		console.log('town store quest 2 store: ', $quest2Store);
+		console.log('town store quest 3 store: ', $quest3Store);
+	}
+
+	//set statuses
+	if (data.town.turbotown && data.town.turbotown.statuses) {
+		setContext('townStatuses', data.town.turbotown.statuses);
+	}
+
+	//loop through quests and set stores
+	if (data.town && data.quests) {
+		let quest1arr: QuestWithRandom[] = data.quests.filter((quest: QuestWithRandom) => quest.questSlot === 1);
+		console.log('quest1: ', quest1arr);
+		let quest2arr: QuestWithRandom[] = data.quests.filter((quest: QuestWithRandom) => quest.questSlot === 2);
+		console.log('quest3: ', quest2arr);
+		let quest3arr: QuestWithRandom[] = data.quests.filter((quest: QuestWithRandom) => quest.questSlot === 3);
+		console.log('quest3: ', quest3arr);
+
+		let quest1: QuestWithRandom, quest2: QuestWithRandom, quest3: QuestWithRandom;
+		if (quest1arr.length > 0) {
+			let allHeroesCopy = [...data.heroDescriptions.allHeroes];
+			quest1 = quest1arr[0];
+			quest1Store.set({
+				allHeroes: data.heroDescriptions.allHeroes,
+				availableHeroes: quest1.random.availableHeroes.split(',').map((randomID: string) => {
+					return allHeroesCopy.filter((hero: Hero) => hero.id === parseInt(randomID))[0];
+				}),
+				bannedHeroes:
+					quest1?.random?.bannedHeroes.length > 0
+						? quest1.random.bannedHeroes.split(',').map((randomID: string) => {
+								return allHeroesCopy.filter((hero: Hero) => hero.id === parseInt(randomID))[0];
+							})
+						: [],
+				selectedRoles: quest1.random.selectedRoles.split(',') || [],
+				startingGold: constant_startingGold,
+				expectedGold: quest1.random.expectedGold,
+				banMultiplier: constant_banMultiplier,
+				modifierAmount: quest1.random.modifierAmount,
+				modifierTotal: quest1.random.modifierTotal,
+				freeBans: constant_freeBans,
+				maxBans: constant_maxBans,
+				randomedHero: allHeroesCopy.filter((hero: Hero) => hero.id === quest1.random.randomedHero)[0]
+			});
+		} else quest1Store.reset(data.heroDescriptions.allHeroes);
+
+		if (quest2arr.length > 0) {
+			let allHeroesCopy = [...data.heroDescriptions.allHeroes];
+			quest2 = quest2arr[0];
+			quest2Store.set({
+				allHeroes: data.heroDescriptions.allHeroes,
+				availableHeroes: quest2.random.availableHeroes.split(',').map((randomID: string) => {
+					return allHeroesCopy.filter((hero: Hero) => hero.id === parseInt(randomID))[0];
+				}),
+				bannedHeroes:
+					quest2.random.bannedHeroes.length > 0
+						? quest2.random.bannedHeroes.split(',').map((randomID: string) => {
+								return allHeroesCopy.filter((hero: Hero) => hero.id === parseInt(randomID))[0];
+							})
+						: [],
+				selectedRoles: quest2.random.selectedRoles.split(',') || [],
+				startingGold: constant_startingGold,
+				expectedGold: quest2.random.expectedGold,
+				banMultiplier: constant_banMultiplier,
+				modifierAmount: quest2.random.modifierAmount,
+				modifierTotal: quest2.random.modifierTotal,
+				freeBans: constant_freeBans,
+				maxBans: constant_maxBans,
+				randomedHero: allHeroesCopy.filter((hero: Hero) => hero.id === quest2.random.randomedHero)[0]
+			});
+		} else quest2Store.reset(data.heroDescriptions.allHeroes);
+
+		if (quest3arr.length > 0) {
+			let allHeroesCopy = [...data.heroDescriptions.allHeroes];
+			quest3 = quest3arr[0];
+			quest3Store.set({
+				allHeroes: data.heroDescriptions.allHeroes,
+				availableHeroes: quest3.random.availableHeroes.split(',').map((randomID: string) => {
+					return allHeroesCopy.filter((hero: Hero) => hero.id === parseInt(randomID))[0];
+				}),
+				bannedHeroes:
+					quest3.random.bannedHeroes.length > 0
+						? quest3.random.bannedHeroes.split(',').map((randomID: string) => {
+								return allHeroesCopy.filter((hero: Hero) => hero.id === parseInt(randomID))[0];
+							})
+						: [],
+				selectedRoles: quest3.random.selectedRoles.split(',') || [],
+				startingGold: constant_startingGold,
+				expectedGold: quest3.random.expectedGold,
+				banMultiplier: constant_banMultiplier,
+				modifierAmount: quest3.random.modifierAmount,
+				modifierTotal: quest3.random.modifierTotal,
+				freeBans: constant_freeBans,
+				maxBans: constant_maxBans,
+				randomedHero: allHeroesCopy.filter((hero: Hero) => hero.id === quest3.random.randomedHero)[0]
+			});
+		} else quest3Store.reset(data.heroDescriptions.allHeroes);
+	}
+	//end set stores
 </script>
 
 <div id="#townLayout" class="w-full flex justify-center">
 	{#if data.session && data.league && data.town && data.town.turbotown}
-		<div id="#turbotownHeader" class="fixed top-20 left-[256px] w-[calc(100vw-256px)] h-24 card rounded-t-none shadow-xl border-primary-500 border-b z-50">
+		<div
+			id="#turbotownHeader"
+			class="fixed top-20 left-[256px] w-[calc(100vw-256px)] h-24 card rounded-t-none shadow-xl border-primary-500 border-b z-50"
+		>
 			<div class="grid grid-cols-4 p-1 h-24">
-				<div id="turbotownPageHeader" class="flex items-center justify-around border-r border-dashed border-primary-500">
+				<div
+					id="turbotownPageHeader"
+					class="flex items-center justify-around border-r border-dashed border-primary-500"
+				>
 					<img class="block dark:hidden w-32" alt="TurboTownLight" src={town_logo_light} />
 					<img class="hidden dark:block w-32" alt="TurboTownDark" src={town_logo_dark} />
 					<h1 class="h1 text-amber-500 max-md:font-bold text-center">{routeName}</h1>
@@ -128,7 +264,7 @@
 				</div>
 				{#if showInventory}
 					<div class="h-full" transition:slide={{ delay: 250, duration: 300, easing: quintOut, axis: 'y' }}>
-						<Inventory {data}/>
+						<Inventory {data} />
 					</div>
 				{/if}
 			</div>

@@ -231,6 +231,7 @@ model Turbotown {
   quests      TurbotownQuest[]
   season      Season?           @relation(fields: [seasonID], references: [id])
   items       TurbotownItem[]
+  statuses    TurbotownStatus[]
 }
 
 model TurbotownMetric {
@@ -271,6 +272,18 @@ model TurbotownItem {
   status      String
 }
 
+model TurbotownStatus {
+  id           Int       @id @default(autoincrement())
+  lastUpdated  DateTime  @default(now())
+  name         String
+  value        String
+  isActive     Boolean
+  appliedDate  DateTime
+  resolvedDate DateTime?
+  turbotownID  Int
+  turbotown    Turbotown @relation(fields: [turbotownID], references: [id])
+}
+
 model Item {
   id                Int             @id @default(autoincrement())
   name              String
@@ -286,7 +299,6 @@ model TurbotownAction {
   id     Int    @id @default(autoincrement())
   action String
 }
-
 
 model Session {
   id             String @id @unique
@@ -320,4 +332,3 @@ model FriendshipMMR {
 
   @@unique([match_id, account_id], name: "matchPlusAccount")
 }
-

@@ -55,106 +55,6 @@
 	if (browser) {
 		console.log('data: ', data);
 	}
-
-	// $: console.log('random store data: ', $randomStore);
-	// $: console.log('town store data: ', $townStore);
-	let quest1Store = $townStore.quests.quest1;
-	let quest2Store = $townStore.quests.quest2;
-	let quest3Store = $townStore.quests.quest3;
-	$: if (browser && $quest1Store) {
-		console.log('town store quest 1 store: ', $quest1Store);
-		console.log('town store quest 2 store: ', $quest2Store);
-		console.log('town store quest 3 store: ', $quest3Store);
-	}
-
-	//loop through quests and set stores
-	if (data.town && data.quests) {
-		let quest1 = data.quests.filter((quest: TurbotownQuest) => quest.questSlot === 1);
-		console.log('quest1: ', quest1);
-		let quest2 = data.quests.filter((quest: TurbotownQuest) => quest.questSlot === 2);
-		console.log('quest3: ', quest2);
-		let quest3 = data.quests.filter((quest: TurbotownQuest) => quest.questSlot === 3);
-		console.log('quest3: ', quest3);
-		if (quest1.length > 0) {
-			let allHeroesCopy = [...data.heroDescriptions.allHeroes];
-			quest1 = quest1[0];
-			quest1Store.set({
-				allHeroes: data.heroDescriptions.allHeroes,
-				availableHeroes: quest1.random.availableHeroes.split(',').map((randomID: string) => {
-					return allHeroesCopy.filter((hero: Hero) => hero.id === parseInt(randomID))[0];
-				}),
-				bannedHeroes:
-					quest1.random.bannedHeroes.length > 0
-						? quest1.random.bannedHeroes.split(',').map((randomID: string) => {
-								return allHeroesCopy.filter((hero: Hero) => hero.id === parseInt(randomID))[0];
-							})
-						: [],
-				selectedRoles: quest1.random.selectedRoles.split(',') || [],
-				startingGold: constant_startingGold,
-				expectedGold: quest1.random.expectedGold,
-				banMultiplier: constant_banMultiplier,
-				modifierAmount: quest1.random.modifierAmount,
-				modifierTotal: quest1.random.modifierTotal,
-				freeBans: constant_freeBans,
-				maxBans: constant_maxBans,
-				randomedHero: allHeroesCopy.filter((hero: Hero) => hero.id === quest1.random.randomedHero)[0]
-			});
-		} else quest1Store.reset(data.heroDescriptions.allHeroes);
-
-		if (quest2.length > 0) {
-			let allHeroesCopy = [...data.heroDescriptions.allHeroes];
-			quest2 = quest2[0];
-			quest2Store.set({
-				allHeroes: data.heroDescriptions.allHeroes,
-				availableHeroes: quest2.random.availableHeroes.split(',').map((randomID: string) => {
-					return allHeroesCopy.filter((hero: Hero) => hero.id === parseInt(randomID))[0];
-				}),
-				bannedHeroes:
-					quest2.random.bannedHeroes.length > 0
-						? quest2.random.bannedHeroes.split(',').map((randomID: string) => {
-								return allHeroesCopy.filter((hero: Hero) => hero.id === parseInt(randomID))[0];
-							})
-						: [],
-				selectedRoles: quest2.random.selectedRoles.split(',') || [],
-				startingGold: constant_startingGold,
-				expectedGold: quest2.random.expectedGold,
-				banMultiplier: constant_banMultiplier,
-				modifierAmount: quest2.random.modifierAmount,
-				modifierTotal: quest2.random.modifierTotal,
-				freeBans: constant_freeBans,
-				maxBans: constant_maxBans,
-				randomedHero: allHeroesCopy.filter((hero: Hero) => hero.id === quest2.random.randomedHero)[0]
-			});
-		} else quest2Store.reset(data.heroDescriptions.allHeroes);
-
-		if (quest3.length > 0) {
-			let allHeroesCopy = [...data.heroDescriptions.allHeroes];
-			quest3 = quest3[0];
-			quest3Store.set({
-				allHeroes: data.heroDescriptions.allHeroes,
-				availableHeroes: quest3.random.availableHeroes.split(',').map((randomID: string) => {
-					return allHeroesCopy.filter((hero: Hero) => hero.id === parseInt(randomID))[0];
-				}),
-				bannedHeroes:
-					quest3.random.bannedHeroes.length > 0
-						? quest3.random.bannedHeroes.split(',').map((randomID: string) => {
-								return allHeroesCopy.filter((hero: Hero) => hero.id === parseInt(randomID))[0];
-							})
-						: [],
-				selectedRoles: quest3.random.selectedRoles.split(',') || [],
-				startingGold: constant_startingGold,
-				expectedGold: quest3.random.expectedGold,
-				banMultiplier: constant_banMultiplier,
-				modifierAmount: quest3.random.modifierAmount,
-				modifierTotal: quest3.random.modifierTotal,
-				freeBans: constant_freeBans,
-				maxBans: constant_maxBans,
-				randomedHero: allHeroesCopy.filter((hero: Hero) => hero.id === quest3.random.randomedHero)[0]
-			});
-		} else quest3Store.reset(data.heroDescriptions.allHeroes);
-	}
-	//end set stores
-
 	/* 
 		Calculations from server data
 	*/
@@ -210,6 +110,9 @@
 	}
 
 	//set user preferences on page
+	let quest1Store = $townStore.quests.quest1;
+	let quest2Store = $townStore.quests.quest2;
+	let quest3Store = $townStore.quests.quest3;
 	if (data.userPreferences && data.userPreferences.length > 0) {
 		console.log(`[random/+page.svelte] - evaluating userPreferencces`);
 		let banListPref = data.userPreferences.filter((pref: any) => pref.name === 'randomBanList');

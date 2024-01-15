@@ -36,6 +36,10 @@
 	const observerModal: ModalSettings = {
 		type: 'component',
 		component: modalComponent,
+		meta: {
+			account_id: data.session.user.account_id,
+			statuses: data.town.turbotown.statuses
+		},
 		response: (r: any) => {
 			//console.log(r);
 		}
