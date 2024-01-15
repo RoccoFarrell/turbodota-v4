@@ -79,7 +79,7 @@ export const actions: Actions = {
         if(timestamp === 0) return(fail(400, {timestamp, missing: true} ))
 
         let winVal: boolean = false
-        if(win === "true") winVal = true
+        if(win === "1") winVal = true
 
         console.log('[admin] - user trying to add fake match', session.user.account_id);
         let fakeMatch = {

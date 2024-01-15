@@ -92,7 +92,7 @@
 								<span class="font-semibold text-primary-500">Win?</span>
 								<select class="select" title="win" name="win">
 									<option value="1">Win</option>
-									<option value="2">Loss</option>
+									<option value="0">Loss</option>
 								</select>
 							</label>
 							<label class="label">
