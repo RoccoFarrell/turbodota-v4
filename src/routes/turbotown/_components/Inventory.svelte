@@ -153,7 +153,7 @@
 								<td class="align-middle text-center">{row[2]}</td>
 								<button
 									class="btn variant-filled-primary w-full max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:my-8 max-lg:mx-4 max-lg:max-w-[90%] md:max-w-[80%]"
-									on:click={() => useClickHandler(tableSource.body[0][0])}
+									on:click={() => useClickHandler(row[0])}
 									>Use
 								</button>
 							</tr>
