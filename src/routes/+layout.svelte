@@ -17,10 +17,11 @@
 		Drawer,
 		getDrawerStore,
 		Modal,
-		getModalStore,
 		Toast
 	} from '@skeletonlabs/skeleton';
 	import type { ModalComponent } from '@skeletonlabs/skeleton';
+	import { getModalStore } from '@skeletonlabs/skeleton';
+	import type { ModalSettings } from '@skeletonlabs/skeleton';
 	//must be called in root layout, one time
 	initializeStores();
 
@@ -32,7 +33,7 @@
 	import Navigation from './_components/Navigation/Navigation.svelte';
 	import Loading from '$lib/components/Loading.svelte';
 	import HeroGrid from '$lib/components/HeroGrid/HeroGrid.svelte';
-
+	import AdminTools from '$lib/components/AdminTools.svelte'
 	//assets
 	import '@flaticon/flaticon-uicons/css/all/all.css';
 	//import HeroSprites from 'dota2-css-hero-sprites/assets/stylesheets/dota2minimapheroes.css'
@@ -41,8 +42,8 @@
 	//images
 	import steam_logo from '$lib/assets/steam_logo.png';
 	import turbo_logo from '$lib/assets/turbologo.png';
-
 	import ogImage from '$lib/assets/turbodota_1200-630.png';
+
 	// Floating UI for Popups
 	import { computePosition, autoUpdate, flip, shift, offset, arrow } from '@floating-ui/dom';
 	import { storePopup } from '@skeletonlabs/skeleton';
@@ -50,7 +51,6 @@
 
 	//analytics
 	import { inject } from '@vercel/analytics';
-
 	inject({ mode: dev ? 'development' : 'production' });
 
 	//mocks
@@ -113,7 +113,8 @@
 
 	const modalRegistry: Record<string, ModalComponent> = {
 		// Set a unique modal ID, then pass the component reference
-		heroGrid: { ref: HeroGrid }
+		heroGrid: { ref: HeroGrid },
+		adminTools: { ref: AdminTools }
 		// ...
 	};
 
@@ -128,6 +129,22 @@
 	beforeNavigate(() => {
 		drawerStore.close();
 	});
+
+	// popup
+	$: console.log(storePopup)
+	import { popup } from '@skeletonlabs/skeleton';
+	import type { PopupSettings } from '@skeletonlabs/skeleton';
+	const adminPopupClick: PopupSettings = {
+		event: 'click',
+		target: 'adminTools',
+		placement: 'right'
+	};
+
+	const modal: ModalSettings = {
+		type: 'component',
+		component: 'adminTools'
+	};
+
 </script>
 
 <svelte:head>
@@ -186,7 +203,21 @@
 								<!-- <p>{`isReady: ${JSON.stringify(isReady)}`}</p> -->
 								<p>{`env: ${process.env.NODE_ENV}`}</p>
 							</div>
-							<button class="btn variant-ghost-warning">Admin tools</button>
+							<!-- <button 
+							class="btn variant-ghost-warning" 
+							use:popup={adminPopupClick}>
+							Admin tools
+						</button> -->
+							<button
+								class="btn variant-ghost-warning"
+								on:click={() => {
+									modalStore.trigger(modal);
+								}}>Admin Tools</button
+							>
+							<div class="z-50 card p-4 variant-filled-primary" data-popup="adminTools">
+								<p>Click Content</p>
+								<div class="arrow variant-filled-primary" />
+							</div>
 						{/if}
 					</div>
 				</svelte:fragment>
