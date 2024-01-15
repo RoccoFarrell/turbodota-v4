@@ -4,8 +4,7 @@
 	import { quintOut, cubicOut } from 'svelte/easing';
 
 	//page data
-	export let randomData: any;
-
+	export let turbotowns: any;
 
 	//constants
 	//import { playersWeCareAbout } from '$lib/constants/playersWeCareAbout';
@@ -16,7 +15,7 @@
 	import type { TableSource } from '@skeletonlabs/skeleton';
 
 	//components
-	import History from '../_components/History.svelte';
+	import History from '../quests/_components/History.svelte';
 
 	//helpers
 	import { calculateKdaClasses, calculateWinPercentageClasses } from '$lib/helpers/tableColors';

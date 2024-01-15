@@ -139,6 +139,23 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 			console.log(`[random page.ts] found ${quests.length} quests`, quests)
 		}
 
+		//check for quest complete
+
+		quests.map(async (quest) => {
+			console.log('checking quest ', quest.id)
+			let questCompleteResponse = await fetch(`/api/town/${session.user.account_id}/quest/${quest.id}/complete`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify(quest)
+			})
+
+			//console.log(questCompleteResponse)
+
+			return questCompleteResponse
+		})
+
 		/* Get current Town Info */
 		/* ------------------- */
 

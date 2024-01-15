@@ -48,7 +48,7 @@
 	// 	console.log('data: ', data);
 	// }
 
-	$: console.log('store data in component: ', $randomStore);
+	//$: console.log('store data in component: ', $randomStore);
 
 	let generatedRandomHero: Hero | null = null;
 	if ($randomStore.randomedHero && $randomStore.randomedHero.id) generatedRandomHero = $randomStore.randomedHero;
@@ -59,7 +59,7 @@
 		End Calculations
 	*/
 	const generateRandomHero = async () => {
-		console.log('randomStore in generate random', randomStore);
+		//console.log('randomStore in generate random', randomStore);
 		console.log(`${$randomStore.availableHeroes.length} available random heroes`);
 
 		function genrandOld(max: number) {

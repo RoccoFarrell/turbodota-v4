@@ -11,6 +11,7 @@ BigInt.prototype.toJSON = function (): number {
 	return this.toString();
 };
 
+//old
 export const POST: RequestHandler = async ({ request, params, url, locals }) => {
 	//const session = await locals.auth.validate();
 
