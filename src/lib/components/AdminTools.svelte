@@ -69,22 +69,22 @@
 				<div class="h-full m-4 card p-4">
 					Active Option: {activeOptionID}
 
-					<form method="POST" class="" action="/turbotown?/addFakeMatch" use:enhance>
+					<form method="POST" class="" action="/turbotown?/adminAction" use:enhance>
 						<div class="flex flex-col space-y-2">
 							<label class="label">
 								<span class="font-semibold text-primary-500">User ID</span>
-								<input class="input" title="userID" type="text" placeholder="65110965" />
+								<input class="input" title="userID" name="userID" value=65110965 type="text" placeholder="65110965" />
 							</label>
 							<label class="label">
 								<span class="font-semibold text-primary-500">Hero ID</span>
-								<input class="input" title="heroID" type="text" placeholder="23" />
+								<input class="input" title="heroID" name="heroID" value=23 type="text" placeholder="23" />
 							</label>
 							<label class="label">
 								<span class="font-semibold text-primary-500">Win?</span>
-                                <select class="select" title="win">
-                                    <option value="1">Win</option>
-                                    <option value="2">Loss</option>
-                                </select>
+								<select class="select" title="win">
+									<option value="1">Win</option>
+									<option value="2">Loss</option>
+								</select>
 							</label>
 							<label class="label">
 								<span class="flex justify-between items-center font-semibold text-primary-500">
@@ -99,6 +99,14 @@
 								/>
 							</label>
 						</div>
+						<input type="hidden" name="activeOptionID" value={activeOptionID} />
+						<input type="hidden" name="actionData" value={activeOptionID} />
+						<button
+							type="submit"
+							class="btn variant-filled-primary w-full max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:my-8 max-lg:mx-4 max-lg:max-w-[90%] md:max-w-[80%]"
+						>
+							Submit
+						</button>
 					</form>
 				</div>
 			</div>

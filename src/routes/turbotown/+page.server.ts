@@ -59,5 +59,23 @@ export const actions: Actions = {
 			console.error(err);
 			return fail(400, { message: 'Could not delete item' });
 		}
+	},
+	adminAction: async ({ request, locals }) => {
+		console.log('received createFakeMatch post in turbotown page server');
+		const session = await locals.auth.validate();
+		if (!session) return fail(400, { message: 'Not logged in, cannot use item' });
+		const formData = await request.formData();
+		let test = JSON.stringify(formData.get('userID')?.toString() || '');
+		//let activeOptionID = parseInt(formData.get('activeOptionID')?.toString() || '-1')
+		//console.log('active option ID:', activeOptionID);
+		console.log(test)
+
+		// if (activeOptionID == 0) {
+		// 	//console.log('Add a fake match')
+
+
+		// }
+
+		console.log('user trying to add fake match', session.user.account_id);
 	}
 };

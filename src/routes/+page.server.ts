@@ -1,10 +1,9 @@
-import type { Actions, PageServerLoad } from './$types'
-
-export const load: PageServerLoad = async () => {
-	// return {
-	// 	articles: await prisma.article.findMany()
-	// }
-}
+import { auth } from '$lib/server/lucia';
+import { fail, redirect, json } from '@sveltejs/kit';
+import type { Actions, PageServerLoad } from './$types';
+import type { TurbotownMetric, TurbotownItem, User } from '@prisma/client';
+import type { Item } from '@prisma/client';
+import prisma from '$lib/server/prisma';
 
 // export const actions: Actions = {
 // 	createArticle: async ({ request, locals }) => {
