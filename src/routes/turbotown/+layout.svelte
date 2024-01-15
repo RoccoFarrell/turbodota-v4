@@ -210,7 +210,7 @@
 								<i class="fi fi-rr-coins text-yellow-500 text-center"></i>
 							</div>
 
-							<p>{data.town.turbotown.metrics[0].value}</p>
+							<p>{data.town.turbotown.metrics.filter(metric => metric.label === "gold")[0].value}</p>
 						</div>
 
 						<div class="flex justify-start space-x-2">
@@ -218,7 +218,7 @@
 								<i class="fi fi-br-arrow-trend-up text-center text-green-500"></i>
 							</div>
 							<p class="">
-								{data.town.turbotown.metrics[0].value}
+								{data.town.turbotown.metrics.filter(metric => metric.label === "xp")[0].value}
 							</p>
 						</div>
 
