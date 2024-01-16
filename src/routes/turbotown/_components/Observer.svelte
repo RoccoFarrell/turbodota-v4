@@ -116,7 +116,7 @@
 
 		toastStore.trigger(t);
 	}
-
+	//console.log('quest store: ', openStore);
 	let randomHeroSelect: Hero;
 	// Handle Form Submission
 	function onFormSubmit(inputHeroSelect: Hero): void {
@@ -141,7 +141,6 @@
 <div class="flex flex-col justify-center items-center">
 	<div id="observerModal" class="h1 card flex flex-col justify-center items-center p-4">
 		<form method="POST" class="" action="/turbotown?/useItem" use:enhance>
-			<input type="hidden" name="observerSelect" value={JSON.stringify(randomHeroSelect)} />
 			<input type="hidden" name="questStore" value={JSON.stringify(openStore)} />
 			<input type="hidden" name="questStoreSlot" value={openStoreSlot} />
 			<input type="hidden" name="turbotownID" value={turbotownID} />

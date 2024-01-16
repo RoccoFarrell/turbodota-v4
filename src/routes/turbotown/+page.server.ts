@@ -1,12 +1,22 @@
+//lucia
 import { auth } from '$lib/server/lucia';
+
+//svelte
 import { fail, redirect, json } from '@sveltejs/kit';
+import { setContext, getContext, onMount } from 'svelte';
 import type { Actions, PageServerLoad } from './$types';
+
+//prisma
 import type { TurbotownMetric, TurbotownItem, User } from '@prisma/client';
 import type { Item } from '@prisma/client';
 import prisma from '$lib/server/prisma';
-import dayjs from 'dayjs'
-import { townStore } from '$lib/stores/townStore';
 import type { Hero } from '@prisma/client';
+
+//dayjs
+import dayjs from 'dayjs'
+
+//stores
+import { townStore } from '$lib/stores/townStore';
 
 //constants
 import { constant_questGold, constant_questXP } from '$lib/constants/turbotown';
@@ -22,7 +32,7 @@ export const actions: Actions = {
 		//this will need to change when there are more items
 		//let hero = JSON.parse(formData.get('observerSelect')?.toString() || '');
 
-		//let turbotownID = parseInt(formData.get('turbotownID')?.toString() || '-1');
+		let turbotownID = parseInt(formData.get('turbotownID')?.toString() || '-1');
 		let questStoreSlot = parseInt(formData.get('questStoreSlot')?.toString() || '')
 		let questStore = JSON.parse(formData.get('questStore')?.toString() || '');
 		//console.log('turbotownID: ', (turbotownID))
@@ -35,6 +45,7 @@ export const actions: Actions = {
 				// look for itemID 0 (observer) for now - this will need to change when there are more items
 				let itemCheck = await tx.turbotownItem.findFirstOrThrow({
 					where: {
+						// need to fix hardcoded values
 						itemID: 0
 					}
 				});
@@ -69,33 +80,78 @@ export const actions: Actions = {
 					});
 
 					// 4. add resolvedDate to TurboTownStatus
-					let statusUpdateResult = await prisma.turbotown.update({
+					let statusUpdateResult = await prisma.turbotownStatus.update({
 						where: {
-							townPlusName
+							// need to fix hardcoded values
+							townPlusName: { turbotownID, name: 'observer' }
 						},
 						data: {
-							statuses: {
-								update: {
-									isActive: false,
-									resolvedDate: new Date(),
-								}
-							}
+							isActive: false,
+							resolvedDate: new Date(),
 						}
 					})
 
 					//5. Add new record for new set of heroes
+					let randomHeroList: Array<Hero> = new Array<Hero>();
+					// let heroes: Hero[] = getContext('heroes');
+
+
+					// console.log('generating new randoms')
+					// //generate 3 new random heroes
+					// const generateRandomIndex = (exclude: number[] = []) => {
+					// 	let randomIndex = Math.floor(Math.random() * heroes.length);
+					// 	while (exclude.includes(randomIndex)) {
+					// 		randomIndex = Math.floor(Math.random() * heroes.length);
+					// 	}
+					// 	return randomIndex;
+					// };
+
+					// let randomIndex1 = generateRandomIndex();
+					// let generatedRandomHero1 = heroes[randomIndex1];
+					// let randomIndex2 = generateRandomIndex([randomIndex1]);
+					// let generatedRandomHero2 = heroes[randomIndex2];
+					// let randomIndex3 = generateRandomIndex([randomIndex1, randomIndex2]);
+					// let generatedRandomHero3 = heroes[randomIndex3];
+					// console.log('random heroes:', generatedRandomHero1, generatedRandomHero2, generatedRandomHero3);
+
+					// randomHeroList.push(generatedRandomHero1);
+					// randomHeroList.push(generatedRandomHero2);
+					// randomHeroList.push(generatedRandomHero3);
+
 					let statusData = {
 						item: 'observer',
-						info: new Array<Number>
+						info: [1, 2, 3]
 					};
 
-					let statusResponse = await fetch(`/api/town/${session.user.account_id}/status`, {
-						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json'
-						},
-						body: JSON.stringify(statusData)
-					});
+					console.log('about to add new record')
+
+					//not working
+					// let statusResponse = await prisma.turbotown.update({
+					// 	where: {
+					// 		account_id: session.user.account_id,
+					// 	},
+					// 	data: {
+					// 		statuses: {
+					// 			create: {
+					// 				name: "observer",
+					// 				isActive: true,
+					// 				appliedDate: new Date(),
+					// 				value: JSON.stringify(statusData.info)
+					// 			}
+					// 		}
+					// 	}
+					// })
+
+					//not working
+					// let statusResponse = await fetch(`/api/town/${session.user.account_id}/status`, {
+					// 	method: 'POST',
+					// 	headers: {
+					// 		'Content-Type': 'application/json'
+					// 	},
+					// 	body: JSON.stringify(statusData)
+					// });
+
+					// console.log('response', statusResponse.json());
 				}
 
 				const itemUseResponse = await tx.turbotownAction.create({
