@@ -142,9 +142,9 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 
 		//check for quest complete
 
-		questChecks = quests.filter(quest => quest.active).map(async (quest) => {
+		let questCheckPromises = await quests.filter(quest => quest.active).map(async (quest) => {
 			console.log('checking quest ', quest.id)
-			let questCompleteResponse = await fetch(`/api/town/${session.user.account_id}/quest/${quest.id}/complete`, {
+			const questCompleteResponse = await fetch(`/api/town/${session.user.account_id}/quest/${quest.id}/complete`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json'
@@ -152,10 +152,13 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 				body: JSON.stringify(quest)
 			})
 
-			//console.log(questCompleteResponse)
+			console.log(questCompleteResponse)
 			let response = await questCompleteResponse.json()
+			console.log('questComplete response: ', response)
 			return response
 		})
+
+		questChecks = await Promise.all(questCheckPromises)
 
 		/* Get current Town Info */
 		/* ------------------- */

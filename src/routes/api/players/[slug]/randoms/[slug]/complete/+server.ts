@@ -76,7 +76,6 @@ export const POST: RequestHandler = async ({ request, params, url, locals, fetch
 			return newResponse;
 		} else {
 			return new Response(
-				{ status: 200 },
 				JSON.stringify({
 					status: 'failed',
 					success: false,

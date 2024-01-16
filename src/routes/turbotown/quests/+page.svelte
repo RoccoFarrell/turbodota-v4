@@ -32,6 +32,7 @@
 	import History from './_components/History.svelte';
 	import MatchHistory from '$lib/components/MatchHistory.svelte';
 	import GenerateRandom from './_components/GenerateRandom.svelte';
+	import { Confetti } from 'svelte-confetti'
 
 	//constants
 	import { heroRoles } from '$lib/constants/heroRoles';
@@ -68,7 +69,7 @@
 	let matchTableData = last5Matches.map((match: any) => {
 		return {
 			match_id: match.match_id,
-			start_time: typeof(match.start_time) === "number" ? dayjs.unix(match.start_time).format('llll') : dayjs(match.start_time).format('llll'),
+			start_time: typeof(match.start_time) === "number" ? dayjs.unix(match.start_time).format('llll') : dayjs.unix(match.start_time).format('llll'),
 			result: winOrLoss(match.player_slot, match.radiant_win),
 			hero: data.heroDescriptions.allHeroes.filter((hero: Hero) => hero.id === match.hero_id)[0].id,
 			kda: ((match.kills + match.assists) / match.deaths).toFixed(2)
@@ -213,7 +214,12 @@
 							class="bg-questBoardPoster bg-no-repeat bg-contain bg-center w-full h-full flex items-center justify-center"
 						>
 							<div class="m-4 h-3/4 w-3/4 my-auto p-4">
-								<GenerateRandom {data} questSlot={3}></GenerateRandom>
+								<div class="w-full flex justify-center">
+									<Confetti x={[-2, 2]} delay={[500, 2000]} size={15} infinite duration={5000} amount={200} fallDistance="100vh" />
+								</div>
+								<div class="exploding h-full">
+									<GenerateRandom {data} questSlot={3}></GenerateRandom>
+								</div>
 							</div>
 						</div>
 					</div>

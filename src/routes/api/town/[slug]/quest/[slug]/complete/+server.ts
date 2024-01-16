@@ -117,7 +117,10 @@ export const POST: RequestHandler = async ({ request, params, url, locals, fetch
 					let metrics_xp = townQuestUpdateResult.metrics.filter((metric) => metric.label === 'xp')[0];
 					let completedQuest = townQuestUpdateResult.quests.filter((quest) => quest.id === questID)[0];
 
-					if ((completedQuest.endGold || completedQuest.endGold === 0) && (completedQuest.endXp || completedQuest.endXp === 0)) {
+					if (
+						(completedQuest.endGold || completedQuest.endGold === 0) &&
+						(completedQuest.endXp || completedQuest.endXp === 0)
+					) {
 						const townGoldUpdateResult = await tx.turbotown.update({
 							where: {
 								account_id
@@ -180,6 +183,11 @@ export const POST: RequestHandler = async ({ request, params, url, locals, fetch
 				let newResponse = new Response(JSON.stringify({ status: 'fail', message: 'no tx_result', success: false }));
 				return newResponse;
 			}
+		} else {
+			let newResponse = new Response(
+				JSON.stringify({ status: 'fail', message: 'random was not completed', success: false, random: requestData.random, questID })
+			);
+			return newResponse;
 		}
 	}
 
