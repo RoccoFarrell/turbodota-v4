@@ -20,39 +20,39 @@
 	let quest2Store = $townStore.quests.quest2;
 	let quest3Store = $townStore.quests.quest3;
 
-	console.log($quest1Store, $quest2Store, $quest3Store)
+	console.log($quest1Store, $quest2Store, $quest3Store);
 
 	const toastStore = getToastStore();
 
 	const modalStore = getModalStore();
 
 	let heroes: Hero[] = getContext('heroes');
-	
-	
+
 	//not working
 	//let account_id: number = getContext('account_id')
 	//let statuses: TurbotownStatus[] = getContext('townStatuses') || []
-	let account_id: number = $modalStore[0].meta.account_id
-	let statuses: TurbotownStatus[] = $modalStore[0].meta.statuses
+	let account_id: number = $modalStore[0].meta.account_id;
+	let turbotownID: number = $modalStore[0].meta.turbotownID;
+	let statuses: TurbotownStatus[] = $modalStore[0].meta.statuses;
 
-	$: console.log('statuses: ', statuses)
-	$: console.log('account_id:', account_id)
+	$: console.log('statuses: ', statuses);
+	$: console.log('account_id:', account_id);
 
 	let randomHeroList: Array<Hero> = new Array<Hero>();
 
 	const generateRandomIndex = (exclude: number[] = []) => {
-		let randomIndex = Math.floor(Math.random() * heroes.length)
-		while(exclude.includes(randomIndex)){
-			randomIndex = Math.floor(Math.random() * heroes.length)
+		let randomIndex = Math.floor(Math.random() * heroes.length);
+		while (exclude.includes(randomIndex)) {
+			randomIndex = Math.floor(Math.random() * heroes.length);
 		}
-		return randomIndex
-	}
+		return randomIndex;
+	};
 	const generate3Randoms = async () => {
-		let randomIndex1 = generateRandomIndex()
+		let randomIndex1 = generateRandomIndex();
 		let generatedRandomHero1 = heroes[randomIndex1];
-		let randomIndex2 = generateRandomIndex([randomIndex1])
+		let randomIndex2 = generateRandomIndex([randomIndex1]);
 		let generatedRandomHero2 = heroes[randomIndex2];
-		let randomIndex3 = generateRandomIndex([randomIndex1, randomIndex2])
+		let randomIndex3 = generateRandomIndex([randomIndex1, randomIndex2]);
 		let generatedRandomHero3 = heroes[randomIndex3];
 		console.log('random heroes:', generatedRandomHero1, generatedRandomHero2, generatedRandomHero3);
 
@@ -61,43 +61,68 @@
 		randomHeroList.push(generatedRandomHero3);
 
 		let postBody = {
-			item: "observer",
-			info: randomHeroList.map(hero => hero.id)
-		}
+			item: 'observer',
+			info: randomHeroList.map((hero) => hero.id)
+		};
 
 		let response = await fetch(`/api/town/${account_id}/status`, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify(postBody)
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify(postBody)
 		});
 
-		console.log('response', response.json())
-	}
+		console.log('response', response.json());
+	};
 
 	/* 
 		Set status in component
 	*/
-	if(statuses.length > 0){
-		console.log('found an observer status')
-		let observerStatus = statuses.filter(status => status.name === "observer")[0]
-		if(observerStatus){
+	if (statuses.length > 0) {
+		console.log('found an observer status');
+		let observerStatus = statuses.filter((status) => status.name === 'observer')[0];
+		if (observerStatus) {
 			JSON.parse(observerStatus.value).forEach((heroID: number) => {
-				randomHeroList.push(heroes.filter(hero => hero.id === heroID)[0])
-			})
+				randomHeroList.push(heroes.filter((hero) => hero.id === heroID)[0]);
+			});
 		}
 	} else {
-		generate3Randoms()
+		generate3Randoms();
 	}
 
 	//select a random
 
 	//$: console.log('rhl: ', randomHeroList);
+	//set town store to first open slot
+	let openStore: any;
+	let openStoreSlot: number;
+	if (!$quest1Store.randomedHero) {
+		openStore = $quest1Store;
+		openStoreSlot = 1;
+	} else if (!$quest2Store.randomedHero) {
+		openStore = $quest2Store;
+		openStoreSlot = 2;
+	} else if (!$quest3Store.randomedHero) {
+		openStore = $quest3Store;
+		openStoreSlot = 3;
+	} else {
+		openStore = null;
+		openStoreSlot = -1;
+		const t: ToastSettings = {
+			message: `You already have 3 quest slots!`,
+			background: 'variant-filled-error'
+		};
+
+		toastStore.trigger(t);
+	}
+
 	let randomHeroSelect: Hero;
 	// Handle Form Submission
 	function onFormSubmit(inputHeroSelect: Hero): void {
 		randomHeroSelect = inputHeroSelect;
+		openStore.randomedHero = randomHeroSelect;
+
 		if ($modalStore[0].response) $modalStore[0].response(inputHeroSelect);
 		modalStore.close();
 
@@ -117,9 +142,12 @@
 	<div id="observerModal" class="h1 card flex flex-col justify-center items-center p-4">
 		<form method="POST" class="" action="/turbotown?/useItem" use:enhance>
 			<input type="hidden" name="observerSelect" value={JSON.stringify(randomHeroSelect)} />
+			<input type="hidden" name="questStore" value={JSON.stringify(openStore)} />
+			<input type="hidden" name="questStoreSlot" value={openStoreSlot} />
+			<input type="hidden" name="turbotownID" value={turbotownID} />
 			<div class="flex flex-col justify-center w-full space-y-4">
 				<h2 class="h2 text-center">Select Your Random Hero!</h2>
-				<div class="mx-auto w-3/4">
+				<!-- <div class="mx-auto w-3/4">
 						<div class="w-full flex text-sm justify-center items-center space-x-4 my-2">
 							<label class="flex items-center space-x-2 relative h-8 p-2">
 								{#if !!$quest1Store.randomedHero}
@@ -143,7 +171,7 @@
 								<p>Quest Slot 3</p>
 							</label>
 						</div>
-				</div>
+				</div> -->
 				<div class="h-full grid grid-cols-3 mx-auto my-4 p-4 gap-4">
 					{#each randomHeroList as hero, i}
 						<div

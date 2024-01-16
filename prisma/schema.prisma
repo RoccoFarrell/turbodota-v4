@@ -222,7 +222,7 @@ model Turbotown {
   account_id  Int               @unique
   seasonID    Int
   lastUpdated DateTime          @default(now())
-  createdDate DateTime          
+  createdDate DateTime
   user        User?             @relation(fields: [account_id], references: [account_id])
   metrics     TurbotownMetric[]
   quests      TurbotownQuest[]
@@ -280,6 +280,8 @@ model TurbotownStatus {
   resolvedDate DateTime?
   turbotownID  Int
   turbotown    Turbotown @relation(fields: [turbotownID], references: [id])
+
+  @@unique([turbotownID, name], name: "townPlusName")
 }
 
 model Item {

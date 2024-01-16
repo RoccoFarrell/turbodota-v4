@@ -2,22 +2,27 @@
 	//svelte
 	import { blur } from 'svelte/transition';
 	import type { SvelteComponent } from 'svelte';
-
 	import { browser } from '$app/environment';
-	import { popup } from '@skeletonlabs/skeleton';
-	import type { PopupSettings } from '@skeletonlabs/skeleton';
+
+	//skeleton
 	import { Table, tableMapperValues } from '@skeletonlabs/skeleton';
 	import type { TableSource } from '@skeletonlabs/skeleton';
 	import { Modal, getModalStore } from '@skeletonlabs/skeleton';
 	import type { ModalSettings, ModalComponent, ModalStore } from '@skeletonlabs/skeleton';
-	import { ListBox, ListBoxItem } from '@skeletonlabs/skeleton';
-	import { clickOutside } from '$lib/helpers/clickOutside.ts';
-	import type { Hero, TurbotownItem } from '@prisma/client';
-	import type { Item } from '@prisma/client';
+	import type { ToastSettings, ToastStore } from '@skeletonlabs/skeleton';
+	import { getToastStore, storeHighlightJs } from '@skeletonlabs/skeleton';
+
+	//prisma
+	import type { TurbotownItem } from '@prisma/client';
+
+	//stores
+	import { townStore } from '$lib/stores/townStore';
+	let quest1Store = $townStore.quests.quest1;
+	let quest2Store = $townStore.quests.quest2;
+	let quest3Store = $townStore.quests.quest3;
+	const toastStore = getToastStore();
 
 	//images
-	import shopkeeper from '$lib/assets/shopkeeper.png';
-	import Lock from '$lib/assets/lock.png';
 	import Observer from './Observer.svelte';
 
 	export let data: any;
@@ -38,7 +43,8 @@
 		component: modalComponent,
 		meta: {
 			account_id: data.session.user.account_id,
-			statuses: data.town.turbotown.statuses
+			statuses: data.town.turbotown.statuses,
+			turbotownID: data.town.turbotown.id
 		},
 		response: (r: any) => {
 			//console.log(r);
@@ -112,7 +118,15 @@
 		//toggleModal(Observer)
 		if (item === 'Observer Ward') {
 			//console.log('triggering modal in click handler');
-			modalStore.trigger(observerModal);
+			if ($quest1Store.randomedHero && $quest2Store.randomedHero && $quest3Store.randomedHero) {
+				const t: ToastSettings = {
+					message: `You already have 3 quest slots!`,
+					background: 'variant-filled-error'
+				};
+				toastStore.trigger(t);
+			} else {
+				modalStore.trigger(observerModal);
+			}
 		} else {
 			console.log(item, ' is in development');
 		}
