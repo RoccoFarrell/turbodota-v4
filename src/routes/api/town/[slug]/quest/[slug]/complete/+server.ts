@@ -3,7 +3,7 @@ import { auth } from '$lib/server/lucia';
 import prisma from '$lib/server/prisma';
 import winOrLoss from '$lib/helpers/winOrLoss';
 import dayjs from 'dayjs';
-import type { Random } from '@prisma/client'
+import type { Random } from '@prisma/client';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unreachable code error
@@ -62,13 +62,13 @@ export const POST: RequestHandler = async ({ request, params, url, locals, fetch
 			let responseData = await response.json();
 			if (responseData.success) {
 				randomStatusComplete = true;
-				completedRandom = responseData.update
+				completedRandom = responseData.random;
 			}
 		} else {
-			if (requestData.random.status === 'completed'){
+			if (requestData.random.status === 'completed') {
 				randomStatusComplete = true;
-				completedRandom = requestData.random
-			} 
+				completedRandom = requestData.random;
+			}
 		}
 
 		if (randomStatusComplete) {
@@ -77,17 +77,14 @@ export const POST: RequestHandler = async ({ request, params, url, locals, fetch
 			const tx_result = await prisma.$transaction(async (tx) => {
 				const quest = await tx.turbotownQuest.findFirst({
 					where: {
-						AND: [
-							{id: questID},
-							{status: "active"}
-						]
+						AND: [{ id: questID }, { status: 'active' }]
 					}
-				})
+				});
 
-				console.log('quest: ', quest)
-				console.log('completedRandom: ', completedRandom)
+				console.log('quest: ', quest);
+				console.log('completedRandom: ', completedRandom);
 
-				if(quest && completedRandom){
+				if (quest && completedRandom) {
 					const townQuestUpdateResult = await tx.turbotown.update({
 						where: {
 							account_id
@@ -114,53 +111,60 @@ export const POST: RequestHandler = async ({ request, params, url, locals, fetch
 						}
 					});
 
-					console.log(townQuestUpdateResult)
-	
+					console.log('townQuestUpdateResult: ', townQuestUpdateResult);
+
 					let metrics_gold = townQuestUpdateResult.metrics.filter((metric) => metric.label === 'gold')[0];
 					let metrics_xp = townQuestUpdateResult.metrics.filter((metric) => metric.label === 'xp')[0];
 					let completedQuest = townQuestUpdateResult.quests.filter((quest) => quest.id === questID)[0];
-	
-					const townGoldUpdateResult = await tx.turbotown.update({
-						where: {
-							account_id
-						},
-						data: {
-							metrics: {
-								update: {
-									where: {
-										id: metrics_gold.id
-									},
-									data: {
-										value: metrics_gold.value + completedQuest.gold
+
+					if ((completedQuest.endGold || completedQuest.endGold === 0) && (completedQuest.endXp || completedQuest.endXp === 0)) {
+						const townGoldUpdateResult = await tx.turbotown.update({
+							where: {
+								account_id
+							},
+							data: {
+								metrics: {
+									update: {
+										where: {
+											id: metrics_gold.id
+										},
+										data: {
+											value: metrics_gold.value + completedQuest.endGold
+										}
 									}
 								}
 							}
-						}
-					});
-	
-					const townXPUpdateResult = await tx.turbotown.update({
-						where: {
-							account_id
-						},
-						data: {
-							metrics: {
-								update: {
-									where: {
-										id: metrics_xp.id
-									},
-									data: {
-										value: metrics_xp.value + completedQuest.xp
+						});
+
+						const townXPUpdateResult = await tx.turbotown.update({
+							where: {
+								account_id
+							},
+							data: {
+								metrics: {
+									update: {
+										where: {
+											id: metrics_xp.id
+										},
+										data: {
+											value: metrics_xp.value + completedQuest.endXp
+										}
 									}
 								}
+							},
+							include: {
+								metrics: true,
+								quests: true
 							}
-						},
-						include: {
-							metrics: true,
-							quests: true
-						}
-					});
-	
-					return townXPUpdateResult;
+						});
+
+						return townXPUpdateResult;
+					} else {
+						let newResponse = new Response(
+							JSON.stringify({ status: 'fail', message: 'no endXp or endGold', success: false })
+						);
+						return newResponse;
+					}
 				} else {
 					let newResponse = new Response(
 						JSON.stringify({ status: 'fail', message: 'no quest or completedRandom', success: false })
@@ -173,16 +177,12 @@ export const POST: RequestHandler = async ({ request, params, url, locals, fetch
 				let newResponse = new Response(JSON.stringify({ status: 'success', success: true, tx_result }));
 				return newResponse;
 			} else {
-				let newResponse = new Response(
-					JSON.stringify({ status: 'fail', message: 'no tx_result', success: false })
-				);
+				let newResponse = new Response(JSON.stringify({ status: 'fail', message: 'no tx_result', success: false }));
 				return newResponse;
-			}	
+			}
 		}
 	}
 
-	let newResponse = new Response(
-		JSON.stringify({ status: 'fail', message: 'couldnt update town', success: false })
-	);
+	let newResponse = new Response(JSON.stringify({ status: 'fail', message: 'couldnt update town', success: false }));
 	return newResponse;
 };

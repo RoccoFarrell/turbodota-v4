@@ -142,7 +142,7 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 
 		//check for quest complete
 
-		questChecks = quests.map(async (quest) => {
+		questChecks = quests.filter(quest => quest.active).map(async (quest) => {
 			console.log('checking quest ', quest.id)
 			let questCompleteResponse = await fetch(`/api/town/${session.user.account_id}/quest/${quest.id}/complete`, {
 				method: 'POST',
