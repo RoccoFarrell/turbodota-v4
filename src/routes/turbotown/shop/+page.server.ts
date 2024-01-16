@@ -10,9 +10,9 @@ import prisma from '$lib/server/prisma';
 export const load: PageServerLoad = async ({ locals, parent }) => {
 	const parentData = await parent();
 	const session = await locals.auth.validate();
-	if (!session) {
-		redirect(302, '/');
-	}
+	// if (!session) {
+	// 	redirect(302, '/');
+	// }
 
 	return {
 		...parentData

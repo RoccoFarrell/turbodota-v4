@@ -270,6 +270,9 @@
 			</div>
 		{/if}
 	{:else}
+	<div class="top-20 h-fit">
 		<TownLoginGate />
+	</div>
+		
 	{/if}
 </div>
