@@ -12,6 +12,7 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:watch": "vitest",
+    "test:e2e": "npx playwright test",
     "coverage": "npx vitest run --coverage",
     "lint": "prettier --check .",
     "format": "prettier --write .",

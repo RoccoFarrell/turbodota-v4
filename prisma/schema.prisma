@@ -13,6 +13,57 @@ datasource db {
 //   directUrl = env("DIRECT_URL")
 // }
 
+// user models
+model User {
+  id           String      @id @unique
+  name         String?
+  username     String      @unique
+  account_id   Int         @unique
+  steam_id     BigInt?     @unique
+  profile_url  String?
+  avatar_url   String?
+  roles        String?
+  createdDate  DateTime?
+  lastUpdated  DateTime    @default(now())
+  key          Key[]
+  auth_session Session[]
+  randoms      Random[]
+  user_prefs   UserPrefs[]
+  leagues      League[]
+  //player_match_details PlayersMatchDetail[]
+  dota_user    DotaUser?   @relation(fields: [account_id], references: [account_id])
+
+  //matches      Match[]
+  Turbotown Turbotown[]
+}
+
+model UserPrefs {
+  id         Int    @id @default(autoincrement())
+  account_id Int
+  name       String
+  value      String
+  user       User?  @relation(fields: [account_id], references: [account_id])
+
+  @@unique([account_id, name], name: "userPlusName")
+}
+
+model DotaUser {
+  account_id    Int             @id @unique
+  lastUpdated   DateTime
+  createdDate   DateTime?
+  oldestMatch   DateTime?
+  newestMatch   DateTime?
+  oldestMatchID BigInt?
+  newestMatchID BigInt?
+  leagues       League[]
+  seasons       Season[]
+  user          User?
+  FriendshipMMR FriendshipMMR[]
+
+  @@index([account_id])
+}
+
+//match models
 model Match {
   id            Int      @id @default(autoincrement())
   match_id      BigInt
@@ -102,6 +153,7 @@ model PlayersMatchDetail {
   @@unique([match_id, account_id], name: "matchPlusAccount")
 }
 
+//league and season models
 model League {
   id          Int        @id @default(autoincrement())
   name        String
@@ -139,63 +191,6 @@ model SeasonResult {
   season     Season @relation(fields: [seasonID], references: [id])
 }
 
-model DotaUser {
-  account_id    Int             @id @unique
-  lastUpdated   DateTime
-  oldestMatch   DateTime?
-  newestMatch   DateTime?
-  oldestMatchID BigInt?
-  newestMatchID BigInt?
-  leagues       League[]
-  seasons       Season[]
-  user          User?
-  FriendshipMMR FriendshipMMR[]
-
-  @@index([account_id])
-}
-
-model Hero {
-  id             Int    @id @unique
-  name           String
-  localized_name String
-  primary_attr   String
-  attack_type    String
-  roles          String
-  legs           Int?
-}
-
-model User {
-  id           String      @id @unique
-  name         String?
-  username     String      @unique
-  account_id   Int         @unique
-  steam_id     BigInt?     @unique
-  profile_url  String?
-  avatar_url   String?
-  roles        String?
-  lastUpdated  DateTime    @default(now())
-  key          Key[]
-  auth_session Session[]
-  randoms      Random[]
-  user_prefs   UserPrefs[]
-  leagues      League[]
-  //player_match_details PlayersMatchDetail[]
-  dota_user    DotaUser?   @relation(fields: [account_id], references: [account_id])
-
-  //matches      Match[]
-  Turbotown Turbotown[]
-}
-
-model UserPrefs {
-  id         Int    @id @default(autoincrement())
-  account_id Int
-  name       String
-  value      String
-  user       User?  @relation(fields: [account_id], references: [account_id])
-
-  @@unique([account_id, name], name: "userPlusName")
-}
-
 model Random {
   id              Int              @id @default(autoincrement())
   account_id      Int
@@ -221,11 +216,13 @@ model Random {
   //@@unique([account_id, active], name: "matchPlusAccount")
 }
 
+//turbotown models
 model Turbotown {
   id          Int               @id @default(autoincrement())
   account_id  Int               @unique
   seasonID    Int
   lastUpdated DateTime          @default(now())
+  createdDate DateTime          
   user        User?             @relation(fields: [account_id], references: [account_id])
   metrics     TurbotownMetric[]
   quests      TurbotownQuest[]
@@ -256,6 +253,7 @@ model TurbotownQuest {
   type        String
   endDate     DateTime?
   lastUpdated DateTime  @default(now())
+  createdDate DateTime
   randomID    Int
   turbotownID Int
   random      Random    @relation(fields: [randomID], references: [id], onDelete: Cascade)
@@ -318,6 +316,16 @@ model Key {
   user            User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@index([user_id])
+}
+
+model Hero {
+  id             Int    @id @unique
+  name           String
+  localized_name String
+  primary_attr   String
+  attack_type    String
+  roles          String
+  legs           Int?
 }
 
 model FriendshipMMR {

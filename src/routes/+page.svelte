@@ -11,7 +11,7 @@
 	<div class="bg-gradient-to-b dark:from-primary-900 from-primary-500/60 dark:to-surface-900/10 light:to-surface-100/10 px-4 py-10">
 		<div class="flex flex-col items-center w-full text-center space-y-4">
 			<img src={Knight} class="ml-8 max-h-32 aspect-square" alt="knight" />
-			<h1 class="h1 text-primary-500 font-bold">Welcome Turbodota challenger!</h1>
+			<h1 id="homeHeader" class="h1 text-primary-500 font-bold" data-testid="homeHeader">Welcome Turbodota challenger!</h1>
 		</div>
 	</div>
 
