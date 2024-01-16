@@ -8,9 +8,11 @@
         <div class="flex justify-center items-center h-full">
             <img src={TurbotownDark} class="w-1/2 bg-surface-900/1" alt="turbotown"/>
             <h1 class="h1 text-tertiary-100  font-bold text-center text-8xl">TurboTown</h1>
+            
         </div>
+        <h2 class="h2 z-20 italic text-center text-amber-500 h-1/4">Can you be king?</h2>
         
-        <h2 class="h2 z-20 italic text-center text-amber-500">Can you be king?</h2>
+        
         <!-- <div class="w-full h-3/4 border border-red-500"></div> -->
     </div>
    

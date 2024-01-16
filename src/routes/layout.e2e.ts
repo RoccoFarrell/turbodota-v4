@@ -7,13 +7,25 @@ test('has title', async ({ page }) => {
   await expect(page).toHaveTitle(/Turbodota/);
 });
 
-test('navigation', async ({ page }) => {
-  await page.goto('/');
+test.describe('navigation', () => {
+  test('home', async ({ page }) => {
+    await page.goto('/');
+  
+    await page.getByRole('link', { name: 'Home'}).click()
+  
+    await expect(page.getByTestId('homeHeader')).toBeVisible()
+  })
 
-  await page.getByRole('link', { name: 'Home'}).click()
-
-  await expect(page.getByTestId('homeHeader')).toBeVisible()
+  test('home', async ({ page }) => {
+    await page.goto('/');
+  
+    await page.getByRole('link', { name: 'Home'}).click()
+  
+    await expect(page.getByTestId('homeHeader')).toBeVisible()
+  })
 })
+
+
 
 // test('random page', async ({ page }) => {
 //   await page.goto('/');
