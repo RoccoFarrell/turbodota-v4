@@ -3,6 +3,7 @@ import { auth } from '$lib/server/lucia';
 import prisma from '$lib/server/prisma';
 import winOrLoss from '$lib/helpers/winOrLoss';
 import dayjs from 'dayjs';
+import type { Random } from '@prisma/client'
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unreachable code error
@@ -44,6 +45,7 @@ export const POST: RequestHandler = async ({ request, params, url, locals, fetch
 		console.log(`[api/town/${account_id}/quest/${questID}/complete] - checking random for: ${session.user.account_id}`);
 
 		let randomStatusComplete: boolean = false;
+		let completedRandom: Random | null = null;
 		if (requestData.random.status === 'active') {
 			const response = await fetch(
 				`/api/players/${session.user.account_id}/randoms/${requestData.random.id}/complete`,
@@ -60,84 +62,111 @@ export const POST: RequestHandler = async ({ request, params, url, locals, fetch
 			let responseData = await response.json();
 			if (responseData.success) {
 				randomStatusComplete = true;
+				completedRandom = responseData.update
 			}
 		} else {
-			if (requestData.random.status === 'completed') randomStatusComplete = true;
+			if (requestData.random.status === 'completed'){
+				randomStatusComplete = true;
+				completedRandom = requestData.random
+			} 
 		}
 
 		if (randomStatusComplete) {
 			console.log('random was completed, time to complete quest');
 
-			const tx_result = prisma.$transaction(async (tx) => {
-				const townQuestUpdateResult = await tx.turbotown.update({
+			const tx_result = await prisma.$transaction(async (tx) => {
+				const quest = await tx.turbotownQuest.findFirst({
 					where: {
-						account_id
-					},
-					data: {
-						quests: {
-							update: {
-								where: {
-									id: questID
-								},
-								data: {
-									active: false,
-									status: 'completed',
-									endDate: dayjs().toDate()
+						AND: [
+							{id: questID},
+							{status: "active"}
+						]
+					}
+				})
+
+				console.log('quest: ', quest)
+				console.log('completedRandom: ', completedRandom)
+
+				if(quest && completedRandom){
+					const townQuestUpdateResult = await tx.turbotown.update({
+						where: {
+							account_id
+						},
+						data: {
+							quests: {
+								update: {
+									where: {
+										id: questID
+									},
+									data: {
+										active: false,
+										status: 'completed',
+										endDate: dayjs().toDate(),
+										endXp: completedRandom.win ? quest.xp * 1.5 : quest.xp,
+										endGold: completedRandom.win ? quest.gold : 0
+									}
+								}
+							}
+						},
+						include: {
+							metrics: true,
+							quests: true
+						}
+					});
+
+					console.log(townQuestUpdateResult)
+	
+					let metrics_gold = townQuestUpdateResult.metrics.filter((metric) => metric.label === 'gold')[0];
+					let metrics_xp = townQuestUpdateResult.metrics.filter((metric) => metric.label === 'xp')[0];
+					let completedQuest = townQuestUpdateResult.quests.filter((quest) => quest.id === questID)[0];
+	
+					const townGoldUpdateResult = await tx.turbotown.update({
+						where: {
+							account_id
+						},
+						data: {
+							metrics: {
+								update: {
+									where: {
+										id: metrics_gold.id
+									},
+									data: {
+										value: metrics_gold.value + completedQuest.gold
+									}
 								}
 							}
 						}
-					},
-					include: {
-						metrics: true,
-						quests: true
-					}
-				});
-
-				let metrics_gold = townQuestUpdateResult.metrics.filter((metric) => metric.label === 'gold')[0];
-				let metrics_xp = townQuestUpdateResult.metrics.filter((metric) => metric.label === 'xp')[0];
-				let completedQuest = townQuestUpdateResult.quests.filter((quest) => quest.id === questID)[0];
-
-				const townGoldUpdateResult = await tx.turbotown.update({
-					where: {
-						account_id
-					},
-					data: {
-						metrics: {
-							update: {
-								where: {
-									id: metrics_gold.id
-								},
-								data: {
-									value: metrics_gold.value + completedQuest.gold
+					});
+	
+					const townXPUpdateResult = await tx.turbotown.update({
+						where: {
+							account_id
+						},
+						data: {
+							metrics: {
+								update: {
+									where: {
+										id: metrics_xp.id
+									},
+									data: {
+										value: metrics_xp.value + completedQuest.xp
+									}
 								}
 							}
+						},
+						include: {
+							metrics: true,
+							quests: true
 						}
-					}
-				});
-
-				const townXPUpdateResult = await tx.turbotown.update({
-					where: {
-						account_id
-					},
-					data: {
-						metrics: {
-							update: {
-								where: {
-									id: metrics_xp.id
-								},
-								data: {
-									value: metrics_xp.value + completedQuest.xp
-								}
-							}
-						}
-					},
-					include: {
-						metrics: true,
-						quests: true
-					}
-				});
-
-				return townXPUpdateResult;
+					});
+	
+					return townXPUpdateResult;
+				} else {
+					let newResponse = new Response(
+						JSON.stringify({ status: 'fail', message: 'no quest or completedRandom', success: false })
+					);
+					return newResponse;
+				}
 			});
 
 			if (tx_result) {
@@ -145,10 +174,15 @@ export const POST: RequestHandler = async ({ request, params, url, locals, fetch
 				return newResponse;
 			} else {
 				let newResponse = new Response(
-					JSON.stringify({ status: 'fail', message: 'couldnt update town', success: false, tx_result })
+					JSON.stringify({ status: 'fail', message: 'no tx_result', success: false })
 				);
 				return newResponse;
-			}
+			}	
 		}
 	}
+
+	let newResponse = new Response(
+		JSON.stringify({ status: 'fail', message: 'couldnt update town', success: false })
+	);
+	return newResponse;
 };

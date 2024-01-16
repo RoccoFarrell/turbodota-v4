@@ -23,7 +23,7 @@ model User {
   profile_url  String?
   avatar_url   String?
   roles        String?
-  createdDate  DateTime?
+  createdDate  DateTime   @default(now())
   lastUpdated  DateTime    @default(now())
   key          Key[]
   auth_session Session[]
@@ -50,7 +50,7 @@ model UserPrefs {
 model DotaUser {
   account_id    Int             @id @unique
   lastUpdated   DateTime
-  createdDate   DateTime?
+  createdDate   DateTime @default(now())
   oldestMatch   DateTime?
   newestMatch   DateTime?
   oldestMatchID BigInt?
@@ -249,6 +249,8 @@ model TurbotownQuest {
   status      String
   xp          Int
   gold        Int
+  endXp       Int?
+  endGold     Int?
   questSlot   Int
   type        String
   endDate     DateTime?

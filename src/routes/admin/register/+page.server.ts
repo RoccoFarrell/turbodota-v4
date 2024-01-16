@@ -13,6 +13,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 export const actions: Actions = {
 	default: async ({ request, locals }) => {
+		console.log('[register] - creating user')
 		const { name, username, password } = Object.fromEntries(await request.formData()) as Record<
 			string,
 			string
@@ -20,6 +21,7 @@ export const actions: Actions = {
 		try {
 			let account_id = await findRandomDotaUser()
 			if(account_id){
+				console.error('[register] - generating with account_id: ', account_id)
 				let createDUResult = await createDotaUser(account_id)
 
 				const user = await auth.createUser({
@@ -31,9 +33,14 @@ export const actions: Actions = {
 					attributes: {
 						name,
 						username,
-						account_id 
+						account_id,
+						createdDate: new Date()
 					}
 				})
+
+				console.log(`[register] - created user: `, user)
+
+				if(!user) return(fail(400, { message: 'could not create user'}))
 	
 				const session = await auth.createSession({
 					userId: user.userId,
@@ -41,12 +48,15 @@ export const actions: Actions = {
 				});
 	
 				locals.auth.setSession(session)
+			} else {
+				console.error('[register] - could not generate with account_id: ', account_id)
+				return fail(400, { message: 'could not get random dota ID'})
 			}
 
 		} catch (err) {
 			console.error(err)
 			return fail(400, { message: 'Could not register user' })
 		}
-		throw redirect(302, '/admin/login')
+		//throw redirect(302, '/admin/login')
 	}
 }

@@ -94,7 +94,8 @@ export const POST: RequestHandler = async ({ request, params, url, locals }) => 
                             active: true,
                             status: "active",
                             xp: constant_questXP,
-                            gold: constant_questGold
+                            gold: constant_questGold,
+							createdDate: new Date()
 						}
 					}
 				}

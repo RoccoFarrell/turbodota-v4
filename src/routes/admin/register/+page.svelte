@@ -1,3 +1,34 @@
+<script lang="ts">
+	import { getToastStore, storeHighlightJs } from '@skeletonlabs/skeleton';
+	import type { ToastSettings, ToastStore } from '@skeletonlabs/skeleton';
+	const toastStore = getToastStore();
+
+	export let form
+	$: if (form?.missing) {
+		const t: ToastSettings = {
+			message: `Enter at least one valid Dota User ID`,
+			background: 'variant-filled-error'
+		};
+
+		toastStore.trigger(t);
+	} else if (form?.success) {
+		const t: ToastSettings = {
+			message: `League created!`,
+			background: 'variant-filled-success'
+		};
+
+		toastStore.trigger(t);
+	} else if(form?.message){
+		const t: ToastSettings = {
+			message: `${form?.message}`,
+			background: 'variant-filled-warning'
+		};
+
+		toastStore.trigger(t);
+	}
+
+</script>
+
 <div class="card container w-1/2 h-1/2 my-auto p-4">
 <form method="POST">
 	<hgroup>

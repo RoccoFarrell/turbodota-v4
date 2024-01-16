@@ -59,13 +59,13 @@
 	};
 
 	//set towninfo
-	if(data.session && data.session.user){
-		console.log('account_id found in turbotown layout')
-		setContext('account_id', data.session.user.account_id)
+	if (data.session && data.session.user) {
+		console.log('account_id found in turbotown layout');
+		setContext('account_id', data.session.user.account_id);
 	} else {
-		console.error('no account_id found in turbotown layout')
+		console.error('no account_id found in turbotown layout');
 	}
-	
+
 	//set quests
 	type QuestWithRandom = Prisma.TurbotownQuestGetPayload<{
 		include: {
@@ -89,11 +89,17 @@
 
 	//loop through quests and set stores
 	if (data.town && data.quests) {
-		let quest1arr: QuestWithRandom[] = data.quests.filter((quest: QuestWithRandom) => quest.questSlot === 1 && quest.status === "active");
+		let quest1arr: QuestWithRandom[] = data.quests.quests.filter(
+			(quest: QuestWithRandom) => quest.questSlot === 1 && quest.status === 'active'
+		);
 		//console.log('quest1: ', quest1arr);
-		let quest2arr: QuestWithRandom[] = data.quests.filter((quest: QuestWithRandom) => quest.questSlot === 2 && quest.status === "active");
+		let quest2arr: QuestWithRandom[] = data.quests.quests.filter(
+			(quest: QuestWithRandom) => quest.questSlot === 2 && quest.status === 'active'
+		);
 		//console.log('quest3: ', quest2arr);
-		let quest3arr: QuestWithRandom[] = data.quests.filter((quest: QuestWithRandom) => quest.questSlot === 3 && quest.status === "active");
+		let quest3arr: QuestWithRandom[] = data.quests.quests.filter(
+			(quest: QuestWithRandom) => quest.questSlot === 3 && quest.status === 'active'
+		);
 		//console.log('quest3: ', quest3arr);
 
 		let quest1: QuestWithRandom, quest2: QuestWithRandom, quest3: QuestWithRandom;
@@ -210,7 +216,7 @@
 								<i class="fi fi-rr-coins text-yellow-500 text-center"></i>
 							</div>
 
-							<p>{data.town.turbotown.metrics.filter(metric => metric.label === "gold")[0].value}</p>
+							<p>{data.town.turbotown.metrics.filter((metric) => metric.label === 'gold')[0].value}</p>
 						</div>
 
 						<div class="flex justify-start space-x-2">
@@ -218,7 +224,7 @@
 								<i class="fi fi-br-arrow-trend-up text-center text-green-500"></i>
 							</div>
 							<p class="">
-								{data.town.turbotown.metrics.filter(metric => metric.label === "xp")[0].value}
+								{data.town.turbotown.metrics.filter((metric) => metric.label === 'xp')[0].value}
 							</p>
 						</div>
 
@@ -270,9 +276,8 @@
 			</div>
 		{/if}
 	{:else}
-	<div class="top-20 h-fit">
-		<TownLoginGate />
-	</div>
-		
+		<div class="top-20 h-fit">
+			<TownLoginGate />
+		</div>
 	{/if}
 </div>

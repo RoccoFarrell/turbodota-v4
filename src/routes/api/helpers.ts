@@ -6,10 +6,12 @@ export const createDotaUser = async (account_id: number) => {
         where: { account_id},
         create: {
             account_id,
+			createdDate: new Date(),
             lastUpdated: new Date()
         }, 
         update: {
             account_id,
+			createdDate: new Date(),
             lastUpdated: new Date()
         }
     })

@@ -44,10 +44,11 @@ export const GET: RequestHandler = async ({ request, locals, params, url }) => {
                 attributes: {
                     name: steamUser.name || "",
                     username: steamUser.username,
-                    steam_id: steamUser.steamid,
+                    steam_id: BigInt(steamUser.steamid),
                     account_id: account_id,
                     profile_url: steamUser.profile,
-                    avatar_url: steamUser.avatar.small            
+                    avatar_url: steamUser.avatar.small,
+                    createdDate: new Date()            
                 }
             })
         } else console.error(`[/authenticate] failed to create dota user so couldnt create normal user`)
@@ -67,6 +68,6 @@ export const GET: RequestHandler = async ({ request, locals, params, url }) => {
     }
 
     //...do something with the data
-    redirect(302, '/random');
+    redirect(302, '/turbotown');
     //return new Response(JSON.stringify({ "user": user }))
 };

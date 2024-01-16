@@ -70,6 +70,7 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 	let currentSeasonLeaderboard: any = [];
 	let currentTown: Turbotown | null = null;
 	let quests: QuestWithRandom[] = []
+	let questChecks: any = null
 
 	if (session && session.user) {
 		/* 
@@ -134,14 +135,14 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 
 		//quests
 		
-		if(leagueAndSeasonsResult && leagueAndSeasonsResult[0] && leagueAndSeasonsResult[0].seasons[0].turbotowns[0].quests.length > 0){
+		if(leagueAndSeasonsResult && leagueAndSeasonsResult[0]?.seasons[0]?.turbotowns[0]?.quests?.length > 0){
 			quests = leagueAndSeasonsResult[0].seasons[0].turbotowns[0].quests
 			console.log(`[random page.ts] found ${quests.length} quests`, quests)
 		}
 
 		//check for quest complete
 
-		quests.map(async (quest) => {
+		questChecks = quests.map(async (quest) => {
 			console.log('checking quest ', quest.id)
 			let questCompleteResponse = await fetch(`/api/town/${session.user.account_id}/quest/${quest.id}/complete`, {
 				method: 'POST',
@@ -152,8 +153,8 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 			})
 
 			//console.log(questCompleteResponse)
-
-			return questCompleteResponse
+			let response = await questCompleteResponse.json()
+			return response
 		})
 
 		/* Get current Town Info */
@@ -297,7 +298,10 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 		meta: {
 			flags,
 		},
-		quests,
+		quests: {
+			quests,
+			questChecks
+		},
 		league: {
 			leagueAndSeasonsResult,
 			currentSeason,

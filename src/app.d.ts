@@ -26,6 +26,13 @@ declare global {
 			username: string;
 			name: string;
 			account_id: number;
+			createdDate: Date;
+			profile_url?: string;
+			avatar_url?: string;
+			account_id: number;
+			steam_id?: BigInt;
+			roles?: string;
+
 		};
 		type DatabaseSessionAttributes = {};
 	}

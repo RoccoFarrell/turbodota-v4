@@ -1,6 +1,7 @@
 import { error } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
 import prisma from '$lib/server/prisma';
+import dayjs from 'dayjs'
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unreachable code error
@@ -81,6 +82,14 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
      ------------Evaluate Date for OD query
     */
 	let rightNow = new Date();
+	let createdDate = userResult?.createdDate
+	let d_diff_created: number | null = null
+	if(createdDate){
+		let date1 = dayjs(createdDate)
+		d_diff_created = Math.ceil(dayjs().diff(date1, 'day', true))
+	}
+
+
 	let startDate = userResult?.newestMatch;
 	let d_diff: number | null = null;
 	if (startDate) {
@@ -139,7 +148,7 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
 			console.log(
 				`[matches][${account_id}] no d_diff calculated, fetching matches ${d_diff} from beginning of time for ${userResult?.account_id}`
 			);
-			od_url = encodeURI(`https://api.opendota.com/api/players/${account_id}/matches?significant=0&game_mode=23`);
+			od_url = encodeURI(`https://api.opendota.com/api/players/${account_id}/matches?significant=0&game_mode=23&date=${d_diff_created}`);
 		}
 		console.log(od_url);
 

@@ -74,9 +74,10 @@ export const POST: RequestHandler = async ({ request, params, url, locals }) => 
                     data: {
                         account_id,
                         seasonID,
+						createdDate: new Date(),
 						metrics: {
 							create: [
-								{ label: 'gold', value: 10000 },
+								{ label: 'gold', value: 0 },
 								{ label: 'xp', value: 0 }
 							]
 						}
