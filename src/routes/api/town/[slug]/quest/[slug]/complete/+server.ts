@@ -62,7 +62,7 @@ export const POST: RequestHandler = async ({ request, params, url, locals, fetch
 			let responseData = await response.json();
 			if (responseData.success) {
 				randomStatusComplete = true;
-				completedRandom = responseData.random;
+				completedRandom = responseData.randomCompleteResults;
 			}
 		} else {
 			if (requestData.random.status === 'completed') {
