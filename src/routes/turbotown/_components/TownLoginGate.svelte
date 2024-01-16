@@ -1,10 +1,26 @@
 <script lang="ts">
-    import seasonLogo from '$lib/assets/seasonLogo.png'
+	import seasonLogo from '$lib/assets/seasonLogo.png';
+	import TurbotownIntro from '$lib/components/TurbotownIntro.svelte';
+	import SteamLogo from '$lib/assets/steam_logo.png';
 </script>
 
-<div class="w-full h-full p-4 flex flex-col items-center justify-center space-y-4">
-    <h1 class="h1">Please login to play Turbotown!</h1>
-    <div class="rounded-full border-4 border-b border-amber-500">
-        <img src={seasonLogo} alt="town logo" class="w-96 rounded-full"/>
-    </div>
+<div class="w-full flex flex-col items-center justify-center space-y-4">
+	<TurbotownIntro />
+	<div class="grid grid-cols-2 w-full items-center">
+		<div class="w-fit mx-auto rounded-full border-4 border-b border-amber-500">
+			<img src={seasonLogo} alt="town logo" class="w-96 rounded-full" />
+		</div>
+		<div class="w-3/4 mx-auto flex flex-col justify-center items-center space-y-4">
+			<h1 class="h1 text-center text-tertiary-300 italic">Please login to play Turbotown!</h1>
+
+			<button class="w-1/2 btn variant-ghost-success">
+				<a class="" href="/api/auth/steam" data-sveltekit-preload-data="tap">
+					<div class="flex items-center justify-around space-x-4">
+						<span><img class="w-6 ml-1.5" alt="steamlogo" src={SteamLogo} /></span>
+						<span>Login</span>
+					</div>
+				</a>
+			</button>
+		</div>
+	</div>
 </div>

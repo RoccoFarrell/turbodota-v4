@@ -264,11 +264,9 @@
 		</svelte:fragment>
 
 		<!-- <svelte:fragment slot="pageFooter">
-			{#if $page.url.pathname.includes('turbotown')}
-				<div class="flex h-32 w-full justify-center m-auto border border-red-500">
-					<p class="text-xs text-slate-300 dark:text-slate-700">Copyright No Salt Studios 2023</p>
+				<div class="flex w-full justify-center m-auto p-2">
+					<p class="text-md text-slate-300 dark:text-surface-400">No Salt Studios 2024 | Dota 2 is a trademark of Valve Corporation</p>
 				</div>
-			{/if}
 		</svelte:fragment> -->
 
 		<!-- Page Route Content -->
