@@ -89,7 +89,7 @@ export const actions: Actions = {
 						// 4. add resolvedDate to TurboTownStatus
 						let statusUpdateResult = await tx.turbotownStatus.update({
 							where: {
-								townPlusNamePlusID: { turbotownID, name: 'observer', id: statusActive.id }
+								id: statusActive.id
 							},
 							data: {
 								isActive: false,
