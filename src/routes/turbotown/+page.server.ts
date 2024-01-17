@@ -83,7 +83,7 @@ export const actions: Actions = {
 					let statusUpdateResult = await prisma.turbotownStatus.update({
 						where: {
 							// need to fix hardcoded values
-							townPlusName: { turbotownID, name: 'observer' }
+							townPlusNamePlusActive: { turbotownID, name: 'observer', isActive: true }
 						},
 						data: {
 							isActive: false,
@@ -143,15 +143,15 @@ export const actions: Actions = {
 					// })
 
 					//not working
-					// let statusResponse = await fetch(`/api/town/${session.user.account_id}/status`, {
-					// 	method: 'POST',
-					// 	headers: {
-					// 		'Content-Type': 'application/json'
-					// 	},
-					// 	body: JSON.stringify(statusData)
-					// });
+					let statusResponse = await fetch(`/api/town/${session.user.account_id}/status`, {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json'
+						},
+						body: JSON.stringify(statusData)
+					});
 
-					// console.log('response', statusResponse.json());
+					console.log('response', statusResponse.json());
 				}
 
 				const itemUseResponse = await tx.turbotownAction.create({

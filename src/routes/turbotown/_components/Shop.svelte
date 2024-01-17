@@ -160,7 +160,7 @@
 									>
 										<td class="hidden">{row[0]}</td>
 										<td class="">
-											<div class="rounded-full flex space-x-4">
+											<div class="grid grid-cols-2 rounded-full space-x-1">
 												<div class="rounded-full">
 													<img class="h-10 object-contain rounded-2xl inline-table" src={items[i].imgSrc} alt="" />
 												</div>
