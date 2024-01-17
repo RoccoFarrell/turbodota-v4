@@ -283,7 +283,7 @@ model TurbotownStatus {
   turbotownID  Int
   turbotown    Turbotown @relation(fields: [turbotownID], references: [id])
 
-  @@unique([turbotownID, name, isActive], name: "townPlusNamePlusActive")
+  @@unique([turbotownID, name, id], name: "townPlusNamePlusID")
 }
 
 model Item {

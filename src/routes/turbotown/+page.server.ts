@@ -79,83 +79,31 @@ export const actions: Actions = {
 						body: JSON.stringify(questData)
 					});
 
-					// 4. add resolvedDate to TurboTownStatus
-					let statusUpdateResult = await prisma.turbotownStatus.update({
+					let statusActive = await tx.turbotownStatus.findFirst({
 						where: {
-							// need to fix hardcoded values
-							townPlusNamePlusActive: { turbotownID, name: 'observer', isActive: true }
+							isActive: true
 						},
-						data: {
-							isActive: false,
-							resolvedDate: new Date(),
-						}
 					})
 
-					//5. Add new record for new set of heroes
-					let randomHeroList: Array<Hero> = new Array<Hero>();
-					// let heroes: Hero[] = getContext('heroes');
+					if (statusActive) {
+						// 4. add resolvedDate to TurboTownStatus
+						let statusUpdateResult = await tx.turbotownStatus.update({
+							where: {
+								townPlusNamePlusID: { turbotownID, name: 'observer', id: statusActive.id }
+							},
+							data: {
+								isActive: false,
+								resolvedDate: new Date(),
+							}
+						})
+					}
+					else{
+						throw new Error(`${session.user.account_id} could not find active observer item!`);
+					}
 
-
-					// console.log('generating new randoms')
-					// //generate 3 new random heroes
-					// const generateRandomIndex = (exclude: number[] = []) => {
-					// 	let randomIndex = Math.floor(Math.random() * heroes.length);
-					// 	while (exclude.includes(randomIndex)) {
-					// 		randomIndex = Math.floor(Math.random() * heroes.length);
-					// 	}
-					// 	return randomIndex;
-					// };
-
-					// let randomIndex1 = generateRandomIndex();
-					// let generatedRandomHero1 = heroes[randomIndex1];
-					// let randomIndex2 = generateRandomIndex([randomIndex1]);
-					// let generatedRandomHero2 = heroes[randomIndex2];
-					// let randomIndex3 = generateRandomIndex([randomIndex1, randomIndex2]);
-					// let generatedRandomHero3 = heroes[randomIndex3];
-					// console.log('random heroes:', generatedRandomHero1, generatedRandomHero2, generatedRandomHero3);
-
-					// randomHeroList.push(generatedRandomHero1);
-					// randomHeroList.push(generatedRandomHero2);
-					// randomHeroList.push(generatedRandomHero3);
-
-					let statusData = {
-						item: 'observer',
-						info: [1, 2, 3]
-					};
-
-					console.log('about to add new record')
-
-					//not working
-					// let statusResponse = await prisma.turbotown.update({
-					// 	where: {
-					// 		account_id: session.user.account_id,
-					// 	},
-					// 	data: {
-					// 		statuses: {
-					// 			create: {
-					// 				name: "observer",
-					// 				isActive: true,
-					// 				appliedDate: new Date(),
-					// 				value: JSON.stringify(statusData.info)
-					// 			}
-					// 		}
-					// 	}
-					// })
-
-					//not working
-					let statusResponse = await fetch(`/api/town/${session.user.account_id}/status`, {
-						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json'
-						},
-						body: JSON.stringify(statusData)
-					});
-
-					console.log('response', statusResponse.json());
 				}
 
 				const itemUseResponse = await tx.turbotownAction.create({
-					// need to fix hardcoded values
 					data: {
 						action: 'observer'
 					}

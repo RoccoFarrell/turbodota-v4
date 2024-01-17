@@ -31,6 +31,7 @@
 	//not working
 	//let account_id: number = getContext('account_id')
 	//let statuses: TurbotownStatus[] = getContext('townStatuses') || []
+
 	let account_id: number = $modalStore[0].meta.account_id;
 	let turbotownID: number = $modalStore[0].meta.turbotownID;
 	let statuses: TurbotownStatus[] = $modalStore[0].meta.statuses;
@@ -40,7 +41,7 @@
 
 	let randomHeroList: Array<Hero> = new Array<Hero>();
 
-	$: console.log('random hero list: ', randomHeroList)
+	$: console.log('random hero list: ', randomHeroList);
 
 	const generateRandomIndex = (exclude: number[] = []) => {
 		let randomIndex = Math.floor(Math.random() * heroes.length);
@@ -75,16 +76,16 @@
 			body: JSON.stringify(postBody)
 		});
 
-		let observerResponse = await response.json()
+		let observerResponse = await response.json();
 
 		console.log('response', observerResponse);
 
-		if(observerResponse.turbotown.statuses.length > 0){
-			statuses = observerResponse.turbotown.statuses
+		if (observerResponse.turbotown.statuses.length > 0) {
+			statuses = observerResponse.turbotown.statuses;
 			let observerStatus = statuses.filter((status) => status.name === 'observer')[0];
 			if (observerStatus) {
 				console.log('found an observer status');
-				randomHeroList = []
+				randomHeroList = [];
 				JSON.parse(observerStatus.value).forEach((heroID: number) => {
 					randomHeroList.push(heroes.filter((hero) => hero.id === heroID)[0]);
 				});
@@ -95,13 +96,16 @@
 	/* 
 		Set status in component
 	*/
+	//console.log('observer status: ', observerStatus)
 	if (statuses.length > 0) {
-		let observerStatus = statuses.filter((status) => status.name === 'observer')[0];
+		let observerStatus = statuses.filter((status) => status.name === 'observer' && status.isActive === true)[0];
 		if (observerStatus) {
 			console.log('found an observer status');
 			JSON.parse(observerStatus.value).forEach((heroID: number) => {
 				randomHeroList.push(heroes.filter((hero) => hero.id === heroID)[0]);
 			});
+		} else {
+			generate3Randoms();
 		}
 	} else {
 		generate3Randoms();
@@ -162,7 +166,9 @@
 			<input type="hidden" name="turbotownID" value={turbotownID} />
 			<div class="flex flex-col justify-center w-full space-y-4">
 				<div class="w-full flex justify-center">
-					<p class="italic text-tertiary-600 text-sm">You pull out an odd stick from your backpack, it is covered in eyeballs. "Gross" you think to yourself...</p>
+					<p class="italic text-tertiary-600 text-sm">
+						You pull out an odd stick from your backpack, it is covered in eyeballs. "Gross" you think to yourself...
+					</p>
 				</div>
 				<h2 class="h2 text-center text-success-500">Select Your Random Hero!</h2>
 				<!-- <div class="mx-auto w-3/4">
