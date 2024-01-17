@@ -161,7 +161,7 @@ export const POST: RequestHandler = async ({ request, params, url, locals, fetch
 							}
 						});
 
-						return townXPUpdateResult;
+						return {town: townXPUpdateResult, quest};
 					} else {
 						let newResponse = new Response(
 							JSON.stringify({ status: 'fail', message: 'no endXp or endGold', success: false })
@@ -177,7 +177,7 @@ export const POST: RequestHandler = async ({ request, params, url, locals, fetch
 			});
 
 			if (tx_result) {
-				let newResponse = new Response(JSON.stringify({ status: 'success', success: true, tx_result }));
+				let newResponse = new Response(JSON.stringify({ status: 'success', success: true, tx_result}));
 				return newResponse;
 			} else {
 				let newResponse = new Response(JSON.stringify({ status: 'fail', message: 'no tx_result', success: false }));

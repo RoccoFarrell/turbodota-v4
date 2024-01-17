@@ -56,6 +56,47 @@
 	if (browser) {
 		console.log('data: ', data);
 	}
+
+	$: console.log('data changed: ', data)
+
+	$: onQuestComplete(data.quests)
+
+	let animationSlots: number[] = [-1]
+	let animateSlot1: boolean = false
+	let animateSlot2: boolean = false
+	let animateSlot3: boolean = false
+	$: animateSlot1, animateSlot2, animateSlot3, console.log(animateSlot1, animateSlot2, animateSlot3)
+	const onQuestComplete = (quests: any) => {
+		console.log('data.quests changed')
+		console.log(quests)
+
+		quests.questChecks.forEach((check: any) => {
+			if(check?.tx_result?.quest){
+				let pushSlot = check.tx_result.quest.questSlot
+				console.log('trigger animation for this quest ', check.tx_result.quest)
+				if(pushSlot === 1) animateSlot1 = true;
+				if(pushSlot === 2) animateSlot2 = true;
+				if(pushSlot === 3) animateSlot3 = true;
+
+				setTimeout(() => {
+					if(animateSlot1){
+						$townStore.quests.quest1.reset(data.heroDescriptions.allHeroes)
+						animateSlot1 = false;
+					} 
+					if(animateSlot2) {
+						$townStore.quests.quest2.reset(data.heroDescriptions.allHeroes)
+						animateSlot2 = false;
+					} 
+					if(animateSlot3) {
+						$townStore.quests.quest3.reset(data.heroDescriptions.allHeroes)
+						animateSlot3 = false;
+					} 
+					
+				}, 5000)
+			} 
+		})
+		
+	}
 	/* 
 		Calculations from server data
 	*/
@@ -195,33 +236,56 @@
 				class="bg-questBoard 2xl:h-[700px] xl:h-[500px] md:h-[500px] bg-no-repeat bg-contain bg-center w-full flex justify-center items-center"
 			>
 				<div class="flex flex-col h-full justify-center items-center w-[70%]">
+
 					<div class="w-full h-full grid grid-cols-3 mx-auto max-h-[75%]">
+						{#key animateSlot1}
 						<div
 							class="bg-questBoardPoster bg-no-repeat bg-contain bg-center w-full h-full flex items-center justify-center"
 						>
 							<div class="m-4 h-4/5 w-3/4 my-auto p-4">
-								<GenerateRandom {data} questSlot={1}></GenerateRandom>
+								{#if animateSlot1}
+									<div class="w-full flex justify-center">
+										<Confetti x={[-2, 2]} delay={[500, 2000]} size={10} duration={5000} amount={50} fallDistance="75vh" />
+									</div>
+								{/if}
+								<div class={"h-full " + (animateSlot1 ? "exploding" : "")}>
+									<GenerateRandom {data} questSlot={1}></GenerateRandom>
+								</div>
 							</div>
 						</div>
+						{/key}
+						{#key animateSlot2}
 						<div
 							class="bg-questBoardPoster bg-no-repeat bg-contain bg-center w-full h-full flex items-center justify-center"
 						>
 							<div class="m-4 h-4/5 w-3/4 my-auto p-4">
-								<GenerateRandom {data} questSlot={2}></GenerateRandom>
+								{#if animateSlot2}
+									<div class="w-full flex justify-center">
+										<Confetti x={[-2, 2]} delay={[500, 2000]} size={10} duration={5000} amount={50} fallDistance="75vh" />
+									</div>
+								{/if}
+								<div class={"h-full " + (animateSlot2 ? "exploding" : "")}>
+									<GenerateRandom {data} questSlot={2}></GenerateRandom>
+								</div>
 							</div>
 						</div>
+						{/key}
+						{#key animateSlot3}
 						<div
 							class="bg-questBoardPoster bg-no-repeat bg-contain bg-center w-full h-full flex items-center justify-center"
 						>
 							<div class="m-4 h-4/5 w-3/4 my-auto p-4">
-								<!-- <div class="w-full flex justify-center">
-									<Confetti x={[-2, 2]} delay={[500, 2000]} size={15} infinite duration={5000} amount={200} fallDistance="100vh" />
-								</div> -->
-								<div class="h-full">
+								{#if animateSlot3}
+									<div class="w-full flex justify-center">
+										<Confetti x={[-2, 2]} delay={[500, 2000]} size={10} duration={5000} amount={50} fallDistance="75vh" />
+									</div>
+								{/if}
+								<div class={"h-full " + (animateSlot3 ? "exploding" : "")}>
 									<GenerateRandom {data} questSlot={3}></GenerateRandom>
 								</div>
 							</div>
 						</div>
+						{/key}
 					</div>
 					<!-- Action buttons for quest board -->
 					<div class="flex flex-col justify-center items-center h-fit w-full">

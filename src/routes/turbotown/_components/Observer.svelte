@@ -40,6 +40,8 @@
 
 	let randomHeroList: Array<Hero> = new Array<Hero>();
 
+	$: console.log('random hero list: ', randomHeroList)
+
 	const generateRandomIndex = (exclude: number[] = []) => {
 		let randomIndex = Math.floor(Math.random() * heroes.length);
 		while (exclude.includes(randomIndex)) {
@@ -73,16 +75,30 @@
 			body: JSON.stringify(postBody)
 		});
 
-		console.log('response', response.json());
+		let observerResponse = await response.json()
+
+		console.log('response', observerResponse);
+
+		if(observerResponse.turbotown.statuses.length > 0){
+			statuses = observerResponse.turbotown.statuses
+			let observerStatus = statuses.filter((status) => status.name === 'observer')[0];
+			if (observerStatus) {
+				console.log('found an observer status');
+				randomHeroList = []
+				JSON.parse(observerStatus.value).forEach((heroID: number) => {
+					randomHeroList.push(heroes.filter((hero) => hero.id === heroID)[0]);
+				});
+			}
+		}
 	};
 
 	/* 
 		Set status in component
 	*/
 	if (statuses.length > 0) {
-		console.log('found an observer status');
 		let observerStatus = statuses.filter((status) => status.name === 'observer')[0];
 		if (observerStatus) {
+			console.log('found an observer status');
 			JSON.parse(observerStatus.value).forEach((heroID: number) => {
 				randomHeroList.push(heroes.filter((hero) => hero.id === heroID)[0]);
 			});
@@ -139,13 +155,16 @@
 </script>
 
 <div class="flex flex-col justify-center items-center">
-	<div id="observerModal" class="h1 card flex flex-col justify-center items-center p-4">
-		<form method="POST" class="" action="/turbotown?/useItem" use:enhance>
+	<div id="observerModal" class="h1 w-[50vw] card flex flex-col justify-center items-center p-4">
+		<form method="POST" class="w-full" action="/turbotown?/useItem" use:enhance>
 			<input type="hidden" name="questStore" value={JSON.stringify(openStore)} />
 			<input type="hidden" name="questStoreSlot" value={openStoreSlot} />
 			<input type="hidden" name="turbotownID" value={turbotownID} />
 			<div class="flex flex-col justify-center w-full space-y-4">
-				<h2 class="h2 text-center">Select Your Random Hero!</h2>
+				<div class="w-full flex justify-center">
+					<p class="italic text-tertiary-600 text-sm">You pull out an odd stick from your backpack, it is covered in eyeballs. "Gross" you think to yourself...</p>
+				</div>
+				<h2 class="h2 text-center text-success-500">Select Your Random Hero!</h2>
 				<!-- <div class="mx-auto w-3/4">
 						<div class="w-full flex text-sm justify-center items-center space-x-4 my-2">
 							<label class="flex items-center space-x-2 relative h-8 p-2">
@@ -171,7 +190,7 @@
 							</label>
 						</div>
 				</div> -->
-				<div class="h-full grid grid-cols-3 mx-auto my-4 p-4 gap-4">
+				<div class="h-full w-full grid grid-cols-3 mx-auto my-4 p-4 gap-4">
 					{#each randomHeroList as hero, i}
 						<div
 							class="card flex flex-col justify-center items-center w-full relative z-0 rounded-xl h-full p-4 shadow-sm shadow-primary-500"

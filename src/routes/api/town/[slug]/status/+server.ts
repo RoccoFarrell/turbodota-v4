@@ -53,6 +53,9 @@ export const POST: RequestHandler = async ({ request, params, url, locals }) => 
                             value: JSON.stringify(statusValues.info)
                         }
                     }
+                },
+                include: {
+                    statuses: true
                 }
             })
         }
@@ -62,7 +65,7 @@ export const POST: RequestHandler = async ({ request, params, url, locals }) => 
 
     let newResponse: Response;
     if(statusResult){
-        newResponse = new Response(JSON.stringify({ status: "success", insert: statusResult}));
+        newResponse = new Response(JSON.stringify({ status: "success", turbotown: statusResult}));
     } else {
         newResponse = new Response(JSON.stringify({ status: "duplicate", turbotown}))
     }
