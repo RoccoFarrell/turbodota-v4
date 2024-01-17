@@ -184,7 +184,7 @@
 	//end set stores
 </script>
 
-<div id="#townLayout" class="w-full flex justify-center">
+<div id="#townLayout" class="w-screen">
 	{#if data.session && data.league && data.town && data.town.turbotown}
 		<div
 			id="#turbotownHeader"
