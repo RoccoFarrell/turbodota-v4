@@ -197,7 +197,7 @@
 				>
 					<img class="block dark:hidden w-32" alt="TurboTownLight" src={town_logo_light} />
 					<img class="hidden dark:block w-32" alt="TurboTownDark" src={town_logo_dark} />
-					<h1 class="h1 text-amber-500 max-md:font-bold text-center">{routeName}</h1>
+					<h2 class="h2 text-amber-500 max-md:font-bold text-center">{routeName}</h2>
 				</div>
 				<div class="col-span-2 border-r border-dashed border-primary-500"></div>
 
@@ -246,7 +246,7 @@
 				transition:slide={{ delay: 50, duration: 200, easing: expoIn, axis: 'y' }}
 				class="fixed bottom-0 left-[256px] w-[calc(100vw-256px)] h-16"
 			>
-				<div class="w-full h-full rounded-t-3xl bg-secondary-500 hover:bg-secondary-600">
+				<div class="w-full h-full rounded-t-3xl bg-secondary-500 hover:bg-secondary-600 border-t-2 border-primary-500">
 					<button on:click={collapse} class="w-full h-full flex items-center justify-center space-x-4">
 						<i class="fi fi-rs-backpack text-3xl"></i>
 						<p>Inventory</p>

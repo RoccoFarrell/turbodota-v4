@@ -199,25 +199,25 @@
 						<div
 							class="bg-questBoardPoster bg-no-repeat bg-contain bg-center w-full h-full flex items-center justify-center"
 						>
-							<div class="m-4 h-3/4 w-3/4 my-auto p-4">
+							<div class="m-4 h-4/5 w-3/4 my-auto p-4">
 								<GenerateRandom {data} questSlot={1}></GenerateRandom>
 							</div>
 						</div>
 						<div
 							class="bg-questBoardPoster bg-no-repeat bg-contain bg-center w-full h-full flex items-center justify-center"
 						>
-							<div class="m-4 h-3/4 w-3/4 my-auto p-4">
+							<div class="m-4 h-4/5 w-3/4 my-auto p-4">
 								<GenerateRandom {data} questSlot={2}></GenerateRandom>
 							</div>
 						</div>
 						<div
 							class="bg-questBoardPoster bg-no-repeat bg-contain bg-center w-full h-full flex items-center justify-center"
 						>
-							<div class="m-4 h-3/4 w-3/4 my-auto p-4">
-								<div class="w-full flex justify-center">
+							<div class="m-4 h-4/5 w-3/4 my-auto p-4">
+								<!-- <div class="w-full flex justify-center">
 									<Confetti x={[-2, 2]} delay={[500, 2000]} size={15} infinite duration={5000} amount={200} fallDistance="100vh" />
-								</div>
-								<div class="exploding h-full">
+								</div> -->
+								<div class="h-full">
 									<GenerateRandom {data} questSlot={3}></GenerateRandom>
 								</div>
 							</div>
