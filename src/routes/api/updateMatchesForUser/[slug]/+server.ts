@@ -245,25 +245,42 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
 
 		//updated last updated on Dota User
 		if (!chunkInsertFail) {
-			console.log(`[updateMatchesForUser][${account_id}] - updating Dota User`)
-			let result_dotaUser = await prisma.dotaUser.upsert({
-				where: { account_id: account_id },
-				update: {
-					account_id: account_id,
-					lastUpdated: new Date(),
-					newestMatch: new Date(Number(matchStats[matchStats.length - 1].start_time) * 1000),
-					newestMatchID: matchStats[matchStats.length - 1].match_id
-				},
-				create: {
-					account_id: account_id,
-					lastUpdated: new Date(),
-					oldestMatch: new Date(Number(matchStats[0].start_time) * 1000),
-					oldestMatchID: matchStats[0].match_id,
-					newestMatch: new Date(Number(matchStats[matchStats.length - 1].start_time) * 1000),
-					newestMatchID: matchStats[matchStats.length - 1].match_id
-				}
-			});
-			console.log(`result_dotaUser: ${JSON.stringify(result_dotaUser)}`);
+			if(matchStats.length > 0){
+				console.log(`[updateMatchesForUser][${account_id}] - updating Dota User`)
+				let result_dotaUser = await prisma.dotaUser.upsert({
+					where: { account_id: account_id },
+					update: {
+						account_id: account_id,
+						lastUpdated: new Date(),
+						newestMatch: new Date(Number(matchStats[matchStats.length - 1].start_time) * 1000),
+						newestMatchID: matchStats[matchStats.length - 1].match_id
+					},
+					create: {
+						account_id: account_id,
+						lastUpdated: new Date(),
+						oldestMatch: new Date(Number(matchStats[0].start_time) * 1000),
+						oldestMatchID: matchStats[0].match_id,
+						newestMatch: new Date(Number(matchStats[matchStats.length - 1].start_time) * 1000),
+						newestMatchID: matchStats[matchStats.length - 1].match_id
+					}
+				});
+				console.log(`result_dotaUser: ${JSON.stringify(result_dotaUser)}`);
+			} else {
+				console.log(`[updateMatchesForUser][${account_id}] - updating Dota User`)
+				let result_dotaUser = await prisma.dotaUser.upsert({
+					where: { account_id: account_id },
+					update: {
+						account_id: account_id,
+						lastUpdated: new Date()
+					},
+					create: {
+						account_id: account_id,
+						lastUpdated: new Date()
+					}
+				});
+				console.log(`result_dotaUser: ${JSON.stringify(result_dotaUser)}`);
+			}
+
 		}
 
 		//after updates, if d_diff, query entire DB for full time range + matches added from the d_diff

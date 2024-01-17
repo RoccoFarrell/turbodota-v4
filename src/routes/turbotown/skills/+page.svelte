@@ -27,7 +27,6 @@
 	//components
 	import { Avatar, ProgressBar } from '@skeletonlabs/skeleton';
 	import HeroGrid from '$lib/components/HeroGrid/HeroGrid.svelte';
-	import SeasonLeaderboard from './_components/SeasonLeaderboard.svelte';
 
 	//data
 	export let data: PageData;
@@ -36,6 +35,16 @@
 	$: training = false;
 	$: progressVal = 0;
 	$: skillCount = 0;
+
+	onMount(() => {
+		if (data.skills.count) skillCount = parseInt(data.skills.count);
+	});
+
+	$: if (browser) {
+		if (skillCount % 5 === 0) {
+			localStorage.setItem('skillCount', skillCount.toString());
+		}
+	}
 
 	//calc leaderboard info for seasons panel
 	let randomSeasonStats = {
@@ -181,8 +190,22 @@
 		}}>Modal</button
 	> -->
 	<div class="flex flex-col space-y-4 justify-center items-center">
-		{#if data.league.currentSeason && data.league.currentSeason.turbotowns}
-			<SeasonLeaderboard turbotowns={data.league.currentSeason.turbotowns} members={data.league.leagueAndSeasonsResult[0].members} randoms={data.league.currentSeason.randoms}/>
-		{/if}
+		<div class="flex flex-col md:flex-row items-center text-center w-full justify-center">
+			<h1 class="h1">ONLY THE BEST CAN BECOME MAYOR OF</h1>
+			<img class="block dark:hidden w-64" alt="TurboTownLight" src={town_logo_light} />
+			<img class="hidden dark:block w-64" alt="TurboTownDark" src={town_logo_dark} />
+		</div>
+		<div class="flex flex-col space-y-8 justify-center w-3/4">
+			<p class="text-lg text-primary-500 text-center italic">Training your last hitting...</p>
+			<div class="text-secondary-500 text-center">
+				Last Hitting Level: <p
+					class="text-primary-500 text-2xl font-bold bg-surface-100 w-1/12 mx-auto rounded-full p-4"
+				>
+					{skillCount}
+				</p>
+			</div>
+			<ProgressBar value={progressVal} class="text-primary-500 fill-primary-500" transition="transition-width" />
+			<button class="btn variant-filled w-1/4 mx-auto" on:click={() => trainSkill()}>Train!</button>
+		</div>
 	</div>
 </div>

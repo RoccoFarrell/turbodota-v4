@@ -3,8 +3,12 @@
 	import { slide, blur, fade } from 'svelte/transition';
 	import { quintOut, cubicOut } from 'svelte/easing';
 
+	import { calculateTownLeaderboard } from '$lib/helpers/leaderboardFromSeason';
+
 	//page data
 	export let turbotowns: any;
+	export let members: any;
+	export let randoms: any;
 
 	//constants
 	//import { playersWeCareAbout } from '$lib/constants/playersWeCareAbout';
@@ -23,22 +27,6 @@
 	//assets
 	import Turboking from '$lib/assets/turboking.png';
 
-	/* 
-        Sort info
-    */
-	class LeaderboardRow {
-		player: number = 0;
-		name: string = '';
-		wins: number = 0;
-		losses: number = 0;
-		win_percentage: number = 0;
-		kdaWins: number = 0;
-		kdaLosses: number = 0;
-		kdaTotal: number = 0;
-		goldWon: number = 0;
-		goldLost: number = 0;
-	}
-
 	const sortMap: SortObj[] = [
 		{
 			headerText: 'Player',
@@ -51,13 +39,13 @@
 			index: 1
 		},
 		{
-			headerText: 'Gold Won',
-			headerKey: 'goldWon',
+			headerText: 'XP',
+			headerKey: 'xp',
 			index: 2
 		},
 		{
-			headerText: 'Gold Lost',
-			headerKey: 'goldLost',
+			headerText: 'Gold',
+			headerKey: 'gold',
 			index: 3
 		},
 		{
@@ -104,160 +92,51 @@
 	/* 
         Table source defaults
     */
+	
+
+	// let randoms: any[] = []
+	// turbotowns.forEach((town: any) => {
+	// 	let townRandoms = town.quests.filter((quest: any) => !quest.active).map((quest: any) => quest.random)
+	// 	randoms.push(...townRandoms)
+	// })
+
+	$: console.log('members: ', members, 'turbotowns: ', turbotowns, 'randoms: ', randoms);
+
+	let rawTableData = calculateTownLeaderboard(turbotowns, randoms, members);
+
+	console.log('rawTableData: ', rawTableData);
+	let sourceData = tableMapperValues(rawTableData, [
+		'player',
+		'name',
+		'xp',
+		'gold',
+		'wins',
+		'losses',
+		'win_percentage',
+		'kdaWins',
+		'kdaLosses',
+		'kdaTotal'
+	]);
+
+	let headerValues = sortMap.map((sort) => sort.headerText)
+
+	console.log('headerValues: ', headerValues)
+
 	let tableSource: TableSource = {
-		head: sortMap.map((sort) => sort.headerText),
-		body: []
+		head: headerValues,
+		body: sourceData
 	};
 
-	$: tableSource;
+	// function setTableSource(): TableSource {
+	// 	return {
+	// 		head: sortMap.map((sort) => sort.headerText),
+	// 		body: sourceData,
+	// 	};
+	// }
 
-	if (randomData) {
-		/* 
-        Get all unique player IDs in random database
-    */
-		let uniqueIDs = randomData
-			.map((random: any) => random.account_id)
-			.filter((random: any, i: any, arr: any) => arr.indexOf(random) === i);
-		console.log(uniqueIDs);
-
-		console.log(uniqueIDs);
-
-		console.log(`Parsing ${randomData.length} randoms`);
-		let randomTotals = {};
-		let tableData: LeaderboardRow[] = [];
-
-		/* 
-            Loop through unique IDs generated above
-        */
-		uniqueIDs.forEach((playerID: any) => {
-			console.log('looping through playerID: ', playerID);
-			let row: LeaderboardRow = new LeaderboardRow();
-
-			let playerRandoms = randomData.filter((random: any) => random.account_id === playerID && random.active === false);
-			if (playerRandoms.length > 0) {
-				row.player = playerID;
-				row.name = playerRandoms[0].user ? playerRandoms[0].user.username : '';
-
-				/* calculate wins and losses */
-				let winCount = playerRandoms.reduce((acc: any, cur: any) => (cur.win ? (acc += 1) : (acc += 0)), 0);
-				let lossCount = playerRandoms.reduce((acc: any, cur: any) => (!cur.win ? (acc += 1) : (acc += 0)), 0);
-				row.wins = winCount;
-				row.losses = lossCount;
-				row.win_percentage = row.wins / (row.wins + row.losses);
-
-				let kdaWins = 0,
-					kdaLosses = 0,
-					kdaTotal = 0;
-
-				/* 
-                    Sum all KDAs in wins and losses
-                */
-
-				let kdaCalcs = {
-					wins: {
-						kills: 0,
-						deaths: 0,
-						assists: 0
-					},
-					losses: {
-						kills: 0,
-						deaths: 0,
-						assists: 0
-					},
-					total: {
-						kills: 0,
-						deaths: 0,
-						assists: 0
-					}
-				}
-				playerRandoms.forEach((random: any) => {
-					if (random.match) {
-						kdaCalcs.total.kills += random.match.kills
-						kdaCalcs.total.deaths += random.match.deaths
-						kdaCalcs.total.assists += random.match.assists
-						if (random.win) {
-							kdaCalcs.wins.kills += random.match.kills
-							kdaCalcs.wins.deaths += random.match.deaths
-							kdaCalcs.wins.assists += random.match.assists
-						} else if (!random.win) {
-							kdaCalcs.losses.kills += random.match.kills
-							kdaCalcs.losses.deaths += random.match.deaths
-							kdaCalcs.losses.assists += random.match.assists
-						}
-					}
-				});
-				row.kdaTotal = (kdaCalcs.total.kills + kdaCalcs.total.assists) / kdaCalcs.total.deaths || 0
-				row.kdaWins = (kdaCalcs.wins.kills + kdaCalcs.wins.assists) / kdaCalcs.wins.deaths || 0
-				row.kdaLosses = (kdaCalcs.losses.kills + kdaCalcs.losses.assists) / kdaCalcs.losses.deaths || 0
-				
-				//old way that results in infinity
-				// playerRandoms.forEach((random) => {
-				// 	if (random.match) {
-				// 		kdaTotal += (random.match.kills + random.match.assists) / random.match.deaths;
-				// 		if (random.win) {
-				// 			kdaWins += (random.match.kills + random.match.assists) / random.match.deaths;
-				// 		} else if (!random.win) {
-				// 			kdaLosses += (random.match.kills + random.match.assists) / random.match.deaths;
-				// 		}
-				// 	}
-				// });
-				// row.kdaTotal = kdaTotal / (winCount + lossCount);
-				// row.kdaWins = kdaWins / winCount;
-				// row.kdaLosses = kdaLosses / lossCount;
-
-				/* 
-                    Gold calculations
-                */
-
-				row.goldWon = playerRandoms.reduce(
-					(acc: any, cur: any) => (cur.win && cur.endGold ? (acc += cur.endGold) : (acc += 0)),
-					0
-				);
-				row.goldLost = playerRandoms.reduce(
-					(acc: any, cur: any) => (cur.win && cur.modifierTotal ? (acc += cur.modifierTotal) : (acc += 0)),
-					0
-				);
-
-				//console.log(`pushing row for ${row.name}`);
-				tableData.push(row);
-			}
-		});
-
-		/* 
-            Set table data
-        */
-
-		//console.log(tableData);
-
-		/* 
-            Sort by gold 
-        */
-
-		tableData = tableData.sort((a: any, b: any) => {
-			if (a.goldWon < b.goldWon) return 1;
-			else if (a.goldWon > b.goldWon) return -1;
-			else if (a.goldWon === b.goldWon) {
-				if (a.win_percentage < b.win_percentage) return 1;
-				else return -1;
-			} else return 0;
-		});
-
-		tableSource = {
-			head: tableSource.head,
-			body: tableMapperValues(
-				tableData,
-				sortMap.map((sort) => sort.headerKey)
-			)
-		};
-	}
-
-	/* 
-        Handle header click
-    */
-
-	const headerSelect = (header: any) => {
-		console.log(header);
-	};
+	// If sourceData updates, set the new TableSource values
+	// let tableSource: TableSource | undefined;
+	// $: tableSource = sourceData ? setTableSource() : undefined;
 
 	/* 
         Handle row select
@@ -276,14 +155,9 @@
 	<div class="flex flex-col items-center text-center md:mx-8 mx-4">
 		<div class="w-full flex max-md:flex-col justify-around items-center md:my-2 my-1">
 			<div class="max-w-[40%]">
-				<h2 class="h2 text-primary-700 max-md:font-bold">The Walker Random Leaderboard™</h2>
+				<h2 class="h2 text-primary-700 max-md:font-bold">TurboTown Leaderboard™</h2>
 			</div>
 
-			<!-- {#if data.session && data.session.user}
-				<div class="text-xs">
-					Logged in as: <p class="text-secondary-500 text-lg font-bold">{data.session.user.username}</p>
-				</div>
-			{/if} -->
 			<div class="vibrating border-4 border-dashed border-amber-500 my-4 flex justify-center space-x-8 p-4">
 				<img src={Turboking} class="w-20" alt="the current turboking" />
 				<div class="h-full flex flex-col items-center justify-center my-auto">
@@ -298,32 +172,20 @@
 			<i class="fi fi-rr-lightbulb-question text-primary-400 text-3xl"></i>
 			<p class="mx-4 italic text-xs text-tertiary-400">Click a row to see their random history!</p>
 		</div>
-		<!-- <Table
-			interactive={true}
-			source={tableSource}
-			on:selected={headerSelect}
-			regionHeadCell={'text-center text-primary-500 font-semibold'}
-		/> -->
 
 		<table class="table table-interactive mx-10">
 			<thead>
 				<tr>
 					{#each tableSource.head as headerText, i}
-						<!-- <th
-							id={headerText}
-							class={'text-center hover:bg-surface-500/50' +
-								([0, 3, 5, 6, 7, 8].includes(i) ? ' max-md:hidden lg:visible' : '') +
-								(headerText === sortBy.sortObj.headerText && sortBy.ascending ? ' table-sort-asc' : '') +
-								(headerText === sortBy.sortObj.headerText && !sortBy.ascending ? ' table-sort-dsc' : '')}
-							on:click={() => handleSortHeaderClick(headerText)}>{headerText}</th
-						> -->
 						<th
 							id={headerText}
 							class={'text-center hover:bg-surface-500/50' +
 								([0, 3, 5, 6, 7, 8].includes(i) ? ' max-md:hidden lg:visible' : '') +
 								(headerText === sortBy.sortObj.headerText && sortBy.ascending ? ' table-sort-asc' : '') +
-								(headerText === sortBy.sortObj.headerText && !sortBy.ascending ? ' table-sort-dsc' : '')}>
-							</th>
+								(headerText === sortBy.sortObj.headerText && !sortBy.ascending ? ' table-sort-dsc' : '')}
+						>
+							{headerText}
+						</th>
 					{/each}
 				</tr>
 			</thead>
@@ -351,14 +213,14 @@
 									<td
 										class={`${cellText === 'Total KDA' ? '' : 'max-md:hidden lg:visible'} ${calculateKdaClasses(
 											parseFloat(row[i])
-										)}`}>
-										{#if parseFloat(row[i]) !== parseFloat("0.00")}
+										)}`}
+									>
+										{#if parseFloat(row[i]) !== parseFloat('0.00')}
 											{parseFloat(row[i]).toFixed(2)}
 										{:else}
 											<p class="text-xs text-slate-500">-</p>
 										{/if}
-										
-										</td>
+									</td>
 								{:else if [0, 3, 5, 6, 7, 8].includes(i)}
 									<td class="max-md:hidden lg:visible">{row[i]}</td>
 								{:else}
@@ -386,21 +248,10 @@
 									</div>
 								</td>
 							</tr>
-							<!-- {:else}
-                            <div>
-                                {selectedRow}
-                                {i_player}
-                            </div> -->
 						{/if}
 					{/each}
 				{/key}
 			</tbody>
-			<!-- <tfoot>
-                    <tr>
-                        <th colspan="3">Calculated Total Weight</th>
-                        <td>test</td>
-                    </tr>
-                </tfoot> -->
 		</table>
 	</div>
 </div>

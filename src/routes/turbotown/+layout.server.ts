@@ -19,7 +19,7 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 	//if (session) throw redirect(302, "/");
 
 	//get static list of items
-	const items = await prisma.item.findMany()
+	const items = await prisma.item.findMany();
 
 	async function getRandomsForUser(seasonID: number) {
 		return await prisma.random.findMany({
@@ -54,9 +54,28 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 	type RandomsForUser = Prisma.PromiseReturnType<typeof getRandomsForUser>;
 	type QuestWithRandom = Prisma.TurbotownQuestGetPayload<{
 		include: {
-			random: true
+			random: true;
+		};
+	}>;
+
+	type TownWithIncludes = Prisma.TurbotownGetPayload<{
+		include: {
+			metrics: true,
+			quests: {
+				include: {
+					random: true
+				}
+			},
+			season: true,
+			statuses: true,
+			items: {
+				include: {
+					item: true
+				}
+			},
+			user: true
 		}
-	  }>
+	}>;
 	let randomsForUser: RandomsForUser = [];
 	let filteredMatchData: Match[] = [];
 	let rawMatchData: Match[] = [];
@@ -68,9 +87,9 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 	let leagueAndSeasonsResult: any = null;
 	let currentSeason: Season | null = null;
 	let currentSeasonLeaderboard: any = [];
-	let currentTown: Turbotown | null = null;
-	let quests: QuestWithRandom[] = []
-	let questChecks: any = null
+	let currentTown: TownWithIncludes | null = null;
+	let quests: QuestWithRandom[] = [];
+	let questChecks: any = null;
 
 	if (session && session.user) {
 		/* 
@@ -88,6 +107,7 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 			include: {
 				members: {
 					include: {
+						user: true,
 						_count: true
 					}
 				},
@@ -108,7 +128,9 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 									include: {
 										random: true
 									}
-								}
+								},
+								metrics: true,
+								user: true
 							}
 						},
 						_count: {
@@ -133,33 +155,6 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 		/* End get season info */
 		/* ------------------- */
 
-		//quests
-		
-		if(leagueAndSeasonsResult && leagueAndSeasonsResult[0]?.seasons[0]?.turbotowns[0]?.quests?.length > 0){
-			quests = leagueAndSeasonsResult[0].seasons[0].turbotowns[0].quests
-			console.log(`[random page.ts] found ${quests.length} quests`, quests)
-		}
-
-		//check for quest complete
-
-		let questCheckPromises = await quests.filter(quest => quest.active).map(async (quest) => {
-			console.log('checking quest ', quest.id)
-			const questCompleteResponse = await fetch(`/api/town/${session.user.account_id}/quest/${quest.id}/complete`, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify(quest)
-			})
-
-			console.log(questCompleteResponse)
-			let response = await questCompleteResponse.json()
-			console.log('questComplete response: ', response)
-			return response
-		})
-
-		questChecks = await Promise.all(questCheckPromises)
-
 		/* Get current Town Info */
 		/* ------------------- */
 
@@ -177,14 +172,19 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 				},
 				include: {
 					metrics: true,
-					quests: true,
+					quests: {
+						include: {
+							random: true
+						}
+					},
 					season: true,
 					statuses: true,
 					items: {
 						include: {
 							item: true
 						}
-					}
+					},
+					user: true
 				}
 			});
 		}
@@ -196,8 +196,37 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 			const response = await fetch(`/api/town/${session.user.account_id}/create`, {
 				method: 'POST'
 			});
-			console.log("create town response: ", response)
+			console.log('create town response: ', response);
 		}
+
+		//quests
+
+		if (currentTown && currentTown?.quests?.length > 0) {
+			quests = currentTown.quests;
+			console.log(`[random page.ts] found ${quests.length} quests`, quests);
+		}
+
+		//check for quest complete
+
+		let questCheckPromises = await quests
+			.filter((quest) => quest.active)
+			.map(async (quest) => {
+				console.log('checking quest ', quest.id);
+				const questCompleteResponse = await fetch(`/api/town/${session.user.account_id}/quest/${quest.id}/complete`, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify(quest)
+				});
+
+				console.log(questCompleteResponse);
+				let response = await questCompleteResponse.json();
+				console.log('questComplete response: ', response);
+				return response;
+			});
+
+		questChecks = await Promise.all(questCheckPromises);
 
 		/* End town info */
 		/* ------------------- */
@@ -293,13 +322,13 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 			randoms: randomsForUser,
 			randomAttempts: filteredMatchData,
 			matchesSinceRandom,
-			responseCompleteRandom,
+			responseCompleteRandom
 		},
 		match: {
-			rawMatchData,
+			rawMatchData
 		},
 		meta: {
-			flags,
+			flags
 		},
 		quests: {
 			quests,
@@ -313,7 +342,7 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 		},
 		town: {
 			turbotown: currentTown,
-			items,
+			items
 		}
 	};
 };
