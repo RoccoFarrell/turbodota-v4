@@ -258,7 +258,15 @@
 
 		<svelte:fragment slot="sidebarLeft">
 			<!-- Insert the list: -->
-			<div class="border-r border-primary-500/30 h-full"><Navigation {session} /></div>
+			<div class="border-r border-primary-500/30 h-full flex flex-col justify-between">
+				<Navigation {session} />
+				<div class="flex flex-col items-center w-full justify-center p-2 bottom-0 relative">
+					<p class="text-sm font-bold italic text-slate-300 dark:text-surface-400">No Salt Studios 2024</p>
+					<p class="text-sm italic text-slate-300 dark:text-surface-400 text-center">Dota 2 is a trademark of Valve Corporation</p>
+				</div>
+			</div>
+
+			
 
 			<!-- --- -->
 		</svelte:fragment>
