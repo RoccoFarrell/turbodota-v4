@@ -1,7 +1,7 @@
 <script lang="ts">
 	import '../app.pcss';
 
-	import { setContext } from 'svelte'
+	import { setContext } from 'svelte';
 
 	import { dev } from '$app/environment';
 	import { beforeNavigate } from '$app/navigation';
@@ -33,7 +33,7 @@
 	import Navigation from './_components/Navigation/Navigation.svelte';
 	import Loading from '$lib/components/Loading.svelte';
 	import HeroGrid from '$lib/components/HeroGrid/HeroGrid.svelte';
-	import AdminTools from '$lib/components/AdminTools.svelte'
+	import AdminTools from '$lib/components/AdminTools.svelte';
 	//assets
 	import '@flaticon/flaticon-uicons/css/all/all.css';
 	//import HeroSprites from 'dota2-css-hero-sprites/assets/stylesheets/dota2minimapheroes.css'
@@ -99,14 +99,14 @@
 	let session: Session | null = data.session || null;
 
 	//set session in context for components
-	setContext('session', session)
-	setContext('userPreferences', data.userPreferences)
+	setContext('session', session);
+	setContext('userPreferences', data.userPreferences);
 
 	let navigatingTest = false;
 
 	//set context for modal component
 
-	setContext('heroes', data.heroDescriptions.allHeroes)
+	setContext('heroes', data.heroDescriptions.allHeroes);
 
 	//modal
 	const modalStore = getModalStore();
@@ -131,7 +131,7 @@
 	});
 
 	// popup
-	$: console.log(storePopup)
+	$: console.log(storePopup);
 	import { popup } from '@skeletonlabs/skeleton';
 	import type { PopupSettings } from '@skeletonlabs/skeleton';
 	const adminPopupClick: PopupSettings = {
@@ -144,7 +144,6 @@
 		type: 'component',
 		component: 'adminTools'
 	};
-
 </script>
 
 <svelte:head>
@@ -250,7 +249,7 @@
 							{/if}
 						</div>
 					</form> -->
-						<LightSwitch />
+						<!-- <LightSwitch /> -->
 					</div>
 				</svelte:fragment>
 			</AppBar>
@@ -261,12 +260,14 @@
 			<div class="border-r border-primary-500/30 h-full flex flex-col justify-between">
 				<Navigation {session} />
 				<div class="flex flex-col items-center w-full justify-center p-2 bottom-0 relative">
-					<p class="text-sm font-bold italic text-slate-300 dark:text-surface-400">No Salt Studios 2024</p>
-					<p class="text-sm italic text-slate-300 dark:text-surface-400 text-center">Dota 2 is a trademark of Valve Corporation</p>
+					<a href="https://twitter.com/nosaltstudios" target="_blank" class="hover:text-blue-900">
+						<p class="text-sm font-bold italic text-slate-300 dark:text-surface-400 hover:text-blue-900">No Salt Studios 2024</p>
+					</a>
+					<p class="text-sm italic text-slate-300 dark:text-surface-400 text-center ">
+						Dota 2 is a trademark of Valve Corporation
+					</p>
 				</div>
 			</div>
-
-			
 
 			<!-- --- -->
 		</svelte:fragment>
