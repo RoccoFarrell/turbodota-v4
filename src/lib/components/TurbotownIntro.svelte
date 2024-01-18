@@ -5,6 +5,10 @@
 	import Item from '$lib/assets/item_generic.png';
 	import Tournament from '$lib/assets/tournament_light.png';
 	import League from '$lib/assets/league.png';
+
+	import { getContext } from 'svelte';
+	let session: any = getContext('session')
+
 </script>
 
 <div class="w-full flex flex-col items-center justify-center space-y-4 pb-20">
@@ -39,7 +43,7 @@
 						to fill your questboard and embark on an epic adventure to become king of TurboTown.
 					</h3>
 					<div class="svg-wrapper">
-						<a href="/turbotown">
+						<a href = { session ? "/turbotown" : "api/auth/steam"}>
 							<svg height="60" width="320" xmlns="http://www.w3.org/2000/svg">
 								<rect class="shape hover:bg-amber-500" height="60" width="320" />
 							</svg>
@@ -60,7 +64,7 @@
 						to spend your acquired gold on unique and magical items.
 					</h3>
 					<div class="svg-wrapper">
-						<a href="/shop">
+						<a href = { session ? "/turbotown/quests" : "api/auth/steam"}>
 							<svg height="60" width="320" xmlns="http://www.w3.org/2000/svg">
 								<rect class="shape hover:bg-amber-500" height="60" width="320" />
 							</svg>
@@ -87,7 +91,7 @@
 						with your friends. Launch each season with unique functionality to change the TurboTown Strategy.
 					</h3>
 					<div class="svg-wrapper">
-						<a href="/leagues">
+						<a href = { session ? "/turbotown/shop" : "api/auth/steam"}>
 							<svg height="60" width="320" xmlns="http://www.w3.org/2000/svg">
 								<rect class="shape hover:bg-amber-500" height="60" width="320" />
 							</svg>
