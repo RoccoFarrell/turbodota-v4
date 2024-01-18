@@ -96,10 +96,10 @@
 	$: data.quests && updateGoldAndXp()
 	
 	function updateGoldAndXp(){
-		if(data.quests.questChecks.length > 0 && data.town.turbotown){
+		if(data.quests.questChecks?.length > 0 && data.town.turbotown){
 			let successChecks = data.quests.questChecks.filter((check: any) => check.success)
 			if(successChecks.length > 0) {
-				data.town.turbotown.metrics = successChecks[data.quests.questChecks.length - 1].tx_result.town.metrics
+				data.town.turbotown.metrics = successChecks[successChecks.length - 1].tx_result.town.metrics
 			}
 			
 		}
