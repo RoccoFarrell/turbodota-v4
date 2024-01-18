@@ -33,7 +33,6 @@
 	export let questSlot: number = 1;
 
 	let randomStore = $townStore.quests.quest1;
-	console.log('questSlot', questSlot);
 	if (questSlot === 1) randomStore = $townStore.quests.quest1;
 	else if (questSlot === 2) randomStore = $townStore.quests.quest2;
 	else if (questSlot === 3) randomStore = $townStore.quests.quest3;

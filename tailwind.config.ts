@@ -70,7 +70,8 @@ const config = {
 				'wantedPoster': "url('$lib/assets/wantedPoster.png')",
 				'blankPoster': "url('$lib/assets/blankPoster.png')",
 				'questBoard': "url('$lib/assets/questBoard.png')",
-				'questBoardPoster': "url('$lib/assets/questBoardPoster2.png')"
+				'questBoardPoster': "url('$lib/assets/questBoardPoster2.png')",
+				'leather': "url('$lib/assets/leather.png')"
 			}
 		}
 	},

@@ -133,26 +133,26 @@
 	};
 </script>
 
-<div class="bg-surface-700 w-full h-full">
+<div class="w-full h-full z-40">
 	<div class="flex h-full mx-auto w-full max-sm:mb-20">
-		<div class="w-full grid grid-cols-4">
-			<div class="mb-2 bg-surface-500/10 p-4 rounded-full w-4/5 mx-auto shadow-md col-span-1">
-				<h3 class="h3 dark:text-yellow-500 text-primary-500">Inventory</h3>
-			</div>
+		<div class="w-full flex p-2">
+			<!-- <div class="mb-2 p-4 rounded-full w-4/5 mx-auto shadow-md col-span-1">
+				<h3 class="h3 dark:text-yellow-500 text-primary-500 text-center">Inventory</h3>
+			</div> -->
 
-			<div class="col-span-3">
-				<table class="table table-hover table-interactive mb-4 table-compact">
+			<div class="w-3/4 mx-auto px-4 bg-surface-900">
+				<table class="table table-hover table-interactive mb-4 table-compact z-50 relative">
 					<thead>
 						<tr>
 							{#each tableSource.head as header, i}
-								<th class="text-center">{header}</th>
+								<th>{header}</th>
 							{/each}
 						</tr>
 					</thead>
 					<tbody>
 						{#each tableSource.body as row, i}
-							<tr class="relative" tabindex={i}>
-								<td>
+							<tr class="relative h-10" tabindex={i}>
+								<td style={"vertical-align: middle;"}>
 									<div class="rounded-full flex space-x-4">
 										<div class="rounded-full">
 											<img class="h-8 object-contain rounded-2xl inline-table" src={row[3]} alt="" />
@@ -161,15 +161,17 @@
 										<p class="font-semibold text-tertiary-300 text-lg">{row[0]}</p>
 									</div>
 								</td>
-								<td class="h-full">
-									<p class="">{row[1]}</p>
+								<td style={"vertical-align: middle;"}>
+									<div class="flex items-center  h-full">{row[1]}</div>
 								</td>
-								<td class="align-middle text-center">{row[2]}</td>
-								<button
-									class="btn variant-filled-primary w-full max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:my-8 max-lg:mx-4 max-lg:max-w-[90%] md:max-w-[80%]"
-									on:click={() => useClickHandler(row[0])}
-									>Use
-								</button>
+								<td style={"vertical-align: middle;"}>{row[2]}</td>
+								<td style={"vertical-align: middle;"}>
+									<button
+										class="btn variant-filled-primary w-full max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:my-8 max-lg:mx-4 max-lg:max-w-[90%] md:max-w-[80%]"
+										on:click={() => useClickHandler(row[0])}
+										>Use
+									</button>
+								</td>
 							</tr>
 						{/each}
 					</tbody>
@@ -177,4 +179,6 @@
 			</div>
 		</div>
 	</div>
+	<div class="z-30 bg-leather opacity-25 h-full w-full absolute top-16" />
+	<div class="z-20 bg-surface-900 h-full w-full absolute top-16" />
 </div>

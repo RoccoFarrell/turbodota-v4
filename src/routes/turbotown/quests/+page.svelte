@@ -65,10 +65,10 @@
 	let animateSlot1: boolean = false
 	let animateSlot2: boolean = false
 	let animateSlot3: boolean = false
-	$: animateSlot1, animateSlot2, animateSlot3, console.log(animateSlot1, animateSlot2, animateSlot3)
+	$: animateSlot1, animateSlot2, animateSlot3
 	const onQuestComplete = (quests: any) => {
 		console.log('data.quests changed')
-		console.log(quests)
+		//console.log(quests)
 
 		quests.questChecks.forEach((check: any) => {
 			if(check?.tx_result?.quest){
@@ -198,7 +198,6 @@
 	};
 
 	export let form;
-	$: console.log('form in quests page.svelte: ', form);
 
 	function onFormSuccess(form: any) {
 		if (form && form.success) {

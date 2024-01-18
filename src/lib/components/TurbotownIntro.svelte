@@ -43,7 +43,7 @@
 						to fill your questboard and embark on an epic adventure to become king of TurboTown.
 					</h3>
 					<div class="svg-wrapper">
-						<a href = { session ? "/turbotown" : "api/auth/steam"}>
+						<a href = { session ? "/turbotown/quests" : "/api/auth/steam"}>
 							<svg height="60" width="320" xmlns="http://www.w3.org/2000/svg">
 								<rect class="shape hover:bg-amber-500" height="60" width="320" />
 							</svg>
@@ -64,7 +64,7 @@
 						to spend your acquired gold on unique and magical items.
 					</h3>
 					<div class="svg-wrapper">
-						<a href = { session ? "/turbotown/quests" : "api/auth/steam"}>
+						<a href = { session ? "/turbotown/shop" : "/api/auth/steam"}>
 							<svg height="60" width="320" xmlns="http://www.w3.org/2000/svg">
 								<rect class="shape hover:bg-amber-500" height="60" width="320" />
 							</svg>
@@ -91,7 +91,7 @@
 						with your friends. Launch each season with unique functionality to change the TurboTown Strategy.
 					</h3>
 					<div class="svg-wrapper">
-						<a href = { session ? "/turbotown/shop" : "api/auth/steam"}>
+						<a href = { session ? "/leagues" : "/api/auth/steam"}>
 							<svg height="60" width="320" xmlns="http://www.w3.org/2000/svg">
 								<rect class="shape hover:bg-amber-500" height="60" width="320" />
 							</svg>

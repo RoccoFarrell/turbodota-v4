@@ -2,6 +2,7 @@
 	//svelte
 	import { slide, blur, fade } from 'svelte/transition';
 	import { quintOut, cubicOut } from 'svelte/easing';
+	import { getContext } from 'svelte';
 
 	import { calculateTownLeaderboard } from '$lib/helpers/leaderboardFromSeason';
 
@@ -9,6 +10,8 @@
 	export let turbotowns: any;
 	export let members: any;
 	export let randoms: any;
+
+	let heroes = getContext('heroes')
 
 	//constants
 	//import { playersWeCareAbout } from '$lib/constants/playersWeCareAbout';
@@ -240,10 +243,10 @@
 										transition:blur={{ amount: 20, duration: 400 }}
 									>
 										<History
-											completedRandoms={randomData.filter(
+											completedRandoms={randoms.filter(
 												(random) => random.account_id === parseInt(row[0]) && random.active === false
 											)}
-											allHeroes={data.heroDescriptions.allHeroes}
+											allHeroes={heroes}
 										/>
 									</div>
 								</td>

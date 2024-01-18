@@ -78,11 +78,11 @@
 	let quest3Store = $townStore.quests.quest3;
 	$: if (browser && $quest1Store) {
 		console.log('town store quest 1 store: ', $quest1Store, ' heroID: ');
-		$quest1Store.randomedHero ? console.log($quest1Store.randomedHero.id) : ''
-		console.log('town store quest 1 store: ', $quest2Store, ' heroID: ');
-		$quest2Store.randomedHero ? console.log($quest2Store.randomedHero.id) : ''
-		console.log('town store quest 1 store: ', $quest3Store, ' heroID: ');
-		$quest3Store.randomedHero ? console.log($quest3Store.randomedHero.id) : ''
+		$quest1Store.randomedHero ? console.log($quest1Store.randomedHero.id) : '';
+		console.log('town store quest 2 store: ', $quest2Store, ' heroID: ');
+		$quest2Store.randomedHero ? console.log($quest2Store.randomedHero.id) : '';
+		console.log('town store quest 3 store: ', $quest3Store, ' heroID: ');
+		$quest3Store.randomedHero ? console.log($quest3Store.randomedHero.id) : '';
 	}
 
 	//set statuses
@@ -92,114 +92,117 @@
 
 	//refresh turbotown on render
 	//$: data.town.turbotown
-	$: console.log('quests changed in layout: ', data.quests)
-	$: data.quests && updateGoldAndXp()
-	
-	function updateGoldAndXp(){
-		if(data.quests.questChecks?.length > 0 && data.town.turbotown){
-			let successChecks = data.quests.questChecks.filter((check: any) => check.success)
-			if(successChecks.length > 0) {
-				data.town.turbotown.metrics = successChecks[successChecks.length - 1].tx_result.town.metrics
+	$: console.log('quests changed in layout: ', data.quests);
+	$: data.quests && updateGoldAndXp();
+	$: data.quests && setQuestStores();
+
+	function updateGoldAndXp() {
+		if (data.quests.questChecks?.length > 0 && data.town.turbotown) {
+			let successChecks = data.quests.questChecks.filter((check: any) => check.success);
+			if (successChecks.length > 0) {
+				data.town.turbotown.metrics = successChecks[successChecks.length - 1].tx_result.town.metrics;
 			}
-			
 		}
 	}
 
-	//loop through quests and set stores
-	if (data.town && data.quests) {
-		let quest1arr: QuestWithRandom[] = data.quests.quests.filter(
-			(quest: QuestWithRandom) => quest.questSlot === 1 && quest.status === 'active'
-		);
-		//console.log('quest1: ', quest1arr);
-		let quest2arr: QuestWithRandom[] = data.quests.quests.filter(
-			(quest: QuestWithRandom) => quest.questSlot === 2 && quest.status === 'active'
-		);
-		//console.log('quest3: ', quest2arr);
-		let quest3arr: QuestWithRandom[] = data.quests.quests.filter(
-			(quest: QuestWithRandom) => quest.questSlot === 3 && quest.status === 'active'
-		);
-		//console.log('quest3: ', quest3arr);
+	function setQuestStores() {
+		console.log('setting quest stores')
+		//loop through quests and set stores
+		if (data.town && data.quests) {
+			let quest1arr: QuestWithRandom[] = data.quests.quests.filter(
+				(quest: QuestWithRandom) => quest.questSlot === 1 && quest.status === 'active'
+			);
+			//console.log('quest1: ', quest1arr);
+			let quest2arr: QuestWithRandom[] = data.quests.quests.filter(
+				(quest: QuestWithRandom) => quest.questSlot === 2 && quest.status === 'active'
+			);
+			//console.log('quest3: ', quest2arr);
+			let quest3arr: QuestWithRandom[] = data.quests.quests.filter(
+				(quest: QuestWithRandom) => quest.questSlot === 3 && quest.status === 'active'
+			);
+			//console.log('quest3: ', quest3arr);
 
-		let quest1: QuestWithRandom, quest2: QuestWithRandom, quest3: QuestWithRandom;
-		if (quest1arr.length > 0) {
-			let allHeroesCopy = [...data.heroDescriptions.allHeroes];
-			quest1 = quest1arr[0];
-			quest1Store.set({
-				allHeroes: data.heroDescriptions.allHeroes,
-				availableHeroes: quest1.random.availableHeroes.split(',').map((randomID: string) => {
-					return allHeroesCopy.filter((hero: Hero) => hero.id === parseInt(randomID))[0];
-				}),
-				bannedHeroes:
-					quest1?.random?.bannedHeroes.length > 0
-						? quest1.random.bannedHeroes.split(',').map((randomID: string) => {
-								return allHeroesCopy.filter((hero: Hero) => hero.id === parseInt(randomID))[0];
-							})
-						: [],
-				selectedRoles: quest1.random.selectedRoles.split(',') || [],
-				startingGold: constant_startingGold,
-				expectedGold: quest1.random.expectedGold,
-				banMultiplier: constant_banMultiplier,
-				modifierAmount: quest1.random.modifierAmount,
-				modifierTotal: quest1.random.modifierTotal,
-				freeBans: constant_freeBans,
-				maxBans: constant_maxBans,
-				randomedHero: allHeroesCopy.filter((hero: Hero) => hero.id === quest1.random.randomedHero)[0]
-			});
-		} else quest1Store.reset(data.heroDescriptions.allHeroes);
+			let quest1: QuestWithRandom, quest2: QuestWithRandom, quest3: QuestWithRandom;
+			if (quest1arr.length > 0) {
+				let allHeroesCopy = [...data.heroDescriptions.allHeroes];
+				quest1 = quest1arr[0];
+				quest1Store.set({
+					allHeroes: data.heroDescriptions.allHeroes,
+					availableHeroes: quest1.random.availableHeroes.split(',').map((randomID: string) => {
+						return allHeroesCopy.filter((hero: Hero) => hero.id === parseInt(randomID))[0];
+					}),
+					bannedHeroes:
+						quest1?.random?.bannedHeroes.length > 0
+							? quest1.random.bannedHeroes.split(',').map((randomID: string) => {
+									return allHeroesCopy.filter((hero: Hero) => hero.id === parseInt(randomID))[0];
+								})
+							: [],
+					selectedRoles: quest1.random.selectedRoles.split(',') || [],
+					startingGold: constant_startingGold,
+					expectedGold: quest1.random.expectedGold,
+					banMultiplier: constant_banMultiplier,
+					modifierAmount: quest1.random.modifierAmount,
+					modifierTotal: quest1.random.modifierTotal,
+					freeBans: constant_freeBans,
+					maxBans: constant_maxBans,
+					randomedHero: allHeroesCopy.filter((hero: Hero) => hero.id === quest1.random.randomedHero)[0]
+				});
+			} else quest1Store.reset(data.heroDescriptions.allHeroes);
 
-		if (quest2arr.length > 0) {
-			let allHeroesCopy = [...data.heroDescriptions.allHeroes];
-			quest2 = quest2arr[0];
-			quest2Store.set({
-				allHeroes: data.heroDescriptions.allHeroes,
-				availableHeroes: quest2.random.availableHeroes.split(',').map((randomID: string) => {
-					return allHeroesCopy.filter((hero: Hero) => hero.id === parseInt(randomID))[0];
-				}),
-				bannedHeroes:
-					quest2.random.bannedHeroes.length > 0
-						? quest2.random.bannedHeroes.split(',').map((randomID: string) => {
-								return allHeroesCopy.filter((hero: Hero) => hero.id === parseInt(randomID))[0];
-							})
-						: [],
-				selectedRoles: quest2.random.selectedRoles.split(',') || [],
-				startingGold: constant_startingGold,
-				expectedGold: quest2.random.expectedGold,
-				banMultiplier: constant_banMultiplier,
-				modifierAmount: quest2.random.modifierAmount,
-				modifierTotal: quest2.random.modifierTotal,
-				freeBans: constant_freeBans,
-				maxBans: constant_maxBans,
-				randomedHero: allHeroesCopy.filter((hero: Hero) => hero.id === quest2.random.randomedHero)[0]
-			});
-		} else quest2Store.reset(data.heroDescriptions.allHeroes);
+			if (quest2arr.length > 0) {
+				let allHeroesCopy = [...data.heroDescriptions.allHeroes];
+				quest2 = quest2arr[0];
+				quest2Store.set({
+					allHeroes: data.heroDescriptions.allHeroes,
+					availableHeroes: quest2.random.availableHeroes.split(',').map((randomID: string) => {
+						return allHeroesCopy.filter((hero: Hero) => hero.id === parseInt(randomID))[0];
+					}),
+					bannedHeroes:
+						quest2.random.bannedHeroes.length > 0
+							? quest2.random.bannedHeroes.split(',').map((randomID: string) => {
+									return allHeroesCopy.filter((hero: Hero) => hero.id === parseInt(randomID))[0];
+								})
+							: [],
+					selectedRoles: quest2.random.selectedRoles.split(',') || [],
+					startingGold: constant_startingGold,
+					expectedGold: quest2.random.expectedGold,
+					banMultiplier: constant_banMultiplier,
+					modifierAmount: quest2.random.modifierAmount,
+					modifierTotal: quest2.random.modifierTotal,
+					freeBans: constant_freeBans,
+					maxBans: constant_maxBans,
+					randomedHero: allHeroesCopy.filter((hero: Hero) => hero.id === quest2.random.randomedHero)[0]
+				});
+			} else quest2Store.reset(data.heroDescriptions.allHeroes);
 
-		if (quest3arr.length > 0) {
-			let allHeroesCopy = [...data.heroDescriptions.allHeroes];
-			quest3 = quest3arr[0];
-			quest3Store.set({
-				allHeroes: data.heroDescriptions.allHeroes,
-				availableHeroes: quest3.random.availableHeroes.split(',').map((randomID: string) => {
-					return allHeroesCopy.filter((hero: Hero) => hero.id === parseInt(randomID))[0];
-				}),
-				bannedHeroes:
-					quest3.random.bannedHeroes.length > 0
-						? quest3.random.bannedHeroes.split(',').map((randomID: string) => {
-								return allHeroesCopy.filter((hero: Hero) => hero.id === parseInt(randomID))[0];
-							})
-						: [],
-				selectedRoles: quest3.random.selectedRoles.split(',') || [],
-				startingGold: constant_startingGold,
-				expectedGold: quest3.random.expectedGold,
-				banMultiplier: constant_banMultiplier,
-				modifierAmount: quest3.random.modifierAmount,
-				modifierTotal: quest3.random.modifierTotal,
-				freeBans: constant_freeBans,
-				maxBans: constant_maxBans,
-				randomedHero: allHeroesCopy.filter((hero: Hero) => hero.id === quest3.random.randomedHero)[0]
-			});
-		} else quest3Store.reset(data.heroDescriptions.allHeroes);
+			if (quest3arr.length > 0) {
+				let allHeroesCopy = [...data.heroDescriptions.allHeroes];
+				quest3 = quest3arr[0];
+				quest3Store.set({
+					allHeroes: data.heroDescriptions.allHeroes,
+					availableHeroes: quest3.random.availableHeroes.split(',').map((randomID: string) => {
+						return allHeroesCopy.filter((hero: Hero) => hero.id === parseInt(randomID))[0];
+					}),
+					bannedHeroes:
+						quest3.random.bannedHeroes.length > 0
+							? quest3.random.bannedHeroes.split(',').map((randomID: string) => {
+									return allHeroesCopy.filter((hero: Hero) => hero.id === parseInt(randomID))[0];
+								})
+							: [],
+					selectedRoles: quest3.random.selectedRoles.split(',') || [],
+					startingGold: constant_startingGold,
+					expectedGold: quest3.random.expectedGold,
+					banMultiplier: constant_banMultiplier,
+					modifierAmount: quest3.random.modifierAmount,
+					modifierTotal: quest3.random.modifierTotal,
+					freeBans: constant_freeBans,
+					maxBans: constant_maxBans,
+					randomedHero: allHeroesCopy.filter((hero: Hero) => hero.id === quest3.random.randomedHero)[0]
+				});
+			} else quest3Store.reset(data.heroDescriptions.allHeroes);
+		}
+		//end set stores
 	}
-	//end set stores
 </script>
 
 <div id="#townLayout" class="w-screen">
@@ -229,26 +232,26 @@
 						<p class="dark:text-yellow-500">Level: 1</p>
 					</div>
 					{#key data.town.turbotown}
-					<div id="townProfileStats" class="flex flex-col text-md justify-center col-span-3">
-						<div class="flex justify-start space-x-2">
-							<div>
-								<i class="fi fi-rr-coins text-yellow-500 text-center"></i>
+						<div id="townProfileStats" class="flex flex-col text-md justify-center col-span-3">
+							<div class="flex justify-start space-x-2">
+								<div>
+									<i class="fi fi-rr-coins text-yellow-500 text-center"></i>
+								</div>
+
+								<p>{data.town.turbotown.metrics.filter((metric) => metric.label === 'gold')[0].value}</p>
 							</div>
 
-							<p>{data.town.turbotown.metrics.filter((metric) => metric.label === 'gold')[0].value}</p>
-						</div>
-
-						<div class="flex justify-start space-x-2">
-							<div>
-								<i class="fi fi-br-arrow-trend-up text-center text-green-500"></i>
+							<div class="flex justify-start space-x-2">
+								<div>
+									<i class="fi fi-br-arrow-trend-up text-center text-green-500"></i>
+								</div>
+								<p class="">
+									{data.town.turbotown.metrics.filter((metric) => metric.label === 'xp')[0].value}
+								</p>
 							</div>
-							<p class="">
-								{data.town.turbotown.metrics.filter((metric) => metric.label === 'xp')[0].value}
-							</p>
-						</div>
 
-						<ProgressBar label="Progress Bar" value={50} max={100} />
-					</div>
+							<ProgressBar label="Progress Bar" value={50} max={100} />
+						</div>
 					{/key}
 				</div>
 				<!-- <i class="fi fi-sr-backpack text-8xl text-yellow-500"></i> -->
@@ -263,10 +266,11 @@
 		transition:slide={{ delay: 50, duration: 400, easing: quintOut, axis: 'y' }}
 		class="fixed bottom-0 border border-red-500 w-[calc(100vw-256px)] bg-tertiary-900 h-20"> -->
 			<div
-				transition:slide={{ delay: 50, duration: 200, easing: expoIn, axis: 'y' }}
-				class="fixed bottom-0 left-[256px] w-[calc(100vw-256px)] h-16"
+				in:slide={{ delay: 300, duration: 200, easing: expoIn, axis: 'y' }}
+				out:slide={{ delay: 100, duration: 200, easing: expoOut, axis: 'y' }}
+				class="fixed bottom-0 left-[256px] w-[calc(100vw-256px)] h-16 z-0"
 			>
-				<div class="w-full h-full rounded-t-3xl bg-secondary-500 hover:bg-secondary-600 border-t-2 border-primary-500">
+				<div class="w-full h-full rounded-t-3xl bg-yellow-950 hover:bg-yellow-900">
 					<button on:click={collapse} class="w-full h-full flex items-center justify-center space-x-4">
 						<i class="fi fi-rs-backpack text-3xl"></i>
 						<p>Inventory</p>
@@ -283,7 +287,7 @@
 				use:clickOutside
 				on:click_outside={onBlur}
 			>
-				<div class="w-full h-16 rounded-t-3xl bg-secondary-500 hover:bg-secondary-600">
+				<div class="w-full h-16 rounded-t-3xl bg-yellow-950 hover:bg-yellow-900">
 					<button on:click={collapse} class="w-full h-full flex items-center justify-center space-x-8"
 						><i class="fi fi-br-angle-small-down text-3xl"></i>Close Inventory</button
 					>

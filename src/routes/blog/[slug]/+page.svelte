@@ -11,30 +11,30 @@
 	<meta property="og:title" content={data.meta.title} />
 </svelte:head>
 
-<article class="p-8">
-	<div class="container flex flex-col">
-		<!-- Title -->
-		<hgroup class="mb-8">
-			<h1 class="h1 font-bold">{data.meta.title}</h1>
-            <h4 class="h4 text-amber-500 text-center">{data.meta.description}</h4>
-			
-		</hgroup>
+<div class="w-full flex justify-center">
+	<article class="p-8">
+		<div class="container flex flex-col">
+			<!-- Title -->
+			<hgroup class="mb-8">
+				<h1 class="h1 font-bold">{data.meta.title}</h1>
+				<h4 class="h4 text-amber-500 text-center">{data.meta.description}</h4>
+			</hgroup>
 
-		<div class="flex justify-between items-center my-4">
-            
-			<!-- Tags -->
-			<div class="tags">
-				{#each data.meta.categories as category}
-					<span class="chip rounded-xl p-2 m-1 variant-filled-secondary">&num;{category}</span>
-				{/each}
+			<div class="flex justify-between items-center my-4">
+				<!-- Tags -->
+				<div class="tags">
+					{#each data.meta.categories as category}
+						<span class="chip rounded-xl p-2 m-1 variant-filled-secondary">&num;{category}</span>
+					{/each}
+				</div>
+				<p class="text-tertiary-500 italic">Published on {formatDate(data.meta.date)}</p>
 			</div>
-            <p class="text-tertiary-500 italic">Published on {formatDate(data.meta.date)}</p>
-		</div>
 
-        <div class="w-full border-b border-dashed border-primary-500 my-4"></div>
-		<!-- Post -->
-		<div class="prose dark:prose-invert mb-20">
-			<svelte:component this={data.content} />
+			<div class="w-full border-b border-dashed border-primary-500 my-4"></div>
+			<!-- Post -->
+			<div class="prose dark:prose-invert mb-20">
+				<svelte:component this={data.content} />
+			</div>
 		</div>
-	</div>
-</article>
+	</article>
+</div>

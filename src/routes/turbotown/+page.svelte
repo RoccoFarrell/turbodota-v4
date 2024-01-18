@@ -116,7 +116,7 @@
 		</div>
 
 		<!-- current season info -->
-		{#if data.session && data.session.user && data.league.leagueAndSeasonsResult && data.league.leagueAndSeasonsResult[0] && data.league.leagueAndSeasonsResult[0].seasons.length > 0}
+		{#if data.session?.user && data.league.leagueAndSeasonsResult && data.league.leagueAndSeasonsResult[0] && data.league?.leagueAndSeasonsResult[0]?.seasons?.length > 0}
 			<div class="flex flex-col w-full justify-center col-span-2 p-2">
 				<div class="w-full grid grid-cols-2 p-1">
 					<div class="text-sm text-tertiary-500">
