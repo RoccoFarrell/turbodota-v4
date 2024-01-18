@@ -283,8 +283,6 @@ model TurbotownStatus {
   resolvedDate DateTime?
   turbotownID  Int
   turbotown    Turbotown @relation(fields: [turbotownID], references: [id])
-
-  @@unique([turbotownID, name, id], name: "townPlusNamePlusID")
 }
 
 model Item {

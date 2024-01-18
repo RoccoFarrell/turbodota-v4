@@ -177,6 +177,7 @@ export const POST: RequestHandler = async ({ request, params, url, locals, fetch
 			});
 
 			if (tx_result) {
+				if(tx_result.town) console.log('added gold and xp to town', tx_result.town.id, tx_result.town.metrics)
 				let newResponse = new Response(JSON.stringify({ status: 'success', success: true, tx_result}));
 				return newResponse;
 			} else {
