@@ -16,7 +16,7 @@
 
 	$: console.log(form);
 
-	function onFormSuccess(form: any) {
+	function onFormReturn(form: any) {
 		if (form && form.success) {
 			console.log('sending toast');
 
@@ -38,9 +38,18 @@
 				toastStore.trigger(t);
 			}
 		}
+		else if (form && !form.enoughGold) {
+			const t: ToastSettings = {
+					message: `Not enough gold for items`,
+					background: 'variant-filled-error'
+				};
+
+				toastStore.trigger(t);
+		}
 	}
 
-	$: onFormSuccess(form);
+	$: onFormReturn(form);
+
 </script>
 
 <div class="flex flex-col h-full">

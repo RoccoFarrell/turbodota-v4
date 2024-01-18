@@ -54,7 +54,6 @@ export const actions: Actions = {
 							decrement: shoppingCart.totalCost
 						}
 					},
-					// need to fix hardcoded values
 					where: {
 						townPlusLabel: { turbotownID, label: 'gold' }
 					}
@@ -62,7 +61,7 @@ export const actions: Actions = {
 
 				// 2. Verify that the users balance didn't go below zero.
 				if (sender.value < 0) {
-					throw new Error(`${session.user.account_id} doesn't have enough to buy selected items`);
+					throw new Error(`Not enough gold for items`);
 				}
 
 				// 3. Add items to user's inventory
@@ -90,7 +89,7 @@ export const actions: Actions = {
             else console.error('no return from use item')
 		} catch (err) {
 			console.error(err);
-			return fail(400, { message: 'Could not create item' });
+			return fail(400, { enoughGold: false });
 		}
 		console.log('item created');
 		//console.log('username:', username, ' password:', password)
