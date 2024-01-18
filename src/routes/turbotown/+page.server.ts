@@ -23,14 +23,11 @@ import { constant_questGold, constant_questXP } from '$lib/constants/turbotown';
 //import { createDotaUser } from '../api/helpers';
 
 export const actions: Actions = {
-	useItem: async ({ request, locals, fetch }) => {
-		console.log('received useItem post in turbotown page server');
+	useObserver: async ({ request, locals, fetch }) => {
+		console.log('received useObserver post in turbotown page server');
 		const session = await locals.auth.validate();
 		if (!session) return fail(400, { message: 'Not logged in, cannot use item' });
 		const formData = await request.formData();
-
-		//this will need to change when there are more items
-		//let hero = JSON.parse(formData.get('observerSelect')?.toString() || '');
 
 		let turbotownID = parseInt(formData.get('turbotownID')?.toString() || '-1');
 		let questStoreSlot = parseInt(formData.get('questStoreSlot')?.toString() || '')
@@ -45,7 +42,6 @@ export const actions: Actions = {
 				// look for itemID 0 (observer) for now - this will need to change when there are more items
 				let itemCheck = await tx.turbotownItem.findFirstOrThrow({
 					where: {
-						// need to fix hardcoded values
 						itemID: 0
 					}
 				});
@@ -97,15 +93,20 @@ export const actions: Actions = {
 							}
 						})
 					}
-					else{
+					else {
 						throw new Error(`${session.user.account_id} could not find active observer item!`);
 					}
-
+				}
+				else {
+					//add else-ifs for other items as they are developed
 				}
 
 				const itemUseResponse = await tx.turbotownAction.create({
 					data: {
-						action: 'observer'
+						action: 'observer',
+						turbotownDestinationID: turbotownID,
+						appliedDate: new Date(),
+						endDate: new Date()
 					}
 				});
 				console.log(itemUseResponse);

@@ -23,7 +23,7 @@ model User {
   profile_url  String?
   avatar_url   String?
   roles        String?
-  createdDate  DateTime   @default(now())
+  createdDate  DateTime    @default(now())
   lastUpdated  DateTime    @default(now())
   key          Key[]
   auth_session Session[]
@@ -50,7 +50,7 @@ model UserPrefs {
 model DotaUser {
   account_id    Int             @id @unique
   lastUpdated   DateTime
-  createdDate   DateTime @default(now())
+  createdDate   DateTime        @default(now())
   oldestMatch   DateTime?
   newestMatch   DateTime?
   oldestMatchID BigInt?
@@ -218,17 +218,18 @@ model Random {
 
 //turbotown models
 model Turbotown {
-  id          Int               @id @default(autoincrement())
-  account_id  Int               @unique
-  seasonID    Int
-  lastUpdated DateTime          @default(now())
-  createdDate DateTime
-  user        User?             @relation(fields: [account_id], references: [account_id])
-  metrics     TurbotownMetric[]
-  quests      TurbotownQuest[]
-  season      Season?           @relation(fields: [seasonID], references: [id])
-  items       TurbotownItem[]
-  statuses    TurbotownStatus[]
+  id              Int               @id @default(autoincrement())
+  account_id      Int               @unique
+  seasonID        Int
+  lastUpdated     DateTime          @default(now())
+  createdDate     DateTime
+  user            User?             @relation(fields: [account_id], references: [account_id])
+  metrics         TurbotownMetric[]
+  quests          TurbotownQuest[]
+  season          Season?           @relation(fields: [seasonID], references: [id])
+  items           TurbotownItem[]
+  statuses        TurbotownStatus[]
+  TurbotownAction TurbotownAction[]
 }
 
 model TurbotownMetric {
@@ -298,8 +299,12 @@ model Item {
 }
 
 model TurbotownAction {
-  id     Int    @id @default(autoincrement())
-  action String
+  id                     Int       @id @default(autoincrement())
+  action                 String
+  turbotownDestinationID Int
+  turbotownDestination   Turbotown @relation(fields: [turbotownDestinationID], references: [id])
+  appliedDate            DateTime
+  endDate                DateTime
 }
 
 model Session {

@@ -71,7 +71,7 @@ export const actions: Actions = {
 					let pushObj = {
 						itemID: item.id,
 						lastUpdated: new Date(),
-						status: 'inactive',
+						status: 'active',
 						turbotownID
 					};
 					recordData.push(pushObj);

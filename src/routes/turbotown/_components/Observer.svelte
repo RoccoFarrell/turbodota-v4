@@ -82,7 +82,7 @@
 
 		if (observerResponse.turbotown.statuses.length > 0) {
 			statuses = observerResponse.turbotown.statuses;
-			let observerStatus = statuses.filter((status) => status.name === 'observer')[0];
+			let observerStatus = statuses.filter((status) => status.name === 'observer' && status.isActive === true)[0];
 			if (observerStatus) {
 				console.log('found an observer status');
 				randomHeroList = [];
@@ -160,7 +160,7 @@
 
 <div class="flex flex-col justify-center items-center">
 	<div id="observerModal" class="h1 w-[50vw] card flex flex-col justify-center items-center p-4">
-		<form method="POST" class="w-full" action="/turbotown?/useItem" use:enhance>
+		<form method="POST" class="w-full" action="/turbotown?/useObserver" use:enhance>
 			<input type="hidden" name="questStore" value={JSON.stringify(openStore)} />
 			<input type="hidden" name="questStoreSlot" value={openStoreSlot} />
 			<input type="hidden" name="turbotownID" value={turbotownID} />
