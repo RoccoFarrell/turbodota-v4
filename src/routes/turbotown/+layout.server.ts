@@ -92,6 +92,24 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 	let questChecks: any = null;
 
 	if (session && session.user) {
+		/* Get raw match data for user */
+		const response = await fetch(`/api/updateMatchesForUser/${session.user.account_id}`, {
+			method: 'GET'
+		});
+
+		let responseData = await response.json();
+		//console.log(responseData);
+
+		//user has at least 1 active random
+
+		if (!responseData.matchData || !responseData.matchData.length) {
+			error(500, {
+				message: `Open Dota Failed, no match data, returned length: ${JSON.stringify(responseData)}`
+			});
+		}
+
+		rawMatchData = responseData.matchData;
+		
 		/* 
 			Get season info
 		*/
@@ -210,8 +228,9 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 
 		let questCheckPromises = await quests
 			.filter((quest) => quest.active)
-			.map(async (quest) => {
+			.map(async (quest, i) => {
 				console.log('checking quest ', quest.id);
+				if(i > 0) await new Promise(resolve => setTimeout(resolve, 100 * i));
 				const questCompleteResponse = await fetch(`/api/town/${session.user.account_id}/quest/${quest.id}/complete`, {
 					method: 'POST',
 					headers: {
@@ -237,82 +256,66 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 
 		console.log(`active random length: ${randomsForUser.filter((random) => random.active).length}`);
 
-		const response = await fetch(`/api/updateMatchesForUser/${session.user.account_id}`, {
-			method: 'GET'
-		});
+		//old random match
+		// if (randomsForUser.length > 0 && randomsForUser.filter((random) => random.active).length > 0) {
+		// 	//fetch most recent matches
 
-		let responseData = await response.json();
-		//console.log(responseData);
+		// 	if (responseData.mocked) flags.mocked = true;
 
-		//user has at least 1 active random
+		// 	console.log([`[random+page.server.ts] found ${responseData.matchData.length} for user`]);
 
-		if (!responseData.matchData || !responseData.matchData.length) {
-			error(500, {
-				message: `Open Dota Failed, no match data, returned length: ${JSON.stringify(responseData)}`
-			});
-		}
+		// 	//format big int dates
+		// 	responseData.matchData.forEach((element: Match) => {
+		// 		element.start_time = new Date(Number(element.start_time) * 1000);
+		// 	});
 
-		rawMatchData = responseData.matchData;
+		// 	//a user should only ever have 1 active random, if not, sort by the oldest one for evaluation
+		// 	let activeRandoms = randomsForUser
+		// 		.filter((random) => random.active)
+		// 		.sort((a: any, b: any) => {
+		// 			if (a.date < b.date) return -1;
+		// 			else return 1;
+		// 		});
 
-		if (randomsForUser.length > 0 && randomsForUser.filter((random) => random.active).length > 0) {
-			//fetch most recent matches
+		// 	let activeRandomDate = activeRandoms[0].date;
+		// 	let activeRandomDate5Minutes = new Date(activeRandoms[0].date.getTime() - 5 * 60 * 1000);
+		// 	matchesSinceRandom = rawMatchData.filter((match: Match) => {
+		// 		match.start_time > activeRandomDate5Minutes;
+		// 	});
 
-			if (responseData.mocked) flags.mocked = true;
+		// 	console.log(`activeRandomDate: ${activeRandomDate}, minus 5 minutes: ${activeRandomDate5Minutes}`);
 
-			console.log([`[random+page.server.ts] found ${responseData.matchData.length} for user`]);
+		// 	//filter all matches for games in the oldest active random
+		// 	//minus 5 minutes from the random start date to account for picking phase
+		// 	filteredMatchData = rawMatchData
+		// 		.filter(
+		// 			(match: Match) =>
+		// 				match.hero_id === activeRandoms[0].randomedHero && match.start_time > activeRandomDate5Minutes
+		// 		)
+		// 		.sort((a: any, b: any) => {
+		// 			if (a.start_time < b.start_time) return -1;
+		// 			else return 1;
+		// 		});
 
-			//format big int dates
-			responseData.matchData.forEach((element: Match) => {
-				element.start_time = new Date(Number(element.start_time) * 1000);
-			});
-
-			//a user should only ever have 1 active random, if not, sort by the oldest one for evaluation
-			let activeRandoms = randomsForUser
-				.filter((random) => random.active)
-				.sort((a: any, b: any) => {
-					if (a.date < b.date) return -1;
-					else return 1;
-				});
-
-			let activeRandomDate = activeRandoms[0].date;
-			let activeRandomDate5Minutes = new Date(activeRandoms[0].date.getTime() - 5 * 60 * 1000);
-			matchesSinceRandom = rawMatchData.filter((match: Match) => {
-				match.start_time > activeRandomDate5Minutes;
-			});
-
-			console.log(`activeRandomDate: ${activeRandomDate}, minus 5 minutes: ${activeRandomDate5Minutes}`);
-
-			//filter all matches for games in the oldest active random
-			//minus 5 minutes from the random start date to account for picking phase
-			filteredMatchData = rawMatchData
-				.filter(
-					(match: Match) =>
-						match.hero_id === activeRandoms[0].randomedHero && match.start_time > activeRandomDate5Minutes
-				)
-				.sort((a: any, b: any) => {
-					if (a.start_time < b.start_time) return -1;
-					else return 1;
-				});
-
-			if (filteredMatchData.length > 0) {
-				let completeResponse = await fetch(`/api/random/${session.user.account_id}/complete`, {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json'
-					},
-					body: JSON.stringify({
-						completedRandom: activeRandoms[0],
-						completedMatch: filteredMatchData[0],
-						session: session
-					})
-				});
-				let completeResponseData = await completeResponse.json();
-				responseCompleteRandom = completeResponseData;
-				randomsForUser = await getRandomsForUser(leagueAndSeasonsResult[0].seasons[0].id);
-			} else {
-				responseCompleteRandom = { error: 'couldnt complete random' };
-			}
-		}
+		// 	if (filteredMatchData.length > 0) {
+		// 		let completeResponse = await fetch(`/api/random/${session.user.account_id}/complete`, {
+		// 			method: 'POST',
+		// 			headers: {
+		// 				'Content-Type': 'application/json'
+		// 			},
+		// 			body: JSON.stringify({
+		// 				completedRandom: activeRandoms[0],
+		// 				completedMatch: filteredMatchData[0],
+		// 				session: session
+		// 			})
+		// 		});
+		// 		let completeResponseData = await completeResponse.json();
+		// 		responseCompleteRandom = completeResponseData;
+		// 		randomsForUser = await getRandomsForUser(leagueAndSeasonsResult[0].seasons[0].id);
+		// 	} else {
+		// 		responseCompleteRandom = { error: 'couldnt complete random' };
+		// 	}
+		// }
 
 		/* End get randoms */
 	}
