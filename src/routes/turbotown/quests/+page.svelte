@@ -247,9 +247,11 @@
 										<Confetti x={[-2, 2]} delay={[500, 2000]} size={10} duration={5000} amount={50} fallDistance="75vh" />
 									</div>
 								{/if}
-								<div class={"h-full " + (animateSlot1 ? "exploding" : "")}>
-									<GenerateRandom {data} questSlot={1}></GenerateRandom>
-								</div>
+								{#key data}
+									<div class={"h-full " + (animateSlot1 ? "exploding" : "")}>
+										<GenerateRandom {data} questSlot={1}></GenerateRandom>
+									</div>
+								{/key}
 							</div>
 						</div>
 						{/key}
@@ -263,9 +265,11 @@
 										<Confetti x={[-2, 2]} delay={[500, 2000]} size={10} duration={5000} amount={50} fallDistance="75vh" />
 									</div>
 								{/if}
-								<div class={"h-full " + (animateSlot2 ? "exploding" : "")}>
-									<GenerateRandom {data} questSlot={2}></GenerateRandom>
-								</div>
+								{#key data}
+									<div class={"h-full " + (animateSlot2 ? "exploding" : "")}>
+										<GenerateRandom {data} questSlot={2}></GenerateRandom>
+									</div>
+								{/key}
 							</div>
 						</div>
 						{/key}
@@ -279,9 +283,11 @@
 										<Confetti x={[-2, 2]} delay={[500, 2000]} size={10} duration={5000} amount={50} fallDistance="75vh" />
 									</div>
 								{/if}
-								<div class={"h-full " + (animateSlot3 ? "exploding" : "")}>
-									<GenerateRandom {data} questSlot={3}></GenerateRandom>
-								</div>
+								{#key data}
+									<div class={"h-full " + (animateSlot3 ? "exploding" : "")}>
+										<GenerateRandom {data} questSlot={3}></GenerateRandom>
+									</div>
+								{/key}
 							</div>
 						</div>
 						{/key}
