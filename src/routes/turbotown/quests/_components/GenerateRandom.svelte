@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { slide } from 'svelte/transition';
-	import { quintOut } from 'svelte/easing';
+	import { slide, blur, fade } from 'svelte/transition';
+	import { flip } from 'svelte/animate';
+	import { quintIn, quintOut } from 'svelte/easing';
 	import { setContext, getContext } from 'svelte';
 
 	//prisma types
@@ -20,6 +21,9 @@
 		placement: 'bottom'
 	};
 
+	//images
+	import Dice from '$lib/assets/dice.png';
+
 	//page data
 	import type { PageData } from '../$types';
 	export let data: PageData;
@@ -27,6 +31,7 @@
 	//stores
 	//import { randomStore } from '$lib/stores/randomStore';
 	import { townStore } from '$lib/stores/townStore';
+	import { load } from '../../../blog/+page';
 
 	//component props
 	export let session: Session | null = null;
@@ -58,6 +63,7 @@
 		End Calculations
 	*/
 	const generateRandomHero = async () => {
+		loadingCircle = true;
 		//console.log('randomStore in generate random', randomStore);
 		console.log(`${$randomStore.availableHeroes.length} available random heroes`);
 
@@ -162,95 +168,55 @@
 	};
 
 	let stratzLoading: any = false;
+
+	//transitionCircle
+	let loadingCircle: boolean = false;
+	$: generatedRandomHero &&
+		setTimeout(() => {
+			loadingCircle = false;
+		}, 2000);
 </script>
 
 {#if generatedRandomHero}
 	<div class="flex flex-col justify-center items-center w-full relative z-0 rounded-xl h-full">
-		<!-- <img src={WantedPoster} alt="wanted" class="rounded-xl absolute"/> -->
-		<div
-			class="z-50 flex flex-col items-center rounded-2xl p-4 w-full h-full justify-around"
-			in:slide={{ delay: 250, duration: 300, easing: quintOut, axis: 'x' }}
-		>
-			<!-- <h1 class="h1 text-slate-900 font-bold">WANTED</h1> -->
-			<h2 class="h2 text-primary-500 font-bold">Wanted</h2>
-			<i class={`d2mh hero-${generatedRandomHero.id} xl:scale-[3] lg:scale-[2.5] md:scale-[2]`}></i>
-			<h1 class="xl-h1 h3 animate-pulse text-amber-600">
-				{generatedRandomHero.localized_name}
-			</h1>
-			<!-- <i class={`vibrating d2mh hero-${generatedRandomHero.id} scale-150`}></i> -->
-		</div>
-		<!-- 
-						<div class="w-fit mx-auto p-4 border border-dashed border-fuchsia-300 my-4 card">
-							<div class="grid grid-cols-3 place-content-start">
-								<p>Pulled {newerStratzMatches.length} matches from Stratz</p>
-								<div class="text-xs">
-									Most recent Stratz match: <p>{newerStratzMatches[0].id}</p>
-								</div>
-								<div class="text-xs mt-2">
-									Most recent Open Dota match: <p>{data.match.rawMatchData[0].match_id}</p>
-								</div>
-							</div>
-
-							<div><p class="inline text-primary-500">{stratzTimeoutCountdown}s</p> before you can check again</div>
-						</div> -->
-
-		<!-- {#await stratzLoading}
-			<div class="flex items-center justify-center h-full">
-				<button class="btn variant-filled-success w-full">
-					<i class="fi fi-br-refresh h-fit animate-spin"></i>
-					<div class="placeholder animate-pulse"></div>
-				</button>
-			</div>
-		{:then stratzData}
-			{#if stratzData}
-				<div class="w-fit mx-auto p-4 border border-dashed border-fuchsia-300 my-4 space-y-4 card">
-					<div>
-						{#if newerStratzMatches[0].id.toString() !== data.match.rawMatchData[0].match_id.toString()}
-							<div class="flex items-center justify-center p-1 space-x-2 text-green-500">
-								<i class="fi fi-ss-head-side-brain"></i>
-								<p>You may have a point...</p>
-							</div>
-						{:else}
-							<div class="text-amber-500 flex items-center space-x-2 justify-center p-1">
-								<i class="fi fi-br-database mx-2"></i>
-								<p>No new matches found from two sources...</p>
-							</div>
-						{/if}
-					</div>
-					<div class="grid grid-cols-3 place-content-start">
-						<p class="text-xs text-secondary-600">Pulled {newerStratzMatches.length} matches from Stratz</p>
-						<div class="text-xs">
-							Most recent Stratz match: <p class="font-bold text-primary-500">{newerStratzMatches[0].id}</p>
-						</div>
-						<div class="text-xs">
-							Most recent Open Dota match: <p class="font-bold text-primary-500">
-								{data.match.rawMatchData[0].match_id}
-							</p>
-						</div>
-					</div>
-
-					<div class="mt-2">
-						<p class="inline text-orange-500 font-bold">{stratzTimeoutCountdown}s</p>
-						before you can check again
-					</div>
-				</div>
-			{/if}
-		{/await} -->
-		{#if data.session && data.session.user}
-			<div class="flex items-center justify-center">
-				<button class="btn variant-filled-success w-full" use:popup={popupClick}>
-					<!-- <button
-					class="btn variant-filled-success w-full"
-					use:popup={popupClick}
-					on:click={() => {
-						stratzLoading = checkForRandomComplete();
-					}}
-				> -->
-					<i class="fi fi-br-refresh h-fit"></i>
-					<div class="italic">Completed?</div></button
-				>
+		{#if loadingCircle}
+			<div
+				class="absolute top-[30%] left-[25%] rounded-full w-32 animate-pulse"
+				out:fade={{ delay: 0, duration: 2000, easing: quintOut }}
+			>
+				<img src={Dice} alt="dice roll" class="spin" />
 			</div>
 		{/if}
+		<!-- <img src={WantedPoster} alt="wanted" class="rounded-xl absolute"/> -->
+		<div
+			class="flex flex-col justify-center items-center w-full relative z-0 rounded-xl h-full"
+			in:fade={{ delay: 0, duration: 4000, easing: quintIn }}
+			out:fade={{ delay: 0, duration: 4000, easing: quintOut }}
+		>
+			<div class="z-50 flex flex-col items-center rounded-2xl p-4 w-full h-full justify-around">
+				<!-- <h1 class="h1 text-slate-900 font-bold">WANTED</h1> -->
+				<h2 class="h2 text-primary-500 font-bold">Wanted</h2>
+				<i class={`d2mh hero-${generatedRandomHero.id} xl:scale-[3] lg:scale-[2.5] md:scale-[2]`}></i>
+				<h1 class="xl-h1 h3 font-bold animate-pulse text-amber-600">
+					{generatedRandomHero.localized_name}
+				</h1>
+				<!-- <i class={`vibrating d2mh hero-${generatedRandomHero.id} scale-150`}></i> -->
+			</div>
+			<!-- {#if data.session && data.session.user}
+				<div class="flex items-center justify-center">
+					<button
+						class="btn variant-filled-success w-full"
+						use:popup={popupClick}
+						on:click={() => {
+							stratzLoading = checkForRandomComplete();
+						}}
+					>
+						<i class="fi fi-br-refresh h-fit"></i>
+						<div class="italic">Completed?</div></button
+					>
+				</div>
+			{/if} -->
+		</div>
 		<!-- {#if data.session && data.session.user}
 					<div class="my-4"><MatchHistory {matchTableData} /></div>
 				{/if} -->
@@ -339,3 +305,27 @@
 		{/await}
 	</div>
 </div>
+
+<style>
+	.spin {
+		-webkit-animation: spin 2s linear infinite;
+		-moz-animation: spin 2s linear infinite;
+		animation: spin 2s linear infinite;
+	}
+	@-moz-keyframes spin {
+		100% {
+			-moz-transform: rotate(360deg);
+		}
+	}
+	@-webkit-keyframes spin {
+		100% {
+			-webkit-transform: rotate(360deg);
+		}
+	}
+	@keyframes spin {
+		100% {
+			-webkit-transform: rotate(360deg);
+			transform: rotate(360deg);
+		}
+	}
+</style>

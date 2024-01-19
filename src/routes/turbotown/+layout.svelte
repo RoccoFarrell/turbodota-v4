@@ -270,7 +270,7 @@
 				out:slide={{ delay: 100, duration: 200, easing: expoOut, axis: 'y' }}
 				class="fixed bottom-0 left-[256px] w-[calc(100vw-256px)] h-16 z-0"
 			>
-				<div class="w-full h-full rounded-t-3xl bg-yellow-950 hover:bg-yellow-900">
+				<div class="w-full h-full rounded-t-3xl bg-yellow-950 hover:bg-yellow-900 border border-yellow-800 bg-gradient-to-b to-transparent from-yellow-950">
 					<button on:click={collapse} class="w-full h-full flex items-center justify-center space-x-4">
 						<i class="fi fi-rs-backpack text-3xl"></i>
 						<p>Inventory</p>
@@ -287,7 +287,7 @@
 				use:clickOutside
 				on:click_outside={onBlur}
 			>
-				<div class="w-full h-16 rounded-t-3xl bg-yellow-950 hover:bg-yellow-900">
+				<div class="w-full h-16 rounded-t-3xl bg-yellow-950 hover:bg-yellow-900 border-yellow-800 border-t border-l border-r bg-gradient-to-b to-transparent from-yellow-950">
 					<button on:click={collapse} class="w-full h-full flex items-center justify-center space-x-8"
 						><i class="fi fi-br-angle-small-down text-3xl"></i>Close Inventory</button
 					>

@@ -171,31 +171,6 @@
 					</p>
 				</div>
 				<h2 class="h2 text-center text-success-500">Select Your Random Hero!</h2>
-				<!-- <div class="mx-auto w-3/4">
-						<div class="w-full flex text-sm justify-center items-center space-x-4 my-2">
-							<label class="flex items-center space-x-2 relative h-8 p-2">
-								{#if !!$quest1Store.randomedHero}
-									<div class="absolute w-full h-full bg-primary-500/20 rounded-xl"><img src={Lock} class="h-8 w-8 mx-auto" alt="locked" /></div>
-								{/if}
-								<input class="radio" type="radio" name="radio-direct" value="1" disabled={!!$quest1Store.randomedHero} checked={!$quest1Store}/>
-								<p>Quest Slot 1</p>
-							</label>
-							<label class="flex items-center space-x-2 relative h-8 p-2">
-								{#if !!$quest2Store.randomedHero}
-									<div class="absolute w-full h-full bg-primary-500/20 rounded-xl"><img src={Lock} class="h-8 w-8 mx-auto" alt="locked" /></div>
-								{/if}
-								<input class="radio" type="radio" name="radio-direct" value="2" disabled={!!$quest2Store.randomedHero} checked={!!$quest1Store && !$quest2Store.randomedHero}/>
-								<p>Quest Slot 2</p>
-							</label>
-							<label class="flex items-center space-x-2 relative h-8 p-2">
-								{#if !!$quest3Store.randomedHero}
-									<div class="absolute w-full h-full bg-primary-500/20 rounded-xl"><img src={Lock} class="h-8 w-8 mx-auto" alt="locked" /></div>
-								{/if}
-								<input class="radio" type="radio" name="radio-direct" value="3" disabled={!!$quest3Store.randomedHero} checked={!!$quest1Store && !!$quest2Store.randomedHero && !$quest3Store}/>
-								<p>Quest Slot 3</p>
-							</label>
-						</div>
-				</div> -->
 				<div class="h-full w-full grid grid-cols-3 mx-auto my-4 p-4 gap-4">
 					{#each randomHeroList as hero, i}
 						<div
@@ -218,19 +193,3 @@
 		</form>
 	</div>
 </div>
-
-<!-- <div class="card w-screen flex flex-col justify-center items-center p-4">
-	<div class="mb-2 bg-surface-500/10 p-4 rounded-full mx-auto shadow-md col-span-1">
-		<h3 class="h3 dark:text-yellow-500 text-primary-500 text-center">Random Hero Selection</h3>
-
-		<button class="btn variant-filled-primary" on:click={() => onFormSubmit(generatedRandomHero1)}
-			>{generatedRandomHero1.localized_name}</button
-		>
-		<button class="btn variant-filled-primary" on:click={() => onFormSubmit(generatedRandomHero2)}
-			>{generatedRandomHero2.localized_name}</button
-		>
-		<button class="btn variant-filled-primary" on:click={() => onFormSubmit(generatedRandomHero3)}
-			>{generatedRandomHero3.localized_name}</button
-		>
-	</div>
-</div> -->

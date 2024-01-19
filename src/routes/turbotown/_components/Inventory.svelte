@@ -134,7 +134,7 @@
 </script>
 
 <div class="w-full h-full z-40">
-	<div class="flex h-full mx-auto w-full max-sm:mb-20">
+	<div class="flex h-full mx-auto w-full max-sm:mb-20 my-8">
 		<div class="w-full flex p-2">
 			<!-- <div class="mb-2 p-4 rounded-full w-4/5 mx-auto shadow-md col-span-1">
 				<h3 class="h3 dark:text-yellow-500 text-primary-500 text-center">Inventory</h3>
