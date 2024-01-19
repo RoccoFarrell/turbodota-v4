@@ -34,10 +34,14 @@
 	import Loading from '$lib/components/Loading.svelte';
 	import HeroGrid from '$lib/components/HeroGrid/HeroGrid.svelte';
 	import AdminTools from '$lib/components/AdminTools.svelte';
+
 	//assets
 	import '@flaticon/flaticon-uicons/css/all/all.css';
 	//import HeroSprites from 'dota2-css-hero-sprites/assets/stylesheets/dota2minimapheroes.css'
 	import 'dota2-css-hero-sprites/assets/stylesheets/dota2minimapheroes.css';
+
+	//constants
+	import { constant_townVersion } from '$lib/constants/turbotown';
 
 	//images
 	import steam_logo from '$lib/assets/steam_logo.png';
@@ -266,11 +270,15 @@
 				<Navigation {session} />
 				<div class="flex flex-col items-center w-full justify-center bottom-0 relative">
 					<div class="p-2 flex flex-col justify-center items-center">
+						<a href="/blog/410b">
+							<p class="text-xs italic text-tertiary-500">Patch: {constant_townVersion}</p>
+						</a>
 						<a href="https://twitter.com/nosaltstudios" target="_blank" class="hover:text-blue-900">
 							<p class="text-sm font-bold italic text-slate-300 dark:text-surface-400 hover:text-blue-900">
 								No Salt Studios 2024
 							</p>
 						</a>
+
 						<p class="text-sm italic text-slate-300 dark:text-surface-400 text-center">
 							Dota 2 is a trademark of Valve Corporation
 						</p>

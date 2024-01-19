@@ -5,6 +5,9 @@ import winOrLoss from '$lib/helpers/winOrLoss';
 import dayjs from 'dayjs';
 import type { Random } from '@prisma/client';
 
+//constants
+import { questWin_xpMultiplier, questWin_goldMultiplier, questLoss_goldMultiplier, questLoss_xpMultiplier } from '$lib/constants/turbotown'
+
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unreachable code error
 BigInt.prototype.toJSON = function (): number {
@@ -100,8 +103,8 @@ export const POST: RequestHandler = async ({ request, params, url, locals, fetch
 										status: 'completed',
 										win: completedRandom.win ? true : false,
 										endDate: dayjs().toDate(),
-										endXp: completedRandom.win ? quest.xp * 1.5 : quest.xp,
-										endGold: completedRandom.win ? quest.gold : 0
+										endXp: completedRandom.win ? quest.xp * questWin_xpMultiplier : quest.xp * questLoss_xpMultiplier,
+										endGold: completedRandom.win ? quest.gold * questWin_goldMultiplier : quest.gold * questLoss_goldMultiplier
 									},
 								}
 							}

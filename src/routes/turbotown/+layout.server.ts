@@ -354,7 +354,7 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 			questChecks
 		},
 		league: {
-			leagueID: leagueAndSeasonsResult[0].id,
+			leagueID: leagueAndSeasonsResult ? leagueAndSeasonsResult[0].id : null,
 			seasonID: currentSeason?.id,
 			leagueAndSeasonsResult,
 			currentSeason,

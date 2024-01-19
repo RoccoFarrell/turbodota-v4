@@ -1,11 +1,12 @@
 ---
-title: Turbodota January Release is Here!
+title: Turbodota January Release 4.10 is Here!
 description: Turbotown, Quest Board, Shop, Observer Ward, XP, and more now available.
 date: '2024-01-19'
 categories:
   - TurboTown
   - MajorRelease
   - seasonEnd
+  - v4.10
 published: true
 ---
 <script context="module">
