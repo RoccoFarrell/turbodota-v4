@@ -1,0 +1,3 @@
+id,name,lastUpdated,startDate,endDate,type,creatorID,leagueID,active
+1,NABCC - Random Season 1 - Dec 2023,2023-12-28 02:16:29.398,2023-12-01 00:00:00,2024-01-08 05:00:00,random,65110965,1,false
+2,NABCC - Random - Jan 2024,2024-01-08 15:12:19.586,2024-01-08 00:00:00,2024-02-04 00:00:00,random,65110965,1,true

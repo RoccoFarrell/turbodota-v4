@@ -220,7 +220,20 @@
 					<img class="hidden dark:block w-32" alt="TurboTownDark" src={town_logo_dark} />
 					<h2 class="h2 text-amber-500 max-md:font-bold text-center">{routeName}</h2>
 				</div>
-				<div class="col-span-2 border-r border-dashed border-primary-500"></div>
+				<div class="col-span-2 border-r border-dashed border-primary-500 h-100% p-1">
+					<div class="border border-orange-500 h-full grid grid-cols-2 ">
+						<div class="flex flex-col w-full">
+							<p class="text-center border-b border-tertiary-500 w-1/2 mx-auto">Turbotown Stats</p>
+							<div class="grid grid-cols-3 w-full h-full">
+								<div class="border border-green-500">test</div>
+								<div class="border border-green-500">test</div>
+								<div class="border border-green-500">test</div>
+							</div>
+						</div>
+						<button class="btn variant-ghost-primary">Leaderboard</button>
+					</div>
+					
+				</div>
 
 				<div id="turbotownProfile" class="rounded-xl grid grid-cols-4 py-1 px-2">
 					<div id="townProfileImage" class="flex flex-col justify-center items-center">

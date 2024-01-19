@@ -102,11 +102,11 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 
 		//user has at least 1 active random
 
-		if (!responseData.matchData || !responseData.matchData.length) {
-			error(500, {
-				message: `Open Dota Failed, no match data, returned length: ${JSON.stringify(responseData)}`
-			});
-		}
+		// if (!responseData.matchData || !responseData.matchData.length) {
+		// 	error(500, {
+		// 		message: `Open Dota Failed, no match data, returned length: ${JSON.stringify(responseData)}`
+		// 	});
+		// }
 
 		rawMatchData = responseData.matchData;
 		
@@ -193,6 +193,9 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 					quests: {
 						include: {
 							random: true
+						},
+						orderBy:{
+							endDate: 'asc'
 						}
 					},
 					season: true,

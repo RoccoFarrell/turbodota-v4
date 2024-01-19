@@ -1,4 +1,10 @@
 <script lang="ts">
+	import AddRandomsToSeason from './AddRandomsToSeason.svelte';
+
+	//components
+	import SeasonHeaderCard from './SeasonHeaderCard.svelte';
+	import SeasonLeaderboard from './SeasonLeaderboard.svelte';
+
 	//SVELTE
 	import { enhance } from '$app/forms';
 
@@ -21,7 +27,7 @@
 	export let data;
 	console.log(`[/seasons/<ID>] data: `, data);
 
-	const table = createTable(readable(data.allRandoms), {
+	const table = createTable(readable(data.random.allRandoms), {
 		select: addSelectedRows()
 	});
 
@@ -86,78 +92,36 @@
 		<div class="flex items-center w-full justify-around space-x-4 border-b border-dashed border-primary-500 p-4">
 			<div class="flex items-center space-x-4">
 				<p class="text-sm text-tertiary-500">season:</p>
-				<h2 class="h2 text-primary-500">{data.selectedSeason.name}</h2>
+				<h2 class="h2 text-primary-500">{data.league.currentSeason.name}</h2>
 			</div>
 
 			<div>
 				<div class="text-tertiary-500">
 					<p class="inline text-xs">started:</p>
-					<p class="inline font-semibold text-primary-500">{dayjs().to(dayjs(data.selectedSeason.startDate))}</p>
+					<p class="inline font-semibold text-primary-500">{dayjs().to(dayjs(data.league.currentSeason.startDate))}</p>
 				</div>
 				<div class="text-tertiary-500">
 					<p class="inline text-xs">ends:</p>
-					<p class="inline font-semibold text-green-500">{dayjs().to(dayjs(data.selectedSeason.endDate))}</p>
+					<p class="inline font-semibold text-green-500">{dayjs().to(dayjs(data.league.currentSeason.endDate))}</p>
 				</div>
 			</div>
 		</div>
-		<div class="grid grid-cols-2"></div>
-		<div class="flex flex-col w-full space-y-4 my-4">
-			<h2 class="h2">Add Randoms</h2>
-			<form method="POST" class="space-y-8" action="?/updateSeasonRandoms" use:enhance>
-				<button class="btn variant-filled-primary" type="submit">Update Randoms in Season</button>
-				
-				<label class="label w-1/4">
-					<span>League ID</span>
-					<input class="input text-xs" type="text" disabled name="seasonID" bind:value={data.selectedSeason.id} />
-					<input class="input text-xs" type="text" hidden name="seasonID" bind:value={data.selectedSeason.id} />
-				</label>
-				<label class="label">
-					<span>Random IDs</span>
-					<textarea class="textarea" rows="3" name="selectedDataIds" bind:value={formDataIds} />
-				</label>
-				
-			</form>
-			<!-- Data Table -->
-			<div class="rounded-md border">
-				<Table.Root {...$tableAttrs}>
-					<Table.Header>
-						{#each $headerRows as headerRow}
-							<Subscribe rowAttrs={headerRow.attrs()}>
-								<Table.Row>
-									{#each headerRow.cells as cell (cell.id)}
-										<Subscribe attrs={cell.attrs()} let:attrs props={cell.props()}>
-											<Table.Head {...attrs} class="[&:has([role=checkbox])]:pl-3">
-												<Render of={cell.render()} />
-											</Table.Head>
-										</Subscribe>
-									{/each}
-								</Table.Row>
-							</Subscribe>
-						{/each}
-					</Table.Header>
-					<Table.Body {...$tableBodyAttrs}>
-						{#each $pageRows as row (row.id)}
-							<Subscribe rowAttrs={row.attrs()} let:rowAttrs>
-								<Table.Row {...rowAttrs} data-state={$selectedDataIds[row.id] && 'selected'}>
-									{#each row.cells as cell (cell.id)}
-										<Subscribe attrs={cell.attrs()} let:attrs>
-											<Table.Cell {...attrs}>
-												<Render of={cell.render()} />
-											</Table.Cell>
-										</Subscribe>
-									{/each}
-								</Table.Row>
-							</Subscribe>
-						{/each}
-					</Table.Body>
-				</Table.Root>
-			</div>
-			<div class="flex items-center justify-end space-x-4 py-4">
-				<div class="flex-1 text-sm text-muted-foreground">
-					{Object.keys($selectedDataIds).length} of{' '}
-					{$pageRows.length} row(s) selected.
-				</div>
+		<div class="container">
+			<!-- <div>
+				<HeroGrid heroes={data.heroDescriptions.allHeroes}/>
+			</div> -->
+			<!-- <SeasonHeaderCard data={data}></SeasonHeaderCard> -->
+			<div class="flex flex-col space-y-4 justify-center items-center">
+				{#if data.league.currentSeason && data.league.currentSeason.turbotowns}
+					<SeasonLeaderboard
+						turbotowns={data.league.currentSeason.turbotowns}
+						members={data.league.leagueAndSeasonsResult[0].members}
+						randoms={data.league.currentSeason.randoms}
+					/>
+				{/if}
 			</div>
 		</div>
+
+		<!-- <AddRandomsToSeason data={data}></AddRandomsToSeason> -->
 	</div>
 </section>

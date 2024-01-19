@@ -57,7 +57,7 @@ export const POST: RequestHandler = async ({ request, params, url, locals, fetch
 					body: JSON.stringify({ random: requestData.random })
 				}
 			);
-			console.log(`[api/town/${account_id}/quest/${questID}/complete] check random response: `, response);
+			//console.log(`[api/town/${account_id}/quest/${questID}/complete] check random response: `, response);
 
 			let responseData = await response.json();
 			if (responseData.success) {
@@ -98,16 +98,21 @@ export const POST: RequestHandler = async ({ request, params, url, locals, fetch
 									data: {
 										active: false,
 										status: 'completed',
+										win: completedRandom.win ? true : false,
 										endDate: dayjs().toDate(),
 										endXp: completedRandom.win ? quest.xp * 1.5 : quest.xp,
 										endGold: completedRandom.win ? quest.gold : 0
-									}
+									},
 								}
 							}
 						},
 						include: {
 							metrics: true,
-							quests: true
+							quests: {
+								orderBy:{
+									endDate: 'asc'
+								}
+							}
 						}
 					});
 

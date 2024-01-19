@@ -248,6 +248,7 @@ model TurbotownQuest {
   id          Int       @id @default(autoincrement())
   active      Boolean
   status      String
+  win         Boolean?
   xp          Int
   gold        Int
   endXp       Int?

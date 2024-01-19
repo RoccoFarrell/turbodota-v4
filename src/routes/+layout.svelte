@@ -1,7 +1,7 @@
 <script lang="ts">
 	import '../app.pcss';
 
-	import { setContext } from 'svelte';
+	import { getContext, setContext } from 'svelte';
 
 	import { dev } from '$app/environment';
 	import { beforeNavigate } from '$app/navigation';
@@ -101,6 +101,9 @@
 	//set session in context for components
 	setContext('session', session);
 	setContext('userPreferences', data.userPreferences);
+	setContext('openDotaDown', false)
+
+	let openDotaDown = getContext('openDotaDown')
 
 	let navigatingTest = false;
 
@@ -178,10 +181,12 @@
 {:then}
 	<Toast />
 	<Modal components={modalRegistry} />
+
 	<Drawer><Navigation {session} /></Drawer>
 	<AppShell slotSidebarLeft="bg-surface-500/10 w-0 lg:w-64">
 		<svelte:fragment slot="header">
 			<!-- App Bar -->
+
 			<AppBar shadow="shadow-md">
 				<svelte:fragment slot="lead">
 					<!-- Hamburger Button-->
@@ -259,13 +264,23 @@
 			<!-- Insert the list: -->
 			<div class="border-r border-primary-500/30 h-full flex flex-col justify-between">
 				<Navigation {session} />
-				<div class="flex flex-col items-center w-full justify-center p-2 bottom-0 relative">
-					<a href="https://twitter.com/nosaltstudios" target="_blank" class="hover:text-blue-900">
-						<p class="text-sm font-bold italic text-slate-300 dark:text-surface-400 hover:text-blue-900">No Salt Studios 2024</p>
-					</a>
-					<p class="text-sm italic text-slate-300 dark:text-surface-400 text-center ">
-						Dota 2 is a trademark of Valve Corporation
-					</p>
+				<div class="flex flex-col items-center w-full justify-center bottom-0 relative">
+					<div class="p-2 flex flex-col justify-center items-center">
+						<a href="https://twitter.com/nosaltstudios" target="_blank" class="hover:text-blue-900">
+							<p class="text-sm font-bold italic text-slate-300 dark:text-surface-400 hover:text-blue-900">
+								No Salt Studios 2024
+							</p>
+						</a>
+						<p class="text-sm italic text-slate-300 dark:text-surface-400 text-center">
+							Dota 2 is a trademark of Valve Corporation
+						</p>
+					</div>
+					{#if openDotaDown}
+					<div class="h-16 w-[90%] bg-warning-500 p-2 flex flex-col justify-center items-center rounded-xl m-2">
+						<p class="font-bold text-lg text-primary-500 vibrating">WARNING</p>
+						<p class="font-bold text-red-500">Open Dota Down</p>
+					</div>
+					{/if}
 				</div>
 			</div>
 

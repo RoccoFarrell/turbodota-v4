@@ -57,11 +57,14 @@
 		</li>
 		<li
 			class={'flex items-center justify-start rounded-full ' +
-				($page.url.pathname === '/random/leaderboard' ? 'border border-secondary-500/60' : '')}
+				($page.url.pathname === '/turbotown/skills' ? 'border border-secondary-500/60' : '')}
 		>
-			<a href="/random/leaderboard" data-sveltekit-preload-data="tap" class="w-full"
-				><i class="fi fi-rr-trophy-star text-red-500"></i>
-				<p class={$page.url.pathname === '/random/leaderboard' ? 'font-bold' : ''}>Leaderboard</p></a
+			<a href="/turbotown/skills" data-sveltekit-preload-data="tap" class="w-full"
+				><i
+				class=
+				"fi fi-rr-head-side-brain text-red-500"
+				></i>
+				<p class={$page.url.pathname === '/turbotown/skills' ? 'font-bold' : ''}>Skills</p></a
 			>
 		</li>
 		<hr class="!border-t-4" />
