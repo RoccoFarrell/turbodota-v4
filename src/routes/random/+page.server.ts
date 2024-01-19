@@ -1,7 +1,7 @@
 import type { Actions, PageServerLoad } from './$types';
 import { auth } from '$lib/server/lucia';
 import prisma from '$lib/server/prisma';
-import type { Prisma } from '@prisma/client';
+import type { Prisma, Turbotown, Season } from '@prisma/client';
 import { error, fail, redirect } from '@sveltejs/kit';
 import { calculateRandomLeaderboard } from '$lib/helpers/leaderboardFromSeason';
 
@@ -13,9 +13,10 @@ BigInt.prototype.toJSON = function (): number {
 	return this.toString();
 };
 
-export const load: PageServerLoad = async ({ locals, parent, url }) => {
+export const load: PageServerLoad = async ({ locals, parent, url, fetch }) => {
 	const parentData = await parent();
 	const session = await locals.auth.validate();
+	console.log('[random page.server] - session in page server: ', session)
 	//if (session) throw redirect(302, "/");
 
 	async function getRandomsForUser(seasonID: number) {
@@ -60,7 +61,9 @@ export const load: PageServerLoad = async ({ locals, parent, url }) => {
 	let responseComplete: any = null;
 	let matchesSinceRandom: Match[] = [];
 	let leagueAndSeasonsResult: any = null;
+	let currentSeason: Season | null = null;
 	let currentSeasonLeaderboard: any = [];
+	let currentTown: Turbotown | null = null;
 
 	if (session && session.user) {
 		/* 
@@ -92,6 +95,15 @@ export const load: PageServerLoad = async ({ locals, parent, url }) => {
 								match: true
 							}
 						},
+						turbotowns: {
+							include: {
+								quests: {
+									include: {
+										random: true
+									}
+								}
+							}
+						},
 						_count: {
 							select: { randoms: true }
 						}
@@ -101,17 +113,57 @@ export const load: PageServerLoad = async ({ locals, parent, url }) => {
 		});
 
 		/* current season leaderboard */
-		if(leagueAndSeasonsResult && leagueAndSeasonsResult[0]) currentSeasonLeaderboard = calculateRandomLeaderboard(leagueAndSeasonsResult[0].members, leagueAndSeasonsResult[0].seasons[0].randoms)
-		else console.error('could not load season leaderboard in server')
+		if (leagueAndSeasonsResult && leagueAndSeasonsResult[0] && leagueAndSeasonsResult[0].seasons.length > 0) {
+			//set season
+			currentSeason = leagueAndSeasonsResult[0].seasons[0];
+			// calculate leaderboard
+			currentSeasonLeaderboard = calculateRandomLeaderboard(
+				leagueAndSeasonsResult[0].members,
+				leagueAndSeasonsResult[0].seasons[0].randoms
+			);
+		} else console.error('could not load season leaderboard in server');
 
 		/* End get season info */
 		/* ------------------- */
 
-		randomsForUser = await getRandomsForUser(leagueAndSeasonsResult[0].seasons[0].id);
+		/* Get current Town Info */
+		/* ------------------- */
+
+		if (currentSeason) {
+			currentTown = await prisma.turbotown.findFirst({
+				where: {
+					AND: [
+						{ account_id: session.user.account_id },
+						{
+							season: {
+								id: currentSeason.id
+							}
+						}
+					]
+				}
+			});
+		}
+
+		console.log(`[random page.server.ts] - current town: `, currentTown)
+
+		if(!currentTown){
+			console.log(`[random page.server.ts] - creating town for: ${session.user.account_id}`)
+			const response = await fetch(`/api/town/${session.user.account_id}/create`, {
+				method: 'POST'
+			});
+			//console.log("create town response: ", response)
+		}
+
+		/* End town info */
+		/* ------------------- */
+
+		if (leagueAndSeasonsResult[0] && leagueAndSeasonsResult[0].seasons.length > 0) {
+			randomsForUser = await getRandomsForUser(leagueAndSeasonsResult[0].seasons[0].id);
+		} else randomsForUser = [];
 
 		console.log(`active random length: ${randomsForUser.filter((random) => random.active).length}`);
 
-		const response = await fetch(`${url.origin}/api/updateMatchesForUser/${session.user.account_id}`, {
+		const response = await fetch(`/api/updateMatchesForUser/${session.user.account_id}`, {
 			method: 'GET'
 		});
 
@@ -169,7 +221,7 @@ export const load: PageServerLoad = async ({ locals, parent, url }) => {
 				});
 
 			if (filteredMatchData.length > 0) {
-				let completeResponse = await fetch(`${url.origin}/api/random/${session.user.account_id}/complete`, {
+				let completeResponse = await fetch(`/api/random/${session.user.account_id}/complete`, {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json'
@@ -189,9 +241,6 @@ export const load: PageServerLoad = async ({ locals, parent, url }) => {
 		}
 
 		/* End get randoms */
-
-
-		//console.log(currentSeasonLeaderboard)
 	}
 	return {
 		...parentData,
@@ -202,6 +251,7 @@ export const load: PageServerLoad = async ({ locals, parent, url }) => {
 		flags,
 		responseComplete,
 		leagueAndSeasonsResult,
+		currentSeason,
 		//dont know why i have to do this, its a non POJO for some reason
 		currentSeasonLeaderboard: structuredClone(currentSeasonLeaderboard)
 	};

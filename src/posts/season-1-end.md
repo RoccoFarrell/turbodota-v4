@@ -16,11 +16,19 @@ Greetings Turbodota challengers! 👋
 
 <img src="{base}/season1leaderboard.png">
 
+Some quick stats on Season 1:
+
+### 336 Randoms completed
+
 | Category | Player |
 | -------- | ------ |
 | Most Games | **Dan** |
 | Best Win Rate | **Walker** |
 | Best KDA | **Walker** |
+| 2nd Best KDA | **Rocco** |
+| Best Dev Effort | **Rocco** |
+| Lowest Win Rate | **Rocco** |
+| Most Complaining | **Ben** |
 
 Congrats Dan on winning season 1.
 --- 

@@ -66,5 +66,10 @@ export const GET: RequestHandler = async ({ params, url }) => {
         })
     }
 
-    return new Response(JSON.stringify({ allHeroes, dataSource }))
+    return new Response(JSON.stringify({ allHeroes, dataSource }), {
+		headers: {
+			'cache-control': `max-age=2592000`
+			
+		}
+	})
 };

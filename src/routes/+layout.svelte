@@ -1,5 +1,14 @@
 <script lang="ts">
 	import '../app.pcss';
+
+	import { getContext, setContext } from 'svelte';
+
+	import { dev } from '$app/environment';
+	import { beforeNavigate } from '$app/navigation';
+	import { navigating, page } from '$app/stores';
+	import { browser } from '$app/environment';
+
+	//skeleton
 	import {
 		AppShell,
 		AppBar,
@@ -7,13 +16,14 @@
 		initializeStores,
 		Drawer,
 		getDrawerStore,
+		Modal,
 		Toast
 	} from '@skeletonlabs/skeleton';
-	import { dev } from '$app/environment';
-
-	import { beforeNavigate } from '$app/navigation';
-	import { navigating, page } from '$app/stores';
-	import { browser } from '$app/environment';
+	import type { ModalComponent } from '@skeletonlabs/skeleton';
+	import { getModalStore } from '@skeletonlabs/skeleton';
+	import type { ModalSettings } from '@skeletonlabs/skeleton';
+	//must be called in root layout, one time
+	initializeStores();
 
 	//types
 	import type { PageData } from './$types';
@@ -22,18 +32,18 @@
 	//components
 	import Navigation from './_components/Navigation/Navigation.svelte';
 	import Loading from '$lib/components/Loading.svelte';
-
+	import HeroGrid from '$lib/components/HeroGrid/HeroGrid.svelte';
+	import AdminTools from '$lib/components/AdminTools.svelte';
 	//assets
-	import "@flaticon/flaticon-uicons/css/all/all.css";
+	import '@flaticon/flaticon-uicons/css/all/all.css';
 	//import HeroSprites from 'dota2-css-hero-sprites/assets/stylesheets/dota2minimapheroes.css'
 	import 'dota2-css-hero-sprites/assets/stylesheets/dota2minimapheroes.css';
-
 
 	//images
 	import steam_logo from '$lib/assets/steam_logo.png';
 	import turbo_logo from '$lib/assets/turbologo.png';
+	import ogImage from '$lib/assets/turbodota_1200-630.png';
 
-	import ogImage from '$lib/assets/turbodota_1200-630.png'
 	// Floating UI for Popups
 	import { computePosition, autoUpdate, flip, shift, offset, arrow } from '@floating-ui/dom';
 	import { storePopup } from '@skeletonlabs/skeleton';
@@ -41,7 +51,6 @@
 
 	//analytics
 	import { inject } from '@vercel/analytics';
-
 	inject({ mode: dev ? 'development' : 'production' });
 
 	//mocks
@@ -87,12 +96,32 @@
 
 	export let data: PageData;
 
-	let session: Session = data.session || null;
+	let session: Session | null = data.session || null;
+
+	//set session in context for components
+	setContext('session', session);
+	setContext('userPreferences', data.userPreferences);
+	setContext('openDotaDown', false)
+
+	let openDotaDown = getContext('openDotaDown')
 
 	let navigatingTest = false;
 
+	//set context for modal component
+
+	setContext('heroes', data.heroDescriptions.allHeroes);
+
+	//modal
+	const modalStore = getModalStore();
+
+	const modalRegistry: Record<string, ModalComponent> = {
+		// Set a unique modal ID, then pass the component reference
+		heroGrid: { ref: HeroGrid },
+		adminTools: { ref: AdminTools }
+		// ...
+	};
+
 	//drawer
-	initializeStores();
 
 	const drawerStore = getDrawerStore();
 
@@ -103,15 +132,24 @@
 	beforeNavigate(() => {
 		drawerStore.close();
 	});
+
+	// popup
+	$: console.log(storePopup);
+	import { popup } from '@skeletonlabs/skeleton';
+	import type { PopupSettings } from '@skeletonlabs/skeleton';
+	const adminPopupClick: PopupSettings = {
+		event: 'click',
+		target: 'adminTools',
+		placement: 'right'
+	};
+
+	const modal: ModalSettings = {
+		type: 'component',
+		component: 'adminTools'
+	};
 </script>
 
 <svelte:head>
-	<!-- <link
-		rel="stylesheet"
-		type="text/css"
-		href={HeroSprites}
-	/> -->
-
 	<!-- 
 
 		OG Meta Stuff
@@ -126,10 +164,7 @@
 	<meta property="og:type" content="website" />
 	<meta property="og:title" content="Turbodota - The Tracker for Turbo" />
 	<meta property="og:description" content="Track your randoms, and compete to become Mayor of Turbotown!" />
-	<meta
-		property="og:image"
-		content={ogImage}
-	/>
+	<meta property="og:image" content={ogImage} />
 
 	<!-- Twitter Meta Tags -->
 	<meta name="twitter:card" content="summary_large_image" />
@@ -137,10 +172,7 @@
 	<meta property="twitter:url" content="https://new.turbodota.com" />
 	<meta name="twitter:title" content="Turbodota - The Tracker for Turbo" />
 	<meta name="twitter:description" content="Track your randoms, and compete to become Mayor of Turbotown!" />
-	<meta
-		name="twitter:image"
-		content={ogImage}
-	/>
+	<meta name="twitter:image" content={ogImage} />
 </svelte:head>
 
 <!-- App Shell -->
@@ -148,10 +180,13 @@
 	<div>Registering service worker {isReady}</div>
 {:then}
 	<Toast />
+	<Modal components={modalRegistry} />
+
 	<Drawer><Navigation {session} /></Drawer>
 	<AppShell slotSidebarLeft="bg-surface-500/10 w-0 lg:w-64">
 		<svelte:fragment slot="header">
 			<!-- App Bar -->
+
 			<AppBar shadow="shadow-md">
 				<svelte:fragment slot="lead">
 					<!-- Hamburger Button-->
@@ -169,8 +204,23 @@
 						<strong class="text-sm lg:text-xl uppercase ml-4 text-center">Turbodota v4</strong>
 						{#if dev}
 							<div class="mx-8 flex flex-col">
-								<p>{`isReady: ${JSON.stringify(isReady)}`}</p>
+								<!-- <p>{`isReady: ${JSON.stringify(isReady)}`}</p> -->
 								<p>{`env: ${process.env.NODE_ENV}`}</p>
+							</div>
+							<!-- <button 
+							class="btn variant-ghost-warning" 
+							use:popup={adminPopupClick}>
+							Admin tools
+						</button> -->
+							<button
+								class="btn variant-ghost-warning"
+								on:click={() => {
+									modalStore.trigger(modal);
+								}}>Admin Tools</button
+							>
+							<div class="z-50 card p-4 variant-filled-primary" data-popup="adminTools">
+								<p>Click Content</p>
+								<div class="arrow variant-filled-primary" />
 							</div>
 						{/if}
 					</div>
@@ -204,7 +254,7 @@
 							{/if}
 						</div>
 					</form> -->
-						<LightSwitch />
+						<!-- <LightSwitch /> -->
 					</div>
 				</svelte:fragment>
 			</AppBar>
@@ -212,21 +262,39 @@
 
 		<svelte:fragment slot="sidebarLeft">
 			<!-- Insert the list: -->
-			<div class="border-r border-primary-500/30 h-full"><Navigation {session} /></div>
+			<div class="border-r border-primary-500/30 h-full flex flex-col justify-between">
+				<Navigation {session} />
+				<div class="flex flex-col items-center w-full justify-center bottom-0 relative">
+					<div class="p-2 flex flex-col justify-center items-center">
+						<a href="https://twitter.com/nosaltstudios" target="_blank" class="hover:text-blue-900">
+							<p class="text-sm font-bold italic text-slate-300 dark:text-surface-400 hover:text-blue-900">
+								No Salt Studios 2024
+							</p>
+						</a>
+						<p class="text-sm italic text-slate-300 dark:text-surface-400 text-center">
+							Dota 2 is a trademark of Valve Corporation
+						</p>
+					</div>
+					{#if openDotaDown}
+					<div class="h-16 w-[90%] bg-warning-500 p-2 flex flex-col justify-center items-center rounded-xl m-2">
+						<p class="font-bold text-lg text-primary-500 vibrating">WARNING</p>
+						<p class="font-bold text-red-500">Open Dota Down</p>
+					</div>
+					{/if}
+				</div>
+			</div>
 
 			<!-- --- -->
 		</svelte:fragment>
 
-		<svelte:fragment slot="pageFooter">
-			{#if $page.url.pathname.includes('turbotown')}
-				<div class="flex h-32 w-full justify-center m-auto border border-red-500">
-					<p class="text-xs text-slate-300 dark:text-slate-700">Copyright No Salt Studios 2023</p>
+		<!-- <svelte:fragment slot="pageFooter">
+				<div class="flex w-full justify-center m-auto p-2">
+					<p class="text-md text-slate-300 dark:text-surface-400">No Salt Studios 2024 | Dota 2 is a trademark of Valve Corporation</p>
 				</div>
-			{/if}
-		</svelte:fragment>
+		</svelte:fragment> -->
 
 		<!-- Page Route Content -->
-		<div class="h-[calc(100vh-80px)] flex w-full justify-center">
+		<div class="h-[calc(100vh-80px)] flex w-full" id="pageRoute">
 			{#if ($navigating && !$navigating?.to?.url.pathname.includes('herostats')) || navigatingTest}
 				<div class="m-8 w-full"><Loading /></div>
 			{:else}

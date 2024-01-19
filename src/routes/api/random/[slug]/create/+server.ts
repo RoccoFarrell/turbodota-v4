@@ -2,6 +2,9 @@ import type { RequestHandler } from '@sveltejs/kit';
 import { auth } from '$lib/server/lucia';
 import prisma from '$lib/server/prisma';
 
+//constants
+import { constant_questGold, constant_questXP } from '$lib/constants/turbotown';
+
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unreachable code error
 BigInt.prototype.toJSON = function (): number {
@@ -13,10 +16,15 @@ BigInt.prototype.toJSON = function (): number {
 export const POST: RequestHandler = async ({ request, params, url, locals }) => {
 	const session = await locals.auth.validate();
 
-	console.log(`session in API call: `, JSON.stringify(session), `params.slug: `, params.slug);
+	console.log(
+		`[/api/random/${params.slug}/create] session in API call: `,
+		JSON.stringify(session),
+		`params.slug: `,
+		params.slug
+	);
 	//reject the call if the user is not authenticated
 
-    let randomCreateResult;
+	let randomCreateResult;
 
 	if (session && session.user) {
 		if (params.slug?.toString() !== session.user.account_id.toString())
@@ -28,7 +36,7 @@ export const POST: RequestHandler = async ({ request, params, url, locals }) => 
 		console.log(`\n-----------\n[matches] account_id: ${account_id}\n-------------\n`);
 
 		let randomStoreValues = await request.json();
-		console.log('request json: ', randomStoreValues);
+		//console.log('request json: ', randomStoreValues);
 
 		console.log(`[api/random/${account_id}/create] creating random for: ${randomStoreValues.randomedHero}`);
 
@@ -37,59 +45,81 @@ export const POST: RequestHandler = async ({ request, params, url, locals }) => 
 			where: {
 				account_id
 			},
-			include: { seasons: true }
+			include: {
+				seasons: {
+					where: {
+						active: true
+					},
+					include: {
+						turbotowns: {
+							where: { account_id: account_id }
+						}
+					}
+				}
+			}
 		});
 
-		let seasonID = -1;
+		let season = null;
 		if (userResult && userResult.seasons) {
 			let randomSeasonIndex = userResult.seasons.findIndex((season) => season.type === 'random' && season.active);
 			if (randomSeasonIndex !== -1) {
-				seasonID = userResult.seasons[randomSeasonIndex].id;
+				season = userResult.seasons[randomSeasonIndex]
 			} else {
-                console.warn('randomSeasonIndex was -1')
-            }
+				console.warn('randomSeasonIndex was -1');
+			}
 		}
 
-        if(seasonID !== -1){
-            randomCreateResult = await prisma.random.create({
-                data: {
-                    account_id: session.user.account_id,
-                    active: true,
-                    status: 'active',
-                    date: new Date(),
-                    availableHeroes: randomStoreValues.availableHeroes.toString(),
-                    bannedHeroes: randomStoreValues.bannedHeroes.toString(),
-                    selectedRoles: randomStoreValues.selectedRoles.toString(),
-                    expectedGold: randomStoreValues.expectedGold,
-                    modifierAmount: randomStoreValues.modifierAmount,
-                    modifierTotal: randomStoreValues.modifierTotal,
-                    randomedHero: randomStoreValues.randomedHero,
-                    seasons: {
-                        connect: { id: seasonID}
-                    }
-                }
-            });
-        } else {
-            randomCreateResult = await prisma.random.create({
-                data: {
-                    account_id: session.user.account_id,
-                    active: true,
-                    status: 'active',
-                    date: new Date(),
-                    availableHeroes: randomStoreValues.availableHeroes.toString(),
-                    bannedHeroes: randomStoreValues.bannedHeroes.toString(),
-                    selectedRoles: randomStoreValues.selectedRoles.toString(),
-                    expectedGold: randomStoreValues.expectedGold,
-                    modifierAmount: randomStoreValues.modifierAmount,
-                    modifierTotal: randomStoreValues.modifierTotal,
-                    randomedHero: randomStoreValues.randomedHero
-                }
-            });
-        }
-
+		if (season && season.turbotowns.length > 0) {
+			randomCreateResult = await prisma.random.create({
+				data: {
+					account_id: session.user.account_id,
+					active: true,
+					status: 'active',
+					date: new Date(),
+					availableHeroes: randomStoreValues.availableHeroes.toString(),
+					bannedHeroes: randomStoreValues.bannedHeroes.toString(),
+					selectedRoles: randomStoreValues.selectedRoles.toString(),
+					expectedGold: randomStoreValues.expectedGold,
+					modifierAmount: randomStoreValues.modifierAmount,
+					modifierTotal: randomStoreValues.modifierTotal,
+					randomedHero: randomStoreValues.randomedHero,
+					seasons: {
+						connect: { id: season.id }
+					},
+					quests: {
+						create: {
+							turbotownID: season.turbotowns[0].id,
+                            questSlot: randomStoreValues.questSlot,
+                            type: "random",
+                            active: true,
+                            status: "active",
+                            xp: constant_questXP,
+                            gold: constant_questGold,
+							createdDate: new Date()
+						}
+					}
+				}
+			});
+		} else {
+			randomCreateResult = await prisma.random.create({
+				data: {
+					account_id: session.user.account_id,
+					active: true,
+					status: 'active',
+					date: new Date(),
+					availableHeroes: randomStoreValues.availableHeroes.toString(),
+					bannedHeroes: randomStoreValues.bannedHeroes.toString(),
+					selectedRoles: randomStoreValues.selectedRoles.toString(),
+					expectedGold: randomStoreValues.expectedGold,
+					modifierAmount: randomStoreValues.modifierAmount,
+					modifierTotal: randomStoreValues.modifierTotal,
+					randomedHero: randomStoreValues.randomedHero
+				}
+			});
+		}
 	} else {
-        return new Response(JSON.stringify({ status: 'unauthorized to create random for this user' }), { status: 401 });
-    }
+		return new Response(JSON.stringify({ status: 'unauthorized to create random for this user' }), { status: 401 });
+	}
 
 	let newResponse = new Response(JSON.stringify({ status: 'success', insert: randomCreateResult }));
 	return newResponse;

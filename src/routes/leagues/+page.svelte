@@ -36,7 +36,7 @@
 		toastStore.trigger(t);
 	} else if (form?.success) {
 		const t: ToastSettings = {
-			message: `League created!`,
+			message: `Record created!`,
 			background: 'variant-filled-success'
 		};
 

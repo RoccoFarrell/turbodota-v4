@@ -18,7 +18,7 @@
 	import type { TableSource } from '@skeletonlabs/skeleton';
 
 	//components
-	import History from '../_components/History.svelte';
+	import History from '../../turbotown/quests/_components/History.svelte';
 
 	//helpers
 	import { calculateKdaClasses, calculateWinPercentageClasses } from '$lib/helpers/tableColors';

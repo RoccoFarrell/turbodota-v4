@@ -1,0 +1,5 @@
+id,name,description,imgSrc,goldCost,quantityAvailable,active
+0,Observer Ward,This item will let you pick from a selection of 3 random heroes,https://cdn.dota2.com/apps/dota2/images/items/ward_observer_lg.png,100,100,true
+1,Lotus Orb,This item will reflect back any attempted debuff applied to you,https://cdn.dota2.com/apps/dota2/images/items/lotus_orb_lg.png,500,10,false
+2,Linken's Sphere,This item will block any attempted debuff applied to you,https://cdn.dota2.com/apps/dota2/images/items/sphere_lg.png,1000,5,false
+3,Divine Rapier,This item delete a user from the current season.  Permadeath.,https://cdn.dota2.com/apps/dota2/images/items/rapier_lg.png,99999999,1,false

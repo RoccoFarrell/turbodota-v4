@@ -1,19 +1,38 @@
-import { Prisma } from '@prisma/client'
-import type { Random, DotaUser } from '@prisma/client';
+import { Prisma } from '@prisma/client';
+import type { Random, DotaUser, Turbotown } from '@prisma/client';
 
 type RandomWithUsersAndMatch = Prisma.RandomGetPayload<{
-    include: {
-        match: true,
-        user: true,
-        seasons: {
-            include: {
-                _count: {
-                    select: { randoms: true}
-                }
-            }
-        }
-    }
-  }>
+	include: {
+		match: true;
+		user: true;
+		seasons: {
+			include: {
+				_count: {
+					select: { randoms: true };
+				};
+			};
+		};
+	};
+}>;
+
+type TownWithIncludes = Prisma.TurbotownGetPayload<{
+	include: {
+		metrics: true;
+		quests: {
+			include: {
+				random: true;
+			};
+		};
+		season: true;
+		statuses: true;
+		items: {
+			include: {
+				item: true;
+			};
+		};
+		user: true;
+	};
+}>;
 
 class LeaderboardRow {
 	player: number = 0;
@@ -33,7 +52,7 @@ const calculateRandomLeaderboard = (inputMembers: DotaUser[], inputRandoms: Rand
         Get all unique player IDs in random database
     */
 	//let uniqueIDs = inputRandoms.map((random) => random.account_id).filter((random, i, arr) => arr.indexOf(random) === i);
-	let uniqueIDs = inputMembers.map(member => member.account_id)
+	let uniqueIDs = inputMembers.map((member) => member.account_id);
 	//console.log(uniqueIDs);
 
 	//console.log(uniqueIDs);
@@ -102,9 +121,11 @@ const calculateRandomLeaderboard = (inputMembers: DotaUser[], inputRandoms: Rand
 					}
 				}
 			});
-			row.kdaTotal = parseFloat(((kdaCalcs.total.kills + kdaCalcs.total.assists) / kdaCalcs.total.deaths).toFixed(2)) || 0;
+			row.kdaTotal =
+				parseFloat(((kdaCalcs.total.kills + kdaCalcs.total.assists) / kdaCalcs.total.deaths).toFixed(2)) || 0;
 			row.kdaWins = parseFloat(((kdaCalcs.wins.kills + kdaCalcs.wins.assists) / kdaCalcs.wins.deaths).toFixed(2)) || 0;
-			row.kdaLosses = parseFloat(((kdaCalcs.losses.kills + kdaCalcs.losses.assists) / kdaCalcs.losses.deaths).toFixed(2)) || 0;
+			row.kdaLosses =
+				parseFloat(((kdaCalcs.losses.kills + kdaCalcs.losses.assists) / kdaCalcs.losses.deaths).toFixed(2)) || 0;
 
 			/* 
                     Gold calculations
@@ -140,7 +161,25 @@ const calculateRandomLeaderboard = (inputMembers: DotaUser[], inputRandoms: Rand
 		} else return 0;
 	});
 
-    return tableData
+	return tableData;
 };
 
-export { calculateRandomLeaderboard }
+const calculateTownLeaderboard = (turbotowns: TownWithIncludes[], randoms: any, members: any) => {
+	let randomData = calculateRandomLeaderboard(members, randoms);
+
+	let townData = randomData.map((randomRow) => {
+		return {
+			...randomRow,
+			xp: turbotowns
+				.filter((town) => town.account_id === randomRow.player)[0]
+				.metrics.filter((metric) => metric.label === 'xp')[0].value,
+			gold: turbotowns
+				.filter((town) => town.account_id === randomRow.player)[0]
+				.metrics.filter((metric) => metric.label === 'gold')[0].value
+		};
+	});
+
+	return townData;
+};
+
+export { calculateRandomLeaderboard, calculateTownLeaderboard };

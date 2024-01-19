@@ -81,6 +81,9 @@ https://discord.com/channels/1004048134218981416/1119986172383469569
 ### Testing Sveltekit API routes
 https://github.com/sveltejs/kit/issues/983#issuecomment-1091761702
 
+### Form actions with hidden input fields
+https://joyofcode.xyz/working-with-forms-in-sveltekit#working-with-forms-using-api-endpoints
+
 ## Thanks
 
 - @pilcrow on the Lucia Discord

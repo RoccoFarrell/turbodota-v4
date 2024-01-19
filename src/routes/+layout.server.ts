@@ -1,4 +1,6 @@
 import type { LayoutServerLoad } from './$types'
+import type { Hero } from '@prisma/client'
+import prisma from '$lib/server/prisma';
 
 export const load: LayoutServerLoad = async ({ locals, url }) => {
 	const getHeroes = async () => {
@@ -11,11 +13,11 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 
 		let responseData = await response.json();
 
-		console.log(Object.keys(responseData))
+		//console.log(Object.keys(responseData))
 		responseData = {
 			...responseData,
-			allHeroes: responseData.allHeroes.sort((a: Hero,b: Hero) => {
-				if(a.localized_name < b.localized_name) return -1
+			allHeroes: responseData.allHeroes.sort((a: Hero, b: Hero) => {
+				if (a.localized_name < b.localized_name) return -1
 				else return 1
 			})
 		}
@@ -29,8 +31,8 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 
 	//get user prefs if user is logged in
 	let userPreferences = []
-	if(session && session.user){
-		const prefsResponse = await fetch (`${url.origin}/api/preferences/${session.user.account_id}`, {
+	if (session && session.user) {
+		const prefsResponse = await fetch(`${url.origin}/api/preferences/${session.user.account_id}`, {
 			method: 'GET',
 			headers: {
 				'content-type': 'application/json'
@@ -40,5 +42,6 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 		let responseData = await prefsResponse.json()
 		userPreferences = responseData
 	}
+
 	return { session, heroDescriptions: await getHeroes(), userPreferences }
 }

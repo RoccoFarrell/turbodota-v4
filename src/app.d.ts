@@ -9,6 +9,14 @@ declare global {
 		// interface PageData {}
 		// interface Platform {}
 	}
+
+	//cooking
+	declare namespace svelteHTML {
+        interface HTMLAttributes<T> {
+            'on:click_outside'?: CompositionEventHandler<T>;
+        }
+    }
+	
 	var __prisma: PrismaClient;
 
 	/// <reference types="lucia" />
@@ -17,6 +25,14 @@ declare global {
 		type DatabaseUserAttributes = {
 			username: string;
 			name: string;
+			account_id: number;
+			createdDate: Date;
+			profile_url?: string;
+			avatar_url?: string;
+			account_id: number;
+			steam_id?: BigInt;
+			roles?: string;
+
 		};
 		type DatabaseSessionAttributes = {};
 	}

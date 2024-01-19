@@ -12,3 +12,7 @@ prisma/dev.sqlite
 *.sqlite
 coverage
 .vercel
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
