@@ -13,6 +13,8 @@
 
 	//skeleton
 	import { ProgressBar } from '@skeletonlabs/skeleton';
+	import { popup } from '@skeletonlabs/skeleton';
+	import type { PopupSettings } from '@skeletonlabs/skeleton';
 
 	//components
 	import Inventory from './_components/Inventory.svelte';
@@ -90,6 +92,10 @@
 		setContext('townStatuses', data.town.turbotown.statuses);
 	}
 
+	//set metrics
+	let questRandomIDs = [...new Set(data.town.turbotown?.quests.map((quest) => quest.randomID))];
+	let randomVariabilityPercent: number = questRandomIDs.length / data.town?.turbotown?.quests?.length;
+
 	//refresh turbotown on render
 	//$: data.town.turbotown
 	$: console.log('quests changed in layout: ', data.quests);
@@ -106,7 +112,7 @@
 	}
 
 	function setQuestStores() {
-		console.log('setting quest stores')
+		console.log('setting quest stores');
 		//loop through quests and set stores
 		if (data.town && data.quests) {
 			let quest1arr: QuestWithRandom[] = data.quests.quests.filter(
@@ -203,6 +209,12 @@
 		}
 		//end set stores
 	}
+
+	const popupHover: PopupSettings = {
+		event: 'hover',
+		target: 'popupHover',
+		placement: 'bottom'
+	};
 </script>
 
 <div id="#townLayout" class="w-screen">
@@ -221,18 +233,63 @@
 					<h2 class="h2 text-amber-500 max-md:font-bold text-center">{routeName}</h2>
 				</div>
 				<div class="col-span-2 border-r border-dashed border-primary-500 h-100% p-1">
-					<div class="border border-orange-500 h-full grid grid-cols-2 ">
+					<div class="h-full grid grid-cols-2">
 						<div class="flex flex-col w-full">
 							<p class="text-center border-b border-tertiary-500 w-1/2 mx-auto">Turbotown Stats</p>
 							<div class="grid grid-cols-3 w-full h-full">
-								<div class="border border-green-500">test</div>
-								<div class="border border-green-500">test</div>
-								<div class="border border-green-500">test</div>
+								<div class="h-full flex justify-center">
+									<div class="w-full my-auto">
+										<p class="text-xs italic text-tertiary-500 text-center">Quest Win %</p>
+										{#if data.quests?.quests.length > 0}
+											<p class="font-bold text-green-500 text-center">
+												{(
+													(data.quests.quests.filter((quest) => quest.win).length / data.quests.quests.length) *
+													100
+												).toFixed(2)}
+											</p>
+										{:else}
+											<p class="text-center font-slate-700">n/a</p>
+										{/if}
+									</div>
+								</div>
+
+								<div class="h-full flex justify-center">
+									<div class="w-full my-auto">
+										<p class="text-xs italic text-tertiary-500 text-center">Season Participation %</p>
+										{#if data.quests?.quests.length > 0}
+											<p class="font-bold text-green-500 text-center">
+												{((data.quests.quests.length / data.league._counts.questsInSeason) * 100).toFixed(2)}
+											</p>
+										{:else}
+											<p class="text-center font-slate-700">n/a</p>
+										{/if}
+									</div>
+								</div>
+								<div class="h-full flex justify-center [&>*]:pointer-events-none" use:popup={popupHover}>
+									<div class="w-full my-auto">
+										<p class="text-xs italic text-tertiary-500 text-center">Random Variability %</p>
+										{#if data.quests?.quests.length > 0}
+											<p class="font-bold text-green-500 text-center">
+												{(randomVariabilityPercent * 100).toFixed(2)}
+											</p>
+										{:else}
+											<p class="text-center font-slate-700">n/a</p>
+										{/if}
+									</div>
+									<div class="card p-4 variant-filled-secondary" data-popup="popupHover">
+										<p class="italic font-tertiary-500">Unique Randomed Heroes / Total Quests</p>
+										<div class="arrow variant-filled-secondary" />
+									</div>
+								</div>
 							</div>
 						</div>
-						<button class="btn variant-ghost-primary">Leaderboard</button>
+						<div class="flex justify-center items-center h-full">
+							<a class="w-1/2" href={`/leagues/${data.league.leagueID}/seasons/${data.league.seasonID}`} target="_blank">
+								<button class="btn variant-ghost-primary w-full h-min">Season Leaderboard</button>
+							</a>
+						</div>
+						
 					</div>
-					
 				</div>
 
 				<div id="turbotownProfile" class="rounded-xl grid grid-cols-4 py-1 px-2">
@@ -283,7 +340,9 @@
 				out:slide={{ delay: 100, duration: 200, easing: expoOut, axis: 'y' }}
 				class="fixed bottom-0 left-[256px] w-[calc(100vw-256px)] h-16 z-0"
 			>
-				<div class="w-full h-full rounded-t-3xl bg-yellow-950 hover:bg-yellow-900 border border-yellow-800 bg-gradient-to-b to-transparent from-yellow-950">
+				<div
+					class="w-full h-full rounded-t-3xl bg-yellow-950 hover:bg-yellow-900 border border-yellow-800 bg-gradient-to-b to-transparent from-yellow-950"
+				>
 					<button on:click={collapse} class="w-full h-full flex items-center justify-center space-x-4">
 						<i class="fi fi-rs-backpack text-3xl"></i>
 						<p>Inventory</p>
@@ -300,7 +359,9 @@
 				use:clickOutside
 				on:click_outside={onBlur}
 			>
-				<div class="w-full h-16 rounded-t-3xl bg-yellow-950 hover:bg-yellow-900 border-yellow-800 border-t border-l border-r bg-gradient-to-b to-transparent from-yellow-950">
+				<div
+					class="w-full h-16 rounded-t-3xl bg-yellow-950 hover:bg-yellow-900 border-yellow-800 border-t border-l border-r bg-gradient-to-b to-transparent from-yellow-950"
+				>
 					<button on:click={collapse} class="w-full h-full flex items-center justify-center space-x-8"
 						><i class="fi fi-br-angle-small-down text-3xl"></i>Close Inventory</button
 					>

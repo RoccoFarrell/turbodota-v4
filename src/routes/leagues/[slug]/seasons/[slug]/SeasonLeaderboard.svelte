@@ -103,11 +103,11 @@
 	// 	randoms.push(...townRandoms)
 	// })
 
-	$: console.log('members: ', members, 'turbotowns: ', turbotowns, 'randoms: ', randoms);
+	//$: console.log('members: ', members, 'turbotowns: ', turbotowns, 'randoms: ', randoms);
 
 	let rawTableData = calculateTownLeaderboard(turbotowns, randoms, members);
 
-	console.log('rawTableData: ', rawTableData);
+	//console.log('rawTableData: ', rawTableData);
 	let sourceData = tableMapperValues(rawTableData, [
 		'player',
 		'name',
@@ -122,8 +122,6 @@
 	]);
 
 	let headerValues = sortMap.map((sort) => sort.headerText)
-
-	console.log('headerValues: ', headerValues)
 
 	let tableSource: TableSource = {
 		head: headerValues,
@@ -157,11 +155,10 @@
 <div class="container md:m-4 my-4 h-full mx-auto w-full max-sm:mb-20">
 	<div class="flex flex-col items-center text-center md:mx-8 mx-4">
 		<div class="w-full flex max-md:flex-col justify-around items-center md:my-2 my-1">
-			<div class="max-w-[40%]">
+			<!-- <div class="max-w-[40%]">
 				<h2 class="h2 text-primary-700 max-md:font-bold">TurboTown Leaderboard™</h2>
-			</div>
-
-			<div class="vibrating border-4 border-dashed border-amber-500 my-4 flex justify-center space-x-8 p-4">
+			</div> -->
+			<div class="w-1/2 vibrating border-4 border-dashed border-amber-500 my-4 flex justify-center space-x-8 p-4 bg-amber-500/10">
 				<img src={Turboking} class="w-20" alt="the current turboking" />
 				<div class="h-full flex flex-col items-center justify-center my-auto">
 					{#if tableSource.body[0]}

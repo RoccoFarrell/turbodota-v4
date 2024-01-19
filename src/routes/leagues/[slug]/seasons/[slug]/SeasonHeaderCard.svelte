@@ -31,6 +31,7 @@
 
 	//data
 	export let data: PageData;
+	$:  console.log('data in seasonheaderCard: ', data)
 
 	$: training = false;
 	$: progressVal = 0;

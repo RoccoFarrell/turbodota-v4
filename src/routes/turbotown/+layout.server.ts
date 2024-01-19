@@ -2,7 +2,7 @@ import type { LayoutServerLoad } from './$types';
 import type { Prisma, Turbotown, Season, TurbotownQuest } from '@prisma/client';
 import prisma from '$lib/server/prisma';
 import { error, fail, redirect } from '@sveltejs/kit';
-import { calculateRandomLeaderboard } from '$lib/helpers/leaderboardFromSeason';
+import { calculateRandomLeaderboard, calculateTownLeaderboard } from '$lib/helpers/leaderboardFromSeason';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unreachable code error
@@ -60,21 +60,21 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 
 	type TownWithIncludes = Prisma.TurbotownGetPayload<{
 		include: {
-			metrics: true,
+			metrics: true;
 			quests: {
 				include: {
-					random: true
-				}
-			},
-			season: true,
-			statuses: true,
+					random: true;
+				};
+			};
+			season: true;
+			statuses: true;
 			items: {
 				include: {
-					item: true
-				}
-			},
-			user: true
-		}
+					item: true;
+				};
+			};
+			user: true;
+		};
 	}>;
 	let randomsForUser: RandomsForUser = [];
 	let filteredMatchData: Match[] = [];
@@ -85,8 +85,11 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 	let responseCompleteRandom: any = null;
 	let matchesSinceRandom: Match[] = [];
 	let leagueAndSeasonsResult: any = null;
+
 	let currentSeason: Season | null = null;
+	let questsInSeason: number | null = null;
 	let currentSeasonLeaderboard: any = [];
+	let currentTownLeaderboard: any = [];
 	let currentTown: TownWithIncludes | null = null;
 	let quests: QuestWithRandom[] = [];
 	let questChecks: any = null;
@@ -109,7 +112,7 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 		// }
 
 		rawMatchData = responseData.matchData;
-		
+
 		/* 
 			Get season info
 		*/
@@ -148,7 +151,7 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 									}
 								},
 								metrics: true,
-								user: true
+								user: true,
 							}
 						},
 						_count: {
@@ -163,10 +166,19 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 		if (leagueAndSeasonsResult && leagueAndSeasonsResult[0] && leagueAndSeasonsResult[0].seasons.length > 0) {
 			//set season
 			currentSeason = leagueAndSeasonsResult[0].seasons[0];
+
+			//count total quests
+			questsInSeason = leagueAndSeasonsResult[0].seasons[0].turbotowns.map((town: any) => town.quests.length).reduce((acc: number, curr: number) => acc += curr)
 			// calculate leaderboard
 			currentSeasonLeaderboard = calculateRandomLeaderboard(
 				leagueAndSeasonsResult[0].members,
 				leagueAndSeasonsResult[0].seasons[0].randoms
+			);
+
+			currentTownLeaderboard = calculateTownLeaderboard(
+				leagueAndSeasonsResult[0].seasons[0].turbotowns,
+				leagueAndSeasonsResult[0].seasons[0].randoms,
+				leagueAndSeasonsResult[0].members
 			);
 		} else console.error('could not load season leaderboard in server');
 
@@ -194,7 +206,7 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 						include: {
 							random: true
 						},
-						orderBy:{
+						orderBy: {
 							endDate: 'asc'
 						}
 					},
@@ -233,7 +245,7 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 			.filter((quest) => quest.active)
 			.map(async (quest, i) => {
 				console.log('checking quest ', quest.id);
-				if(i > 0) await new Promise(resolve => setTimeout(resolve, 100 * i));
+				if (i > 0) await new Promise((resolve) => setTimeout(resolve, 100 * i));
 				const questCompleteResponse = await fetch(`/api/town/${session.user.account_id}/quest/${quest.id}/complete`, {
 					method: 'POST',
 					headers: {
@@ -341,10 +353,16 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 			questChecks
 		},
 		league: {
+			leagueID: leagueAndSeasonsResult[0].id,
+			seasonID: currentSeason?.id,
 			leagueAndSeasonsResult,
 			currentSeason,
+			_counts: {
+				questsInSeason
+			},
 			//dont know why i have to do this, its a non POJO for some reason
-			currentSeasonLeaderboard: structuredClone(currentSeasonLeaderboard)
+			currentSeasonLeaderboard: structuredClone(currentSeasonLeaderboard),
+			currentTownLeaderboard: structuredClone(currentTownLeaderboard)
 		},
 		town: {
 			turbotown: currentTown,

@@ -106,12 +106,12 @@
 				</div>
 			</div>
 		</div>
-		<div class="container">
+		<div class="container py-4 flex flex-col space-y-4">
 			<!-- <div>
 				<HeroGrid heroes={data.heroDescriptions.allHeroes}/>
 			</div> -->
-			<!-- <SeasonHeaderCard data={data}></SeasonHeaderCard> -->
-			<div class="flex flex-col space-y-4 justify-center items-center">
+			<SeasonHeaderCard data={data}></SeasonHeaderCard>
+			<div class="flex flex-col space-y-4 justify-center items-center border border-secondary-500/10 rounded-xl">
 				{#if data.league.currentSeason && data.league.currentSeason.turbotowns}
 					<SeasonLeaderboard
 						turbotowns={data.league.currentSeason.turbotowns}

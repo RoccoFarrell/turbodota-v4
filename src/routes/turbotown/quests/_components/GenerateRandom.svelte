@@ -233,6 +233,7 @@
 				on:click={generateRandomHero}
 				disabled={randomFound}
 				class="z-50 btn variant-filled-primary w-full my-4 max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:my-8 max-lg:mx-4 max-lg:max-w-[90%] md:max-w-[80%]"
+				in:fade={{ delay: 0, duration: 1000, easing: quintIn }}
 			>
 				<div class="flex items-center space-x-2">
 					<i class="h-5 w-5 fi fi-rs-treasure-chest text-amber-200"></i>
