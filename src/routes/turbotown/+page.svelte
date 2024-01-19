@@ -30,6 +30,7 @@
 	import { Avatar, ProgressBar } from '@skeletonlabs/skeleton';
 	import HeroGrid from '$lib/components/HeroGrid/HeroGrid.svelte';
 	import SeasonLeaderboard from '../leagues/[slug]/seasons/[slug]/SeasonLeaderboard.svelte';
+	import TurbotownIntro from '$lib/components/TurbotownIntro.svelte';
 
 	//data
 	export let data: PageData;
@@ -96,19 +97,14 @@
 </script>
 
 <div class="container">
+	<TurbotownIntro/>
 	<!-- <div>
 		<HeroGrid heroes={data.heroDescriptions.allHeroes}/>
 	</div> -->
-	<SeasonHeaderCard data={data}></SeasonHeaderCard>
-	<!-- <button
-		class="btn variant-filled"
-		on:click={() => {
-			modalStore.trigger(modal);
-		}}>Modal</button
-	> -->
-	<div class="flex flex-col space-y-4 justify-center items-center">
+	<!-- <SeasonHeaderCard data={data}></SeasonHeaderCard> -->
+	<!-- <div class="flex flex-col space-y-4 justify-center items-center">
 		{#if data.league.currentSeason && data.league.currentSeason.turbotowns}
 			<SeasonLeaderboard turbotowns={data.league.currentSeason.turbotowns} members={data.league.leagueAndSeasonsResult[0].members} randoms={data.league.currentSeason.randoms}/>
 		{/if}
-	</div>
+	</div> -->
 </div>

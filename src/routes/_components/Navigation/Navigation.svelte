@@ -81,7 +81,7 @@
 				class={'flex items-center justify-start rounded-full ' +
 					($page.url.pathname === route.path ? 'border border-secondary-500/60' : '')}
 			>
-				<a href="/" data-sveltekit-preload-data="tap" class="w-full">
+				<a href={route.path} data-sveltekit-preload-data="tap" class="w-full">
 					<i class={route.iconClassAndColor} />
 					<p class={$page.url.pathname === route.path ? 'font-bold' : ''}>{route.label}</p></a
 				>
