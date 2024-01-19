@@ -61,7 +61,7 @@
 		},
 		{
 			label: 'Leagues',
-			path: '/turbotown/leagues',
+			path: '/leagues',
 			iconClassAndColor: 'fi fi-br-users-alt text-teal-500',
 			sectionHeader: true,
 		}

@@ -168,7 +168,8 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 			currentSeason = leagueAndSeasonsResult[0].seasons[0];
 
 			//count total quests
-			questsInSeason = leagueAndSeasonsResult[0].seasons[0].turbotowns.map((town: any) => town.quests.length).reduce((acc: number, curr: number) => acc += curr)
+			let questsInSeasonRaw = leagueAndSeasonsResult[0].seasons[0].turbotowns.map((town: any) => town.quests.length)
+			if(questsInSeasonRaw.length > 0) questsInSeason = questsInSeasonRaw.reduce((acc: number, curr: number) => acc += curr)
 			// calculate leaderboard
 			currentSeasonLeaderboard = calculateRandomLeaderboard(
 				leagueAndSeasonsResult[0].members,

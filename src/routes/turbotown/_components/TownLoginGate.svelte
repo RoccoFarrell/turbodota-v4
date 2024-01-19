@@ -5,7 +5,7 @@
 </script>
 
 <div class="w-full flex flex-col items-center justify-center space-y-4 pb-20">
-	<TurbotownIntro />
+	<!-- <TurbotownIntro /> -->
 	<div class="grid grid-cols-2 2xl:w-3/4 xl:w-4/5 md:w-7/8 w-9/10 justify-center items-center">
 		<div class="w-fit mx-auto rounded-full border-4 border-b border-amber-500">
 			<img src={seasonLogo} alt="town logo" class="w-96 rounded-full" />

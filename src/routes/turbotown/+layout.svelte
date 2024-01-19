@@ -218,163 +218,191 @@
 </script>
 
 <div id="#townLayout" class="w-screen">
-	{#if data.session && data.league && data.town && data.town.turbotown}
-		<div
-			id="#turbotownHeader"
-			class="fixed top-20 left-[256px] w-[calc(100vw-256px)] h-24 card rounded-t-none shadow-xl border-primary-500 border-b z-50"
-		>
-			<div class="grid grid-cols-4 p-1 h-24">
-				<div
-					id="turbotownPageHeader"
-					class="flex items-center justify-around border-r border-dashed border-primary-500"
-				>
-					<img class="block dark:hidden w-32" alt="TurboTownLight" src={town_logo_light} />
-					<img class="hidden dark:block w-32" alt="TurboTownDark" src={town_logo_dark} />
-					<h2 class="h2 text-amber-500 max-md:font-bold text-center">{routeName}</h2>
-				</div>
-				<div class="col-span-2 border-r border-dashed border-primary-500 h-100% p-1">
-					<div class="h-full grid grid-cols-2">
-						<div class="flex flex-col w-full">
-							<p class="text-center border-b border-tertiary-500 w-1/2 mx-auto">Turbotown Stats</p>
-							<div class="grid grid-cols-3 w-full h-full">
-								<div class="h-full flex justify-center">
-									<div class="w-full my-auto">
-										<p class="text-xs italic text-tertiary-500 text-center">Quest Win %</p>
-										{#if data.quests?.quests.length > 0}
-											<p class="font-bold text-green-500 text-center">
-												{(
-													(data.quests.quests.filter((quest) => quest.win).length / data.quests.quests.length) *
-													100
-												).toFixed(2)}
-											</p>
-										{:else}
-											<p class="text-center font-slate-700">n/a</p>
-										{/if}
-									</div>
-								</div>
-
-								<div class="h-full flex justify-center">
-									<div class="w-full my-auto">
-										<p class="text-xs italic text-tertiary-500 text-center">Season Participation %</p>
-										{#if data.quests?.quests.length > 0}
-											<p class="font-bold text-green-500 text-center">
-												{((data.quests.quests.length / data.league._counts.questsInSeason) * 100).toFixed(2)}
-											</p>
-										{:else}
-											<p class="text-center font-slate-700">n/a</p>
-										{/if}
-									</div>
-								</div>
-								<div class="h-full flex justify-center [&>*]:pointer-events-none" use:popup={popupHover}>
-									<div class="w-full my-auto">
-										<p class="text-xs italic text-tertiary-500 text-center">Random Variability %</p>
-										{#if data.quests?.quests.length > 0}
-											<p class="font-bold text-green-500 text-center">
-												{(randomVariabilityPercent * 100).toFixed(2)}
-											</p>
-										{:else}
-											<p class="text-center font-slate-700">n/a</p>
-										{/if}
-									</div>
-									<div class="card p-4 variant-filled-secondary" data-popup="popupHover">
-										<p class="italic font-tertiary-500">Unique Randomed Heroes / Total Quests</p>
-										<div class="arrow variant-filled-secondary" />
-									</div>
-								</div>
-							</div>
-						</div>
-						<div class="flex justify-center items-center h-full">
-							<a class="w-1/2" href={`/leagues/${data.league.leagueID}/seasons/${data.league.seasonID}`} target="_blank">
-								<button class="btn variant-ghost-primary w-full h-min">Season Leaderboard</button>
-							</a>
-						</div>
-						
+	{#if data.session}
+		{#if data.league && data.town && data.town.turbotown}
+			<div
+				id="#turbotownHeader"
+				class="fixed top-20 left-[256px] w-[calc(100vw-256px)] h-24 card rounded-t-none shadow-xl border-primary-500 border-b z-50"
+			>
+				<div class="grid grid-cols-4 p-1 h-24">
+					<div
+						id="turbotownPageHeader"
+						class="flex items-center justify-around border-r border-dashed border-primary-500"
+					>
+						<img class="block dark:hidden w-32" alt="TurboTownLight" src={town_logo_light} />
+						<img class="hidden dark:block w-32" alt="TurboTownDark" src={town_logo_dark} />
+						<h2 class="h2 text-amber-500 max-md:font-bold text-center">{routeName}</h2>
 					</div>
-				</div>
+					<div class="col-span-2 border-r border-dashed border-primary-500 h-100% p-1">
+						<div class="h-full grid grid-cols-2">
+							<div class="flex flex-col w-full">
+								<p class="text-center border-b border-tertiary-500 w-1/2 mx-auto">Turbotown Stats</p>
+								<div class="grid grid-cols-3 w-full h-full">
+									<div class="h-full flex justify-center">
+										<div class="w-full my-auto">
+											<p class="text-xs italic text-tertiary-500 text-center">Quest Win %</p>
+											{#if data.quests?.quests.length > 0}
+												<p class="font-bold text-green-500 text-center">
+													{(
+														(data.quests.quests.filter((quest) => quest.win).length / data.quests.quests.length) *
+														100
+													).toFixed(2)}
+												</p>
+											{:else}
+												<p class="text-center font-slate-700">n/a</p>
+											{/if}
+										</div>
+									</div>
 
-				<div id="turbotownProfile" class="rounded-xl grid grid-cols-4 py-1 px-2">
-					<div id="townProfileImage" class="flex flex-col justify-center items-center">
-						{#if avatarURL}
-							<img class="h-12 w-12 rounded-xl" src={avatarURL} alt="" />
-						{:else}
-							<i class="text-5xl fi fi-rr-mode-portrait"></i>
-						{/if}
-						<p class="dark:text-yellow-500">Level: 1</p>
-					</div>
-					{#key data.town.turbotown}
-						<div id="townProfileStats" class="flex flex-col text-md justify-center col-span-3">
-							<div class="flex justify-start space-x-2">
-								<div>
-									<i class="fi fi-rr-coins text-yellow-500 text-center"></i>
+									<div class="h-full flex justify-center">
+										<div class="w-full my-auto">
+											<p class="text-xs italic text-tertiary-500 text-center">Season Participation %</p>
+											{#if data.quests?.quests.length > 0}
+												<p class="font-bold text-green-500 text-center">
+													{((data.quests.quests.length / data.league._counts.questsInSeason) * 100).toFixed(2)}
+												</p>
+											{:else}
+												<p class="text-center font-slate-700">n/a</p>
+											{/if}
+										</div>
+									</div>
+									<div class="h-full flex justify-center [&>*]:pointer-events-none" use:popup={popupHover}>
+										<div class="w-full my-auto">
+											<p class="text-xs italic text-tertiary-500 text-center">Random Variability %</p>
+											{#if data.quests?.quests.length > 0}
+												<p class="font-bold text-green-500 text-center">
+													{(randomVariabilityPercent * 100).toFixed(2)}
+												</p>
+											{:else}
+												<p class="text-center font-slate-700">n/a</p>
+											{/if}
+										</div>
+										<div class="card p-4 variant-filled-secondary" data-popup="popupHover">
+											<p class="italic font-tertiary-500">Unique Randomed Heroes / Total Quests</p>
+											<div class="arrow variant-filled-secondary" />
+										</div>
+									</div>
 								</div>
-
-								<p>{data.town.turbotown.metrics.filter((metric) => metric.label === 'gold')[0].value}</p>
 							</div>
-
-							<div class="flex justify-start space-x-2">
-								<div>
-									<i class="fi fi-br-arrow-trend-up text-center text-green-500"></i>
-								</div>
-								<p class="">
-									{data.town.turbotown.metrics.filter((metric) => metric.label === 'xp')[0].value}
-								</p>
+							<div class="flex justify-center items-center h-full">
+								<a
+									class="w-1/2"
+									href={`/leagues/${data.league.leagueID}/seasons/${data.league.seasonID}`}
+									target="_blank"
+								>
+									<button class="btn variant-ghost-primary w-full h-min">Season Leaderboard</button>
+								</a>
 							</div>
-
-							<ProgressBar label="Progress Bar" value={50} max={100} />
 						</div>
-					{/key}
+					</div>
+
+					<div id="turbotownProfile" class="rounded-xl grid grid-cols-4 py-1 px-2">
+						<div id="townProfileImage" class="flex flex-col justify-center items-center">
+							{#if avatarURL}
+								<img class="h-12 w-12 rounded-xl" src={avatarURL} alt="" />
+							{:else}
+								<i class="text-5xl fi fi-rr-mode-portrait"></i>
+							{/if}
+							<p class="dark:text-yellow-500">Level: 1</p>
+						</div>
+						{#key data.town.turbotown}
+							<div id="townProfileStats" class="flex flex-col text-md justify-center col-span-3">
+								<div class="flex justify-start space-x-2">
+									<div>
+										<i class="fi fi-rr-coins text-yellow-500 text-center"></i>
+									</div>
+
+									<p>{data.town.turbotown.metrics.filter((metric) => metric.label === 'gold')[0].value}</p>
+								</div>
+
+								<div class="flex justify-start space-x-2">
+									<div>
+										<i class="fi fi-br-arrow-trend-up text-center text-green-500"></i>
+									</div>
+									<p class="">
+										{data.town.turbotown.metrics.filter((metric) => metric.label === 'xp')[0].value}
+									</p>
+								</div>
+
+								<ProgressBar label="Progress Bar" value={50} max={100} />
+							</div>
+						{/key}
+					</div>
+					<!-- <i class="fi fi-sr-backpack text-8xl text-yellow-500"></i> -->
 				</div>
-				<!-- <i class="fi fi-sr-backpack text-8xl text-yellow-500"></i> -->
 			</div>
-		</div>
-		<div class="w-full mt-24 mb-16 py-4 px-2">
-			<slot />
-		</div>
+			<div class="w-full mt-24 mb-16 py-4 px-2">
+				<slot />
+			</div>
 
-		{#if !showInventory}
-			<!-- <div 
+			{#if !showInventory}
+				<!-- <div 
 		transition:slide={{ delay: 50, duration: 400, easing: quintOut, axis: 'y' }}
 		class="fixed bottom-0 border border-red-500 w-[calc(100vw-256px)] bg-tertiary-900 h-20"> -->
-			<div
-				in:slide={{ delay: 300, duration: 200, easing: expoIn, axis: 'y' }}
-				out:slide={{ delay: 100, duration: 200, easing: expoOut, axis: 'y' }}
-				class="fixed bottom-0 left-[256px] w-[calc(100vw-256px)] h-16 z-0"
-			>
 				<div
-					class="w-full h-full rounded-t-3xl bg-yellow-950 hover:bg-yellow-900 border border-yellow-800 bg-gradient-to-b to-transparent from-yellow-950"
+					in:slide={{ delay: 300, duration: 200, easing: expoIn, axis: 'y' }}
+					out:slide={{ delay: 100, duration: 200, easing: expoOut, axis: 'y' }}
+					class="fixed bottom-0 left-[256px] w-[calc(100vw-256px)] h-16 z-0"
 				>
-					<button on:click={collapse} class="w-full h-full flex items-center justify-center space-x-4">
-						<i class="fi fi-rs-backpack text-3xl"></i>
-						<p>Inventory</p>
-					</button>
-				</div>
-			</div>
-		{/if}
-		<!-- <div transition:slide={{ delay: 250, duration: 300, easing: quintOut, axis: 'y' }} class={"fixed bottom-0 border border-red-500 w-[calc(100vw-256px)] bg-tertiary-900 " + (showInventory ? "h-[500px]" : "h-10")}></div> -->
-		{#if showInventory}
-			<div
-				transition:slide={{ delay: 50, duration: 400, easing: expoIn, axis: 'y' }}
-				class={'fixed bottom-0 left-[256px] w-[calc(100vw-256px)] h-[500px] z-50'}
-				on:blur={onBlur}
-				use:clickOutside
-				on:click_outside={onBlur}
-			>
-				<div
-					class="w-full h-16 rounded-t-3xl bg-yellow-950 hover:bg-yellow-900 border-yellow-800 border-t border-l border-r bg-gradient-to-b to-transparent from-yellow-950"
-				>
-					<button on:click={collapse} class="w-full h-full flex items-center justify-center space-x-8"
-						><i class="fi fi-br-angle-small-down text-3xl"></i>Close Inventory</button
+					<div
+						class="w-full h-full rounded-t-3xl bg-yellow-950 hover:bg-yellow-900 border border-yellow-800 bg-gradient-to-b to-transparent from-yellow-950"
 					>
-				</div>
-				{#if showInventory}
-					<div class="h-full" transition:slide={{ delay: 250, duration: 300, easing: quintOut, axis: 'y' }}>
-						<Inventory {data} />
+						<button on:click={collapse} class="w-full h-full flex items-center justify-center space-x-4">
+							<i class="fi fi-rs-backpack text-3xl"></i>
+							<p>Inventory</p>
+						</button>
 					</div>
-				{/if}
+				</div>
+			{/if}
+			<!-- <div transition:slide={{ delay: 250, duration: 300, easing: quintOut, axis: 'y' }} class={"fixed bottom-0 border border-red-500 w-[calc(100vw-256px)] bg-tertiary-900 " + (showInventory ? "h-[500px]" : "h-10")}></div> -->
+			{#if showInventory}
+				<div
+					transition:slide={{ delay: 50, duration: 400, easing: expoIn, axis: 'y' }}
+					class={'fixed bottom-0 left-[256px] w-[calc(100vw-256px)] h-[500px] z-50'}
+					on:blur={onBlur}
+					use:clickOutside
+					on:click_outside={onBlur}
+				>
+					<div
+						class="w-full h-16 rounded-t-3xl bg-yellow-950 hover:bg-yellow-900 border-yellow-800 border-t border-l border-r bg-gradient-to-b to-transparent from-yellow-950"
+					>
+						<button on:click={collapse} class="w-full h-full flex items-center justify-center space-x-8"
+							><i class="fi fi-br-angle-small-down text-3xl"></i>Close Inventory</button
+						>
+					</div>
+					{#if showInventory}
+						<div class="h-full" transition:slide={{ delay: 250, duration: 300, easing: quintOut, axis: 'y' }}>
+							<Inventory {data} />
+						</div>
+					{/if}
+				</div>
+			{/if}
+		{:else}
+			<div class="top-20 h-fit m-20 w-full">
+				<div>
+					<h1 class="h1">Missing one of:</h1>
+				</div>
+				<div class="">
+					<div>
+						League: <p class={'inline font-bold ' + (!!data.league ? 'text-green-500' : 'text-red-500')}>
+							{!!data.league ? 'Found' : 'Missing'}
+						</p>
+					</div>
+					<div>
+						Town: <p class={'inline font-bold ' + (!!data.town ? 'text-green-500' : 'text-red-500')}>
+							{!!data.town ? 'Found' : 'Missing'}
+						</p>
+					</div>
+					<div>
+						Turbotown: <p class={'inline font-bold ' + (!!data.town.turbotown ? 'text-green-500' : 'text-red-500')}>
+							{!!data.town.turbotown ? 'Found' : 'Missing'}
+						</p>
+					</div>
+				</div>
 			</div>
 		{/if}
 	{:else}
-		<div class="top-20 h-fit">
+		<div class="top-20 h-fit m-20 border-b border-double border-amber-500">
 			<TownLoginGate />
 		</div>
 	{/if}
