@@ -237,7 +237,7 @@
 			>
 				<div class="flex flex-col h-full justify-center items-center w-[70%]">
 					<div class="w-full h-full grid grid-cols-3 mx-auto max-h-[75%]">
-						{#key animateSlot1}
+						{#key animateSlot1 || data}
 							<div
 								class="bg-questBoardPoster bg-no-repeat bg-contain bg-center w-full h-full flex items-center justify-center"
 							>
@@ -257,10 +257,11 @@
 									<div class={'h-full ' + (animateSlot1 ? 'exploding' : '')}>
 										<GenerateRandom {data} questSlot={1}></GenerateRandom>
 									</div>
+
 								</div>
 							</div>
 						{/key}
-						{#key animateSlot2}
+						{#key animateSlot2 || data}
 							<div
 								class="bg-questBoardPoster bg-no-repeat bg-contain bg-center w-full h-full flex items-center justify-center"
 							>
@@ -277,14 +278,16 @@
 											/>
 										</div>
 									{/if}
+
 									<div class={'h-full ' + (animateSlot2 ? 'exploding' : '')}>
 										<GenerateRandom {data} questSlot={2}></GenerateRandom>
 									</div>
+
 									<div class="box"></div>
 								</div>
 							</div>
 						{/key}
-						{#key animateSlot3}
+						{#key animateSlot3 || data}
 							<div
 								class="bg-questBoardPoster bg-no-repeat bg-contain bg-center w-full h-full flex items-center justify-center"
 							>
@@ -301,9 +304,11 @@
 											/>
 										</div>
 									{/if}
-									<div class={'h-full ' + (animateSlot3 ? 'exploding' : '')}>
-										<GenerateRandom {data} questSlot={3}></GenerateRandom>
-									</div>
+
+										<div class={'h-full ' + (animateSlot3 ? 'exploding' : '')}>
+											<GenerateRandom {data} questSlot={3}></GenerateRandom>
+										</div>
+
 								</div>
 							</div>
 						{/key}

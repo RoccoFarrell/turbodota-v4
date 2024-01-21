@@ -230,14 +230,14 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 			const response = await fetch(`/api/town/${session.user.account_id}/create`, {
 				method: 'POST'
 			});
-			console.log('create town response: ', response);
+			//console.log('create town response: ', response);
 		}
 
 		//quests
 
 		if (currentTown && currentTown?.quests?.length > 0) {
 			quests = currentTown.quests;
-			console.log(`[random page.ts] found ${quests.length} quests`, quests);
+			//console.log(`[random page.ts] found ${quests.length} quests`, quests);
 		}
 
 		//check for quest complete
@@ -255,9 +255,9 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 					body: JSON.stringify(quest)
 				});
 
-				console.log(questCompleteResponse);
+				//console.log(questCompleteResponse);
 				let response = await questCompleteResponse.json();
-				console.log('questComplete response: ', response);
+				//console.log('questComplete response: ', response);
 				return response;
 			});
 
@@ -271,69 +271,6 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 		} else randomsForUser = [];
 
 		console.log(`active random length: ${randomsForUser.filter((random) => random.active).length}`);
-
-		//old random match
-		// if (randomsForUser.length > 0 && randomsForUser.filter((random) => random.active).length > 0) {
-		// 	//fetch most recent matches
-
-		// 	if (responseData.mocked) flags.mocked = true;
-
-		// 	console.log([`[random+page.server.ts] found ${responseData.matchData.length} for user`]);
-
-		// 	//format big int dates
-		// 	responseData.matchData.forEach((element: Match) => {
-		// 		element.start_time = new Date(Number(element.start_time) * 1000);
-		// 	});
-
-		// 	//a user should only ever have 1 active random, if not, sort by the oldest one for evaluation
-		// 	let activeRandoms = randomsForUser
-		// 		.filter((random) => random.active)
-		// 		.sort((a: any, b: any) => {
-		// 			if (a.date < b.date) return -1;
-		// 			else return 1;
-		// 		});
-
-		// 	let activeRandomDate = activeRandoms[0].date;
-		// 	let activeRandomDate5Minutes = new Date(activeRandoms[0].date.getTime() - 5 * 60 * 1000);
-		// 	matchesSinceRandom = rawMatchData.filter((match: Match) => {
-		// 		match.start_time > activeRandomDate5Minutes;
-		// 	});
-
-		// 	console.log(`activeRandomDate: ${activeRandomDate}, minus 5 minutes: ${activeRandomDate5Minutes}`);
-
-		// 	//filter all matches for games in the oldest active random
-		// 	//minus 5 minutes from the random start date to account for picking phase
-		// 	filteredMatchData = rawMatchData
-		// 		.filter(
-		// 			(match: Match) =>
-		// 				match.hero_id === activeRandoms[0].randomedHero && match.start_time > activeRandomDate5Minutes
-		// 		)
-		// 		.sort((a: any, b: any) => {
-		// 			if (a.start_time < b.start_time) return -1;
-		// 			else return 1;
-		// 		});
-
-		// 	if (filteredMatchData.length > 0) {
-		// 		let completeResponse = await fetch(`/api/random/${session.user.account_id}/complete`, {
-		// 			method: 'POST',
-		// 			headers: {
-		// 				'Content-Type': 'application/json'
-		// 			},
-		// 			body: JSON.stringify({
-		// 				completedRandom: activeRandoms[0],
-		// 				completedMatch: filteredMatchData[0],
-		// 				session: session
-		// 			})
-		// 		});
-		// 		let completeResponseData = await completeResponse.json();
-		// 		responseCompleteRandom = completeResponseData;
-		// 		randomsForUser = await getRandomsForUser(leagueAndSeasonsResult[0].seasons[0].id);
-		// 	} else {
-		// 		responseCompleteRandom = { error: 'couldnt complete random' };
-		// 	}
-		// }
-
-		/* End get randoms */
 	}
 	return {
 		...parentData,

@@ -13,7 +13,7 @@ import prisma from '$lib/server/prisma';
 import type { Hero } from '@prisma/client';
 
 //dayjs
-import dayjs from 'dayjs'
+import dayjs from 'dayjs';
 
 //stores
 import { townStore } from '$lib/stores/townStore';
@@ -30,89 +30,105 @@ export const actions: Actions = {
 		const formData = await request.formData();
 
 		let turbotownID = parseInt(formData.get('turbotownID')?.toString() || '-1');
-		let questStoreSlot = parseInt(formData.get('questStoreSlot')?.toString() || '')
+		let questStoreSlot = parseInt(formData.get('questStoreSlot')?.toString() || '');
 		let questStore = JSON.parse(formData.get('questStore')?.toString() || '');
 		//console.log('turbotownID: ', (turbotownID))
 		//console.log('random hero select:', hero);
 
-		console.log('user trying to use item', session.user.account_id);
+		console.log('[observer page.server.ts] user trying to use item', session.user.account_id);
 		try {
-			let tx_result = await prisma.$transaction(async (tx) => {
-				// 1. Verify that the user has at least one of the item in inventory
-				// look for itemID 0 (observer) for now - this will need to change when there are more items
-				let itemCheck = await tx.turbotownItem.findFirstOrThrow({
-					where: {
-						itemID: 0
-					}
-				});
-
-				// 2. Decrement item from the user
-				if (itemCheck) {
-					const sender = await tx.turbotownItem.delete({
+			let tx_result = await prisma.$transaction(
+				async (tx) => {
+					let tx_startTime = dayjs();
+					// 1. Verify that the user has at least one of the item in inventory
+					// look for itemID 0 (observer) for now - this will need to change when there are more items
+					let itemCheck = await tx.turbotownItem.findFirstOrThrow({
 						where: {
-							id: itemCheck.id
+							itemID: 0
 						}
 					});
 
-					if (!sender) {
-						throw new Error(`${session.user.account_id} failed to delete item!`);
-					}
-
-					// 3. Enter the selected random hero into the quest slot
-					let questData = {
-						...questStore,
-						availableHeroes: questStore.availableHeroes.map((hero: Hero) => hero.id),
-						bannedHeroes: questStore.bannedHeroes.map((hero: Hero) => hero.id),
-						randomedHero: questStore.randomedHero.id,
-						questSlot: questStoreSlot
-					};
-
-					let response = await fetch(`/api/random/${session.user.account_id}/create`, {
-						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json'
-						},
-						body: JSON.stringify(questData)
-					});
-
-					let statusActive = await tx.turbotownStatus.findFirst({
-						where: {
-							isActive: true
-						},
-					})
-
-					if (statusActive) {
-						// 4. add resolvedDate to TurboTownStatus
-						let statusUpdateResult = await tx.turbotownStatus.update({
+					// 2. Decrement item from the user
+					if (itemCheck) {
+						console.log('[observer page.server.ts] item found')
+						const sender = await tx.turbotownItem.delete({
 							where: {
-								id: statusActive.id
-							},
-							data: {
-								isActive: false,
-								resolvedDate: new Date(),
+								id: itemCheck.id
 							}
-						})
-					}
-					else {
-						throw new Error(`${session.user.account_id} could not find active observer item!`);
-					}
-				}
-				else {
-					//add else-ifs for other items as they are developed
-				}
+						});
 
-				const itemUseResponse = await tx.turbotownAction.create({
-					data: {
-						action: 'observer',
-						turbotownDestinationID: turbotownID,
-						appliedDate: new Date(),
-						endDate: new Date()
-					}
-				});
-				console.log(itemUseResponse);
+						if (!sender) {
+							throw new Error(`${session.user.account_id} failed to delete item!`);
+						}
 
-				return itemUseResponse;
-			});
+						// 3. Enter the selected random hero into the quest slot
+						let questData = {
+							...questStore,
+							availableHeroes: questStore.availableHeroes.map((hero: Hero) => hero.id),
+							bannedHeroes: questStore.bannedHeroes.map((hero: Hero) => hero.id),
+							randomedHero: questStore.randomedHero.id,
+							questSlot: questStoreSlot,
+							session
+						};
+
+						let response = await fetch(`/api/random/${session.user.account_id}/create`, {
+							method: 'POST',
+							headers: {
+								'Content-Type': 'application/json'
+							},
+							body: JSON.stringify(questData)
+						});
+
+						let randomCreateResponseData = await response.json()
+						console.log('[observer page.server.ts] random created', randomCreateResponseData)
+
+						let statusActive = await tx.turbotownStatus.findFirst({
+							where: {
+								isActive: true
+							}
+						});
+
+						//3. create turbo town action
+						if (statusActive && randomCreateResponseData) {
+							console.log('[observer page.server.ts] found observer status', statusActive)
+							const itemUseResponse = await tx.turbotownAction.create({
+								data: {
+									action: 'observer',
+									turbotownDestinationID: turbotownID,
+									appliedDate: new Date(),
+									endDate: new Date()
+								}
+							});
+
+							console.log('[observer page.server.ts] item use response: ', itemUseResponse);
+		
+							// 4. add resolvedDate to TurboTownStatus
+							let statusUpdateResult = await tx.turbotownStatus.update({
+								where: {
+									id: statusActive.id
+								},
+								data: {
+									isActive: false,
+									resolvedDate: new Date()
+								}
+							});
+
+							let tx_endTime = dayjs();
+							let executionTime = tx_endTime.diff(tx_startTime, 'millisecond');
+
+							return { itemUseResponse, executionTime };
+						} else {
+							throw new Error(`${session.user.account_id} could not find active observer item or create random`);
+						}
+					} else {
+						//add else-ifs for other items as they are developed
+					}
+				},
+				{
+					maxWait: 9500, // default: 2000
+					timeout: 9500 // default: 5000
+				}
+			);
 
 			if (tx_result) {
 				console.log('returning');
@@ -130,39 +146,39 @@ export const actions: Actions = {
 		const formData = await request.formData();
 		let account_id: number = parseInt(formData.get('account_id')?.toString() || '-1');
 		let heroID: number = parseInt(formData.get('heroID')?.toString() || '-1');
-		let win: string = (formData.get('win')?.toString() || 'true');
-		let timestamp: number = parseInt(formData.get('matchTS')?.toString() || '0')
+		let win: string = formData.get('win')?.toString() || 'true';
+		let timestamp: number = parseInt(formData.get('matchTS')?.toString() || '0');
 		//let activeOptionID = parseInt(formData.get('activeOptionID')?.toString() || '-1')
 		//console.log('active option ID:', activeOptionID);
-		console.log(account_id, heroID, win, timestamp)
+		console.log(account_id, heroID, win, timestamp);
 
-		if (account_id === -1) return (fail(400, { account_id, missing: true }))
-		if (heroID === -1) return (fail(400, { heroID, missing: true }))
-		if (timestamp === 0) return (fail(400, { timestamp, missing: true }))
+		if (account_id === -1) return fail(400, { account_id, missing: true });
+		if (heroID === -1) return fail(400, { heroID, missing: true });
+		if (timestamp === 0) return fail(400, { timestamp, missing: true });
 
-		let winVal: boolean = false
-		if (win === "1") winVal = true
+		let winVal: boolean = false;
+		if (win === '1') winVal = true;
 
 		console.log('[admin] - user trying to add fake match', session.user.account_id);
 		let fakeMatch = {
-			"match_id": parseInt("999999" + Math.floor(Math.random() * 9999)),
-			"account_id": account_id,
-			"player_slot": 2,
-			"radiant_win": winVal,
-			"game_mode": 23,
-			"hero_id": heroID,
-			"start_time": timestamp,
-			"duration": 1323,
-			"lobby_type": 0,
-			"version": null,
-			"kills": 10,
-			"deaths": 2,
-			"assists": 13,
-			"skill": null,
-			"average_rank": 35,
-			"leaver_status": 0,
-			"party_size": null
-		}
+			match_id: parseInt('999999' + Math.floor(Math.random() * 9999)),
+			account_id: account_id,
+			player_slot: 2,
+			radiant_win: winVal,
+			game_mode: 23,
+			hero_id: heroID,
+			start_time: timestamp,
+			duration: 1323,
+			lobby_type: 0,
+			version: null,
+			kills: 10,
+			deaths: 2,
+			assists: 13,
+			skill: null,
+			average_rank: 35,
+			leaver_status: 0,
+			party_size: null
+		};
 
 		const matchInsertResult = await prisma.match.upsert({
 			where: {
@@ -174,8 +190,8 @@ export const actions: Actions = {
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 			// @ts-ignore: Unreachable code error
 			create: { ...fakeMatch }
-		})
+		});
 
-		if (matchInsertResult) return { success: true, matchInsertResult }
+		if (matchInsertResult) return { success: true, matchInsertResult };
 	}
 };
