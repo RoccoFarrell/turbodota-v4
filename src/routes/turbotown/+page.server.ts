@@ -32,6 +32,7 @@ export const actions: Actions = {
 		let turbotownID = parseInt(formData.get('turbotownID')?.toString() || '-1');
 		let questStoreSlot = parseInt(formData.get('questStoreSlot')?.toString() || '');
 		let questStore = JSON.parse(formData.get('questStore')?.toString() || '');
+		let seasonID = JSON.parse(formData.get('seasonID')?.toString() || '');
 		//console.log('turbotownID: ', (turbotownID))
 		//console.log('random hero select:', hero);
 
@@ -50,12 +51,14 @@ export const actions: Actions = {
 
 					// 2. Decrement item from the user
 					if (itemCheck) {
-						console.log('[observer page.server.ts] item found')
+						console.log('[observer page.server.ts] item found');
 						const sender = await tx.turbotownItem.delete({
 							where: {
 								id: itemCheck.id
 							}
 						});
+
+						console.log('itemCheck for delete: ', sender)
 
 						if (!sender) {
 							throw new Error(`${session.user.account_id} failed to delete item!`);
@@ -71,6 +74,8 @@ export const actions: Actions = {
 							session
 						};
 
+						//fairly certain the calls to prisma.xx inside transaction is locking the DB
+						/*
 						let response = await fetch(`/api/random/${session.user.account_id}/create`, {
 							method: 'POST',
 							headers: {
@@ -79,8 +84,42 @@ export const actions: Actions = {
 							body: JSON.stringify(questData)
 						});
 
-						let randomCreateResponseData = await response.json()
-						console.log('[observer page.server.ts] random created', randomCreateResponseData)
+						let randomCreateResponseData = await response.json();
+						*/
+
+						//new method
+						let randomCreateResponse = await tx.random.create({
+							data: {
+								account_id: session.user.account_id,
+								active: true,
+								status: 'active',
+								date: new Date(),
+								availableHeroes: questData.availableHeroes.toString(),
+								bannedHeroes: questData.bannedHeroes.toString(),
+								selectedRoles: questData.selectedRoles.toString(),
+								expectedGold: questData.expectedGold,
+								modifierAmount: questData.modifierAmount,
+								modifierTotal: questData.modifierTotal,
+								randomedHero: questData.randomedHero,
+								seasons: {
+									connect: { id: seasonID}
+								},
+								quests: {
+									create: {
+										turbotownID,
+										questSlot: questData.questSlot,
+										type: 'random',
+										active: true,
+										status: 'active',
+										xp: constant_questXP,
+										gold: constant_questGold,
+										createdDate: new Date()
+									}
+								}
+							}
+						});
+
+						console.log('[observer page.server.ts] random created', randomCreateResponse);
 
 						let statusActive = await tx.turbotownStatus.findFirst({
 							where: {
@@ -89,8 +128,8 @@ export const actions: Actions = {
 						});
 
 						//3. create turbo town action
-						if (statusActive && randomCreateResponseData) {
-							console.log('[observer page.server.ts] found observer status', statusActive)
+						if (statusActive && randomCreateResponse) {
+							console.log('[observer page.server.ts] found observer status', statusActive);
 							const itemUseResponse = await tx.turbotownAction.create({
 								data: {
 									action: 'observer',
@@ -101,7 +140,7 @@ export const actions: Actions = {
 							});
 
 							console.log('[observer page.server.ts] item use response: ', itemUseResponse);
-		
+
 							// 4. add resolvedDate to TurboTownStatus
 							let statusUpdateResult = await tx.turbotownStatus.update({
 								where: {
