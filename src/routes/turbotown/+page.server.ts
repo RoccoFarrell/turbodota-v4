@@ -185,6 +185,8 @@ export const actions: Actions = {
 		const formData = await request.formData();
 
 		let turbotownID = parseInt(formData.get('turbotownID')?.toString() || '-1');
+		let turbotownDestination = JSON.parse(formData.get('turbotownDestination')?.toString() || '');
+		console.log('turbotownDestination', turbotownDestination)
 
 		try {
 			let tx_result = await prisma.$transaction(async (tx) => {
@@ -208,12 +210,12 @@ export const actions: Actions = {
 						throw new Error(`${session.user.account_id} failed to delete item!`);
 					}
 
-					// 3. Check if the user already has a Linken's Sphere buff applied
+					// 3. Check if the user that is receiving the buff already has a Linken's Sphere buff applied
 					let statusActive = await tx.turbotownStatus.findFirst({
 						where: {
 							AND: [
 								{
-									turbotownID,
+									turbotownID: turbotownDestination.id,
 									isActive: true,
 									name: "linkens"
 								}
@@ -225,34 +227,61 @@ export const actions: Actions = {
 						throw new Error(`${session.user.account_id} already has a Linken's Sphere buff applied!`);
 					}
 
-					let postBody = {
-						item: 'linkens',
-						info: null
-					};
+					// 4. add the status to the receiving user
+					let statusResult: any = null;
 
-					let response = await fetch(`/api/town/${session.user.account_id}/status`, {
-						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json'
+					statusResult = await prisma.turbotown.update({
+						where: {
+							account_id: turbotownDestination.account_id
 						},
-						body: JSON.stringify(postBody)
-					});
+						data: {
+							statuses: {
+								create: {
+									name: 'linkens',
+									isActive: true,
+									appliedDate: new Date(),
+									value: ''
+								}
+							}
+						},
+						include: {
+							statuses: true
+						}
+					})
 
-					let linkensResponse = await response.json();
-					console.log('response', linkensResponse);
+					if(!statusResult){
+						throw new Error(`${session.user.account_id} failed to add status to`, turbotownDestination.account_id);
+					}
+
+					// let postBody = {
+					// 	item: 'linkens',
+					// 	info: null
+					// };
+
+					// let response = await fetch(`/api/town/${session.user.account_id}/status`, {
+					// 	method: 'POST',
+					// 	headers: {
+					// 		'Content-Type': 'application/json'
+					// 	},
+					// 	body: JSON.stringify(postBody)
+					// });
+
+					// let linkensResponse = await response.json();
+					// console.log('response', linkensResponse);
+
+					const itemUseResponse = await tx.turbotownAction.create({
+						data: {
+							action: 'linkens',
+							turbotownDestinationID: turbotownDestination.id,
+							appliedDate: new Date(),
+							endDate: new Date()
+						}
+					});
+					console.log(itemUseResponse);
+
+					return itemUseResponse;
 				}
 
-				const itemUseResponse = await tx.turbotownAction.create({
-					data: {
-						action: 'linkens',
-						turbotownDestinationID: turbotownID,
-						appliedDate: new Date(),
-						endDate: new Date()
-					}
-				});
-				console.log(itemUseResponse);
-
-				return itemUseResponse;
 			});
 
 			if (tx_result) {
