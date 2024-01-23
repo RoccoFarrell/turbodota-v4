@@ -35,6 +35,7 @@
 	let account_id: number = $modalStore[0].meta.account_id;
 	let turbotownID: number = $modalStore[0].meta.turbotownID;
 	let statuses: TurbotownStatus[] = $modalStore[0].meta.statuses;
+	let seasonID: number = $modalStore[0].meta.seasonID
 
 	$: console.log('statuses: ', statuses);
 	$: console.log('account_id:', account_id);
@@ -164,6 +165,7 @@
 			<input type="hidden" name="questStore" value={JSON.stringify(openStore)} />
 			<input type="hidden" name="questStoreSlot" value={openStoreSlot} />
 			<input type="hidden" name="turbotownID" value={turbotownID} />
+			<input type="hidden" name="seasonID" value={seasonID}>
 			<div class="flex flex-col justify-center w-full space-y-4">
 				<div class="w-full flex justify-center">
 					<p class="italic text-tertiary-600 text-sm">

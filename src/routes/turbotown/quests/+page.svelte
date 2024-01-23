@@ -78,17 +78,28 @@
 				if (pushSlot === 2) animateSlot2 = true;
 				if (pushSlot === 3) animateSlot3 = true;
 
+				let setList = checkForBanList()
+				// if(setList.length > 0){
+				// 	quest1Store.setBanList(setList);
+				// 	quest2Store.setBanList(setList);
+					
+				// }
+
 				setTimeout(() => {
+
 					if (animateSlot1) {
 						$townStore.quests.quest1.reset(data.heroDescriptions.allHeroes);
+						quest1Store.setBanList(setList);
 						animateSlot1 = false;
 					}
 					if (animateSlot2) {
 						$townStore.quests.quest2.reset(data.heroDescriptions.allHeroes);
+						quest2Store.setBanList(setList);
 						animateSlot2 = false;
 					}
 					if (animateSlot3) {
 						$townStore.quests.quest3.reset(data.heroDescriptions.allHeroes);
+						quest3Store.setBanList(setList);
 						animateSlot3 = false;
 					}
 				}, 5000);
@@ -156,26 +167,59 @@
 	let quest1Store = $townStore.quests.quest1;
 	let quest2Store = $townStore.quests.quest2;
 	let quest3Store = $townStore.quests.quest3;
-	if (data.userPreferences && data.userPreferences.length > 0) {
-		console.log(`[random/+page.svelte] - evaluating userPreferencces`);
-		let banListPref = data.userPreferences.filter((pref: any) => pref.name === 'randomBanList');
 
-		try {
-			if (banListPref.length > 0 && banListPref[0].value) {
-				console.log(`[random/+page.svelte] - evaluating saved ban list`);
-				let randomBanListParsed = JSON.parse(banListPref[0].value);
+	const checkForBanList = () => {
+		if (data.userPreferences && data.userPreferences.length > 0) {
+			console.log(`[random/+page.svelte] - evaluating userPreferencces`);
+			let banListPref = data.userPreferences.filter((pref: any) => pref.name === 'randomBanList');
 
-				let setList = data.heroDescriptions.allHeroes.filter((hero: Hero) => randomBanListParsed.includes(hero.id));
+			try {
+				if (banListPref.length > 0 && banListPref[0].value) {
+					console.log(`[random/+page.svelte] - evaluating saved ban list`);
+					let randomBanListParsed = JSON.parse(banListPref[0].value);
 
-				randomStore.setBanList(setList);
-				quest1Store.setBanList(setList);
-				quest2Store.setBanList(setList);
-				quest3Store.setBanList(setList);
+					let setList = data.heroDescriptions.allHeroes.filter((hero: Hero) => randomBanListParsed.includes(hero.id));
+
+					return setList
+				} else {
+					console.error('[quests page.svelte] - couldnt get ban list in checkForBanList')
+					return []
+				}
+			} catch (e) {
+				console.error('error in setting preferences');
 			}
-		} catch (e) {
-			console.error('error in setting preferences');
 		}
+	};
+
+	//when component mounts, set ban list
+	let setList = checkForBanList()
+	if(setList.length > 0){
+		randomStore.setBanList(setList);
+		quest1Store.setBanList(setList);
+		quest2Store.setBanList(setList);
+		quest3Store.setBanList(setList);
 	}
+
+	// if (data.userPreferences && data.userPreferences.length > 0) {
+	// 	console.log(`[random/+page.svelte] - evaluating userPreferencces`);
+	// 	let banListPref = data.userPreferences.filter((pref: any) => pref.name === 'randomBanList');
+
+	// 	try {
+	// 		if (banListPref.length > 0 && banListPref[0].value) {
+	// 			console.log(`[random/+page.svelte] - evaluating saved ban list`);
+	// 			let randomBanListParsed = JSON.parse(banListPref[0].value);
+
+	// 			let setList = data.heroDescriptions.allHeroes.filter((hero: Hero) => randomBanListParsed.includes(hero.id));
+
+	// 			randomStore.setBanList(setList);
+	// 			quest1Store.setBanList(setList);
+	// 			quest2Store.setBanList(setList);
+	// 			quest3Store.setBanList(setList);
+	// 		}
+	// 	} catch (e) {
+	// 		console.error('error in setting preferences');
+	// 	}
+	// }
 
 	const t: ToastSettings = {
 		message: `Max bans of ${$randomStore.maxBans} reached!`,
@@ -237,7 +281,7 @@
 			>
 				<div class="flex flex-col h-full justify-center items-center w-[70%]">
 					<div class="w-full h-full grid grid-cols-3 mx-auto max-h-[75%]">
-						{#key animateSlot1}
+						{#key animateSlot1 || data}
 							<div
 								class="bg-questBoardPoster bg-no-repeat bg-contain bg-center w-full h-full flex items-center justify-center"
 							>
@@ -260,7 +304,7 @@
 								</div>
 							</div>
 						{/key}
-						{#key animateSlot2}
+						{#key animateSlot2 || data}
 							<div
 								class="bg-questBoardPoster bg-no-repeat bg-contain bg-center w-full h-full flex items-center justify-center"
 							>
@@ -277,14 +321,16 @@
 											/>
 										</div>
 									{/if}
+
 									<div class={'h-full ' + (animateSlot2 ? 'exploding' : '')}>
 										<GenerateRandom {data} questSlot={2}></GenerateRandom>
 									</div>
+
 									<div class="box"></div>
 								</div>
 							</div>
 						{/key}
-						{#key animateSlot3}
+						{#key animateSlot3 || data}
 							<div
 								class="bg-questBoardPoster bg-no-repeat bg-contain bg-center w-full h-full flex items-center justify-center"
 							>
@@ -301,6 +347,7 @@
 											/>
 										</div>
 									{/if}
+
 									<div class={'h-full ' + (animateSlot3 ? 'exploding' : '')}>
 										<GenerateRandom {data} questSlot={3}></GenerateRandom>
 									</div>

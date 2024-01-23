@@ -27,7 +27,7 @@
 
 	export let data: any;
 	if (browser) {
-		//console.log(data);
+		console.log('data in inventory: ', data);
 	}
 
 	let items: TurbotownItem[] = data.town.turbotown.items;
@@ -44,7 +44,8 @@
 		meta: {
 			account_id: data.session.user.account_id,
 			statuses: data.town.turbotown.statuses,
-			turbotownID: data.town.turbotown.id
+			turbotownID: data.town.turbotown.id,
+			seasonID: data.league.seasonID
 		},
 		response: (r: any) => {
 			//console.log(r);

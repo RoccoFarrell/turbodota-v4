@@ -8,6 +8,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 	//if(event.url) console.log(event.url)
 	console.log(`[hooks] - setting locals auth`)
 	event.locals.auth = auth.handleRequest(event)
+	console.log('[hooks] - local auth returning')
 
 	// const session = await event.locals.auth.validate()
 	// event.locals.session = session;
