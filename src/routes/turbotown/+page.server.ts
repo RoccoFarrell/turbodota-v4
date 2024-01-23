@@ -178,6 +178,75 @@ export const actions: Actions = {
 			return fail(400, { message: 'Could not delete item' });
 		}
 	},
+	useLinkens: async ({ request, locals, fetch }) => {
+		console.log('received useLinkens post in turbotown page server');
+		const session = await locals.auth.validate();
+		if (!session) return fail(400, { message: 'Not logged in, cannot use item' });
+		const formData = await request.formData();
+
+		let turbotownID = parseInt(formData.get('turbotownID')?.toString() || '-1');
+
+		try {
+			let tx_result = await prisma.$transaction(async (tx) => {
+				// 1. Verify that the user has at least one of the item in inventory
+				// look for itemID 2 (linkens sphere)
+				let itemCheck = await tx.turbotownItem.findFirstOrThrow({
+					where: {
+						itemID: 2
+					}
+				});
+
+				// 2. Decrement item from the user
+				if (itemCheck) {
+					const sender = await tx.turbotownItem.delete({
+						where: {
+							id: itemCheck.id
+						}
+					});
+
+					if (!sender) {
+						throw new Error(`${session.user.account_id} failed to delete item!`);
+					}
+
+					// 3. Check if the user already has a Linken's Sphere buff applied
+					let statusActive = await tx.turbotownStatus.findFirst({
+						where: {
+							AND: [
+								{
+									isActive: true,
+									name: "linkens"
+								}
+							]
+						},
+					})
+
+					if (statusActive) {
+						throw new Error(`${session.user.account_id} already has a Linken's Sphere buff applied!`);
+					}
+				}
+
+				const itemUseResponse = await tx.turbotownAction.create({
+					data: {
+						action: 'observer',
+						turbotownDestinationID: turbotownID,
+						appliedDate: new Date(),
+						endDate: new Date()
+					}
+				});
+				console.log(itemUseResponse);
+
+				return itemUseResponse;
+			});
+
+			if (tx_result) {
+				console.log('returning');
+				return { action: 'use item', result: tx_result, success: true };
+			} else console.error('no return from use item');
+		} catch (err) {
+			console.error(err);
+			return fail(400, { message: 'Could not delete item' });
+		}
+	},
 	addFakeMatch: async ({ request, locals }) => {
 		console.log('received createFakeMatch post in turbotown page server');
 		const session = await locals.auth.validate();
