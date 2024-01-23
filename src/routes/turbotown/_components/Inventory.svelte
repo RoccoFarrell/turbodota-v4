@@ -3,6 +3,7 @@
 	import { blur } from 'svelte/transition';
 	import type { SvelteComponent } from 'svelte';
 	import { browser } from '$app/environment';
+	import { enhance } from '$app/forms';
 
 	//skeleton
 	import { Table, tableMapperValues } from '@skeletonlabs/skeleton';
@@ -13,7 +14,7 @@
 	import { getToastStore, storeHighlightJs } from '@skeletonlabs/skeleton';
 
 	//prisma
-	import type { TurbotownItem } from '@prisma/client';
+	import type { Turbotown, TurbotownItem, TurbotownStatus } from '@prisma/client';
 
 	//stores
 	import { townStore } from '$lib/stores/townStore';
@@ -22,8 +23,9 @@
 	let quest3Store = $townStore.quests.quest3;
 	const toastStore = getToastStore();
 
-	//images
+	//components
 	import Observer from './Observer.svelte';
+	import Linkens from './Linkens.svelte';
 
 	export let data: any;
 	if (browser) {
@@ -34,13 +36,13 @@
 
 	const modalStore = getModalStore();
 
-	const modalComponent: ModalComponent = {
+	const observerModalComponent: ModalComponent = {
 		ref: Observer
 	};
 
 	const observerModal: ModalSettings = {
 		type: 'component',
-		component: modalComponent,
+		component: observerModalComponent,
 		meta: {
 			account_id: data.session.user.account_id,
 			statuses: data.town.turbotown.statuses,
@@ -48,19 +50,38 @@
 			seasonID: data.league.seasonID
 		},
 		response: (r: any) => {
-			//console.log(r);
 		}
 	};
 
-	class ShopItem {
-		id: number = -1;
-		name: string = '';
-		description: string = '';
-		imgSrc: string = '';
-		goldCost: number = 0;
-		quantityAvailable: number = 0;
-		active: boolean = false;
-	}
+	const linkensModalComponent: ModalComponent = {
+		ref: Linkens
+	};
+
+	// let allStatuses: TurbotownStatus[][] = [];
+
+	// data.league.currentSeason.turbotowns.forEach((turbotown: any, i: number) => {
+	// 	turbotown.statuses.forEach((status: any) => {
+	// 		if (allStatuses[i] === undefined) {
+	// 			allStatuses[i] = [];
+	// 		}
+	// 		allStatuses[i].push(status)
+	// 	});
+	// });
+
+	// console.log(allStatuses)
+
+	const linkensModal: ModalSettings = {
+		type: 'component',
+		component: linkensModalComponent,
+		meta: {
+			account_id: data.session.user.account_id,
+			allTurbotowns: data.league.currentSeason.turbotowns,
+			turbotownID: data.town.turbotown.id,
+			turbotownUsers: data.league.currentSeason.turbotowns
+		},
+		response: (r: any) => {
+		}
+	};
 
 	class InventoryItem {
 		id: number = -1;
@@ -71,19 +92,8 @@
 		status: string = '';
 	}
 
-	// let userInventory: {
-	// 	id: number,
-	// 	name: string,
-	// 	description: string,
-	// 	imgSrc: string
-	// 	quantity: number
-	// 	status: string
-	// }[];
-
 	let userInventory: Array<InventoryItem> = new Array();
-
 	let allItems = items.map((item: any) => item.item);
-
 	let itemListReduced = allItems.filter(
 		(value, index, self) => index === self.findIndex((t) => t.place === value.place && t.name === value.name)
 	);
@@ -101,8 +111,6 @@
 		userInventory.push(pushObj);
 	});
 
-	//console.log(userInventory);
-
 	const tableSource: TableSource = {
 		// A list of heading labels.
 		head: ['Item Name', 'Description', 'Quantity', 'Action'],
@@ -115,10 +123,7 @@
 	};
 
 	const useClickHandler = (item: string) => {
-		//console.log('in click', item);
-		//toggleModal(Observer)
 		if (item === 'Observer Ward') {
-			//console.log('triggering modal in click handler');
 			if ($quest1Store.randomedHero && $quest2Store.randomedHero && $quest3Store.randomedHero) {
 				const t: ToastSettings = {
 					message: `You already have 3 quest slots!`,
@@ -128,8 +133,10 @@
 			} else {
 				modalStore.trigger(observerModal);
 			}
+		} else if (item == "Linken's Sphere") {
+			modalStore.trigger(linkensModal);
 		} else {
-			console.log(item, ' is in development');
+			console.log(item, 'is in development');
 		}
 	};
 </script>
@@ -153,7 +160,7 @@
 					<tbody>
 						{#each tableSource.body as row, i}
 							<tr class="relative h-10" tabindex={i}>
-								<td style={"vertical-align: middle;"}>
+								<td style={'vertical-align: middle;'}>
 									<div class="rounded-full flex space-x-4">
 										<div class="rounded-full">
 											<img class="h-8 object-contain rounded-2xl inline-table" src={row[3]} alt="" />
@@ -162,12 +169,13 @@
 										<p class="font-semibold text-tertiary-300 text-lg">{row[0]}</p>
 									</div>
 								</td>
-								<td style={"vertical-align: middle;"}>
-									<div class="flex items-center  h-full">{row[1]}</div>
+								<td style={'vertical-align: middle;'}>
+									<div class="flex items-center h-full">{row[1]}</div>
 								</td>
-								<td style={"vertical-align: middle;"}>{row[2]}</td>
-								<td style={"vertical-align: middle;"}>
+								<td style={'vertical-align: middle;'}>{row[2]}</td>
+								<td style={'vertical-align: middle;'}>
 									<button
+										type="submit"
 										class="btn variant-filled-primary w-full max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:my-8 max-lg:mx-4 max-lg:max-w-[90%] md:max-w-[80%]"
 										on:click={() => useClickHandler(row[0])}
 										>Use

@@ -152,6 +152,7 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 								},
 								metrics: true,
 								user: true,
+								statuses: true
 							}
 						},
 						_count: {

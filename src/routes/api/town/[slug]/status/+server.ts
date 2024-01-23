@@ -46,7 +46,7 @@ export const POST: RequestHandler = async ({ request, params, url, locals }) => 
             data: {
                 statuses: {
                     create: {
-                        name: "observer",
+                        name: statusValues.item,
                         isActive: true,
                         appliedDate: new Date(),
                         value: JSON.stringify(statusValues.info)
