@@ -45,7 +45,7 @@ export const actions: Actions = {
 					// look for itemID 0 (observer) for now - this will need to change when there are more items
 					let itemCheck = await tx.turbotownItem.findFirstOrThrow({
 						where: {
-							itemID: 0
+							AND: [{ itemID: 0 }, { turbotownID }]
 						}
 					});
 
@@ -58,7 +58,7 @@ export const actions: Actions = {
 							}
 						});
 
-						console.log('itemCheck for delete: ', sender)
+						console.log('itemCheck for delete: ', sender);
 
 						if (!sender) {
 							throw new Error(`${session.user.account_id} failed to delete item!`);
@@ -102,7 +102,7 @@ export const actions: Actions = {
 								modifierTotal: questData.modifierTotal,
 								randomedHero: questData.randomedHero,
 								seasons: {
-									connect: { id: seasonID}
+									connect: { id: seasonID }
 								},
 								quests: {
 									create: {
