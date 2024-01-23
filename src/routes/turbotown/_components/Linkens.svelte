@@ -46,13 +46,21 @@
         selectedTown = allTurbotowns.filter((town) => town.user.username === selectedUser)
         console.log('selected town', selectedTown[0])
     }
+
+	const townToObject = () => {
+        return JSON.parse(JSON.stringify(selectedTown[0], (key, value) =>
+            typeof value === 'bigint'
+                ? value.toString()
+                : value // return everything else unchanged
+        ));
+    }
 </script>
 
 <div class="flex flex-col justify-center items-center">
 	<div id="linkensModal" class="h1 w-[50vw] card flex flex-col justify-center items-center p-4">
 		<form method="POST" class="w-full" action="/turbotown?/useLinkens" use:enhance>
 			<input type="hidden" name="turbotownID" value={turbotownID} />
-            <input type="hidden" name="turbotown" value={JSON.stringify(selectedTown[0])} />
+            <input type="hidden" name="turbotown" value={townToObject} />
 			<div class="flex flex-col justify-center w-full space-y-4">
 				<div class="w-full flex justify-center">
 					<p class="italic text-tertiary-600 text-sm">

@@ -192,7 +192,7 @@ export const actions: Actions = {
 				// look for itemID 2 (linkens sphere)
 				let itemCheck = await tx.turbotownItem.findFirstOrThrow({
 					where: {
-						itemID: 2
+						AND: [{ itemID: 2 }, { turbotownID }]
 					}
 				});
 
@@ -213,6 +213,7 @@ export const actions: Actions = {
 						where: {
 							AND: [
 								{
+									turbotownID,
 									isActive: true,
 									name: "linkens"
 								}
@@ -223,11 +224,27 @@ export const actions: Actions = {
 					if (statusActive) {
 						throw new Error(`${session.user.account_id} already has a Linken's Sphere buff applied!`);
 					}
+
+					let postBody = {
+						item: 'linkens',
+						info: null
+					};
+
+					let response = await fetch(`/api/town/${session.user.account_id}/status`, {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json'
+						},
+						body: JSON.stringify(postBody)
+					});
+
+					let linkensResponse = await response.json();
+					console.log('response', linkensResponse);
 				}
 
 				const itemUseResponse = await tx.turbotownAction.create({
 					data: {
-						action: 'observer',
+						action: 'linkens',
 						turbotownDestinationID: turbotownID,
 						appliedDate: new Date(),
 						endDate: new Date()
