@@ -7,7 +7,7 @@ import { setContext, getContext, onMount } from 'svelte';
 import type { Actions, PageServerLoad } from './$types';
 
 //prisma
-import type { TurbotownMetric, TurbotownItem, User } from '@prisma/client';
+import type { TurbotownMetric, TurbotownItem, User, Random } from '@prisma/client';
 import type { Item } from '@prisma/client';
 import prisma from '$lib/server/prisma';
 import type { Hero } from '@prisma/client';
@@ -249,7 +249,7 @@ export const actions: Actions = {
 						}
 					})
 
-					if(!statusResult){
+					if (!statusResult) {
 						throw new Error(`${session.user.account_id} failed to add status to`, turbotownDestination.account_id);
 					}
 
@@ -392,38 +392,55 @@ export const actions: Actions = {
 							throw new Error(`${session.user.account_id} failed to delete item!`);
 						}
 
-						// 3. Remove quest, set random status to skipped, and create turbo town action
-						const questDelete = await tx.turbotownQuest.delete({
+						// 3. Find the quest that is active and matches selected hero
+						const findRandom = await tx.random.findFirst({
 							where: {
-								id: itemCheck.id
+								AND: [{
+									status: 'active',
+									randomedHero: selectedHeroID
+								}]
 							}
 						})
 
-		
+						console.log('found random', findRandom)
 
-						//3. create turbo town action
-						if (questRemoved) {
-							console.log('[quelling blade page.server.ts] found observer status');
-							const itemUseResponse = await tx.turbotownAction.create({
+						// 4. update that quest status to skipped
+						if (findRandom) {
+							const questDelete = await tx.turbotownQuest.update({
+								where: {
+									id: findRandom.id
+								},
 								data: {
-									action: 'observer',
-									turbotownDestinationID: turbotownID,
-									appliedDate: new Date(),
-									endDate: new Date()
+									status: 'skipped',
+									active: false
 								}
-							});
+							})
 
-							console.log('[observer page.server.ts] item use response: ', itemUseResponse);
+							//5. create turbo town action
+							if (questDelete) {
+								console.log('[quelling blade page.server.ts] found observer status');
+								const itemUseResponse = await tx.turbotownAction.create({
+									data: {
+										action: 'quelling blade',
+										turbotownDestinationID: turbotownID,
+										appliedDate: new Date(),
+										endDate: new Date()
+									}
+								});
 
-							let tx_endTime = dayjs();
-							let executionTime = tx_endTime.diff(tx_startTime, 'millisecond');
+								console.log('[observer page.server.ts] item use response: ', itemUseResponse);
 
-							return { itemUseResponse, executionTime };
-						} else {
-							throw new Error(`${session.user.account_id} could not find active quelling blade item or delete quest`);
+								let tx_endTime = dayjs();
+								let executionTime = tx_endTime.diff(tx_startTime, 'millisecond');
+
+								return { itemUseResponse, executionTime };
+							} else {
+								throw new Error(`${session.user.account_id} could not find active quelling blade item or delete quest`);
+							}
 						}
-					} else {
-						//add else-ifs for other items as they are developed
+					}
+					else {
+						throw new Error(`${session.user.account_id} failed to find random!`);
 					}
 				},
 				{

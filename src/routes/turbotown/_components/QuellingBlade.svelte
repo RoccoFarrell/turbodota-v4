@@ -58,6 +58,16 @@
         console.log(inputQuestSelect)
         selectedHeroID = inputQuestSelect
         console.log("selectedHeroID", selectedHeroID)
+
+		if ($modalStore[0].response) $modalStore[0].response(selectedHeroID);
+		modalStore.close();
+
+		const t: ToastSettings = {
+			message: `Used Quelling Blade`,
+			background: 'variant-filled-success'
+		};
+
+		toastStore.trigger(t);
 	}
 </script>
 
