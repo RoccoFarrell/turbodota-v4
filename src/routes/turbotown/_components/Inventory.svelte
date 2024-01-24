@@ -26,6 +26,7 @@
 	//components
 	import Observer from './Observer.svelte';
 	import Linkens from './Linkens.svelte';
+	import QuellingBlade from './QuellingBlade.svelte';
 
 	export let data: any;
 	if (browser) {
@@ -43,6 +44,23 @@
 	const observerModal: ModalSettings = {
 		type: 'component',
 		component: observerModalComponent,
+		meta: {
+			account_id: data.session.user.account_id,
+			statuses: data.town.turbotown.statuses,
+			turbotownID: data.town.turbotown.id,
+			seasonID: data.league.seasonID
+		},
+		response: (r: any) => {
+		}
+	};
+
+	const quellingBladeModalComponent: ModalComponent = {
+		ref: QuellingBlade
+	};
+
+	const quellingBladeModal: ModalSettings = {
+		type: 'component',
+		component: quellingBladeModalComponent,
 		meta: {
 			account_id: data.session.user.account_id,
 			statuses: data.town.turbotown.statuses,
@@ -135,6 +153,18 @@
 			}
 		} else if (item == "Linken's Sphere") {
 			modalStore.trigger(linkensModal);
+		} else if (item == "Quelling Blade") {
+			if (!$quest1Store.randomedHero && !$quest2Store.randomedHero && !$quest3Store.randomedHero) {
+				const t: ToastSettings = {
+					message: `You have no quests to quell!`,
+					background: 'variant-filled-error'
+				};
+				toastStore.trigger(t);
+			}
+			else {
+				modalStore.trigger(quellingBladeModal);
+			}
+			
 		} else {
 			console.log(item, 'is in development');
 		}

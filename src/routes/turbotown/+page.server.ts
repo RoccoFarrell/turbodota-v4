@@ -347,5 +347,98 @@ export const actions: Actions = {
 		});
 
 		if (matchInsertResult) return { success: true, matchInsertResult };
+	},
+	useQuellingBlade: async ({ request, locals, fetch }) => {
+		console.log('received useQuellingBlade post in turbotown page server');
+		const session = await locals.auth.validate();
+		if (!session) return fail(400, { message: 'Not logged in, cannot use item' });
+		const formData = await request.formData();
+
+		let turbotownID = parseInt(formData.get('turbotownID')?.toString() || '-1');
+		let seasonID = JSON.parse(formData.get('seasonID')?.toString() || '');
+		let selectedHeroID = parseInt(formData.get('selectedHeroID')?.toString() || '-1');
+
+		//////////////////////////////////////////////////////////////////////////////////////////////
+		// NEED TO DO ALL THIS SHIT AFTER TALKING TO NO SALT ABOUT QUEST ID NOT BEING ON QUEST STORE//
+		//////////////////////////////////////////////////////////////////////////////////////////////
+
+		console.log("selectedHeroID", selectedHeroID)
+
+		console.log('[quelling blade page.server.ts] user trying to use item', session.user.account_id);
+		try {
+			let tx_result = await prisma.$transaction(
+				async (tx) => {
+					let tx_startTime = dayjs();
+					// 1. Verify that the user has at least one of the item in inventory
+					// look for itemID 0 (observer) for now - this will need to change when there are more items
+					let itemCheck = await tx.turbotownItem.findFirstOrThrow({
+						where: {
+							AND: [{ itemID: 5 }, { turbotownID }]
+						}
+					});
+
+					// 2. Decrement item from the user
+					if (itemCheck) {
+						console.log('[quelling blade page.server.ts] item found');
+						const sender = await tx.turbotownItem.delete({
+							where: {
+								id: itemCheck.id
+							}
+						});
+
+						console.log('itemCheck for delete: ', sender);
+
+						if (!sender) {
+							throw new Error(`${session.user.account_id} failed to delete item!`);
+						}
+
+						// 3. Remove quest, set random status to skipped, and create turbo town action
+						const questDelete = await tx.turbotownQuest.delete({
+							where: {
+								id: itemCheck.id
+							}
+						})
+
+		
+
+						//3. create turbo town action
+						if (questRemoved) {
+							console.log('[quelling blade page.server.ts] found observer status');
+							const itemUseResponse = await tx.turbotownAction.create({
+								data: {
+									action: 'observer',
+									turbotownDestinationID: turbotownID,
+									appliedDate: new Date(),
+									endDate: new Date()
+								}
+							});
+
+							console.log('[observer page.server.ts] item use response: ', itemUseResponse);
+
+							let tx_endTime = dayjs();
+							let executionTime = tx_endTime.diff(tx_startTime, 'millisecond');
+
+							return { itemUseResponse, executionTime };
+						} else {
+							throw new Error(`${session.user.account_id} could not find active quelling blade item or delete quest`);
+						}
+					} else {
+						//add else-ifs for other items as they are developed
+					}
+				},
+				{
+					maxWait: 9500, // default: 2000
+					timeout: 9500 // default: 5000
+				}
+			);
+
+			if (tx_result) {
+				console.log('returning');
+				return { action: 'use item', result: tx_result, success: true };
+			} else console.error('no return from use item');
+		} catch (err) {
+			console.error(err);
+			return fail(400, { message: 'Could not delete item' });
+		}
 	}
 };
