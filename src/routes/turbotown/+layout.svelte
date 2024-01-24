@@ -79,6 +79,21 @@
 	let quest2Store = $townStore.quests.quest2;
 	let quest3Store = $townStore.quests.quest3;
 
+	//set statuses
+	if (data.town.turbotown && data.town.turbotown.statuses) {
+		setContext('townStatuses', data.town.turbotown.statuses);
+	}
+
+	//set metrics
+	let questRandomIDs = [...new Set(data.town.turbotown?.quests.map((quest) => quest.randomID))];
+	let randomVariabilityPercent: number = questRandomIDs.length / data.town?.turbotown?.quests?.length;
+
+	//refresh turbotown on render
+	//$: data.town.turbotown
+	$: console.log('quests changed in layout: ', data.quests);
+	$: data.quests && updateGoldAndXp();
+	$: data.quests && setQuestStores();
+
 	//set ban list
 	const checkForBanList = () => {
 		if (data.userPreferences && data.userPreferences.length > 0) {
@@ -100,7 +115,7 @@
 			} catch (e) {
 				console.error('error in setting preferences');
 			}
-		}
+		} else return [];
 	};
 
 	$: if (browser && $quest1Store) {
@@ -113,15 +128,15 @@
 		// 	console.error('[turbotown layout] - could not set bans, banList length 0');
 		// }
 
-		if(!$quest1Store.randomedHero){
+		if (!$quest1Store.randomedHero) {
 			quest1Store.setBanList(setList);
 		}
 
-		if(!$quest2Store.randomedHero){
+		if (!$quest2Store.randomedHero) {
 			quest2Store.setBanList(setList);
 		}
 
-		if(!$quest3Store.randomedHero){
+		if (!$quest3Store.randomedHero) {
 			quest3Store.setBanList(setList);
 		}
 
@@ -132,21 +147,6 @@
 		console.log('town store quest 3 store after bans: ', $quest3Store, ' heroID: ');
 		$quest3Store.randomedHero ? console.log($quest3Store.randomedHero.id) : '';
 	}
-
-	//set statuses
-	if (data.town.turbotown && data.town.turbotown.statuses) {
-		setContext('townStatuses', data.town.turbotown.statuses);
-	}
-
-	//set metrics
-	let questRandomIDs = [...new Set(data.town.turbotown?.quests.map((quest) => quest.randomID))];
-	let randomVariabilityPercent: number = questRandomIDs.length / data.town?.turbotown?.quests?.length;
-
-	//refresh turbotown on render
-	//$: data.town.turbotown
-	$: console.log('quests changed in layout: ', data.quests);
-	$: data.quests && updateGoldAndXp();
-	$: data.quests && setQuestStores();
 
 	function updateGoldAndXp() {
 		if (data.quests.questChecks?.length > 0 && data.town.turbotown) {

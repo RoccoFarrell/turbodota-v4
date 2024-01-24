@@ -79,27 +79,22 @@
 				if (pushSlot === 3) animateSlot3 = true;
 
 				let setList = checkForBanList()
-				// if(setList.length > 0){
-				// 	quest1Store.setBanList(setList);
-				// 	quest2Store.setBanList(setList);
-					
-				// }
 
 				setTimeout(() => {
 
 					if (animateSlot1) {
 						$townStore.quests.quest1.reset(data.heroDescriptions.allHeroes);
-						quest1Store.setBanList(setList);
+						setList?.length > 0 ? quest1Store.setBanList(setList) : ''
 						animateSlot1 = false;
 					}
 					if (animateSlot2) {
 						$townStore.quests.quest2.reset(data.heroDescriptions.allHeroes);
-						quest2Store.setBanList(setList);
+						setList?.length > 0 ? quest2Store.setBanList(setList) : ''
 						animateSlot2 = false;
 					}
 					if (animateSlot3) {
 						$townStore.quests.quest3.reset(data.heroDescriptions.allHeroes);
-						quest3Store.setBanList(setList);
+						setList?.length > 0 ? quest3Store.setBanList(setList) : ''
 						animateSlot3 = false;
 					}
 				}, 5000);
@@ -168,37 +163,37 @@
 	let quest2Store = $townStore.quests.quest2;
 	let quest3Store = $townStore.quests.quest3;
 
-	const checkForBanList = () => {
-		if (data.userPreferences && data.userPreferences.length > 0) {
-			console.log(`[random/+page.svelte] - evaluating userPreferencces`);
-			let banListPref = data.userPreferences.filter((pref: any) => pref.name === 'randomBanList');
+	// const checkForBanList = () => {
+	// 	if (data.userPreferences && data.userPreferences.length > 0) {
+	// 		console.log(`[random/+page.svelte] - evaluating userPreferencces`);
+	// 		let banListPref = data.userPreferences.filter((pref: any) => pref.name === 'randomBanList');
 
-			try {
-				if (banListPref.length > 0 && banListPref[0].value) {
-					console.log(`[random/+page.svelte] - evaluating saved ban list`);
-					let randomBanListParsed = JSON.parse(banListPref[0].value);
+	// 		try {
+	// 			if (banListPref.length > 0 && banListPref[0].value) {
+	// 				console.log(`[random/+page.svelte] - evaluating saved ban list`);
+	// 				let randomBanListParsed = JSON.parse(banListPref[0].value);
 
-					let setList = data.heroDescriptions.allHeroes.filter((hero: Hero) => randomBanListParsed.includes(hero.id));
+	// 				let setList = data.heroDescriptions.allHeroes.filter((hero: Hero) => randomBanListParsed.includes(hero.id));
 
-					return setList
-				} else {
-					console.error('[quests page.svelte] - couldnt get ban list in checkForBanList')
-					return []
-				}
-			} catch (e) {
-				console.error('error in setting preferences');
-			}
-		}
-	};
+	// 				return setList
+	// 			} else {
+	// 				console.error('[quests page.svelte] - couldnt get ban list in checkForBanList')
+	// 				return []
+	// 			}
+	// 		} catch (e) {
+	// 			console.error('error in setting preferences');
+	// 		}
+	// 	} else return []
+	// };
 
-	//when component mounts, set ban list
-	let setList = checkForBanList()
-	if(setList.length > 0){
-		randomStore.setBanList(setList);
-		quest1Store.setBanList(setList);
-		quest2Store.setBanList(setList);
-		quest3Store.setBanList(setList);
-	}
+	// //when component mounts, set ban list
+	// let setList = checkForBanList()
+	// if(setList?.length > 0){
+	// 	randomStore.setBanList(setList);
+	// 	quest1Store.setBanList(setList);
+	// 	quest2Store.setBanList(setList);
+	// 	quest3Store.setBanList(setList);
+	// }
 
 	// if (data.userPreferences && data.userPreferences.length > 0) {
 	// 	console.log(`[random/+page.svelte] - evaluating userPreferencces`);
