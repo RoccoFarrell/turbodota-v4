@@ -356,13 +356,11 @@ export const actions: Actions = {
 
 		let turbotownID = parseInt(formData.get('turbotownID')?.toString() || '-1');
 		let seasonID = JSON.parse(formData.get('seasonID')?.toString() || '');
-		let selectedHeroID = parseInt(formData.get('selectedHeroID')?.toString() || '-1');
-
-		//////////////////////////////////////////////////////////////////////////////////////////////
-		// NEED TO DO ALL THIS SHIT AFTER TALKING TO NO SALT ABOUT QUEST ID NOT BEING ON QUEST STORE//
-		//////////////////////////////////////////////////////////////////////////////////////////////
-
-		console.log("selectedHeroID", selectedHeroID)
+		let inputQuestID = parseInt(formData.get('inputQuestID')?.toString() || '-1');
+		let inputrandomID = parseInt(formData.get('inputrandomID')?.toString() || '-1');
+		
+		console.log("inputQuestID", inputQuestID)
+		console.log("inputrandomID", inputrandomID)
 
 		console.log('[quelling blade page.server.ts] user trying to use item', session.user.account_id);
 		try {
@@ -393,51 +391,60 @@ export const actions: Actions = {
 						}
 
 						// 3. Find the quest that is active and matches selected hero
-						const findRandom = await tx.random.findFirst({
+						// const findRandom = await tx.random.findFirst({
+						// 	where: {
+						// 		AND: [{
+						// 			status: 'active',
+						// 			randomedHero: selectedHeroID
+						// 		}]
+						// 	}
+						// })
+
+						// console.log('found random', findRandom)
+
+						// 4. update that quest status to skipped
+						const questUpdate = await tx.turbotownQuest.update({
 							where: {
-								AND: [{
-									status: 'active',
-									randomedHero: selectedHeroID
-								}]
+								id: inputQuestID
+							},
+							data: {
+								status: 'skipped',
+								active: false
 							}
 						})
 
-						console.log('found random', findRandom)
-
-						// 4. update that quest status to skipped
-						if (findRandom) {
-							const questUpdate = await tx.turbotownQuest.update({
-								where: {
-									id: findRandom.id
-								},
-								data: {
-									status: 'skipped',
-									active: false
-								}
-							})
-
-							//5. create turbo town action
-							if (questUpdate) {
-								console.log('[quelling blade page.server.ts] found observer status');
-								const itemUseResponse = await tx.turbotownAction.create({
-									data: {
-										action: 'quelling blade',
-										turbotownDestinationID: turbotownID,
-										appliedDate: new Date(),
-										endDate: new Date()
-									}
-								});
-
-								console.log('[observer page.server.ts] item use response: ', itemUseResponse);
-
-								let tx_endTime = dayjs();
-								let executionTime = tx_endTime.diff(tx_startTime, 'millisecond');
-
-								return { itemUseResponse, executionTime };
-							} else {
-								throw new Error(`${session.user.account_id} could not find active quelling blade item or delete quest`);
+						const randomUpdate = await tx.random.update({
+							where: {
+								id: inputrandomID
+							},
+							data: {
+								status: 'skipped',
+								active: false
 							}
+						})
+
+						//5. create turbo town action
+						if (questUpdate && randomUpdate) {
+							console.log('[quelling blade page.server.ts] found observer status');
+							const itemUseResponse = await tx.turbotownAction.create({
+								data: {
+									action: 'quelling blade',
+									turbotownDestinationID: turbotownID,
+									appliedDate: new Date(),
+									endDate: new Date()
+								}
+							});
+
+							console.log('[observer page.server.ts] item use response: ', itemUseResponse);
+
+							let tx_endTime = dayjs();
+							let executionTime = tx_endTime.diff(tx_startTime, 'millisecond');
+
+							return { itemUseResponse, executionTime };
+						} else {
+							throw new Error(`${session.user.account_id} could not find active quelling blade item or delete quest`);
 						}
+						//}
 					}
 					else {
 						throw new Error(`${session.user.account_id} failed to find random!`);

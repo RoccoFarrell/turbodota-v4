@@ -63,9 +63,9 @@
 		component: quellingBladeModalComponent,
 		meta: {
 			account_id: data.session.user.account_id,
-			statuses: data.town.turbotown.statuses,
 			turbotownID: data.town.turbotown.id,
-			seasonID: data.league.seasonID
+			seasonID: data.league.seasonID,
+			quests: data.town.turbotown.quests
 		},
 		response: (r: any) => {
 		}

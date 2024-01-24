@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { setContext, getContext, onMount } from 'svelte';
-	import type { Hero, TurbotownStatus } from '@prisma/client';
+	import type { Hero, TurbotownQuest } from '@prisma/client';
 	import type { SvelteComponent } from 'svelte';
 	import { enhance } from '$app/forms';
 
@@ -13,53 +13,40 @@
 
 	//stores
 	const toastStore = getToastStore();
-
 	const modalStore = getModalStore();
+
 
 	let heroes: Hero[] = getContext('heroes');
 
-	import { townStore } from '$lib/stores/townStore';
-	let quest1Store = $townStore.quests.quest1;
-	let quest2Store = $townStore.quests.quest2;
-	let quest3Store = $townStore.quests.quest3;
-	console.log('quest1Store', $quest1Store.randomedHero);
-    console.log('$townStore.quests', $townStore.quests.quest1)
-
 	let account_id: number = $modalStore[0].meta.account_id;
 	let turbotownID: number = $modalStore[0].meta.turbotownID;
-	let statuses: TurbotownStatus[] = $modalStore[0].meta.statuses;
 	let seasonID: number = $modalStore[0].meta.seasonID;
+    let quests: TurbotownQuest[] = $modalStore[0].meta.quests;
 
 	$: console.log('LOGGGINGGGGG');
 	$: console.log('heroes: ', heroes);
-	$: console.log('statuses: ', statuses);
 	$: console.log('account_id:', account_id);
 	$: console.log('turbotownID: ', turbotownID);
 	$: console.log('seasonID: ', seasonID);
+    $: console.log('quests: ', quests);
 
 	let currentQuestList: Array<any> = new Array<any>();
-	$: console.log('random hero list: ', currentQuestList);
+	$: console.log('CURRENT QUEST list: ', currentQuestList);
 
-	//currentHeroList = quests.filter(quest => quest.active).map(quest => quest.random.randomedHero)
+	currentQuestList = quests.filter(quest => quest.active).map(quest => quest)
+    let temp2 = heroes.filter(hero => hero.id == currentQuestList[0].random.randomedHero)
+    console.log("temp2", temp2[0].localized_name)
 
-	if ($quest1Store.randomedHero) {
-		currentQuestList.push($quest1Store);
-	}
-	if ($quest2Store.randomedHero) {
-		currentQuestList.push($quest2Store);
-	}
-	if ($quest3Store.randomedHero) {
-		currentQuestList.push($quest3Store);
-	}
+    let inputQuestID: number
+    let inputrandomID : number
 
-    let selectedHeroID: number
+	function onFormSubmit(selectedQuestID: any, randomID: any): void {
+        inputQuestID = selectedQuestID
+        inputrandomID = randomID
+        console.log("inputQuestID", inputQuestID)
+        console.log("inputrandomID", inputrandomID)
 
-	function onFormSubmit(inputQuestSelect: any): void {
-        console.log(inputQuestSelect)
-        selectedHeroID = inputQuestSelect
-        console.log("selectedHeroID", selectedHeroID)
-
-		if ($modalStore[0].response) $modalStore[0].response(selectedHeroID);
+		if ($modalStore[0].response) $modalStore[0].response(inputQuestID); //WHAT IS THIS, not using inputrandomID?
 		modalStore.close();
 
 		const t: ToastSettings = {
@@ -76,7 +63,8 @@
 		<form method="POST" class="w-full" action="/turbotown?/useQuellingBlade" use:enhance>
 			<input type="hidden" name="turbotownID" value={turbotownID} />
 			<input type="hidden" name="seasonID" value={seasonID} />
-            <input type="hidden" name="selectedHeroID" value={selectedHeroID} />
+            <input type="hidden" name="inputQuestID" value={inputQuestID} />
+            <input type="hidden" name="inputrandomID" value={inputrandomID} />
 			<div class="flex flex-col justify-center w-full space-y-4">
 				<div class="w-full flex justify-center">
 					<p class="italic text-tertiary-600 text-sm">
@@ -90,12 +78,11 @@
 							class="card flex flex-col justify-center items-center w-full relative z-0 rounded-xl h-full p-4 shadow-sm shadow-primary-500"
 						>
 							<h2 class="h2 animate-pulse text-amber-600">
-								{quest.randomedHero.localized_name}
+								{heroes.filter(hero => hero.id == quest.random.randomedHero)[0].localized_name}
 							</h2>
-							<i class={`d2mh hero-${quest.randomedHero.id} scale-[3] m-12`}></i>
-
+                            <i class={`d2mh hero-${heroes.filter(hero => hero.id == quest.random.randomedHero)[0].id} scale-[3] m-12`}></i>
 							<div class="flex items-center justify-center">
-								<button class="btn variant-filled-primary w-full" on:click={() => onFormSubmit(quest.randomedHero.id)}>
+								<button class="btn variant-filled-primary w-full" on:click={() => onFormSubmit(quest.id, quest.randomID)}>
 									<div class="italic">Select</div></button
 								>
 							</div>
