@@ -406,7 +406,7 @@ export const actions: Actions = {
 
 						// 4. update that quest status to skipped
 						if (findRandom) {
-							const questDelete = await tx.turbotownQuest.update({
+							const questUpdate = await tx.turbotownQuest.update({
 								where: {
 									id: findRandom.id
 								},
@@ -417,7 +417,7 @@ export const actions: Actions = {
 							})
 
 							//5. create turbo town action
-							if (questDelete) {
+							if (questUpdate) {
 								console.log('[quelling blade page.server.ts] found observer status');
 								const itemUseResponse = await tx.turbotownAction.create({
 									data: {
