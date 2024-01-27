@@ -26,14 +26,14 @@ export const POST: RequestHandler = async ({ request, params, url, locals, fetch
 
 	let requestData = await request.json();
 
-	console.log(
-		`[/quest/complete] session in API call: `,
-		JSON.stringify(session),
-		`params.slug: `,
-		params,
-		`request.url: `,
-		url
-	);
+	// console.log(
+	// 	`[/quest/complete] session in API call: `,
+	// 	JSON.stringify(session),
+	// 	`params.slug: `,
+	// 	params,
+	// 	`request.url: `,
+	// 	url
+	// );
 	//reject the call if the user is not authenticated
 
 	let account_id: number = parseInt(url.pathname.split('/api/town/')[1].split('/quest')[0]);
@@ -48,7 +48,7 @@ export const POST: RequestHandler = async ({ request, params, url, locals, fetch
 			`\n-----------\n[api/town/${account_id}/quest/${questID}/complete] account_id: ${account_id}, questID: ${questID}\n-------------\n`
 		);
 
-		console.log('[api/town/${account_id}/quest/${questID}/complete] requestData: ', requestData);
+		//console.log('[api/town/${account_id}/quest/${questID}/complete] requestData: ', requestData);
 
 		console.log(`[api/town/${account_id}/quest/${questID}/complete] - checking random for: ${session.user.account_id}`);
 
@@ -91,8 +91,8 @@ export const POST: RequestHandler = async ({ request, params, url, locals, fetch
 						}
 					});
 
-					console.log('quest: ', quest);
-					console.log('completedRandom: ', completedRandom);
+					//console.log('quest: ', quest);
+					//console.log('completedRandom: ', completedRandom);
 
 					if (quest && completedRandom) {
 						const townQuestUpdateResult = await tx.turbotown.update({
@@ -128,7 +128,7 @@ export const POST: RequestHandler = async ({ request, params, url, locals, fetch
 							}
 						});
 
-						console.log('townQuestUpdateResult: ', townQuestUpdateResult);
+						//console.log('townQuestUpdateResult: ', townQuestUpdateResult);
 
 						let metrics_gold = townQuestUpdateResult.metrics.filter((metric) => metric.label === 'gold')[0];
 						let metrics_xp = townQuestUpdateResult.metrics.filter((metric) => metric.label === 'xp')[0];
@@ -202,7 +202,7 @@ export const POST: RequestHandler = async ({ request, params, url, locals, fetch
 			);
 
 			if (tx_result) {
-				if (tx_result.town) console.log('added gold and xp to town', tx_result.town.id, tx_result.town.metrics);
+				//if (tx_result.town) console.log('added gold and xp to town', tx_result.town.id, tx_result.town.metrics);
 				let newResponse = new Response(JSON.stringify({ status: 'success', success: true, tx_result }));
 				return newResponse;
 			} else {

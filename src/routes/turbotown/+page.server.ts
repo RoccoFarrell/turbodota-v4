@@ -1,22 +1,13 @@
-//lucia
-import { auth } from '$lib/server/lucia';
-
 //svelte
 import { fail, redirect, json } from '@sveltejs/kit';
-import { setContext, getContext, onMount } from 'svelte';
 import type { Actions, PageServerLoad } from './$types';
 
 //prisma
-import type { TurbotownMetric, TurbotownItem, User } from '@prisma/client';
-import type { Item } from '@prisma/client';
 import prisma from '$lib/server/prisma';
 import type { Hero } from '@prisma/client';
 
 //dayjs
 import dayjs from 'dayjs';
-
-//stores
-import { townStore } from '$lib/stores/townStore';
 
 //constants
 import { constant_questGold, constant_questXP } from '$lib/constants/turbotown';
@@ -154,6 +145,8 @@ export const actions: Actions = {
 
 							let tx_endTime = dayjs();
 							let executionTime = tx_endTime.diff(tx_startTime, 'millisecond');
+
+							console.log('[observer] total execution time: ', executionTime)
 
 							return { itemUseResponse, executionTime };
 						} else {

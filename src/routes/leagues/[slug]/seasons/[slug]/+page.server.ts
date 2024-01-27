@@ -127,9 +127,13 @@ export const load: PageServerLoad = async ({ locals, parent, params }) => {
 	return {
 		...parentData,
 		league: {
+			leagueID: leagueAndSeasonsResult ? leagueAndSeasonsResult[0].id : null,
+			seasonID: currentSeason?.id,
 			leagueAndSeasonsResult,
 			currentSeason,
-			questsInSeason,
+			_counts: {
+				questsInSeason
+			},
 			currentTownLeaderboard: structuredClone(currentTownLeaderboard),
 			currentSeasonLeaderboard: structuredClone(currentSeasonLeaderboard)
 		},
@@ -152,7 +156,7 @@ export const actions: Actions = {
 
 		console.log(`[updateSeasonRandoms] FOUND ${randomsList.length} randoms to add to season ${seasonID}`);
 
-		if (session && session.user && session.user.roles.includes('dev')) {
+		if (session?.user?.roles.includes('dev')) {
 			let randomUpdateResult = await prisma.season.update({
 				where: {
 					id: seasonID

@@ -160,7 +160,12 @@
 	 -->
 
 	<!-- HTML Meta Tags -->
-	<title>Turbodota - The Tracker for Turbo</title>
+	{#if dev}
+		<title>[DEV] Turbodota</title>
+	{:else}
+		<title>Turbodota - The Tracker for Turbo</title>
+	{/if}
+	
 	<meta name="description" content="Track your randoms, and compete to become Mayor of Turbotown!" />
 
 	<!-- Facebook Meta Tags -->

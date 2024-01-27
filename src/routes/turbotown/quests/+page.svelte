@@ -57,7 +57,7 @@
 		console.log('data: ', data);
 	}
 
-	$: console.log('data changed: ', data);
+	//$: console.log('data changed: ', data);
 
 	$: onQuestComplete(data.quests);
 
@@ -197,7 +197,6 @@
 
 	// 			let setList = data.heroDescriptions.allHeroes.filter((hero: Hero) => randomBanListParsed.includes(hero.id));
 
-	// 			randomStore.setBanList(setList);
 	// 			quest1Store.setBanList(setList);
 	// 			quest2Store.setBanList(setList);
 	// 			quest3Store.setBanList(setList);
@@ -208,7 +207,7 @@
 	// }
 
 	const t: ToastSettings = {
-		message: `Max bans of ${$randomStore.maxBans} reached!`,
+		message: `Max bans of ${$quest1Store.maxBans} reached!`,
 		background: 'variant-filled-warning'
 	};
 
@@ -219,7 +218,7 @@
 		}, 5000);
 
 	$: {
-		randomStore.updateCalculations();
+		//quest1Store.updateCalculations();
 		if (banLimitErrorVisible) toastStore.trigger(t);
 	}
 

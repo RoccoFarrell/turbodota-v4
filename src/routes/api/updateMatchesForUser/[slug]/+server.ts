@@ -59,11 +59,6 @@ async function writeRecordsChunked(partialArr: Match[], account_id: number) {
 }
 
 export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
-	// console.log(url)
-	// console.log(`[api] - received GET to ${url.href}`)
-	//console.log(`params: ${JSON.stringify(params)}`)
-	//console.log(params)
-
 	let account_id: number = parseInt(params.slug || '0');
 	console.log(`\n-----------\n[matches] account_id: ${account_id}\n-------------\n`);
 	//let account_id: number = parseInt(url.searchParams.get('account_id') || "80636612")
@@ -117,7 +112,7 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
 	let timeoutInterval: number = 1
 	updateInterval.setMinutes(rightNow.getMinutes() - timeoutInterval);
 
-	console.log(`[matches][${account_id}] updateInterval: ${updateInterval}`);
+	//console.log(`[matches][${account_id}] updateInterval: ${updateInterval}`);
 	if ((userResult && userResult.lastUpdated >= updateInterval && !forceFullUpdate) || forceSource === "db") {
 		if(forceSource === "db") console.log(`[updateMatchesForUser] FORCING source "db"`)
 		console.log(`[matches][${account_id}] user was last updated <${timeoutInterval} minutes - fetch from DB`);
@@ -150,7 +145,7 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
 			);
 			od_url = encodeURI(`https://api.opendota.com/api/players/${account_id}/matches?significant=0&game_mode=23&date=${d_diff_created}`);
 		}
-		console.log(od_url);
+		//console.log(od_url);
 
 		let odError: ODError = {
 			error: false
@@ -219,27 +214,27 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
 			if (txRecordCount - txBlockSize > 0) {
 				let partialMatchArr = matchStats.slice(txRecordCount - txBlockSize, txRecordCount);
 
-				console.log(`[matches][${account_id}] - too many records, chunked insert with block size ${txBlockSize}`);
-				console.log(`[matches][${account_id}] - from index ${txRecordCount - txBlockSize} to ${txRecordCount}`);
+				//console.log(`[matches][${account_id}] - too many records, chunked insert with block size ${txBlockSize}`);
+				//console.log(`[matches][${account_id}] - from index ${txRecordCount - txBlockSize} to ${txRecordCount}`);
 
 				let { match, tx } = await writeRecordsChunked(partialMatchArr, account_id);
 
 				if (!match) chunkInsertFail = true;
-				console.log(`tx results: ${match} | ${tx}`);
+				//console.log(`tx results: ${match} | ${tx}`);
 				txRecordCount = txRecordCount - txBlockSize;
 			} else {
 				let partialMatchArr = matchStats.slice(0, txRecordCount);
-				console.log(`[matches][${account_id}] - too many records, chunked insert with block size ${txRecordCount}`);
-				console.log(`[matches][${account_id}] - final insert from index 0 to ${txRecordCount}`);
+				//console.log(`[matches][${account_id}] - too many records, chunked insert with block size ${txRecordCount}`);
+				//console.log(`[matches][${account_id}] - final insert from index 0 to ${txRecordCount}`);
 
 				let { match, tx } = await writeRecordsChunked(partialMatchArr, account_id);
 
 				if (!match) chunkInsertFail = true;
-				console.log(`tx results: ${match} | ${tx}`);
+				//console.log(`tx results: ${match} | ${tx}`);
 				txRecordCount = 0;
 			}
 
-			console.log('loop count: ', loopCount);
+			//console.log('loop count: ', loopCount);
 			loopCount++;
 		}
 
@@ -291,8 +286,8 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
 
 		console.log(`[matches][${account_id}] ${matchStats.length} matches returned from OpenDota`);
 		console.log(`[matches][${account_id}] ${matchesResult.length} matches returned from Database`);
-		if(matchStats.filter(match => match.id === 7482782346).length > 0) console.log('found 7482782346 in Open Dota')
-		if(matchesResult.filter(match => match.id === 7482782346).length > 0) console.log('found 7482782346 in matches result')
+		//if(matchStats.filter(match => match.id === 7482782346).length > 0) console.log('found 7482782346 in Open Dota')
+		//if(matchesResult.filter(match => match.id === 7482782346).length > 0) console.log('found 7482782346 in matches result')
 		matchStats = matchesResult;
 		dataSource = 'db';
 	}

@@ -62,7 +62,7 @@
 
 	//set towninfo
 	if (data.session && data.session.user) {
-		console.log('account_id found in turbotown layout');
+		//console.log('account_id found in turbotown layout');
 		setContext('account_id', data.session.user.account_id);
 	} else {
 		console.error('no account_id found in turbotown layout');

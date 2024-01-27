@@ -179,6 +179,11 @@ const calculateTownLeaderboard = (turbotowns: TownWithIncludes[], randoms: any, 
 		};
 	});
 
+	townData = townData.sort((a: any, b: any) => {
+		if(a.xp > b.xp) return -1
+		else return 1
+	})
+
 	return townData;
 };
 

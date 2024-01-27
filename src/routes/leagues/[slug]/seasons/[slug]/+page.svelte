@@ -1,6 +1,8 @@
 <script lang="ts">
 	import AddRandomsToSeason from './AddRandomsToSeason.svelte';
 
+	import { browser } from '$app/environment';
+
 	//components
 	import SeasonHeaderCard from './SeasonHeaderCard.svelte';
 	import SeasonLeaderboard from './SeasonLeaderboard.svelte';
@@ -25,7 +27,10 @@
 	import DataTableCheckbox from './data-table-checkbox.svelte';
 
 	export let data;
-	console.log(`[/seasons/<ID>] data: `, data);
+	if(browser){
+		console.log(`[/seasons/<ID>] data: `, data);
+	}
+	
 
 	const table = createTable(readable(data.random.allRandoms), {
 		select: addSelectedRows()

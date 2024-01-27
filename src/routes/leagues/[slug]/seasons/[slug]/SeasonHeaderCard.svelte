@@ -146,7 +146,7 @@
 						</div>
 					</div>
 					<div class="flex justify-center items-center">
-						<a href="/random/leaderboard"><button class="btn variant-ghost-primary">Leaderboard</button></a>
+						<a href={`/leagues/${data.league.leagueID}/seasons/${data.league.seasonID}`}><button class="btn variant-ghost-primary">Leaderboard</button></a>
 					</div>
 				</div>
 			</div>
