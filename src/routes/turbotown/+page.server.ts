@@ -24,6 +24,7 @@ export const actions: Actions = {
 		if (!session) return fail(400, { message: 'Not logged in, cannot use item' });
 		const formData = await request.formData();
 
+		console.log('[observer] parsing form data, ', dayjs().diff(tx_startTime, 'millisecond'))
 		let turbotownID = parseInt(formData.get('turbotownID')?.toString() || '-1');
 		let questStoreSlot = parseInt(formData.get('questStoreSlot')?.toString() || '');
 		let questStore = JSON.parse(formData.get('questStore')?.toString() || '');
