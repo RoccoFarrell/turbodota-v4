@@ -26,7 +26,6 @@
 
 	//components
 	import { Avatar, ProgressBar } from '@skeletonlabs/skeleton';
-	import HeroGrid from '$lib/components/HeroGrid/HeroGrid.svelte';
 	import SeasonLeaderboard from './SeasonLeaderboard.svelte';
 
 	//data

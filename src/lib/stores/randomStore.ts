@@ -101,6 +101,8 @@ const banHero = (hero: Hero, store: any) => {
 		}
 	} else {
 		console.warn('[randomStore - banHero] hero is already banned')
+		store.bannedHeroes = store.bannedHeroes.filter((arrHero: Hero) => arrHero !== hero);
+		store.availableHeroes.push(hero);
 	}
 
 

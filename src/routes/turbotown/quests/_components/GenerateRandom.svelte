@@ -6,6 +6,8 @@
 
 	//prisma types
 	import type { Random, Hero, UserPrefs, Session } from '@prisma/client';
+	//types
+	import type { createRandomStore } from '$lib/stores/randomStore'
 
 	//day js
 	import dayjs from 'dayjs';
@@ -31,6 +33,7 @@
 	//stores
 	//import { randomStore } from '$lib/stores/randomStore';
 	import { townStore } from '$lib/stores/townStore';
+	import { banStore } from '$lib/stores/banStore';
 	import { load } from '../../../blog/+page';
 
 	//component props
@@ -47,6 +50,12 @@
 	let preferences: UserPrefs[] = [];
 	if (!preferences || preferences.length === 0) preferences = getContext('userPreferences');
 	//console.log(preferences);
+
+	// type BanStore = ReturnType<typeof createRandomStore>
+	// let banStore = getContext<BanStore>('banStore')
+		
+	// $: console.log(`[questSlot ${questSlot}] ban store in generate random: `, $banStore)
+	// $: console.log(`[questSlot ${questSlot}] random store in generate random: `, $randomStore)
 
 	// if (browser) {
 	// 	console.log('data: ', data);

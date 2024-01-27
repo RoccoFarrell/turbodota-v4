@@ -28,11 +28,12 @@
 	//types
 	import type { PageData } from './$types';
 	import type { Session } from 'lucia';
+	import type { Hero } from '@prisma/client';
 
 	//components
 	import Navigation from './_components/Navigation/Navigation.svelte';
 	import Loading from '$lib/components/Loading.svelte';
-	import HeroGrid from '$lib/components/HeroGrid/HeroGrid.svelte';
+	import HeroGrid from './turbotown/_components/HeroGrid/HeroGrid.svelte';
 	import AdminTools from '$lib/components/AdminTools.svelte';
 
 	//assets
@@ -100,20 +101,60 @@
 
 	export let data: PageData;
 
+	if (browser) {
+		console.log('root data: ', data);
+	}
+
 	let session: Session | null = data.session || null;
 
 	//set session in context for components
 	setContext('session', session);
 	setContext('userPreferences', data.userPreferences);
-	setContext('openDotaDown', false)
+	setContext('openDotaDown', false);
 
-	let openDotaDown = getContext('openDotaDown')
+	let openDotaDown = getContext('openDotaDown');
 
 	let navigatingTest = false;
 
 	//set context for modal component
 
 	setContext('heroes', data.heroDescriptions.allHeroes);
+
+	//create ban store
+	import { banStore } from '$lib/stores/banStore';
+
+	/* Initialize store */
+	let heroes = data.heroDescriptions.allHeroes;
+	if (heroes.length === 0) heroes = getContext('heroes');
+	banStore.setAllHeroes(heroes);
+
+	/* Set bans from preferences */
+	let preferences = data.userPreferences;
+
+	if (preferences && preferences.length > 0) {
+		console.log(`[root layout] - evaluating userPreferencces`);
+		let banListPref = preferences.filter((pref: any) => pref.name === 'randomBanList');
+
+		try {
+			if (banListPref.length > 0 && banListPref[0].value) {
+				console.log(`[root layout] - evaluating saved ban list`);
+				let randomBanListParsed = JSON.parse(banListPref[0].value);
+
+				//console.log(randomBanListParsed);
+
+				//console.log(heroes);
+				let setList = heroes.filter((hero: Hero) => randomBanListParsed.includes(hero.id));
+
+				//console.log(setList);
+				banStore.setBanList(setList);
+			}
+		} catch (e) {
+			console.error('error in setting preferences');
+		}
+	}
+
+	console.log('[root layout] setting banStore', $banStore);
+	setContext('banStore', banStore);
 
 	//modal
 	const modalStore = getModalStore();
@@ -165,7 +206,7 @@
 	{:else}
 		<title>Turbodota - The Tracker for Turbo</title>
 	{/if}
-	
+
 	<meta name="description" content="Track your randoms, and compete to become Mayor of Turbotown!" />
 
 	<!-- Facebook Meta Tags -->
@@ -289,10 +330,10 @@
 						</p>
 					</div>
 					{#if openDotaDown}
-					<div class="h-16 w-[90%] bg-warning-500 p-2 flex flex-col justify-center items-center rounded-xl m-2">
-						<p class="font-bold text-lg text-primary-500 vibrating">WARNING</p>
-						<p class="font-bold text-red-500">Open Dota Down</p>
-					</div>
+						<div class="h-16 w-[90%] bg-warning-500 p-2 flex flex-col justify-center items-center rounded-xl m-2">
+							<p class="font-bold text-lg text-primary-500 vibrating">WARNING</p>
+							<p class="font-bold text-red-500">Open Dota Down</p>
+						</div>
 					{/if}
 				</div>
 			</div>

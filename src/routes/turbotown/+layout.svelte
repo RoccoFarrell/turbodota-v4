@@ -97,19 +97,19 @@
 	//set ban list
 	const checkForBanList = () => {
 		if (data.userPreferences && data.userPreferences.length > 0) {
-			console.log(`[random/+page.svelte] - evaluating userPreferencces`);
+			console.log(`[turbotown layout] - evaluating userPreferencces`);
 			let banListPref = data.userPreferences.filter((pref: any) => pref.name === 'randomBanList');
 
 			try {
 				if (banListPref.length > 0 && banListPref[0].value) {
-					console.log(`[random/+page.svelte] - evaluating saved ban list`);
+					console.log(`[turbotown layout] - evaluating saved ban list`);
 					let randomBanListParsed = JSON.parse(banListPref[0].value);
 
 					let setList = data.heroDescriptions.allHeroes.filter((hero: Hero) => randomBanListParsed.includes(hero.id));
 
 					return setList;
 				} else {
-					console.error('[quests page.svelte] - couldnt get ban list in checkForBanList');
+					console.error('[turbotown layout] - couldnt get ban list in checkForBanList');
 					return [];
 				}
 			} catch (e) {
