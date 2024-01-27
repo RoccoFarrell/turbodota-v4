@@ -13,7 +13,7 @@ import { PrismaClient } from '@prisma/client';
 // })
 
 const prisma = new PrismaClient({
-	log: [{ level: 'query', emit: 'event' }, 'info', 'warn', 'error']
+	//log: [{ level: 'query', emit: 'event' }, 'info', 'warn', 'error']
 });
 
 // prisma.$on('query', (e) => {
