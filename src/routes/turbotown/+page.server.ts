@@ -21,7 +21,12 @@ export const actions: Actions = {
 		let authValidate_endTime = dayjs().diff(tx_startTime, 'millisecond');
 		console.log(`[observer] authValidate took: ${authValidate_endTime}`)
 
-		if (!session) return fail(400, { message: 'Not logged in, cannot use item' });
+		if (!session){
+			console.log('[observer] form failing: , ', dayjs().diff(tx_startTime, 'millisecond'))
+			return fail(400, { message: 'Not logged in, cannot use item' });
+		} 
+
+		console.log('[observer] starting parse form data, ', dayjs().diff(tx_startTime, 'millisecond'))
 		const formData = await request.formData();
 
 		console.log('[observer] parsing form data, ', dayjs().diff(tx_startTime, 'millisecond'))
