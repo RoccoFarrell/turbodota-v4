@@ -15,8 +15,12 @@ import { constant_questGold, constant_questXP } from '$lib/constants/turbotown';
 
 export const actions: Actions = {
 	useObserver: async ({ request, locals, fetch }) => {
-		console.log('received useObserver post in turbotown page server');
+		let tx_startTime = dayjs();
+		console.log('[observer] received useObserver post in turbotown page server, starting auth validate');
 		const session = await locals.auth.validate();
+		let authValidate_endTime = dayjs().diff(tx_startTime, 'millisecond');
+		console.log(`[observer] authValidate took: ${authValidate_endTime}`)
+
 		if (!session) return fail(400, { message: 'Not logged in, cannot use item' });
 		const formData = await request.formData();
 
@@ -31,7 +35,7 @@ export const actions: Actions = {
 		try {
 			let tx_result = await prisma.$transaction(
 				async (tx) => {
-					let tx_startTime = dayjs();
+					
 					// 1. Verify that the user has at least one of the item in inventory
 					// look for itemID 0 (observer) for now - this will need to change when there are more items
 					let itemCheck = await tx.turbotownItem.findFirstOrThrow({
