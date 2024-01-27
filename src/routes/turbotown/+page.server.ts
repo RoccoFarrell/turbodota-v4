@@ -35,8 +35,6 @@ export const actions: Actions = {
 		try {
 			let tx_result = await prisma.$transaction(
 				async (tx) => {
-					
-					c
 					// 1. Verify that the user has at least one of the item in inventory
 					// look for itemID 0 (observer) for now - this will need to change when there are more items
 					let itemCheck = await tx.turbotownItem.findFirstOrThrow({
