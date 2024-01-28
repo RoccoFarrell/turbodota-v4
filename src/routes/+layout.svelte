@@ -28,11 +28,12 @@
 	//types
 	import type { PageData } from './$types';
 	import type { Session } from 'lucia';
+	import type { Hero } from '@prisma/client';
 
 	//components
 	import Navigation from './_components/Navigation/Navigation.svelte';
 	import Loading from '$lib/components/Loading.svelte';
-	import HeroGrid from '$lib/components/HeroGrid/HeroGrid.svelte';
+	import HeroGrid from './turbotown/_components/HeroGrid/HeroGrid.svelte';
 	import AdminTools from '$lib/components/AdminTools.svelte';
 
 	//assets
@@ -100,20 +101,60 @@
 
 	export let data: PageData;
 
+	if (browser) {
+		console.log('root data: ', data);
+	}
+
 	let session: Session | null = data.session || null;
 
 	//set session in context for components
 	setContext('session', session);
 	setContext('userPreferences', data.userPreferences);
-	setContext('openDotaDown', false)
+	setContext('openDotaDown', false);
 
-	let openDotaDown = getContext('openDotaDown')
+	let openDotaDown = getContext('openDotaDown');
 
 	let navigatingTest = false;
 
 	//set context for modal component
 
 	setContext('heroes', data.heroDescriptions.allHeroes);
+
+	//create ban store
+	import { banStore } from '$lib/stores/banStore';
+
+	/* Initialize store */
+	let heroes = data.heroDescriptions.allHeroes;
+	if (heroes.length === 0) heroes = getContext('heroes');
+	banStore.setAllHeroes(heroes);
+
+	/* Set bans from preferences */
+	let preferences = data.userPreferences;
+
+	if (preferences && preferences.length > 0) {
+		console.log(`[root layout] - evaluating userPreferencces`);
+		let banListPref = preferences.filter((pref: any) => pref.name === 'randomBanList');
+
+		try {
+			if (banListPref.length > 0 && banListPref[0].value) {
+				console.log(`[root layout] - evaluating saved ban list`);
+				let randomBanListParsed = JSON.parse(banListPref[0].value);
+
+				//console.log(randomBanListParsed);
+
+				//console.log(heroes);
+				let setList = heroes.filter((hero: Hero) => randomBanListParsed.includes(hero.id));
+
+				//console.log(setList);
+				banStore.setBanList(setList);
+			}
+		} catch (e) {
+			console.error('error in setting preferences');
+		}
+	}
+
+	console.log('[root layout] setting banStore', $banStore);
+	setContext('banStore', banStore);
 
 	//modal
 	const modalStore = getModalStore();
@@ -160,7 +201,12 @@
 	 -->
 
 	<!-- HTML Meta Tags -->
-	<title>Turbodota - The Tracker for Turbo</title>
+	{#if dev}
+		<title>[DEV] Turbodota</title>
+	{:else}
+		<title>Turbodota - The Tracker for Turbo</title>
+	{/if}
+
 	<meta name="description" content="Track your randoms, and compete to become Mayor of Turbotown!" />
 
 	<!-- Facebook Meta Tags -->
@@ -231,10 +277,24 @@
 				</svelte:fragment>
 
 				<svelte:fragment slot="trail">
-					<div class="flex justify-around space-x-8 items-center">
+					<div class="flex justify-around space-x-8 items-center mr-8">
 						{#key data.session}
-							<div class="h-full m-auto">
+							<div class={"h-full m-auto grid" + (dev ? " grid-cols-2" : "grid-cols-1")}>
 								{#if data.session && !$page.url.pathname.includes('herostats')}
+									{#if dev}
+										<div class="flex justify-center items-center">
+											<a href="/feed" class="h-10 w-10">
+												<div class="relative inline-block mt-2">
+													<span class="vibrating badge-icon bg-primary-500 absolute -top-2 -right-0 z-50"
+														><p class="inline text-amber-500 font-bold">2</p></span
+													>
+													<button class="hover:bg-amber-500/50 rounded-full w-10 h-10">
+														<i class="fi fi-rr-bell text-xl h-10 w-10"></i>
+													</button>
+												</div>
+											</a>
+										</div>
+									{/if}
 									<div class="m-auto h-full text-center">
 										Welcome <p class="font-bold text-red-400">{`${data.session.user.username}`}</p>
 									</div>
@@ -284,10 +344,10 @@
 						</p>
 					</div>
 					{#if openDotaDown}
-					<div class="h-16 w-[90%] bg-warning-500 p-2 flex flex-col justify-center items-center rounded-xl m-2">
-						<p class="font-bold text-lg text-primary-500 vibrating">WARNING</p>
-						<p class="font-bold text-red-500">Open Dota Down</p>
-					</div>
+						<div class="h-16 w-[90%] bg-warning-500 p-2 flex flex-col justify-center items-center rounded-xl m-2">
+							<p class="font-bold text-lg text-primary-500 vibrating">WARNING</p>
+							<p class="font-bold text-red-500">Open Dota Down</p>
+						</div>
 					{/if}
 				</div>
 			</div>

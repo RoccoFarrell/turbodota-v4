@@ -62,7 +62,7 @@
 
 	//set towninfo
 	if (data.session && data.session.user) {
-		console.log('account_id found in turbotown layout');
+		//console.log('account_id found in turbotown layout');
 		setContext('account_id', data.session.user.account_id);
 	} else {
 		console.error('no account_id found in turbotown layout');
@@ -79,60 +79,6 @@
 	let quest2Store = $townStore.quests.quest2;
 	let quest3Store = $townStore.quests.quest3;
 
-	//set ban list
-	const checkForBanList = () => {
-		if (data.userPreferences && data.userPreferences.length > 0) {
-			console.log(`[random/+page.svelte] - evaluating userPreferencces`);
-			let banListPref = data.userPreferences.filter((pref: any) => pref.name === 'randomBanList');
-
-			try {
-				if (banListPref.length > 0 && banListPref[0].value) {
-					console.log(`[random/+page.svelte] - evaluating saved ban list`);
-					let randomBanListParsed = JSON.parse(banListPref[0].value);
-
-					let setList = data.heroDescriptions.allHeroes.filter((hero: Hero) => randomBanListParsed.includes(hero.id));
-
-					return setList;
-				} else {
-					console.error('[quests page.svelte] - couldnt get ban list in checkForBanList');
-					return [];
-				}
-			} catch (e) {
-				console.error('error in setting preferences');
-			}
-		}
-	};
-
-	$: if (browser && $quest1Store) {
-		let setList = checkForBanList();
-		// if (setList.length > 0) {
-		// 	quest1Store.setBanList(setList);
-		// 	quest2Store.setBanList(setList);
-		// 	quest3Store.setBanList(setList);
-		// } else {
-		// 	console.error('[turbotown layout] - could not set bans, banList length 0');
-		// }
-
-		if(!$quest1Store.randomedHero){
-			quest1Store.setBanList(setList);
-		}
-
-		if(!$quest2Store.randomedHero){
-			quest2Store.setBanList(setList);
-		}
-
-		if(!$quest3Store.randomedHero){
-			quest3Store.setBanList(setList);
-		}
-
-		console.log('town store quest 1 store after bans: ', $quest1Store, ' heroID: ');
-		$quest1Store.randomedHero ? console.log($quest1Store.randomedHero.id) : '';
-		console.log('town store quest 2 store after bans: ', $quest2Store, ' heroID: ');
-		$quest2Store.randomedHero ? console.log($quest2Store.randomedHero.id) : '';
-		console.log('town store quest 3 store after bans: ', $quest3Store, ' heroID: ');
-		$quest3Store.randomedHero ? console.log($quest3Store.randomedHero.id) : '';
-	}
-
 	//set statuses
 	if (data.town.turbotown && data.town.turbotown.statuses) {
 		setContext('townStatuses', data.town.turbotown.statuses);
@@ -147,6 +93,60 @@
 	$: console.log('quests changed in layout: ', data.quests);
 	$: data.quests && updateGoldAndXp();
 	$: data.quests && setQuestStores();
+
+	//set ban list
+	const checkForBanList = () => {
+		if (data.userPreferences && data.userPreferences.length > 0) {
+			console.log(`[turbotown layout] - evaluating userPreferencces`);
+			let banListPref = data.userPreferences.filter((pref: any) => pref.name === 'randomBanList');
+
+			try {
+				if (banListPref.length > 0 && banListPref[0].value) {
+					console.log(`[turbotown layout] - evaluating saved ban list`);
+					let randomBanListParsed = JSON.parse(banListPref[0].value);
+
+					let setList = data.heroDescriptions.allHeroes.filter((hero: Hero) => randomBanListParsed.includes(hero.id));
+
+					return setList;
+				} else {
+					console.error('[turbotown layout] - couldnt get ban list in checkForBanList');
+					return [];
+				}
+			} catch (e) {
+				console.error('error in setting preferences');
+			}
+		} else return [];
+	};
+
+	$: if (browser && $quest1Store) {
+		let setList = checkForBanList();
+		// if (setList.length > 0) {
+		// 	quest1Store.setBanList(setList);
+		// 	quest2Store.setBanList(setList);
+		// 	quest3Store.setBanList(setList);
+		// } else {
+		// 	console.error('[turbotown layout] - could not set bans, banList length 0');
+		// }
+
+		if (!$quest1Store.randomedHero) {
+			quest1Store.setBanList(setList);
+		}
+
+		if (!$quest2Store.randomedHero) {
+			quest2Store.setBanList(setList);
+		}
+
+		if (!$quest3Store.randomedHero) {
+			quest3Store.setBanList(setList);
+		}
+
+		console.log('town store quest 1 store after bans: ', $quest1Store, ' heroID: ');
+		$quest1Store.randomedHero ? console.log($quest1Store.randomedHero.id) : '';
+		console.log('town store quest 2 store after bans: ', $quest2Store, ' heroID: ');
+		$quest2Store.randomedHero ? console.log($quest2Store.randomedHero.id) : '';
+		console.log('town store quest 3 store after bans: ', $quest3Store, ' heroID: ');
+		$quest3Store.randomedHero ? console.log($quest3Store.randomedHero.id) : '';
+	}
 
 	function updateGoldAndXp() {
 		if (data.quests.questChecks?.length > 0 && data.town.turbotown) {

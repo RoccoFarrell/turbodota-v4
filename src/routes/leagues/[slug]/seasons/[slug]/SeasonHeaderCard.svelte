@@ -26,7 +26,6 @@
 
 	//components
 	import { Avatar, ProgressBar } from '@skeletonlabs/skeleton';
-	import HeroGrid from '$lib/components/HeroGrid/HeroGrid.svelte';
 	import SeasonLeaderboard from './SeasonLeaderboard.svelte';
 
 	//data
@@ -146,7 +145,7 @@
 						</div>
 					</div>
 					<div class="flex justify-center items-center">
-						<a href="/random/leaderboard"><button class="btn variant-ghost-primary">Leaderboard</button></a>
+						<a href={`/leagues/${data.league.leagueID}/seasons/${data.league.seasonID}`}><button class="btn variant-ghost-primary">Leaderboard</button></a>
 					</div>
 				</div>
 			</div>

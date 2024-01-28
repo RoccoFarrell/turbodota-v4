@@ -1,12 +1,6 @@
 <script lang="ts">
+	import { setContext, getContext } from 'svelte';
 	import type { Hero, Session, UserPrefs } from '@prisma/client';
-	export let randomFound = false;
-	export let session: Session | null = null;
-	export let heroes: Hero[] = [];
-	//export let parent: any;
-	export let freeBans: number = 3;
-
-	//console.log("parent", parent)
 
 	//skeleton
 	import { getToastStore, storeHighlightJs } from '@skeletonlabs/skeleton';
@@ -19,47 +13,28 @@
 	//images
 	import Lock from '$lib/assets/lock.png';
 
-	//stores
-	import { herogridStore } from './herogridStore';
-	import { setContext, getContext } from 'svelte';
+	//types
+	import type { createRandomStore } from '$lib/stores/randomStore'
+	type BanStore = ReturnType<typeof createRandomStore>
+	import { banStore } from '$lib/stores/banStore'
+
+	export let randomFound = false;
+	export let session: Session | null = null;
+	export let heroes: Hero[] = [];
+	//export let parent: any;
+	export let freeBans: number = 3;
+	
+	if (heroes.length === 0) heroes = getContext('heroes');
+
+
+	console.log('banStore: ', $banStore)
+	$: console.log('banStore changed: ', $banStore)
 
 	/* Get session from context */
 	if (!session) session = getContext('session');
-	let preferences: UserPrefs[] = [];
-	if (!preferences || preferences.length === 0) preferences = getContext('userPreferences');
-	console.log(preferences);
-
-	/* Initialize store */
-
-	if (heroes.length === 0) heroes = getContext('heroes');
-	herogridStore.setAllHeroes(heroes);
-
-	/* End initialize store */
-
-	/* 
-		Set bans from preferences
-	*/
-	if (preferences && preferences.length > 0) {
-		console.log(`[random/+page.svelte] - evaluating userPreferencces`);
-		let banListPref = preferences.filter((pref: any) => pref.name === 'randomBanList');
-
-		try {
-			if (banListPref.length > 0 && banListPref[0].value) {
-				console.log(`[random/+page.svelte] - evaluating saved ban list`);
-				let randomBanListParsed = JSON.parse(banListPref[0].value);
-
-				//console.log(randomBanListParsed);
-
-				//console.log(heroes);
-				let setList = heroes.filter((hero: Hero) => randomBanListParsed.includes(hero.id));
-
-				//console.log(setList);
-				herogridStore.setBanList(setList);
-			}
-		} catch (e) {
-			console.error('error in setting preferences');
-		}
-	}
+	// let preferences: UserPrefs[] = [];
+	// if (!preferences || preferences.length === 0) preferences = getContext('userPreferences');
+	// console.log('[herogrid] preferences: ', preferences);
 
 	$: showHeroGrid = true;
 
@@ -68,37 +43,37 @@
 		if (role === 'All') {
 			//if All was already selected, set to empty
 			//if not selected, set to all roles
-			$herogridStore.selectedRoles.includes('All')
-				? ($herogridStore.selectedRoles = [])
-				: ($herogridStore.selectedRoles = heroRoles);
+			$banStore.selectedRoles.includes('All')
+				? ($banStore.selectedRoles = [])
+				: ($banStore.selectedRoles = heroRoles);
 		} else {
 			//if not All, remove role if already there
 			//or add role if missing
-			if ($herogridStore.selectedRoles.includes(role))
-				$herogridStore.selectedRoles = $herogridStore.selectedRoles.filter((r) => r !== role && r !== 'All');
-			else $herogridStore.selectedRoles.push(role);
+			if ($banStore.selectedRoles.includes(role))
+				$banStore.selectedRoles = $banStore.selectedRoles.filter((r) => r !== role && r !== 'All');
+			else $banStore.selectedRoles.push(role);
 		}
 
-		$herogridStore.availableHeroes = heroes.filter((heroDesc: Hero) => {
+		$banStore.availableHeroes = heroes.filter((heroDesc: Hero) => {
 			let returnVal = false;
-			$herogridStore.selectedRoles.forEach((role) => {
+			$banStore.selectedRoles.forEach((role) => {
 				if (heroDesc.roles.includes(role)) returnVal = true;
 			});
 			return returnVal;
 		});
-		console.log(`${heroes.length} filtered to ${$herogridStore.availableHeroes.length}`);
+		console.log(`${heroes.length} filtered to ${$banStore.availableHeroes.length}`);
 
-		$herogridStore.bannedHeroes = heroes.filter((heroDesc: Hero) => {
+		$banStore.bannedHeroes = heroes.filter((heroDesc: Hero) => {
 			let returnVal = true;
-			$herogridStore.selectedRoles.forEach((role) => {
+			$banStore.selectedRoles.forEach((role) => {
 				if (heroDesc.roles.includes(role)) returnVal = false;
 			});
 			return returnVal;
 		});
 
-		if ($herogridStore.availableHeroes.length === 0) herogridStore.reset(heroes);
+		if ($banStore.availableHeroes.length === 0) banStore.reset(heroes);
 		else console.log('this is where we would update calculations');
-		//herogridStore.updateCalculations();
+		//banStore.updateCalculations();
 		//console.log($randomStore.selectedRoles);
 	};
 
@@ -123,15 +98,15 @@
 
 	const setBanList = (inputList?: string) => {
 		if (typeof inputList === 'string') {
-			if (inputList === 'garbage') herogridStore.setBanList(autoBanLists.garbage);
+			if (inputList === 'garbage') banStore.setBanList(autoBanLists.garbage);
 		} else {
-			herogridStore.reset(heroes);
+			banStore.reset(heroes);
 			//randomStore.setAllHeroes(data.heroDescriptions.allHeroes)
 		}
 	};
 
 	const saveBanList = async () => {
-		if ($herogridStore.bannedHeroes.length <= 3 && session) {
+		if ($banStore.bannedHeroes.length <= 3 && session) {
 			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 			// @ts-ignore: Unreachable code error
 			let response = await fetch(`/api/preferences/${session.user.account_id}`, {
@@ -141,7 +116,7 @@
 				},
 				body: JSON.stringify({
 					name: 'randomBanList',
-					value: JSON.stringify($herogridStore.bannedHeroes.map((hero: Hero) => hero.id))
+					value: JSON.stringify($banStore.bannedHeroes.map((hero: Hero) => hero.id))
 				})
 			});
 
@@ -205,12 +180,12 @@
 				{#if showHeroGrid}
 					{#each heroes as hero}
 						<div class="object-contain m-1 relative">
-							{#if $herogridStore.bannedHeroes.indexOf(hero) !== -1}
+							{#if $banStore.bannedHeroes.indexOf(hero) !== -1}
 								<div class="w-full h-full bg-red-600 rounded-xl z-10 absolute bg-opacity-70">
-									<button on:click={() => herogridStore.banHero(hero)} class="w-full h-full"></button>
+									<button on:click={() => banStore.banHero(hero)} class="w-full h-full"></button>
 								</div>
 							{/if}
-							<button on:click={() => herogridStore.banHero(hero)}><i class={`z-0 d2mh hero-${hero.id}`}></i></button>
+							<button on:click={() => banStore.banHero(hero)}><i class={`z-0 d2mh hero-${hero.id}`}></i></button>
 						</div>
 					{/each}
 				{/if}
@@ -225,12 +200,12 @@
 				{#if showHeroGrid}
 					{#each heroes as hero}
 						<div class={`object-contain m-3 relative`}>
-							{#if $herogridStore.bannedHeroes.indexOf(hero) !== -1}
+							{#if $banStore.bannedHeroes.indexOf(hero) !== -1}
 								<div class="w-full h-full bg-red-600 rounded-xl z-10 absolute bg-opacity-70">
-									<button on:click={() => herogridStore.banHero(hero)} class="w-full h-full"></button>
+									<button on:click={() => banStore.banHero(hero)} class="w-full h-full"></button>
 								</div>
 							{/if}
-							<button on:click={() => herogridStore.banHero(hero)}
+							<button on:click={() => banStore.banHero(hero)}
 								><i class={`z-0 d2mh hero-${hero.id} scale-125`}></i></button
 							>
 						</div>
@@ -242,9 +217,9 @@
 			<div id="bannedHeroes" class="w-full space-x-1 max-w-[90%] flex-wrap p-2 my-2 md:mb-10">
 				<div class="my-2 justify-center flex flex-col items-center">
 					<h4 class="h4">Banned Heroes:</h4>
-					{#if $herogridStore.bannedHeroes.length > 0}
+					{#if $banStore.bannedHeroes.length > 0}
 						<div>
-							{#each $herogridStore.bannedHeroes as bannedHero}
+							{#each $banStore.bannedHeroes as bannedHero}
 								<span class="badge variant-filled-secondary">{bannedHero?.localized_name}</span>
 							{/each}
 						</div>
@@ -260,7 +235,7 @@
 					>
 					<button
 						class="btn bg-red-500 w-1/3"
-						disabled={$herogridStore.bannedHeroes.length === 0}
+						disabled={$banStore.bannedHeroes.length === 0}
 						on:click={() => setBanList()}>Clear</button
 					>
 				</div>
@@ -314,7 +289,7 @@
 									class="checkbox"
 									type="checkbox"
 									on:click={() => handleRoleSelect(role)}
-									checked={$herogridStore.selectedRoles.includes(role)}
+									checked={$banStore.selectedRoles.includes(role)}
 								/>
 								<p>{role}</p>
 							</label>
@@ -339,14 +314,14 @@
 						<p>Total gold on win:</p>
 					</div>
 					<div>
-						<p>{$herogridStore.bannedHeroes.length}</p>
+						<p>{$banStore.bannedHeroes.length}</p>
 						<p>
-							{$herogridStore.bannedHeroes.length < freeBans ? freeBans - $herogridStore.bannedHeroes.length : 0}
+							{$banStore.bannedHeroes.length < freeBans ? freeBans - $banStore.bannedHeroes.length : 0}
 						</p>
-						<p class="text-green-600">{$herogridStore.availableHeroes.length}</p>
-						<p class="text-red-500">-{$herogridStore.modifierTotal}</p>
+						<p class="text-green-600">{$banStore.availableHeroes.length}</p>
+						<p class="text-red-500">-{$banStore.modifierTotal}</p>
 						<p class="text-amber-500 font-bold">
-							{$herogridStore.expectedGold}
+							{$banStore.expectedGold}
 						</p>
 					</div>
 				</div>

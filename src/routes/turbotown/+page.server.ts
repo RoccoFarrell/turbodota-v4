@@ -1,9 +1,5 @@
-//lucia
-import { auth } from '$lib/server/lucia';
-
 //svelte
 import { fail, redirect, json } from '@sveltejs/kit';
-import { setContext, getContext, onMount } from 'svelte';
 import type { Actions, PageServerLoad } from './$types';
 
 //prisma
@@ -15,20 +11,27 @@ import type { Hero } from '@prisma/client';
 //dayjs
 import dayjs from 'dayjs';
 
-//stores
-import { townStore } from '$lib/stores/townStore';
-
 //constants
 import { constant_questGold, constant_questXP } from '$lib/constants/turbotown';
 //import { createDotaUser } from '../api/helpers';
 
 export const actions: Actions = {
 	useObserver: async ({ request, locals, fetch }) => {
-		console.log('received useObserver post in turbotown page server');
+		let tx_startTime = dayjs();
+		console.log('[observer] received useObserver post in turbotown page server, starting auth validate');
 		const session = await locals.auth.validate();
-		if (!session) return fail(400, { message: 'Not logged in, cannot use item' });
+		let authValidate_endTime = dayjs().diff(tx_startTime, 'millisecond');
+		console.log(`[observer] authValidate took: ${authValidate_endTime}`)
+
+		if (!session){
+			console.log('[observer] form failing: , ', dayjs().diff(tx_startTime, 'millisecond'))
+			return fail(400, { message: 'Not logged in, cannot use item' });
+		} 
+
+		console.log('[observer] starting parse form data, ', dayjs().diff(tx_startTime, 'millisecond'))
 		const formData = await request.formData();
 
+		console.log('[observer] parsing form data, ', dayjs().diff(tx_startTime, 'millisecond'))
 		let turbotownID = parseInt(formData.get('turbotownID')?.toString() || '-1');
 		let questStoreSlot = parseInt(formData.get('questStoreSlot')?.toString() || '');
 		let questStore = JSON.parse(formData.get('questStore')?.toString() || '');
@@ -40,7 +43,6 @@ export const actions: Actions = {
 		try {
 			let tx_result = await prisma.$transaction(
 				async (tx) => {
-					let tx_startTime = dayjs();
 					// 1. Verify that the user has at least one of the item in inventory
 					// look for itemID 0 (observer) for now - this will need to change when there are more items
 					let itemCheck = await tx.turbotownItem.findFirstOrThrow({
@@ -48,17 +50,18 @@ export const actions: Actions = {
 							AND: [{ itemID: 0 }, { turbotownID }]
 						}
 					});
+					console.log(`[observer] item find end: ${dayjs().diff(tx_startTime, 'millisecond')}`)
 
 					// 2. Decrement item from the user
 					if (itemCheck) {
-						console.log('[observer page.server.ts] item found');
+						console.log(`[observer] delete item start: ${dayjs().diff(tx_startTime, 'millisecond')}`)
 						const sender = await tx.turbotownItem.delete({
 							where: {
 								id: itemCheck.id
 							}
 						});
 
-						console.log('itemCheck for delete: ', sender);
+						console.log(`[observer] delete item end: ${dayjs().diff(tx_startTime, 'millisecond')}`)
 
 						if (!sender) {
 							throw new Error(`${session.user.account_id} failed to delete item!`);
@@ -86,6 +89,8 @@ export const actions: Actions = {
 
 						let randomCreateResponseData = await response.json();
 						*/
+
+						console.log(`[observer] random create start: ${dayjs().diff(tx_startTime, 'millisecond')}`)
 
 						//new method
 						let randomCreateResponse = await tx.random.create({
@@ -119,13 +124,18 @@ export const actions: Actions = {
 							}
 						});
 
+						console.log(`[observer] random create end: ${dayjs().diff(tx_startTime, 'millisecond')}`)
+
 						console.log('[observer page.server.ts] random created', randomCreateResponse);
 
+						console.log(`[observer] status find start: ${dayjs().diff(tx_startTime, 'millisecond')}`)
 						let statusActive = await tx.turbotownStatus.findFirst({
 							where: {
 								isActive: true
 							}
 						});
+
+						console.log(`[observer] status find end: ${dayjs().diff(tx_startTime, 'millisecond')}`)
 
 						//3. create turbo town action
 						if (statusActive && randomCreateResponse) {
@@ -154,6 +164,8 @@ export const actions: Actions = {
 
 							let tx_endTime = dayjs();
 							let executionTime = tx_endTime.diff(tx_startTime, 'millisecond');
+
+							console.log('[observer] total execution time: ', executionTime)
 
 							return { itemUseResponse, executionTime };
 						} else {
