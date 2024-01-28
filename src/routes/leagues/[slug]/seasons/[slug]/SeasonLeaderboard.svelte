@@ -241,7 +241,7 @@
 									>
 										<History
 											completedRandoms={randoms.filter(
-												(random) => random.account_id === parseInt(row[0]) && random.active === false
+												(random) => random.account_id === parseInt(row[0]) && random.active === false && random.status !== 'skipped'
 											)}
 											allHeroes={heroes}
 										/>

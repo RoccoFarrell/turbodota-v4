@@ -136,7 +136,7 @@
 			//console.log('looping through playerID: ', playerID);
 			let row: LeaderboardRow = new LeaderboardRow();
 
-			let playerRandoms = data.randoms.filter((random) => random.account_id === playerID && random.active === false);
+			let playerRandoms = data.randoms.filter((random) => random.account_id === 0 && random.active === false && random.status !== 'skipped');
 			if (playerRandoms.length > 0) {
 				row.player = playerID;
 				row.name = playerRandoms[0].user ? playerRandoms[0].user.username : '';
@@ -375,7 +375,7 @@
 									>
 										<History
 											completedRandoms={data.randoms.filter(
-												(random) => random.account_id === parseInt(row[0]) && random.active === false
+												(random) => random.account_id === parseInt(row[0]) && random.active === false && random.status !== 'skipped'
 											)}
 											allHeroes={data.heroDescriptions.allHeroes}
 										/>

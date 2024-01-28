@@ -1,20 +1,22 @@
 <script lang="ts">
 	//page data
 
-	import type { Hero, Random } from '@prisma/client'
+	import type { Hero, Random } from '@prisma/client';
 
 	export let allHeroes: Hero[] = [];
 	export let completedRandoms: Random[] = [];
 
 	import { calculateKdaClasses } from '$lib/helpers/tableColors';
-    import daysAgoString from '$lib/helpers/daysAgo';
+	import daysAgoString from '$lib/helpers/daysAgo';
 
 	//console.log(completedRandoms);
 
-	completedRandoms = completedRandoms.sort((a: any, b: any) => {
-		if (a.endDate < b.endDate) return 1;
-		else return -1;
-	});
+	completedRandoms = completedRandoms
+		.filter((randomStatus) => randomStatus.status !== 'skipped')
+		.sort((a: any, b: any) => {
+			if (a.endDate < b.endDate) return 1;
+			else return -1;
+		});
 </script>
 
 <!-- History-->

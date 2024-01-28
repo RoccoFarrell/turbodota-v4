@@ -139,7 +139,7 @@
 
 	let completedRandoms: Random[] = [];
 	if (data.random.randoms) {
-		completedRandoms = data.random.randoms.filter((random) => !random.active);
+		completedRandoms = data.random.randoms.filter((random) => !random.active && random.status !== 'skipped');
 		if (completedRandoms.length > 0) {
 			randomLifetimeStats = {
 				wins: completedRandoms.filter((random) => random.win).length || 0,

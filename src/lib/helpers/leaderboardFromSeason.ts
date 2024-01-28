@@ -68,7 +68,7 @@ const calculateRandomLeaderboard = (inputMembers: DotaUser[], inputRandoms: Rand
 		//console.log('looping through playerID: ', playerID);
 		let row: LeaderboardRow = new LeaderboardRow();
 
-		let playerRandoms = inputRandoms.filter((random) => random.account_id === playerID && random.active === false);
+		let playerRandoms = inputRandoms.filter((random) => random.account_id === playerID && random.active === false && random.status !== 'skipped');
 		if (playerRandoms.length > 0) {
 			row.player = playerID;
 			row.name = playerRandoms[0].user ? playerRandoms[0].user.username : '';
