@@ -286,6 +286,16 @@ model TurbotownStatus {
   turbotown    Turbotown @relation(fields: [turbotownID], references: [id])
 }
 
+model TurbotownAction {
+  id                     Int       @id @default(autoincrement())
+  action                 String
+  value                  String?
+  turbotownDestinationID Int
+  turbotownDestination   Turbotown @relation(fields: [turbotownDestinationID], references: [id])
+  appliedDate            DateTime
+  endDate                DateTime
+}
+
 model Item {
   id                Int             @id @default(autoincrement())
   name              String
@@ -295,15 +305,6 @@ model Item {
   quantityAvailable Int
   active            Boolean
   TurbotownItem     TurbotownItem[]
-}
-
-model TurbotownAction {
-  id                     Int       @id @default(autoincrement())
-  action                 String
-  turbotownDestinationID Int
-  turbotownDestination   Turbotown @relation(fields: [turbotownDestinationID], references: [id])
-  appliedDate            DateTime
-  endDate                DateTime
 }
 
 model Session {
