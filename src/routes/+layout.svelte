@@ -277,10 +277,24 @@
 				</svelte:fragment>
 
 				<svelte:fragment slot="trail">
-					<div class="flex justify-around space-x-8 items-center">
+					<div class="flex justify-around space-x-8 items-center mr-8">
 						{#key data.session}
-							<div class="h-full m-auto">
+							<div class={"h-full m-auto grid" + (dev ? " grid-cols-2" : "grid-cols-1")}>
 								{#if data.session && !$page.url.pathname.includes('herostats')}
+									{#if dev}
+										<div class="flex justify-center items-center">
+											<a href="/feed" class="h-10 w-10">
+												<div class="relative inline-block mt-2">
+													<span class="vibrating badge-icon bg-primary-500 absolute -top-2 -right-0 z-50"
+														><p class="inline text-amber-500 font-bold">2</p></span
+													>
+													<button class="hover:bg-amber-500/50 rounded-full w-10 h-10">
+														<i class="fi fi-rr-bell text-xl h-10 w-10"></i>
+													</button>
+												</div>
+											</a>
+										</div>
+									{/if}
 									<div class="m-auto h-full text-center">
 										Welcome <p class="font-bold text-red-400">{`${data.session.user.username}`}</p>
 									</div>
