@@ -153,7 +153,7 @@
 		}
 	}
 
-	console.log('[root layout] setting banStore', $banStore);
+	//console.log('[root layout] setting banStore', $banStore);
 	setContext('banStore', banStore);
 
 	//modal

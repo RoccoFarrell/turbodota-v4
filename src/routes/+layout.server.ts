@@ -99,7 +99,7 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 								},
 								metrics: true,
 								user: true,
-								TurbotownAction: true
+								actions: true
 							}
 						},
 						_count: {

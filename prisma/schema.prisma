@@ -218,18 +218,19 @@ model Random {
 
 //turbotown models
 model Turbotown {
-  id              Int               @id @default(autoincrement())
-  account_id      Int               @unique
-  seasonID        Int
-  lastUpdated     DateTime          @default(now())
-  createdDate     DateTime
-  user            User?             @relation(fields: [account_id], references: [account_id])
-  metrics         TurbotownMetric[]
-  quests          TurbotownQuest[]
-  season          Season?           @relation(fields: [seasonID], references: [id])
-  items           TurbotownItem[]
-  statuses        TurbotownStatus[]
-  TurbotownAction TurbotownAction[]
+  id          Int               @id @default(autoincrement())
+  account_id  Int               @unique
+  seasonID    Int
+  lastUpdated DateTime          @default(now())
+  createdDate DateTime
+  user        User?             @relation(fields: [account_id], references: [account_id])
+  metrics     TurbotownMetric[]
+  quests      TurbotownQuest[]
+  season      Season?           @relation(fields: [seasonID], references: [id])
+  items       TurbotownItem[]
+  statuses    TurbotownStatus[]
+  actions     TurbotownAction[] @relation("user")
+  debuffs     TurbotownAction[] @relation("target")
 }
 
 model TurbotownMetric {
@@ -290,10 +291,12 @@ model TurbotownAction {
   id                     Int       @id @default(autoincrement())
   action                 String
   value                  String?
-  turbotownDestinationID Int
-  turbotownDestination   Turbotown @relation(fields: [turbotownDestinationID], references: [id])
   appliedDate            DateTime
   endDate                DateTime
+  turbotownID            Int
+  turbotownDestinationID Int
+  turbotown              Turbotown @relation("user", fields: [turbotownID], references: [id])
+  turbotownDestination   Turbotown @relation("target", fields: [turbotownDestinationID], references: [id])
 }
 
 model Item {

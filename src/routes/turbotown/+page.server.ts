@@ -143,6 +143,7 @@ export const actions: Actions = {
 							const itemUseResponse = await tx.turbotownAction.create({
 								data: {
 									action: 'observer',
+									turbotownID,
 									turbotownDestinationID: turbotownID,
 									appliedDate: new Date(),
 									endDate: new Date(),
@@ -285,6 +286,7 @@ export const actions: Actions = {
 					const itemUseResponse = await tx.turbotownAction.create({
 						data: {
 							action: 'linkens',
+							turbotownID,
 							turbotownDestinationID: turbotownDestination.id,
 							appliedDate: new Date(),
 							endDate: new Date(),
@@ -387,6 +389,7 @@ export const actions: Actions = {
 							const itemUseResponse = await tx.turbotownAction.create({
 								data: {
 									action: 'quelling blade',
+									turbotownID,
 									turbotownDestinationID: turbotownID,
 									appliedDate: new Date(),
 									endDate: new Date(),

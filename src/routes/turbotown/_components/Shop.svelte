@@ -10,6 +10,7 @@
 
 	//images
 	import shopkeeper from '$lib/assets/shopkeeper.png';
+	import shopkeeper2 from '$lib/assets/shopkeeper_3x1.png';
 	import Lock from '$lib/assets/lock.png';
 	import type { Item } from '@prisma/client';
 	import DataTableCheckbox from '../../leagues/[slug]/seasons/[slug]/data-table-checkbox.svelte';
@@ -18,6 +19,16 @@
 	export let form: any;
 
 	let items: Item[] = data.town.items;
+
+	items = items.sort((a: ShopItem, b: ShopItem) => {
+		if(a.name > b.name) return 1
+		else return -1
+	})
+	
+	items = items.sort((a: ShopItem, b: ShopItem) => {
+		if(a.active) return -1
+		else return 1
+	})
 
 	const modalStore = getModalStore();
 	const purchaseConfirmModal: ModalSettings = {
@@ -53,7 +64,7 @@
 
 	const tableSource: TableSource = {
 		// A list of heading labels.
-		head: ['Item Name', 'Gold', 'Quantity Available', 'Quantity'],
+		head: ['Item Name', 'Gold', '# in Stock', 'Quantity'],
 		// The data visibly shown in your table body UI.
 		body: tableMapperValues(items, ['name', 'goldCost', 'quantityAvailable']),
 		// Optional: The data returned when interactive is enabled and a row is clicked.
@@ -63,6 +74,7 @@
 	};
 
 	let selectedDetailItem = new ShopItem();
+	$: console.log(selectedDetailItem);
 
 	const modifyCart = (itemName: string, mode: string) => {
 		let item = items.filter((item: ShopItem) => item.name === itemName)[0];
@@ -90,13 +102,12 @@
 		selectedDetailItem = item;
 	};
 
-	$: clearCart(form)
+	$: clearCart(form);
 	const clearCart = (form: any) => {
-		if(form && form.success){
-			userShoppingCart.itemList = [],
-			userShoppingCart.totalCost = 0
+		if (form && form.success) {
+			(userShoppingCart.itemList = []), (userShoppingCart.totalCost = 0);
 		}
-	}
+	};
 
 	const purchaseClickHandler = () => {
 		if (data.town.turbotown.metrics[0].value >= userShoppingCart.totalCost) {
@@ -113,15 +124,43 @@
 </script>
 
 {#if data.town.turbotown}
-	<div id="shopComponent" class="w-full grid grid-cols-3 container gap-4">
+	<div id="shopComponent" class="w-full grid grid-cols-2 container gap-4">
 		<!-- Shop keeper image -->
 		<div class="text-center w-full h-full justify-start space-y-4 px-1">
-			<div class="h-full mx-auto w-full max-sm:mb-20">
+			<div class="mx-auto w-full max-sm:mb-20">
 				<img
 					class="max-w-full rounded-3xl object-contain shadow-amber-500 shadow-[0_0_10px_1px]"
-					src={shopkeeper}
+					src={shopkeeper2}
 					alt=""
 				/>
+			</div>
+			<div class="card p-4 grid grid-cols-2">
+				<!-- <div class="mb-2 bg-surface-500/10 p-4 rounded-full w-4/5 mx-auto shadow-md">
+					<h3 class="h3 dark:text-yellow-500 text-primary-500">Item Details</h3>
+					<p class="text-m text-center">Hover over an item to see its details</p>
+				</div> -->
+				<!-- {#if activeItem.id !== -1} -->
+				{#if selectedDetailItem.id !== -1}
+					<div class="flex flex-col justify-center items-center">
+						<img src={selectedDetailItem.imgSrc} alt="item" class="rounded-2xl" />
+						<p class="text-lg font-bold text-left">{selectedDetailItem.name}</p>
+					</div>
+					<div class="flex flex-col">
+						<p class="text-md italic text-tertiary-400 text-lef inline">Description:</p>
+						<p class="text-amber-500 text-lg"> {selectedDetailItem.description}</p>
+
+						<div class="mt-4 py-4 border-t border-dashed border-primary-500">
+							<i class="fi fi-rr-coins text-yellow-500 text-center"></i>
+							<p class="inline text-xl font-bold text-amber-500"> {selectedDetailItem.goldCost}</p>
+						</div>
+
+					</div>
+				{:else}
+					<div class="flex justify-center items-center w-full col-span-2 space-x-4">
+						<i class="fi fi-br-search text-primary-500/50 h-6 w-6"></i>
+						<h3 class="h3 italic text-tertiary-600">Hover an item to view details</h3>
+					</div>
+				{/if}
 			</div>
 		</div>
 		<div class="flex h-full mx-auto w-full max-sm:mb-20">
@@ -160,12 +199,12 @@
 									>
 										<td class="hidden">{row[0]}</td>
 										<td class="">
-											<div class="grid grid-cols-2 rounded-full space-x-1">
+											<div class="grid grid-cols-3 rounded-full space-x-1">
 												<div class="rounded-full">
 													<img class="h-10 object-contain rounded-2xl inline-table" src={items[i].imgSrc} alt="" />
 												</div>
 
-												<p class="font-semibold text-tertiary-300 text-lg">{row[0]}</p>
+												<p class="font-semibold text-tertiary-300 text-lg col-span-2">{row[0]}</p>
 											</div>
 											{#if items[i].active === false}
 												<div
@@ -212,31 +251,19 @@
 								on:click={() => purchaseClickHandler()}>
 								Purchase
 							</button> -->
-							<input type="hidden" name="turbotownID" value={data.town.turbotown.id}/>
-							<input type="hidden" name="shoppingCart" value={JSON.stringify(userShoppingCart)}/>
+							<input type="hidden" name="turbotownID" value={data.town.turbotown.id} />
+							<input type="hidden" name="shoppingCart" value={JSON.stringify(userShoppingCart)} />
 							<button
 								type="submit"
 								disabled={userShoppingCart.itemList.length === 0}
 								class="btn variant-filled-primary w-full max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:my-8 max-lg:mx-4 max-lg:max-w-[90%] md:max-w-[80%]"
-								>
+							>
 								Purchase
 							</button>
 						</form>
 					</div>
 				</div>
 			</div>
-		</div>
-		<div
-			class="md:w-full max-md:max-w-sm text-center h-fit items-center dark:bg-surface-600/30 bg-surface-200/30 border border-surface-200 dark:border-surface-700 shadow-lg rounded-xl px-2 md:py-2 max-sm:py-2"
-		>
-			<div class="mb-2 bg-surface-500/10 p-4 rounded-full w-4/5 mx-auto shadow-md">
-				<h3 class="h3 dark:text-yellow-500 text-primary-500">Item Details</h3>
-				<p class="text-m text-center">Hover over an item to see its details</p>
-			</div>
-			<!-- {#if activeItem.id !== -1} -->
-			<p class="text-m text-left">Item: {selectedDetailItem.name}</p>
-			<p class="text-m text-left">Description: {selectedDetailItem.description}</p>
-			<p class="text-m text-left dark:text-yellow-500">Gold Cost: {selectedDetailItem.goldCost}</p>
 		</div>
 	</div>
 {/if}

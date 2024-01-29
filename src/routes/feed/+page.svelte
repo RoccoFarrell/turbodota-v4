@@ -1,17 +1,21 @@
 <script lang="ts">
-	//assets
-	import Shopkeeper from '$lib/assets/shopkeeper.png';
-
-	//prisma
-	import type { Hero, Season, Turbotown, User } from '@prisma/client';
-	import { Avatar, CodeBlock } from '@skeletonlabs/skeleton';
-
-	//dayjs
+    	//dayjs
 	import dayjs from 'dayjs';
 	import LocalizedFormat from 'dayjs/plugin/localizedFormat';
 	dayjs.extend(LocalizedFormat);
 
+	//assets
+	import Shopkeeper from '$lib/assets/shopkeeper.png';
+
+	//prisma
+	import type { Hero, Season, Turbotown, User, TurbotownQuest, TurbotownAction } from '@prisma/client';
+	import { Avatar, CodeBlock } from '@skeletonlabs/skeleton';
+
+    //components
+    import FeedItem from './_components/FeedItem.svelte';
+
 	export let data: any;
+	console.log('data: ', data);
 	let allHeroes: Hero[] = data.heroDescriptions.allHeroes;
 	let towns = data.league.currentSeason.turbotowns;
 
@@ -21,32 +25,30 @@
 		avatarURL = data.session.user.avatar_url.replace('.jpg', '_full.jpg');
 	}
 
-	// class Feed {
-	// 	feedEntry: any
-	// 	userInfo: User = {
-	// 		id: '',
-	// 		name: '',
-	// 		username: '',
-	// 		account_id: -1,
-	// 		steam_id: BigInt(-1),
-	// 		profile_url: '',
-	// 		avatar_url: '',
-	// 		roles: '',
-	// 		createdDate: new Date(),
-	// 		lastUpdated: new Date()
-	// 	};
-	// }
-
-	// let feedList: Array<Feed> = new Array();
-
 	//build an array of all actions and completed quests
-	let feedEntry = new Array();
+    interface FeedEntry{
+        quest?: TurbotownQuest,
+        action?: TurbotownAction,
+        user: User
+    }
+
+	let feedEntry: FeedEntry[] = [];
 	towns.forEach((town: any) => {
 		town.quests.forEach((quest: any) => {
-			feedEntry.push(quest);
+			feedEntry.push({
+				quest,
+				user: data.league.leagueAndSeasonsResult[0].members.filter(
+					(member: any) => town.account_id === member.account_id
+				)[0].user
+			});
 		});
-		town.TurbotownAction.forEach((action: any) => {
-			feedEntry.push(action);
+		town.actions.forEach((action: any) => {
+			feedEntry.push({
+                action,
+                user: data.league.leagueAndSeasonsResult[0].members.filter(
+					(member: any) => town.account_id === member.account_id
+				)[0].user
+            });
 		});
 	});
 
@@ -78,123 +80,7 @@
 					<ul class="list">
 						<!-- {#each towns as town} -->
 						{#each feedEntry as action}
-							{#if action.action && action.action === 'observer'}
-								<li>
-									<!-- {#if }
-											<Avatar src={getHighDefSteamAvatar(towns.filter((town) => town.quests[0].random.account_id === 34940151)[0].user.avatar_url)} width="w-12" rounded="rounded-xl" />
-										{:else}
-											<i class="text-5xl fi fi-rr-mode-portrait"></i>
-										{/if} -->
-									<span class="flex">
-										<!-- <p class="font-extrabold">{town.user.username}</p> -->
-										<p class="ps-1">used</p>
-										<p class="font-extrabold ps-1 text-amber-300">{action.action}</p>
-										<p class="ps-1">to select</p>
-										<i
-											class={`d2mh hero-${
-												allHeroes.filter((hero) => hero.id === parseInt(action.value))[0].id
-											} m-1 p-4`}
-										></i>
-										on
-										<p class="font-extrabold ps-1">{dayjs(action.appliedDate).format('lll')}</p>
-									</span>
-								</li>
-							{/if}
-							{#if action.action === 'quelling blade'}
-								<li>
-									<!-- {#if town.user.avatar_url}
-											<Avatar src={getHighDefSteamAvatar(town.user.avatar_url)} width="w-12" rounded="rounded-xl" />
-										{:else}
-											<i class="text-5xl fi fi-rr-mode-portrait"></i>
-										{/if} -->
-									<span class="flex">
-										<!-- <p class="font-extrabold">{town.user.username}</p> -->
-										<p class="ps-1">used</p>
-										<p class="font-extrabold text-orange-500 ps-1">{action.action}</p>
-										<p class="ps-1">to chop</p>
-										<i
-											class={`d2mh hero-${
-												allHeroes.filter((hero) => hero.id === parseInt(action.value))[0].id
-											} m-1 p-4`}
-										></i>
-										on
-										<p class="font-extrabold ps-1">{dayjs(action.appliedDate).format('lll')}</p>
-									</span>
-								</li>
-							{/if}
-							{#if action.action === 'linkens'}
-								<li>
-									<!-- {#if town.user.avatar_url}
-											<Avatar src={getHighDefSteamAvatar(town.user.avatar_url)} width="w-12" rounded="rounded-xl" />
-										{:else}
-											<i class="text-5xl fi fi-rr-mode-portrait"></i>
-										{/if} -->
-									<span class="flex">
-										<!-- <p class="font-extrabold">{town.user.username}</p> -->
-										<p class="ps-1">used</p>
-										<p class="font-extrabold ps-1">{action.action}</p>
-										<p class="ps-1">to protect</p>
-										<i
-											class={`d2mh hero-${
-												allHeroes.filter((hero) => hero.id === parseInt(action.value))[0].id
-											} m-1 p-4`}
-										></i>
-										on
-										<p class="font-extrabold ps-1">{dayjs(action.appliedDate).format('lll')}</p>
-									</span>
-								</li>
-							{/if}
-                            
-							{#if action.status && action.status === 'completed' && action.win && !action.active}
-								<li>
-									<!-- {#if town.user.avatar_url}
-										<Avatar src={getHighDefSteamAvatar(town.user.avatar_url)} width="w-12" rounded="rounded-xl" />
-									{:else}
-										<i class="text-5xl fi fi-rr-mode-portrait"></i>
-									{/if} -->
-
-									<span class="flex">
-										<!-- <p class="font-extrabold">{town.user.username}</p> -->
-										<p class="ps-1 text-green-500">completed</p>
-										<p class="ps-1">quest as</p>
-										<i
-											class={`d2mh hero-${
-												allHeroes.filter((hero) => hero.id === action.random.randomedHero)[0].id
-											} m-1 p-4`}
-										></i>
-										on
-										<p class="font-extrabold ps-1">{dayjs(action.endDate).format('lll')}</p>
-										<p class="ps-1">and gained</p>
-										<i class="fi fi-rr-coins text-yellow-500 ps-1">{action.endXp}</i>
-										<i class="fi fi-br-arrow-trend-up text-center text-green-500 ps-1">{action.endXp}</i>
-									</span>
-								</li>
-							{/if}
-
-							{#if action.status && action.status === 'completed' && !action.win && !action.active}
-								<li>
-									<!-- {#if town.user.avatar_url}
-										<Avatar src={getHighDefSteamAvatar(town.user.avatar_url)} width="w-12" rounded="rounded-xl" />
-									{:else}
-										<i class="text-5xl fi fi-rr-mode-portrait"></i>
-									{/if} -->
-									<span class="flex">
-										<!-- <p class="font-extrabold">{town.user.username}</p> -->
-										<p class="ps-1 text-red-500">failed</p>
-										<p class="ps-1">quest as</p>
-										<i
-											class={`d2mh hero-${
-												allHeroes.filter((hero) => hero.id === action.random.randomedHero)[0].id
-											} m-1 p-4`}
-										></i>
-										on
-										<p class="font-extrabold ps-1">{dayjs(action.random.endDate).format('lll')}</p>
-										<p class="ps-1">and lost</p>
-										<i class="fi fi-rr-coins text-yellow-500 ps-1">{action.endXp}</i>
-										<i class="fi fi-br-arrow-trend-down text-center text-red-500 ps-1">{action.endXp}</i>
-									</span>
-								</li>
-							{/if}
+                            <FeedItem action={action}/>
 						{/each}
 						<!-- {/each} -->
 					</ul>
@@ -268,4 +154,3 @@
 		</div>
 	</div> -->
 </div>
-
