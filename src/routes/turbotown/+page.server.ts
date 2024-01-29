@@ -369,7 +369,11 @@ export const actions: Actions = {
 							},
 							data: {
 								status: 'skipped',
-								active: false
+								active: false,
+								endDate: new Date(),
+								lastUpdated: new Date(),
+								endGold: 0,
+								endXp: 0
 							}
 						})
 
@@ -379,7 +383,8 @@ export const actions: Actions = {
 							},
 							data: {
 								status: 'skipped',
-								active: false
+								active: false,
+								endDate: new Date()
 							}
 						})
 

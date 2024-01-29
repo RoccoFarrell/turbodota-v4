@@ -286,7 +286,7 @@
 											<a href="/feed" class="h-10 w-10">
 												<div class="relative inline-block mt-2">
 													<span class="vibrating badge-icon bg-primary-500 absolute -top-2 -right-0 z-50"
-														><p class="inline text-amber-500 font-bold">2</p></span
+														><p class="inline text-amber-500 font-bold"></p></span
 													>
 													<button class="hover:bg-amber-500/50 rounded-full w-10 h-10">
 														<i class="fi fi-rr-bell text-xl h-10 w-10"></i>

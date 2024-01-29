@@ -1,5 +1,5 @@
 <script lang="ts">
-    	//dayjs
+	//dayjs
 	import dayjs from 'dayjs';
 	import LocalizedFormat from 'dayjs/plugin/localizedFormat';
 	dayjs.extend(LocalizedFormat);
@@ -11,8 +11,9 @@
 	import type { Hero, Season, Turbotown, User, TurbotownQuest, TurbotownAction } from '@prisma/client';
 	import { Avatar, CodeBlock } from '@skeletonlabs/skeleton';
 
-    //components
-    import FeedItem from './_components/FeedItem.svelte';
+	//components
+	import FeedItem from './_components/FeedItem.svelte';
+	import type { DateTimeDuration } from '@internationalized/date';
 
 	export let data: any;
 	console.log('data: ', data);
@@ -26,36 +27,93 @@
 	}
 
 	//build an array of all actions and completed quests
-    interface FeedEntry{
-        quest?: TurbotownQuest,
-        action?: TurbotownAction,
-        user: User
-    }
+	interface FeedEntry {
+		quest?: TurbotownQuest;
+		action?: TurbotownAction;
+		heroes?: Number[];
+		startDate: Date;
+		endDate?: Date;
+		type: String;
+		user: User;
+	}
 
 	let feedEntry: FeedEntry[] = [];
 	towns.forEach((town: any) => {
-		town.quests.forEach((quest: any) => {
+		let townUser = data.league.leagueAndSeasonsResult[0].members.filter(
+			(member: any) => town.account_id === member.account_id
+		)[0].user;
+
+		//sort them by date
+		let allQuests = town.quests.sort((a: any, b: any) => {
+			if (a.endDate && b.endDate) {
+				if (a.endDate > b.endDate) return 1;
+				else return -1;
+			} else if (a.endDate) {
+				if (a.endDate > b.startDate) return 1;
+				else return -1;
+			} else if (b.endDate) {
+				if (a.startDate > b.startDate) return 1;
+				else return -1;
+			} else {
+				if (a.startDate > b.startDate) return 1;
+				else return -1;
+			}
+		});
+
+        console.log("allQuests: ", allQuests)
+
+		let activeQuests = allQuests.filter((quest: any) => quest.active);
+
+		activeQuests = activeQuests.sort((a: any, b: any) => {
+			if (a.createdDate > b.createdDate) return 1;
+			else return -1;
+		});
+
+		let activeGroup = {
+			type: 'activeQuestGroup',
+			heroes: activeQuests.map((quest: any) => quest.random.randomedHero),
+			startDate: allQuests[0].endDate ? allQuests[0].endDate : allQuests[0].createdDate,
+			user: townUser
+		};
+
+		feedEntry.push(activeGroup);
+		let inactiveQuests = allQuests.filter((quest: any) => !quest.active);
+
+		inactiveQuests.forEach((quest: any) => {
 			feedEntry.push({
+				type: 'quest',
 				quest,
-				user: data.league.leagueAndSeasonsResult[0].members.filter(
-					(member: any) => town.account_id === member.account_id
-				)[0].user
+				startDate: quest.createdDate,
+				endDate: quest.endDate,
+				user: townUser
 			});
 		});
 		town.actions.forEach((action: any) => {
 			feedEntry.push({
-                action,
-                user: data.league.leagueAndSeasonsResult[0].members.filter(
-					(member: any) => town.account_id === member.account_id
-				)[0].user
-            });
+				type: 'action',
+				action,
+				startDate: action.appliedDate,
+				endDate: action.endDate,
+				user: townUser
+			});
 		});
 	});
 
 	//sort them by date
 	feedEntry.sort((a: any, b: any) => {
-		if (a.endDate > b.endDate) return -1;
-		else return 1;
+		if (a.endDate && b.endDate) {
+			if (a.endDate > b.endDate) return -1;
+			else return 1;
+		} else if (a.endDate) {
+			if (a.endDate > b.startDate) return -1;
+			else return 1;
+		} else if (b.endDate) {
+			if (a.startDate > b.startDate) return -1;
+			else return 1;
+		} else {
+			if (a.startDate > b.startDate) return -1;
+			else return 1;
+		}
 	});
 
 	console.log(feedEntry);
@@ -67,20 +125,20 @@
 	}
 </script>
 
-<div id="feedComponent" class="w-full grid grid-cols-1 container gap-4 mt-4">
+<div id="feedComponent" class="w-full flex flex-col container mt-4">
+	<div class="mb-2 bg-surface-500/10 p-4 rounded-full w-4/5 mx-auto shadow-md h-fit">
+		<h3 class="h3 dark:text-yellow-500 text-primary-500">TurboTown Feed</h3>
+	</div>
 	<div class="flex h-full mx-auto w-full max-sm:mb-20">
 		<div class="flex h-full mx-auto w-full max-sm:mb-20">
 			<div
 				class="md:w-full max-md:max-w-sm text-center h-fit items-center dark:bg-surface-600/30 bg-surface-200/30 border border-surface-200 dark:border-surface-700 shadow-lg rounded-xl px-2 md:py-2 max-sm:py-2"
 			>
-				<div class="mb-2 bg-surface-500/10 p-4 rounded-full w-4/5 mx-auto shadow-md">
-					<h3 class="h3 dark:text-yellow-500 text-primary-500">TurboTown Feed</h3>
-				</div>
 				<div class="w-full h-full flex flex-col">
 					<ul class="list">
 						<!-- {#each towns as town} -->
 						{#each feedEntry as action}
-                            <FeedItem action={action}/>
+							<FeedItem {action} />
 						{/each}
 						<!-- {/each} -->
 					</ul>
@@ -88,69 +146,4 @@
 			</div>
 		</div>
 	</div>
-	<!-- <div
-		class="md:w-full max-md:max-w-sm text-center h-fit items-center dark:bg-surface-600/30 bg-surface-200/30 border border-surface-200 dark:border-surface-700 shadow-lg rounded-xl px-2 md:py-2 max-sm:py-2"
-	>
-		<div class="mb-2 bg-surface-500/10 p-4 rounded-full w-4/5 mx-auto shadow-md">
-			<h3 class="h3 dark:text-yellow-500 text-primary-500">Quest Feed</h3>
-		</div>
-		<div class="w-full h-full flex flex-col-2">
-			<ul class="list">
-				{#each towns as town}
-					{#each town.quests as quest}
-						{#if quest.status === 'completed' && quest.win && !quest.active}
-							<li>
-								{#if town.user.avatar_url}
-									<Avatar src={getHighDefSteamAvatar(town.user.avatar_url)} width="w-12" rounded="rounded-xl" />
-								{:else}
-									<i class="text-5xl fi fi-rr-mode-portrait"></i>
-								{/if}
-
-								<span class="flex">
-									<p class="font-extrabold">{town.user.username}</p>
-									<p class="ps-1 text-green-500">completed</p>
-									<p class="ps-1">quest as</p>
-									<i
-										class={`d2mh hero-${
-											allHeroes.filter((hero) => hero.id === quest.random.randomedHero)[0].id
-										} m-1 p-4`}
-									></i>
-									on
-									<p class="font-extrabold ps-1">{dayjs(quest.random.endDate).format('lll')}</p>
-									<p class="ps-1">and gained</p>
-									<i class="fi fi-rr-coins text-yellow-500 ps-1">{quest.endXp}</i>
-									<i class="fi fi-br-arrow-trend-up text-center text-green-500 ps-1">{quest.endXp}</i>
-								</span>
-							</li>
-						{/if}
-
-						{#if quest.status === 'completed' && !quest.win && !quest.active}
-							<li>
-								{#if town.user.avatar_url}
-									<Avatar src={getHighDefSteamAvatar(town.user.avatar_url)} width="w-12" rounded="rounded-xl" />
-								{:else}
-									<i class="text-5xl fi fi-rr-mode-portrait"></i>
-								{/if}
-								<span class="flex">
-									<p class="font-extrabold">{town.user.username}</p>
-									<p class="ps-1 text-red-500">failed</p>
-									<p class="ps-1">quest as</p>
-									<i
-										class={`d2mh hero-${
-											allHeroes.filter((hero) => hero.id === quest.random.randomedHero)[0].id
-										} m-1 p-4`}
-									></i>
-									on
-									<p class="font-extrabold ps-1">{dayjs(quest.random.endDate).format('lll')}</p>
-									<p class="ps-1">and lost</p>
-									<i class="fi fi-rr-coins text-yellow-500 ps-1">{quest.endXp}</i>
-									<i class="fi fi-br-arrow-trend-down text-center text-red-500 ps-1">{quest.endXp}</i>
-								</span>
-							</li>
-						{/if}
-					{/each}
-				{/each}
-			</ul>
-		</div>
-	</div> -->
 </div>
