@@ -42,7 +42,7 @@
 	import 'dota2-css-hero-sprites/assets/stylesheets/dota2minimapheroes.css';
 
 	//constants
-	import { constant_townVersion } from '$lib/constants/turbotown';
+	import { constant_patchLink, constant_townVersion } from '$lib/constants/turbotown';
 
 	//images
 	import steam_logo from '$lib/assets/steam_logo.png';
@@ -330,7 +330,7 @@
 				<Navigation {session} />
 				<div class="flex flex-col items-center w-full justify-center bottom-0 relative">
 					<div class="p-2 flex flex-col justify-center items-center">
-						<a href="/blog/410b">
+						<a href={`/blog/${constant_patchLink}`}>
 							<p class="text-xs italic text-tertiary-500">Patch: {constant_townVersion}</p>
 						</a>
 						<a href="https://twitter.com/nosaltstudios" target="_blank" class="hover:text-blue-900">

@@ -16,7 +16,7 @@
 	import type { DateTimeDuration } from '@internationalized/date';
 
 	export let data: any;
-	console.log('data: ', data);
+	console.log('data in feed: ', data);
 	let allHeroes: Hero[] = data.heroDescriptions.allHeroes;
 	let towns = data.league.currentSeason.turbotowns;
 
@@ -60,7 +60,7 @@
 			}
 		});
 
-        console.log("allQuests: ", allQuests)
+        //console.log("allQuests: ", allQuests)
 
 		let activeQuests = allQuests.filter((quest: any) => quest.active);
 
@@ -127,7 +127,7 @@
 
 <div id="feedComponent" class="w-full flex flex-col container mt-4">
 	<div class="mb-2 bg-surface-500/10 p-4 rounded-full w-4/5 mx-auto shadow-md h-fit">
-		<h3 class="h3 dark:text-yellow-500 text-primary-500">TurboTown Feed</h3>
+		<h3 class="h3 dark:text-yellow-500 text-primary-500 text-center">TurboTown Feed</h3>
 	</div>
 	<div class="flex h-full mx-auto w-full max-sm:mb-20">
 		<div class="flex h-full mx-auto w-full max-sm:mb-20">
@@ -137,8 +137,13 @@
 				<div class="w-full h-full flex flex-col">
 					<ul class="list">
 						<!-- {#each towns as town} -->
-						{#each feedEntry as action}
-							<FeedItem {action} />
+						{#each feedEntry as action, i}
+							{#if i<100}
+								<FeedItem {action} items={data.items} />
+							{/if}
+							<!-- {#if dayjs(action.startDate).get('day') !== dayjs(feedEntry[i-1].startDate).get('day')}
+								<div>test</div>
+							{/if} -->
 						{/each}
 						<!-- {/each} -->
 					</ul>
