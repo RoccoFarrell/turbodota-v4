@@ -281,7 +281,6 @@
 						{#key data.session}
 							<div class={"h-full m-auto grid" + (dev ? " grid-cols-2" : "grid-cols-1")}>
 								{#if data.session && !$page.url.pathname.includes('herostats')}
-									{#if dev}
 										<div class="flex justify-center items-center">
 											<a href="/feed" class="h-10 w-10">
 												<div class="relative inline-block mt-2">
@@ -294,7 +293,6 @@
 												</div>
 											</a>
 										</div>
-									{/if}
 									<div class="m-auto h-full text-center">
 										Welcome <p class="font-bold text-red-400">{`${data.session.user.username}`}</p>
 									</div>

@@ -1,10 +1,9 @@
 ---
-title: Season 3 Update!
+title: Season 3 Update - v4.11
 description: New item - Quelling Blade & Town Feed are here!
 date: '2024-02-05'
 categories:
   - TurboTown
-  - seasonEnd
   - v4.11
 published: true
 ---
@@ -19,6 +18,7 @@ I hope Season 3 is going well! We have a few mid season updates for you to buff 
 
 #### * New Item: Quelling Blade 
     * Chop down those pesky heroes!
+    * Quelling Blade costs 300g and allows you to skip a quest
 #### * Town Feed
     * Check out the progress of your friends in the Season by clicking the Notification bell in the top right!
 
