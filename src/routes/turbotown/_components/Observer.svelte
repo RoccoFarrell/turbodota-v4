@@ -6,8 +6,6 @@
 
 	//skeleton
 	import { ListBox, ListBoxItem, getModalStore } from '@skeletonlabs/skeleton';
-
-	//skeleton
 	import { getToastStore, storeHighlightJs } from '@skeletonlabs/skeleton';
 	import type { ToastSettings, ToastStore } from '@skeletonlabs/skeleton';
 
@@ -130,13 +128,8 @@
 	} else {
 		openStore = null;
 		openStoreSlot = -1;
-		const t: ToastSettings = {
-			message: `You already have 3 quest slots!`,
-			background: 'variant-filled-error'
-		};
-
-		toastStore.trigger(t);
 	}
+	
 	//console.log('quest store: ', openStore);
 	let randomHeroSelect: Hero;
 	// Handle Form Submission

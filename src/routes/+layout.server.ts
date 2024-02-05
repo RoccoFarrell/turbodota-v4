@@ -98,7 +98,8 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 									}
 								},
 								metrics: true,
-								user: true
+								user: true,
+								actions: true
 							}
 						},
 						_count: {

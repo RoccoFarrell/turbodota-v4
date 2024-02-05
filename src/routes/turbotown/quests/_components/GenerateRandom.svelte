@@ -7,7 +7,7 @@
 	//prisma types
 	import type { Random, Hero, UserPrefs, Session } from '@prisma/client';
 	//types
-	import type { createRandomStore } from '$lib/stores/randomStore'
+	import type { createRandomStore } from '$lib/stores/randomStore';
 
 	//day js
 	import dayjs from 'dayjs';
@@ -36,6 +36,10 @@
 	import { banStore } from '$lib/stores/banStore';
 	import { load } from '../../../blog/+page';
 
+	import { getToastStore, storeHighlightJs } from '@skeletonlabs/skeleton';
+	import type { ToastSettings, ToastStore } from '@skeletonlabs/skeleton';
+	const toastStore = getToastStore();
+
 	//component props
 	export let session: Session | null = null;
 	export let questSlot: number = 1;
@@ -53,7 +57,7 @@
 
 	// type BanStore = ReturnType<typeof createRandomStore>
 	// let banStore = getContext<BanStore>('banStore')
-		
+
 	// $: console.log(`[questSlot ${questSlot}] ban store in generate random: `, $banStore)
 	// $: console.log(`[questSlot ${questSlot}] random store in generate random: `, $randomStore)
 
@@ -99,16 +103,14 @@
 			rollRandsOld($randomStore.availableHeroes.length, 1000000)
 		);
 
-		generatedRandomHero = $randomStore.availableHeroes[Math.floor(Math.random() * $randomStore.availableHeroes.length)];
+		let randomizedHero = $randomStore.availableHeroes[Math.floor(Math.random() * $randomStore.availableHeroes.length)];
 
-		$randomStore.randomedHero = generatedRandomHero;
-
-		if (data.session && generatedRandomHero) {
+		if (data.session && randomizedHero) {
 			let bodyData = {
 				...$randomStore,
 				availableHeroes: $randomStore.availableHeroes.map((hero: Hero) => hero.id),
 				bannedHeroes: $randomStore.bannedHeroes.map((hero: Hero) => hero.id),
-				randomedHero: generatedRandomHero.id,
+				randomedHero: randomizedHero.id,
 				questSlot
 			};
 			//bodyData.availableHeroes = bodyData.availableHeroes.map((hero: Hero) => hero.id);
@@ -122,7 +124,18 @@
 
 			//console.log(response);
 
-			randomFound = true;
+			if (response.status === 200) {
+				$randomStore.randomedHero = randomizedHero;
+				generatedRandomHero = randomizedHero
+				randomFound = true;
+			} else {
+				const t: ToastSettings = {
+					message: `Trying to cheat ;) ? Refresh the page.`,
+					background: 'variant-filled-warning'
+				};
+
+				toastStore.trigger(t);
+			}
 		} else {
 			console.error('couldnt set generated random hero for specific user');
 		}

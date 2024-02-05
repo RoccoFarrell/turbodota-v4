@@ -42,7 +42,7 @@
 	import 'dota2-css-hero-sprites/assets/stylesheets/dota2minimapheroes.css';
 
 	//constants
-	import { constant_townVersion } from '$lib/constants/turbotown';
+	import { constant_patchLink, constant_townVersion } from '$lib/constants/turbotown';
 
 	//images
 	import steam_logo from '$lib/assets/steam_logo.png';
@@ -153,7 +153,7 @@
 		}
 	}
 
-	console.log('[root layout] setting banStore', $banStore);
+	//console.log('[root layout] setting banStore', $banStore);
 	setContext('banStore', banStore);
 
 	//modal
@@ -286,7 +286,7 @@
 											<a href="/feed" class="h-10 w-10">
 												<div class="relative inline-block mt-2">
 													<span class="vibrating badge-icon bg-primary-500 absolute -top-2 -right-0 z-50"
-														><p class="inline text-amber-500 font-bold">2</p></span
+														><p class="inline text-amber-500 font-bold"></p></span
 													>
 													<button class="hover:bg-amber-500/50 rounded-full w-10 h-10">
 														<i class="fi fi-rr-bell text-xl h-10 w-10"></i>
@@ -330,7 +330,7 @@
 				<Navigation {session} />
 				<div class="flex flex-col items-center w-full justify-center bottom-0 relative">
 					<div class="p-2 flex flex-col justify-center items-center">
-						<a href="/blog/410b">
+						<a href={`/blog/${constant_patchLink}`}>
 							<p class="text-xs italic text-tertiary-500">Patch: {constant_townVersion}</p>
 						</a>
 						<a href="https://twitter.com/nosaltstudios" target="_blank" class="hover:text-blue-900">

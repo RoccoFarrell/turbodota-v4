@@ -90,7 +90,7 @@
 
 	//refresh turbotown on render
 	//$: data.town.turbotown
-	$: console.log('quests changed in layout: ', data.quests);
+	$: console.log('quests changed in layout');
 	$: data.quests && updateGoldAndXp();
 	$: data.quests && setQuestStores();
 
