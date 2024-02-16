@@ -101,7 +101,7 @@
 				{/if}
 			{/if}
 
-			{#if action.action}
+			{#if action.action && (action.action.action === 'observer' || action.action.action === 'quelling blade')}
 				<!-- <p class="font-extrabold">{town.user.username}</p> -->
 				<p class="ps-1">used {action.action.action === 'observer' ? 'an' : 'a'}</p>
 				<p class="font-extrabold ps-1 text-amber-300">{action.action.action}</p>
@@ -115,6 +115,20 @@
 				{/if}
 				<!-- on
 				<p class="font-extrabold ps-1">{dayjs(action.appliedDate).format('lll')}</p> -->
+			{/if}
+
+			{#if action.action && (action.action.action === 'spirit vessel' || action.action.action === 'linkens')}
+				<p class="ps-1">{action.action.value === 'failed' ? 'attempted to use a' : 'used a'}</p>
+				<p class="font-extrabold ps-1 text-amber-300">{action.action.action}</p>
+				<p class="ps-1">to {action.action.action === 'spirit vessel' ? 'debuff' : 'buff'}</p>
+				<p class="ps-1 font-extrabold text-secondary-400">{action.destinationUser.username}</p>
+				{#if action?.destinationUser?.avatar_url}
+					<Avatar src={getHighDefSteamAvatar(action.user.avatar_url)} width="w-12" rounded="rounded-xl" />
+				{:else}
+					<i class="ps-1 text-5xl fi fi-rr-mode-portrait"></i>
+				{/if}
+				<p class="ps-1">{action.action.value === 'failed' ? 'but was blocked by [item]': ''}</p>
+
 			{/if}
 
 			{#if action.type === 'activeQuestGroup'}

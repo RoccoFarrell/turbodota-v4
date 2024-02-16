@@ -23,10 +23,10 @@ export const actions: Actions = {
 		let authValidate_endTime = dayjs().diff(tx_startTime, 'millisecond');
 		console.log(`[observer] authValidate took: ${authValidate_endTime}`)
 
-		if (!session){
+		if (!session) {
 			console.log('[observer] form failing: , ', dayjs().diff(tx_startTime, 'millisecond'))
 			return fail(400, { message: 'Not logged in, cannot use item' });
-		} 
+		}
 
 		console.log('[observer] starting parse form data, ', dayjs().diff(tx_startTime, 'millisecond'))
 		const formData = await request.formData();
@@ -290,6 +290,7 @@ export const actions: Actions = {
 							turbotownDestinationID: turbotownDestination.id,
 							appliedDate: new Date(),
 							endDate: new Date(),
+							value: ''
 						}
 					});
 					console.log(itemUseResponse);
@@ -297,6 +298,157 @@ export const actions: Actions = {
 					return itemUseResponse;
 				}
 
+			});
+
+			if (tx_result) {
+				console.log('returning');
+				return { action: 'use item', result: tx_result, success: true };
+			} else console.error('no return from use item');
+		} catch (err) {
+			console.error(err);
+			return fail(400, { message: 'Could not delete item' });
+		}
+	},
+	useSpiritVessel: async ({ request, locals, fetch }) => {
+		console.log('received useSpiritVessel post in turbotown page server');
+		const session = await locals.auth.validate();
+		if (!session) return fail(400, { message: 'Not logged in, cannot use item' });
+		const formData = await request.formData();
+
+		let turbotownID = parseInt(formData.get('turbotownID')?.toString() || '-1');
+		let turbotownDestination = JSON.parse(formData.get('turbotownDestination')?.toString() || '');
+		console.log('turbotownDestination', turbotownDestination)
+
+		try {
+			let tx_result = await prisma.$transaction(async (tx) => {
+				// 1. Verify that the user has at least one of the item in inventory
+				// look for itemID 4 (spirit vessel)
+				console.log(`[spiritVessel] looking for item in inventory`)
+				let spiritVesselCheck = await tx.turbotownItem.findFirstOrThrow({
+					where: {
+						AND: [{ itemID: 4 }, { turbotownID }]
+					}
+				});
+
+				// 2. Decrement item from the user
+				if (spiritVesselCheck) {
+					const sender = await tx.turbotownItem.delete({
+						where: {
+							id: spiritVesselCheck.id
+						}
+					});
+
+					if (!sender) {
+						throw new Error(`${session.user.account_id} failed to delete item!`);
+					}
+
+					// 3. Check if the receiving user already has a Spirit Vessel debuff applied
+					console.log(`[spiritVessel] checking if the receiving user already has a Spirit Vessel debuff applied`)
+					let statusActive = await tx.turbotownStatus.findFirst({
+						where: {
+							AND: [
+								{
+									turbotownID: turbotownDestination.id,
+									isActive: true,
+									name: "spirit vessel"
+								}
+							]
+						},
+					})
+
+					if (statusActive) {
+						throw new Error(`${session.user.account_id} already has a Spirit Vessel debuff applied!`);
+					}
+
+					// 3. Check if the user that is receiving the debuff has a Linken's Sphere applied
+					console.log(`[spiritVessel] checking if the receiving user has a linken's buff`)
+					let linkensCheck = await tx.turbotownStatus.findFirst({
+						where: {
+							AND: [
+								{
+									turbotownID: turbotownDestination.id,
+									isActive: true,
+									name: "linkens"
+								}
+							]
+						},
+					})
+
+					// if the receiving user has a Linken's buff, update the status in TurbotownStatus and do not apply the Spirit Vessel
+					if (linkensCheck) {
+						console.log(`[spiritVessel] turbotownDestinationID: ${turbotownDestination.id} has a linken's buff`)
+						console.log(`[spiritVessel] updating resolve date in TurbotownStatus`)
+						// 4. add resolvedDate to TurboTownStatus
+						let statusUpdateResult = await tx.turbotownStatus.update({
+							where: {
+								id: linkensCheck.id
+							},
+							data: {
+								isActive: false,
+								resolvedDate: new Date()
+							}
+						});
+
+						if (!statusUpdateResult) {
+							throw new Error(`${session.user.account_id} failed to add status to`, turbotownDestination.account_id);
+						}
+
+						console.log(`[spiritVessel] adding action to TurbotownAction`)
+						const itemUseResponse = await tx.turbotownAction.create({
+							data: {
+								action: 'spirit vessel',
+								turbotownID,
+								turbotownDestinationID: turbotownDestination.id,
+								appliedDate: new Date(),
+								endDate: new Date(),
+								value: 'failed'
+							}
+						});
+						console.log(itemUseResponse);
+
+						return itemUseResponse;
+					}
+					//user did not have a Linken's buff
+					else {
+						// 4. add the status to the receiving user
+						let statusResult: any = null;
+
+						console.log(`[spiritVessel] adding status to TurbotownStatus`)
+						statusResult = await prisma.turbotown.update({
+							where: {
+								account_id: turbotownDestination.account_id
+							},
+							data: {
+								statuses: {
+									create: {
+										name: 'spirit vessel',
+										isActive: true,
+										appliedDate: new Date(),
+										value: 'success'
+									}
+								}
+							},
+							include: {
+								statuses: true
+							}
+						})
+
+						console.log(`[spiritVessel] adding action to TurbotownAction`)
+						const itemUseResponse = await tx.turbotownAction.create({
+							data: {
+								action: 'spirit vessel',
+								turbotownID,
+								turbotownDestinationID: turbotownDestination.id,
+								appliedDate: new Date(),
+								endDate: new Date(),
+								value: 'success'
+							}
+						});
+						console.log(itemUseResponse);
+
+						return itemUseResponse;
+					}
+				}
 			});
 
 			if (tx_result) {
@@ -318,7 +470,7 @@ export const actions: Actions = {
 		let seasonID = JSON.parse(formData.get('seasonID')?.toString() || '');
 		let inputQuestID = parseInt(formData.get('inputQuestID')?.toString() || '-1');
 		let inputrandomID = parseInt(formData.get('inputrandomID')?.toString() || '-1');
-		
+
 		console.log("inputQuestID", inputQuestID)
 		console.log("inputrandomID", inputrandomID)
 

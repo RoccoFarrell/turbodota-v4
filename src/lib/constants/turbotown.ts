@@ -6,3 +6,4 @@ export const questWin_xpMultiplier: number = 1.5
 export const questLoss_xpMultiplier: number = .5
 export const questWin_goldMultiplier: number = 1
 export const questLoss_goldMultiplier: number = 0
+export const constant_spiritVesselMultiplier: number = 0.5

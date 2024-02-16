@@ -27,6 +27,7 @@
 	import Observer from './Observer.svelte';
 	import Linkens from './Linkens.svelte';
 	import QuellingBlade from './QuellingBlade.svelte';
+	import SpiritVessel from './SpiritVessel.svelte';
 
 	export let data: any;
 	if (browser) {
@@ -75,6 +76,10 @@
 		ref: Linkens
 	};
 
+	const spiritVesselModalComponent: ModalComponent = {
+		ref: SpiritVessel
+	};
+
 	// let allStatuses: TurbotownStatus[][] = [];
 
 	// data.league.currentSeason.turbotowns.forEach((turbotown: any, i: number) => {
@@ -91,6 +96,19 @@
 	const linkensModal: ModalSettings = {
 		type: 'component',
 		component: linkensModalComponent,
+		meta: {
+			account_id: data.session.user.account_id,
+			allTurbotowns: data.league.currentSeason.turbotowns,
+			turbotownID: data.town.turbotown.id,
+			turbotownUsers: data.league.currentSeason.turbotowns
+		},
+		response: (r: any) => {
+		}
+	};
+
+	const spiritVesselModal: ModalSettings = {
+		type: 'component',
+		component: spiritVesselModalComponent,
 		meta: {
 			account_id: data.session.user.account_id,
 			allTurbotowns: data.league.currentSeason.turbotowns,
@@ -165,7 +183,10 @@
 				modalStore.trigger(quellingBladeModal);
 			}
 			
-		} else {
+		} else if (item == "Spirit Vessel") {
+			modalStore.trigger(spiritVesselModal);		
+		}
+		else {
 			console.log(item, 'is in development');
 		}
 	};

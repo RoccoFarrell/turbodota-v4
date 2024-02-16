@@ -359,6 +359,15 @@
 									</div>
 
 									<p>{data.town.turbotown.metrics.filter((metric) => metric.label === 'gold')[0].value}</p>
+									{#each data.town.turbotown.statuses as status}
+										{#if status.isActive}
+											<img
+												class="h-8 object-contain rounded"
+												src={data.town.items.filter((item) => (item.shortName === status.name))[0].imgSrc}
+												alt=""
+											/>
+										{/if}
+									{/each}
 								</div>
 
 								<div class="flex justify-start space-x-2">

@@ -10,7 +10,8 @@ import {
 	questWin_xpMultiplier,
 	questWin_goldMultiplier,
 	questLoss_goldMultiplier,
-	questLoss_xpMultiplier
+	questLoss_xpMultiplier,
+	constant_spiritVesselMultiplier
 } from '$lib/constants/turbotown';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -54,6 +55,8 @@ export const POST: RequestHandler = async ({ request, params, url, locals, fetch
 
 		let randomStatusComplete: boolean = false;
 		let completedRandom: Random | null = null;
+		let debuffMultiplier: number = 1;
+
 		if (requestData.random.status === 'active') {
 			const response = await fetch(
 				`/api/players/${session.user.account_id}/randoms/${requestData.random.id}/complete`,
@@ -94,6 +97,50 @@ export const POST: RequestHandler = async ({ request, params, url, locals, fetch
 					//console.log('quest: ', quest);
 					//console.log('completedRandom: ', completedRandom);
 
+					//check for gold modifiers i.e. Spirit Vessel
+					console.log(`[api/town/${account_id}/quest/${questID}/complete] - checking for debuffs`);
+
+					//get the turbotownID
+					const statusResult = await prisma.turbotown.findFirst({
+						where: {
+							account_id
+						},
+					})
+
+					//find the active status to clear
+					if (statusResult) {
+						const modifierCheck = await prisma.turbotownStatus.findFirst({
+							where: {
+								AND: [
+									{
+										turbotownID: statusResult.id,
+										isActive: true,
+										name: "spirit vessel"
+									}
+								]
+							}
+						})
+
+						//set the modifier and remove the debuff from the town
+						if (modifierCheck) {
+							debuffMultiplier = constant_spiritVesselMultiplier;
+
+							let statusUpdateResult = await tx.turbotownStatus.update({
+								where: {
+									id: modifierCheck.id
+								},
+								data: {
+									isActive: false,
+									resolvedDate: new Date()
+								}
+							});
+
+							if (!statusUpdateResult) {
+								throw new Error(`${session.user.account_id} failed to update status`);
+							}
+						}
+					}
+
 					if (quest && completedRandom) {
 						const townQuestUpdateResult = await tx.turbotown.update({
 							where: {
@@ -112,8 +159,8 @@ export const POST: RequestHandler = async ({ request, params, url, locals, fetch
 											endDate: dayjs().toDate(),
 											endXp: completedRandom.win ? quest.xp * questWin_xpMultiplier : quest.xp * questLoss_xpMultiplier,
 											endGold: completedRandom.win
-												? quest.gold * questWin_goldMultiplier
-												: quest.gold * questLoss_goldMultiplier
+												? quest.gold * questWin_goldMultiplier * debuffMultiplier
+												: quest.gold * questLoss_goldMultiplier * debuffMultiplier
 										}
 									}
 								}

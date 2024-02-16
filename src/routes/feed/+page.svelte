@@ -35,6 +35,7 @@
 		endDate?: Date;
 		type: String;
 		user: User;
+		destinationUser?: User;
 	}
 
 	let feedEntry: FeedEntry[] = [];
@@ -60,7 +61,7 @@
 			}
 		});
 
-        //console.log("allQuests: ", allQuests)
+		//console.log("allQuests: ", allQuests)
 
 		let activeQuests = allQuests.filter((quest: any) => quest.active);
 
@@ -94,7 +95,10 @@
 				action,
 				startDate: action.appliedDate,
 				endDate: action.endDate,
-				user: townUser
+				user: townUser,
+				destinationUser: data.league.currentSeason.turbotowns.filter(
+					(member: any) => member.id === action.turbotownDestinationID
+				)[0].user
 			});
 		});
 	});
@@ -138,7 +142,7 @@
 					<ul class="list">
 						<!-- {#each towns as town} -->
 						{#each feedEntry as action, i}
-							{#if i<100}
+							{#if i < 100}
 								<FeedItem {action} items={data.items} />
 							{/if}
 							<!-- {#if dayjs(action.startDate).get('day') !== dayjs(feedEntry[i-1].startDate).get('day')}
