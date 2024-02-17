@@ -29,6 +29,9 @@
 	import QuellingBlade from './QuellingBlade.svelte';
 	import SpiritVessel from './SpiritVessel.svelte';
 	import LotusOrb from './LotusOrb.svelte';
+	import EtherealBlade from './EtherealBlade.svelte';
+	import Orchid from './Orchid.svelte';
+	import Nullifier from './Nullifier.svelte';
 
 	export let data: any;
 	if (browser) {
@@ -85,6 +88,18 @@
 		ref: LotusOrb
 	};
 
+	const etherealBladeModalComponent: ModalComponent = {
+		ref: EtherealBlade
+	};
+
+	const orchidModalComponent: ModalComponent = {
+		ref: Orchid
+	};
+
+	const nullifierModalComponent: ModalComponent = {
+		ref: Nullifier
+	};
+
 	// let allStatuses: TurbotownStatus[][] = [];
 
 	// data.league.currentSeason.turbotowns.forEach((turbotown: any, i: number) => {
@@ -127,6 +142,45 @@
 	const lotusOrbModal: ModalSettings = {
 		type: 'component',
 		component: lotusOrbModalComponent,
+		meta: {
+			account_id: data.session.user.account_id,
+			allTurbotowns: data.league.currentSeason.turbotowns,
+			turbotownID: data.town.turbotown.id,
+			turbotownUsers: data.league.currentSeason.turbotowns
+		},
+		response: (r: any) => {
+		}
+	};
+
+	const etherealBladeModal: ModalSettings = {
+		type: 'component',
+		component: etherealBladeModalComponent,
+		meta: {
+			account_id: data.session.user.account_id,
+			allTurbotowns: data.league.currentSeason.turbotowns,
+			turbotownID: data.town.turbotown.id,
+			turbotownUsers: data.league.currentSeason.turbotowns
+		},
+		response: (r: any) => {
+		}
+	};
+
+	const orchidModal: ModalSettings = {
+		type: 'component',
+		component: orchidModalComponent,
+		meta: {
+			account_id: data.session.user.account_id,
+			allTurbotowns: data.league.currentSeason.turbotowns,
+			turbotownID: data.town.turbotown.id,
+			turbotownUsers: data.league.currentSeason.turbotowns
+		},
+		response: (r: any) => {
+		}
+	};
+
+	const nullifierModal: ModalSettings = {
+		type: 'component',
+		component: nullifierModalComponent,
 		meta: {
 			account_id: data.session.user.account_id,
 			allTurbotowns: data.league.currentSeason.turbotowns,
@@ -206,6 +260,15 @@
 		}
 		else if (item == "Lotus Orb") {
 			modalStore.trigger(lotusOrbModal);		
+		}
+		else if (item == "Ethereal Blade") {
+			modalStore.trigger(etherealBladeModal);		
+		}
+		else if (item == "Orchid Malevolence") {
+			modalStore.trigger(orchidModal);		
+		}
+		else if (item == "Nullifier") {
+			modalStore.trigger(nullifierModal);		
 		}
 		else {
 			console.log(item, 'is in development');

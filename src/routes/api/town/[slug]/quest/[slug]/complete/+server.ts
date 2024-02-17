@@ -11,7 +11,10 @@ import {
 	questWin_goldMultiplier,
 	questLoss_goldMultiplier,
 	questLoss_xpMultiplier,
-	constant_spiritVesselMultiplier
+	constant_spiritVesselMultiplier,
+	constant_OrchidMultiplier,
+	questWin_etherealBladeMultiplier,
+	questLoss_etherealBladeMultiplier,
 } from '$lib/constants/turbotown';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -55,7 +58,7 @@ export const POST: RequestHandler = async ({ request, params, url, locals, fetch
 
 		let randomStatusComplete: boolean = false;
 		let completedRandom: Random | null = null;
-		let debuffMultiplier: number = 1;
+		let xpItemMultiplier: number = 1;
 
 		if (requestData.random.status === 'active') {
 			const response = await fetch(
@@ -107,41 +110,56 @@ export const POST: RequestHandler = async ({ request, params, url, locals, fetch
 						},
 					})
 
-					//find the active status to clear
-					if (statusResult) {
-						const modifierCheck = await prisma.turbotownStatus.findFirst({
-							where: {
-								AND: [
-									{
-										turbotownID: statusResult.id,
-										isActive: true,
-										name: "spirit vessel"
-									}
-								]
-							}
-						})
-
-						//set the modifier and remove the debuff from the town
-						if (modifierCheck) {
-							debuffMultiplier = constant_spiritVesselMultiplier;
-
-							let statusUpdateResult = await tx.turbotownStatus.update({
-								where: {
-									id: modifierCheck.id
-								},
-								data: {
-									isActive: false,
-									resolvedDate: new Date()
-								}
-							});
-
-							if (!statusUpdateResult) {
-								throw new Error(`${session.user.account_id} failed to update status`);
-							}
-						}
-					}
-
 					if (quest && completedRandom) {
+
+						//find the active status to clear
+						if (statusResult) {
+							const modifierCheck = await prisma.turbotownStatus.findMany({
+								where: {
+									AND: [
+										{
+											turbotownID: statusResult.id,
+											isActive: true,
+											OR: [
+												{ name: "spirit vessel" },
+												{ name: "orchid" },
+												{ name: "ethereal blade"},
+											]
+										}
+									]
+								}
+							})
+
+							//set the modifier and remove the debuff from the town
+							for (const buffDebuff of modifierCheck) {
+								if (buffDebuff.name === 'spirit vessel') {
+									xpItemMultiplier = xpItemMultiplier * constant_spiritVesselMultiplier
+								}
+								else if (buffDebuff.name === 'orchid') {
+									xpItemMultiplier = xpItemMultiplier * constant_OrchidMultiplier
+								}
+								else if (buffDebuff.name === 'ethereal blade') {
+									completedRandom.win
+										? xpItemMultiplier = xpItemMultiplier * questWin_etherealBladeMultiplier
+										: xpItemMultiplier = xpItemMultiplier * questLoss_etherealBladeMultiplier
+									
+								}
+								const statusUpdateResult = await tx.turbotownStatus.update({
+									where: {
+										id: buffDebuff.id
+									},
+									data: {
+										isActive: false,
+										resolvedDate: new Date()
+									}
+								});
+								if (!statusUpdateResult) {
+									throw new Error(`${session.user.account_id} failed to update status`);
+								}
+							}
+
+						}
+
 						const townQuestUpdateResult = await tx.turbotown.update({
 							where: {
 								account_id
@@ -157,10 +175,10 @@ export const POST: RequestHandler = async ({ request, params, url, locals, fetch
 											status: 'completed',
 											win: completedRandom.win ? true : false,
 											endDate: dayjs().toDate(),
-											endXp: completedRandom.win ? quest.xp * questWin_xpMultiplier : quest.xp * questLoss_xpMultiplier,
+											endXp: (completedRandom.win ? quest.xp * questWin_xpMultiplier : quest.xp * questLoss_xpMultiplier) * xpItemMultiplier,
 											endGold: completedRandom.win
-												? quest.gold * questWin_goldMultiplier * debuffMultiplier
-												: quest.gold * questLoss_goldMultiplier * debuffMultiplier
+												? quest.gold * questWin_goldMultiplier
+												: quest.gold * questLoss_goldMultiplier
 										}
 									}
 								}
