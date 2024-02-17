@@ -15,6 +15,14 @@ import dayjs from 'dayjs';
 import { constant_questGold, constant_questXP } from '$lib/constants/turbotown';
 //import { createDotaUser } from '../api/helpers';
 
+interface ActionObj {
+	session: any
+	turbotownID: number,
+	turbotownDestinationID: number,
+	name: string,
+	id: number
+}
+
 export const actions: Actions = {
 	useObserver: async ({ request, locals, fetch }) => {
 		let tx_startTime = dayjs();
@@ -202,13 +210,13 @@ export const actions: Actions = {
 		let turbotownDestination = JSON.parse(formData.get('turbotownDestination')?.toString() || '');
 		console.log('turbotownDestination', turbotownDestination)
 
-		let buffObj = {
+		let buffObj: ActionObj = {
 			session,
 			turbotownID,
 			turbotownDestinationID: turbotownDestination.id,
 			name: 'linkens',
 			id: 2
-		}
+		};
 
 		applyBuff(buffObj);
 	},
@@ -222,13 +230,13 @@ export const actions: Actions = {
 		let turbotownDestination = JSON.parse(formData.get('turbotownDestination')?.toString() || '');
 		console.log('turbotownDestination', turbotownDestination)
 
-		let buffObj = {
+		let buffObj: ActionObj = {
 			session,
 			turbotownID,
 			turbotownDestinationID: turbotownDestination.id,
 			name: 'lotus orb',
 			id: 1
-		}
+		};
 
 		applyBuff(buffObj);
 	},
@@ -242,13 +250,13 @@ export const actions: Actions = {
 		let turbotownDestination = JSON.parse(formData.get('turbotownDestination')?.toString() || '');
 		console.log('turbotownDestination', turbotownDestination)
 
-		let buffObj = {
+		let buffObj: ActionObj = {
 			session,
 			turbotownID,
 			turbotownDestinationID: turbotownDestination.id,
 			name: 'ethereal blade',
 			id: 6
-		}
+		};
 
 		applyBuff(buffObj);
 		
@@ -263,15 +271,15 @@ export const actions: Actions = {
 		let turbotownDestination = JSON.parse(formData.get('turbotownDestination')?.toString() || '');
 		console.log('turbotownDestination', turbotownDestination)
 
-		let buffObj = {
+		let debuffObj: ActionObj = {
 			session,
 			turbotownID,
 			turbotownDestinationID: turbotownDestination.id,
 			name: 'spirit vessel',
 			id: 4
-		}
+		};
 
-		applyDebuff(buffObj);
+		applyBuff(debuffObj);
 	},
 	useOrchid: async ({ request, locals, fetch }) => {
 		console.log('received useOrchid post in turbotown page server');
@@ -283,15 +291,15 @@ export const actions: Actions = {
 		let turbotownDestination = JSON.parse(formData.get('turbotownDestination')?.toString() || '');
 		console.log('turbotownDestination', turbotownDestination)
 
-		let buffObj = {
+		let debuffObj: ActionObj = {
 			session,
 			turbotownID,
 			turbotownDestinationID: turbotownDestination.id,
 			name: 'orchid',
 			id: 7
-		}
+		};
 
-		applyDebuff(buffObj);
+		applyBuff(debuffObj);
 	},
 	useNullifier: async ({ request, locals, fetch }) => {
 		console.log('received usenullifier post in turbotown page server');
@@ -640,14 +648,14 @@ async function applyBuff (inputBuffObj: any) {
 	}
 }
 
-async function applyDebuff (inputBuffObj: any) {
+async function applyDebuff (inputdebuffObj: any) {
 	try {
 		let tx_result = await prisma.$transaction(async (tx) => {
 			// 1. Verify that the user has at least one of the item in inventory
-			console.log(`[${inputBuffObj.name}] looking for item in inventory`)
+			console.log(`[${inputdebuffObj.name}] looking for item in inventory`)
 			let itemCheck = await tx.turbotownItem.findFirstOrThrow({
 				where: {
-					AND: [{ itemID: inputBuffObj.id }, { turbotownID: inputBuffObj.turbotownID }]
+					AND: [{ itemID: inputdebuffObj.id }, { turbotownID: inputdebuffObj.turbotownID }]
 				}
 			});
 
@@ -660,34 +668,34 @@ async function applyDebuff (inputBuffObj: any) {
 				});
 
 				if (!sender) {
-					throw new Error(`${inputBuffObj.session.user.account_id} failed to delete item!`);
+					throw new Error(`${inputdebuffObj.session.user.account_id} failed to delete item!`);
 				}
 
 				// 3. Check if the receiving user already has the debuff applied
-				console.log(`[${inputBuffObj.name}] checking if the receiving user already has the debuff applied`)
+				console.log(`[${inputdebuffObj.name}] checking if the receiving user already has the debuff applied`)
 				let statusActive = await tx.turbotownStatus.findFirst({
 					where: {
 						AND: [
 							{
-								turbotownID: inputBuffObj.turbotownDestinationID,
+								turbotownID: inputdebuffObj.turbotownDestinationID,
 								isActive: true,
-								name: inputBuffObj.name
+								name: inputdebuffObj.name
 							}
 						]
 					},
 				})
 
 				if (statusActive) {
-					throw new Error(`${inputBuffObj.session.user.account_id} already has ${inputBuffObj.name} debuff applied!`);
+					throw new Error(`${inputdebuffObj.session.user.account_id} already has ${inputdebuffObj.name} debuff applied!`);
 				}
 
 				// 3. Check if the user that is receiving the debuff has a protection item applied
-				console.log(`[${inputBuffObj.name}] checking if the receiving user has a protection item`)
+				console.log(`[${inputdebuffObj.name}] checking if the receiving user has a protection item`)
 				let buffCheck = await tx.turbotownStatus.findMany({
 					where: {
 						AND: [
 							{
-								turbotownID: inputBuffObj.turbotownDestinationID,
+								turbotownID: inputdebuffObj.turbotownDestinationID,
 								isActive: true,
 								OR: [
 									{ name: "lotus orb" },
@@ -703,8 +711,8 @@ async function applyDebuff (inputBuffObj: any) {
 				console.log('buff check: ', buffCheck)
 				// if the receiving user has lotus, update the status in TurbotownStatus and apply the item to both sender and receiver
 				if (buffCheck.length > 0 && buffCheck.filter((item) => item.name === 'lotus orb').length > 0) {
-					console.log(`[${inputBuffObj.name}] turbotownDestinationID: ${inputBuffObj.turbotownDestinationID} has a lotus orb`)
-					console.log(`[${inputBuffObj.name}] updating resolve date to lotus orb in TurbotownStatus`)
+					console.log(`[${inputdebuffObj.name}] turbotownDestinationID: ${inputdebuffObj.turbotownDestinationID} has a lotus orb`)
+					console.log(`[${inputdebuffObj.name}] updating resolve date to lotus orb in TurbotownStatus`)
 					// add resolvedDate to TurbotownStatus
 					let statusUpdateResult = await tx.turbotownStatus.update({
 						where: {
@@ -718,15 +726,15 @@ async function applyDebuff (inputBuffObj: any) {
 					});
 
 					if (!statusUpdateResult) {
-						throw new Error(`${inputBuffObj.session.user.account_id} failed to add status to turbotown id: `, inputBuffObj.turbotownDestinationID);
+						throw new Error(`${inputdebuffObj.session.user.account_id} failed to add status to turbotown id: `, inputdebuffObj.turbotownDestinationID);
 					}
 
 					//apply item to sender
-					console.log(`[${inputBuffObj.name}] adding item status to sender's TurbotownStatus`)
+					console.log(`[${inputdebuffObj.name}] adding item status to sender's TurbotownStatus`)
 					let senderStatusCreateResult = await prisma.turbotownStatus.create({
 						data: {
-							turbotownID: inputBuffObj.turbotownID,
-							name: inputBuffObj.name,
+							turbotownID: inputdebuffObj.turbotownID,
+							name: inputdebuffObj.name,
 							isActive: true,
 							appliedDate: new Date(),
 							value: 'success'
@@ -734,15 +742,15 @@ async function applyDebuff (inputBuffObj: any) {
 					})
 
 					if (!senderStatusCreateResult) {
-						throw new Error(`${inputBuffObj.session.user.account_id} failed to add status to turbotown id:`, inputBuffObj.turbotownDestinationID);
+						throw new Error(`${inputdebuffObj.session.user.account_id} failed to add status to turbotown id:`, inputdebuffObj.turbotownDestinationID);
 					}
 
 					//apply item to receiver
-					console.log(`[${inputBuffObj.name}] adding item status to receiver's TurbotownStatus`)
+					console.log(`[${inputdebuffObj.name}] adding item status to receiver's TurbotownStatus`)
 					let receiverStatusCreateResult = await prisma.turbotownStatus.create({
 						data: {
-							turbotownID: inputBuffObj.turbotownDestinationID,
-							name: inputBuffObj.name,
+							turbotownID: inputdebuffObj.turbotownDestinationID,
+							name: inputdebuffObj.name,
 							isActive: true,
 							appliedDate: new Date(),
 							value: 'success'
@@ -750,20 +758,20 @@ async function applyDebuff (inputBuffObj: any) {
 					})
 
 					if (!receiverStatusCreateResult) {
-						throw new Error(`${inputBuffObj.session.user.account_id} failed to add status to turbotown id:`, inputBuffObj.turbotownDestinationID);
+						throw new Error(`${inputdebuffObj.session.user.account_id} failed to add status to turbotown id:`, inputdebuffObj.turbotownDestinationID);
 					}
 
 					actionResult = statusUpdateResult.value
 				}
 				//if the receiving user has linkens, update the status in TurbotownStatus and do not apply item
 				else if (buffCheck.length > 0 && buffCheck.filter((item) => item.name === 'linkens').length > 0) {
-					console.log(`[${inputBuffObj.name}] turbotownDestinationID: ${inputBuffObj.turbotownDestinationID} has a linken's sphere`)
-					console.log(`[${inputBuffObj.name}] updating resolve date in TurbotownStatus`)
+					console.log(`[${inputdebuffObj.name}] turbotownDestinationID: ${inputdebuffObj.turbotownDestinationID} has a linken's sphere`)
+					console.log(`[${inputdebuffObj.name}] updating resolve date in TurbotownStatus`)
 
 					// add the status to the receiving user
 					let statusUpdateResult: any = null;
 
-					console.log(`[${inputBuffObj.name}] adding status to TurbotownStatus`)
+					console.log(`[${inputdebuffObj.name}] adding status to TurbotownStatus`)
 					statusUpdateResult = await tx.turbotownStatus.update({
 						where: {
 							id: buffCheck[0].id
@@ -778,20 +786,20 @@ async function applyDebuff (inputBuffObj: any) {
 					actionResult = 'failed'
 
 					if (!statusUpdateResult) {
-						throw new Error(`${inputBuffObj.session.user.account_id} failed to update status to: turbotown id:`, inputBuffObj.turbotownDestinationID);
+						throw new Error(`${inputdebuffObj.session.user.account_id} failed to update status to: turbotown id:`, inputdebuffObj.turbotownDestinationID);
 					}
 				}
 				else {
 					// no protection items
-					console.log(`[${inputBuffObj.name}] no protection items found`)
+					console.log(`[${inputdebuffObj.name}] no protection items found`)
 					// add the status to the receiving user
 					let statusUpdateResult: any = null;
 
-					console.log(`[${inputBuffObj.name}] adding status to TurbotownStatus`)
+					console.log(`[${inputdebuffObj.name}] adding status to TurbotownStatus`)
 					statusUpdateResult = await tx.turbotownStatus.create({
 						data: {
-							name: inputBuffObj.name,
-							turbotownID: inputBuffObj.turbotownDestinationID,
+							name: inputdebuffObj.name,
+							turbotownID: inputdebuffObj.turbotownDestinationID,
 							isActive: true,
 							appliedDate: new Date(),
 							resolvedDate: new Date(),
@@ -802,17 +810,17 @@ async function applyDebuff (inputBuffObj: any) {
 					actionResult = 'success'
 
 					if (!statusUpdateResult) {
-						throw new Error(`${inputBuffObj.session.user.account_id} failed to update status to: turbotown id:`, inputBuffObj.turbotownDestinationID);
+						throw new Error(`${inputdebuffObj.session.user.account_id} failed to update status to: turbotown id:`, inputdebuffObj.turbotownDestinationID);
 					}
 				}
 
 				//add the action to TurbotownAction
-				console.log(`[${inputBuffObj.name}] adding action to TurbotownAction`)
+				console.log(`[${inputdebuffObj.name}] adding action to TurbotownAction`)
 				const itemUseResponse = await tx.turbotownAction.create({
 					data: {
-						action: inputBuffObj.name,
-						turbotownID: inputBuffObj.turbotownID,
-						turbotownDestinationID: inputBuffObj.turbotownDestinationID,
+						action: inputdebuffObj.name,
+						turbotownID: inputdebuffObj.turbotownID,
+						turbotownDestinationID: inputdebuffObj.turbotownDestinationID,
 						appliedDate: new Date(),
 						endDate: new Date(),
 						value: actionResult
