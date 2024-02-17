@@ -29,7 +29,7 @@
 		modalStore.close();
 
 		const t: ToastSettings = {
-			message: `Used Linken's Sphere`,
+			message: `Used Lotus Orb`,
 			background: 'variant-filled-success'
 		};
 
@@ -52,18 +52,17 @@
 </script>
 
 <div class="flex flex-col justify-center items-center">
-	<div id="linkensModal" class="h1 w-[50vw] card flex flex-col justify-center items-center p-4">
-		<form method="POST" class="w-full" action="/turbotown?/useLinkens" use:enhance>
+	<div id="lotusModal" class="h1 w-[50vw] card flex flex-col justify-center items-center p-4">
+		<form method="POST" class="w-full" action="/turbotown?/useLotusOrb" use:enhance>
 			<input type="hidden" name="turbotownID" value={turbotownID} />
 			<input type="hidden" name="turbotownDestination" value={selectedTownString} />
 			<div class="flex flex-col justify-center w-full space-y-4">
 				<div class="w-full flex justify-center">
 					<p class="italic text-tertiary-600 text-sm">
-						This magical sphere once protected one of the most famous heroes in history. Maybe it can be of some use to
-						you, too...
+						The orb in it's center shows your reflection. "I really let myself go...", you think to yourself.
 					</p>
 				</div>
-				<h2 class="h2 text-center text-success-500">Select Town to Apply Linken's Sphere</h2>
+				<h2 class="h2 text-center text-success-500">Select Town to Apply Lotus Orb</h2>
 				<div class="h-full w-full grid grid-cols-3 mx-auto my-4 p-4 gap-4">
 					<select class="select" name="selectedUserID" bind:value={selectedUser} on:change={changeUserHandler}>
 						{#each turbotownUsers as townUser}

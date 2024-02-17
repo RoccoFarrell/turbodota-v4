@@ -74,7 +74,7 @@
 	};
 
 	let selectedDetailItem = new ShopItem();
-	$: console.log(selectedDetailItem);
+	//$: console.log(selectedDetailItem);
 
 	const modifyCart = (itemName: string, mode: string) => {
 		let item = items.filter((item: ShopItem) => item.name === itemName)[0];

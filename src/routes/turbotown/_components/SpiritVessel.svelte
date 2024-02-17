@@ -22,6 +22,7 @@
 
 	let selectedUser: String;
 	let selectedTown = allTurbotowns.filter((town) => town.user.account_id === account_id);
+	$: console.log('selected town:', selectedTown)
 	let selectedTownString: String = townToString(selectedTown[0]);
 
 	function onFormSubmit(inputSelectedTown: any): void {
@@ -67,7 +68,7 @@
 				<div class="h-full w-full grid grid-cols-3 mx-auto my-4 p-4 gap-4">
 					<select class="select" name="selectedUserID" bind:value={selectedUser} on:change={changeUserHandler}>
 						{#each turbotownUsers as townUser}
-							<option>{townUser.user.username}</option>
+							<option selected={selectedTown[0].user.id === townUser.user.id}>{townUser.user.username}</option>
 						{/each}
 					</select>
 					<button class="btn variant-filled-primary w-full" on:click={() => onFormSubmit(selectedTown[0])}>
