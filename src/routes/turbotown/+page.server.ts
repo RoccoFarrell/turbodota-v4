@@ -259,7 +259,7 @@ export const actions: Actions = {
 		};
 
 		applyBuff(buffObj);
-		
+
 	},
 	useSpiritVessel: async ({ request, locals, fetch }) => {
 		console.log('received useSpiritVessel post in turbotown page server');
@@ -336,24 +336,38 @@ export const actions: Actions = {
 
 					// 3. Check if the receiving user has any debuffs that need to be cleared
 					console.log(`[nullifier] checking if the receiving user has any debuffs`)
-					let statusActive = await tx.turbotownStatus.findFirst({
+					//find the active status to clear
+
+					const modifierCheck = await prisma.turbotownStatus.findMany({
 						where: {
 							AND: [
 								{
-									turbotownID: turbotownDestination.id,
+									turbotownID,
 									isActive: true,
-									name: "nullifier"
+									OR: [
+										{ name: "spirit vessel" },
+										{ name: "orchid" },
+									]
 								}
 							]
-						},
+						}
 					})
 
-					if (statusActive) {
-						throw new Error(`${session.user.account_id} already has a nullifier debuff applied!`);
+					//set the modifier and remove the debuff from the town
+					for (const buffDebuff of modifierCheck) {
+						const statusUpdateResult = await tx.turbotownStatus.update({
+							where: {
+								id: buffDebuff.id
+							},
+							data: {
+								isActive: false,
+								resolvedDate: new Date()
+							}
+						});
+						if (!statusUpdateResult) {
+							throw new Error(`${session.user.account_id} failed to update status`);
+						}
 					}
-
-					//clear the debuff
-					//todo
 
 					//add the action to TurbotownAction
 					console.log(`[nullifier] adding action to TurbotownAction`)
@@ -563,7 +577,7 @@ export const actions: Actions = {
 	},
 };
 
-async function applyBuff (inputBuffObj: any) {
+async function applyBuff(inputBuffObj: any) {
 	try {
 		let tx_result = await prisma.$transaction(async (tx) => {
 			// 1. Verify that the user has at least one of the item in inventory
@@ -648,7 +662,7 @@ async function applyBuff (inputBuffObj: any) {
 	}
 }
 
-async function applyDebuff (inputdebuffObj: any) {
+async function applyDebuff(inputdebuffObj: any) {
 	try {
 		let tx_result = await prisma.$transaction(async (tx) => {
 			// 1. Verify that the user has at least one of the item in inventory
