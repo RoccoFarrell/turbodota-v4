@@ -202,99 +202,15 @@ export const actions: Actions = {
 		let turbotownDestination = JSON.parse(formData.get('turbotownDestination')?.toString() || '');
 		console.log('turbotownDestination', turbotownDestination)
 
-		try {
-			let tx_result = await prisma.$transaction(async (tx) => {
-				// 1. Verify that the user has at least one of the item in inventory
-				// look for itemID 2 (linkens sphere)
-				console.log(`[linkens] looking for item in inventory`)
-				let itemCheck = await tx.turbotownItem.findFirstOrThrow({
-					where: {
-						AND: [{ itemID: 2 }, { turbotownID }]
-					}
-				});
-
-				// 2. Decrement item from the user
-				if (itemCheck) {
-					const sender = await tx.turbotownItem.delete({
-						where: {
-							id: itemCheck.id
-						}
-					});
-
-					if (!sender) {
-						throw new Error(`${session.user.account_id} failed to delete item!`);
-					}
-
-					// 3. Check if the user that is receiving the buff already has a Linken's Sphere buff applied
-					console.log(`[linkens] checking if the receiving user already has a Linken's Sphere buff applied`)
-					let statusActive = await tx.turbotownStatus.findFirst({
-						where: {
-							AND: [
-								{
-									turbotownID: turbotownDestination.id,
-									isActive: true,
-									name: "linkens"
-								}
-							]
-						},
-					})
-
-					if (statusActive) {
-						throw new Error(`${session.user.account_id} already has a Linken's Sphere buff applied!`);
-					}
-
-					// 4. add the status to the receiving user
-					console.log(`[linkens] adding action to TurbotownAction`)
-					let statusResult: any = null;
-
-					statusResult = await prisma.turbotown.update({
-						where: {
-							account_id: turbotownDestination.account_id
-						},
-						data: {
-							statuses: {
-								create: {
-									name: 'linkens',
-									isActive: true,
-									appliedDate: new Date(),
-									value: ''
-								}
-							}
-						},
-						include: {
-							statuses: true
-						}
-					})
-
-					if (!statusResult) {
-						throw new Error(`${session.user.account_id} failed to add status to`, turbotownDestination.account_id);
-					}
-
-					const itemUseResponse = await tx.turbotownAction.create({
-						data: {
-							action: 'linkens',
-							turbotownID,
-							turbotownDestinationID: turbotownDestination.id,
-							appliedDate: new Date(),
-							endDate: new Date(),
-							value: ''
-						}
-					});
-					console.log(itemUseResponse);
-
-					return itemUseResponse;
-				}
-
-			});
-
-			if (tx_result) {
-				console.log('returning');
-				return { action: 'use item', result: tx_result, success: true };
-			} else console.error('no return from use item');
-		} catch (err) {
-			console.error(err);
-			return fail(400, { message: 'Could not delete item' });
+		let buffObj = {
+			session,
+			turbotownID,
+			turbotownDestinationID: turbotownDestination.id,
+			name: 'linkens',
+			id: 2
 		}
+
+		applyBuff(buffObj);
 	},
 	useLotusOrb: async ({ request, locals, fetch }) => {
 		console.log('received useLotusOrb post in turbotown page server');
@@ -306,303 +222,15 @@ export const actions: Actions = {
 		let turbotownDestination = JSON.parse(formData.get('turbotownDestination')?.toString() || '');
 		console.log('turbotownDestination', turbotownDestination)
 
-		try {
-			let tx_result = await prisma.$transaction(async (tx) => {
-				// 1. Verify that the user has at least one of the item in inventory
-				// look for itemID 1 (lotus orb)
-				console.log(`[lotusOrb] looking for item in inventory`)
-				let itemCheck = await tx.turbotownItem.findFirstOrThrow({
-					where: {
-						AND: [{ itemID: 1 }, { turbotownID }]
-					}
-				});
-
-				// 2. Decrement item from the user
-				if (itemCheck) {
-					const sender = await tx.turbotownItem.delete({
-						where: {
-							id: itemCheck.id
-						}
-					});
-
-					if (!sender) {
-						throw new Error(`${session.user.account_id} failed to delete item!`);
-					}
-
-					// 3. Check if the user that is receiving the buff already has a Lotus Orb buff applied
-					console.log(`[lotusOrb] checking if the receiving user already has a Lotus Orb debuff applied`)
-					let statusActive = await tx.turbotownStatus.findFirst({
-						where: {
-							AND: [
-								{
-									turbotownID: turbotownDestination.id,
-									isActive: true,
-									name: "lotus orb"
-								}
-							]
-						},
-					})
-
-					if (statusActive) {
-						throw new Error(`${session.user.account_id} already has a Lotus Orb buff applied!`);
-					}
-
-					// 4. add the status to the receiving user
-					console.log(`[lotusOrb] checking if the receiving user already has a Lotus Orb debuff applied`)
-					let statusResult: any = null;
-
-					statusResult = await prisma.turbotown.update({
-						where: {
-							account_id: turbotownDestination.account_id
-						},
-						data: {
-							statuses: {
-								create: {
-									name: 'lotus orb',
-									isActive: true,
-									appliedDate: new Date(),
-									value: ''
-								}
-							}
-						},
-						include: {
-							statuses: true
-						}
-					})
-
-					if (!statusResult) {
-						throw new Error(`${session.user.account_id} failed to add status to`, turbotownDestination.account_id);
-					}
-
-					console.log(`[lotusOrb] adding action to TurbotownAction`)
-					const itemUseResponse = await tx.turbotownAction.create({
-						data: {
-							action: 'lotus orb',
-							turbotownID,
-							turbotownDestinationID: turbotownDestination.id,
-							appliedDate: new Date(),
-							endDate: new Date(),
-							value: ''
-						}
-					});
-					console.log(itemUseResponse);
-
-					return itemUseResponse;
-				}
-
-			});
-
-			if (tx_result) {
-				console.log('returning');
-				return { action: 'use item', result: tx_result, success: true };
-			} else console.error('no return from use item');
-		} catch (err) {
-			console.error(err);
-			return fail(400, { message: 'Could not delete item' });
+		let buffObj = {
+			session,
+			turbotownID,
+			turbotownDestinationID: turbotownDestination.id,
+			name: 'lotus orb',
+			id: 1
 		}
-	},
-	useSpiritVessel: async ({ request, locals, fetch }) => {
-		console.log('received useSpiritVessel post in turbotown page server');
-		const session = await locals.auth.validate();
-		if (!session) return fail(400, { message: 'Not logged in, cannot use item' });
-		const formData = await request.formData();
 
-		let turbotownID = parseInt(formData.get('turbotownID')?.toString() || '-1');
-		let turbotownDestination = JSON.parse(formData.get('turbotownDestination')?.toString() || '');
-		console.log('turbotownDestination', turbotownDestination)
-
-		try {
-			let tx_result = await prisma.$transaction(async (tx) => {
-				// 1. Verify that the user has at least one of the item in inventory
-				// look for itemID 4 (spirit vessel)
-				console.log(`[spiritVessel] looking for item in inventory`)
-				let spiritVesselCheck = await tx.turbotownItem.findFirstOrThrow({
-					where: {
-						AND: [{ itemID: 4 }, { turbotownID }]
-					}
-				});
-
-				// 2. Decrement item from the user
-				if (spiritVesselCheck) {
-					const sender = await tx.turbotownItem.delete({
-						where: {
-							id: spiritVesselCheck.id
-						}
-					});
-
-					if (!sender) {
-						throw new Error(`${session.user.account_id} failed to delete item!`);
-					}
-
-					// 3. Check if the receiving user already has a Spirit Vessel debuff applied
-					console.log(`[spiritVessel] checking if the receiving user already has a Spirit Vessel debuff applied`)
-					let statusActive = await tx.turbotownStatus.findFirst({
-						where: {
-							AND: [
-								{
-									turbotownID: turbotownDestination.id,
-									isActive: true,
-									name: "spirit vessel"
-								}
-							]
-						},
-					})
-
-					if (statusActive) {
-						throw new Error(`${session.user.account_id} already has a Spirit Vessel debuff applied!`);
-					}
-
-					// 3. Check if the user that is receiving the debuff has a protection item applied
-					console.log(`[spiritVessel] checking if the receiving user has a protection item`)
-					let buffCheck = await tx.turbotownStatus.findMany({
-						where: {
-							AND: [
-								{
-									turbotownID: turbotownDestination.id,
-									isActive: true,
-									OR: [
-										{ name: "lotus orb" },
-										{ name: "linkens" }
-									]
-
-								}
-							]
-						},
-					})
-
-					let actionResult: string = '';
-					console.log('buff check: ', buffCheck)
-					// if the receiving user has lotus, update the status in TurbotownStatus and apply the Spirit Vessel to both sender and receiver
-					if (buffCheck.length > 0 && buffCheck.filter((item) => item.name === 'lotus orb').length > 0) {
-						console.log(`[spiritVessel] turbotownDestinationID: ${turbotownDestination.id} has a lotus orb`)
-						console.log(`[spiritVessel] updating resolve date to lotus orb in TurbotownStatus`)
-						// add resolvedDate to TurbotownStatus
-						let statusUpdateResult = await tx.turbotownStatus.update({
-							where: {
-								id: buffCheck[0].id
-							},
-							data: {
-								isActive: false,
-								resolvedDate: new Date(),
-								value: 'success'
-							}
-						});
-
-						if (!statusUpdateResult) {
-							throw new Error(`${session.user.account_id} failed to add status to`, turbotownDestination.account_id);
-						}
-
-						//apply spirit vessel to sender
-						console.log(`[spiritVessel] adding spirit vessel status to sender's TurbotownStatus`)
-						let senderStatusCreateResult = await prisma.turbotownStatus.create({
-							data: {
-								turbotownID,
-								name: 'spirit vessel',
-								isActive: true,
-								appliedDate: new Date(),
-								value: 'success'
-							}
-						})
-
-						if (!senderStatusCreateResult) {
-							throw new Error(`${session.user.account_id} failed to add status to`, turbotownDestination.account_id);
-						}
-
-						//apply spirit vessel to receiver
-						console.log(`[spiritVessel] adding spirit vessel status to receiver's TurbotownStatus`)
-						let receiverStatusCreateResult = await prisma.turbotownStatus.create({
-							data: {
-								turbotownID: turbotownDestination.id,
-								name: 'spirit vessel',
-								isActive: true,
-								appliedDate: new Date(),
-								value: 'success'
-							}
-						})
-
-						if (!receiverStatusCreateResult) {
-							throw new Error(`${session.user.account_id} failed to add status to`, turbotownDestination.account_id);
-						}
-
-						actionResult = statusUpdateResult.value
-					}
-					//if the receiving user has linkens, update the status in TurbotownStatus and do not apply Spirit Vessel
-					else if (buffCheck.length > 0 && buffCheck.filter((item) => item.name === 'linkens').length > 0) {
-						console.log(`[spiritVessel] turbotownDestinationID: ${turbotownDestination.id} has a linken's sphere`)
-						console.log(`[spiritVessel] updating resolve date in TurbotownStatus`)
-
-						// add the status to the receiving user
-						let statusUpdateResult: any = null;
-
-						console.log(`[spiritVessel] adding status to TurbotownStatus`)
-						statusUpdateResult = await tx.turbotownStatus.update({
-							where: {
-								id: buffCheck[0].id
-							},
-							data: {
-								isActive: false,
-								resolvedDate: new Date(),
-								value: 'success'
-							}
-						});
-
-						actionResult = 'failed'
-
-						if (!statusUpdateResult) {
-							throw new Error(`${session.user.account_id} failed to update status to`, turbotownDestination.account_id);
-						}
-					}
-					else {
-						// no protection items
-						console.log(`[spiritVessel] no protection items found`)
-						// add the status to the receiving user
-						let statusUpdateResult: any = null;
-
-						console.log(`[spiritVessel] adding status to TurbotownStatus`)
-						statusUpdateResult = await tx.turbotownStatus.create({
-							data: {
-								name: 'spirit vessel',
-								turbotownID: turbotownDestination.id,
-								isActive: true,
-								appliedDate: new Date(),
-								resolvedDate: new Date(),
-								value: 'success'
-							}
-						});
-
-						actionResult = 'success'
-
-						if (!statusUpdateResult) {
-							throw new Error(`${session.user.account_id} failed to update status to`, turbotownDestination.account_id);
-						}
-					}
-
-					//add the action to TurbotownAction
-					console.log(`[spiritVessel] adding action to TurbotownAction`)
-					const itemUseResponse = await tx.turbotownAction.create({
-						data: {
-							action: 'spirit vessel',
-							turbotownID,
-							turbotownDestinationID: turbotownDestination.id,
-							appliedDate: new Date(),
-							endDate: new Date(),
-							value: actionResult
-						}
-					});
-					console.log(itemUseResponse);
-
-					return itemUseResponse;
-				}
-			});
-
-			if (tx_result) {
-				console.log('returning');
-				return { action: 'use item', result: tx_result, success: true };
-			} else console.error('no return from use item');
-		} catch (err) {
-			console.error(err);
-			return fail(400, { message: 'Could not delete item' });
-		}
+		applyBuff(buffObj);
 	},
 	useEtherealBlade: async ({ request, locals, fetch }) => {
 		console.log('received useEtherealBlade post in turbotown page server');
@@ -614,89 +242,36 @@ export const actions: Actions = {
 		let turbotownDestination = JSON.parse(formData.get('turbotownDestination')?.toString() || '');
 		console.log('turbotownDestination', turbotownDestination)
 
-		try {
-			let tx_result = await prisma.$transaction(async (tx) => {
-				// 1. Verify that the user has at least one of the item in inventory
-				// look for itemID 6 (ethereal blade)
-				console.log(`[etherealBlade] looking for item in inventory`)
-				let etherealBladeCheck = await tx.turbotownItem.findFirstOrThrow({
-					where: {
-						AND: [{ itemID: 6 }, { turbotownID }]
-					}
-				});
-
-				// 2. Decrement item from the user
-				if (etherealBladeCheck) {
-					const sender = await tx.turbotownItem.delete({
-						where: {
-							id: etherealBladeCheck.id
-						}
-					});
-
-					if (!sender) {
-						throw new Error(`${session.user.account_id} failed to delete item!`);
-					}
-
-					// 3. Check if the user already has a ethereal blade buff applied
-					console.log(`[etherealBlade] checking if the receiving user already has a ethereal blade buff applied`)
-					let statusActive = await tx.turbotownStatus.findFirst({
-						where: {
-							AND: [
-								{
-									turbotownID: turbotownDestination.id,
-									isActive: true,
-									name: "ethereal blade"
-								}
-							]
-						},
-					})
-
-					if (statusActive) {
-						throw new Error(`${session.user.account_id} already has a ethereal blade debuff applied!`);
-					}
-
-					//apply ethereal blade to sender
-					console.log(`[etherealBlade] adding ethereal blade status to sender's TurbotownStatus`)
-					let senderStatusCreateResult = await prisma.turbotownStatus.create({
-						data: {
-							turbotownID: turbotownDestination.id,
-							name: 'ethereal blade',
-							isActive: true,
-							appliedDate: new Date(),
-							value: 'success'
-						}
-					})
-
-					if (!senderStatusCreateResult) {
-						throw new Error(`${session.user.account_id} failed to add status to`, turbotownDestination.account_id);
-					}
-
-					//add the action to TurbotownAction
-					console.log(`[etherealBlade] adding action to TurbotownAction`)
-					const itemUseResponse = await tx.turbotownAction.create({
-						data: {
-							action: 'ethereal blade',
-							turbotownID,
-							turbotownDestinationID: turbotownDestination.id,
-							appliedDate: new Date(),
-							endDate: new Date(),
-							value: 'success'
-						}
-					});
-					console.log(itemUseResponse);
-
-					return itemUseResponse;
-				}
-			});
-
-			if (tx_result) {
-				console.log('returning');
-				return { action: 'use item', result: tx_result, success: true };
-			} else console.error('no return from use item');
-		} catch (err) {
-			console.error(err);
-			return fail(400, { message: 'Could not delete item' });
+		let buffObj = {
+			session,
+			turbotownID,
+			turbotownDestinationID: turbotownDestination.id,
+			name: 'ethereal blade',
+			id: 6
 		}
+
+		applyBuff(buffObj);
+		
+	},
+	useSpiritVessel: async ({ request, locals, fetch }) => {
+		console.log('received useSpiritVessel post in turbotown page server');
+		const session = await locals.auth.validate();
+		if (!session) return fail(400, { message: 'Not logged in, cannot use item' });
+		const formData = await request.formData();
+
+		let turbotownID = parseInt(formData.get('turbotownID')?.toString() || '-1');
+		let turbotownDestination = JSON.parse(formData.get('turbotownDestination')?.toString() || '');
+		console.log('turbotownDestination', turbotownDestination)
+
+		let buffObj = {
+			session,
+			turbotownID,
+			turbotownDestinationID: turbotownDestination.id,
+			name: 'spirit vessel',
+			id: 4
+		}
+
+		applyDebuff(buffObj);
 	},
 	useOrchid: async ({ request, locals, fetch }) => {
 		console.log('received useOrchid post in turbotown page server');
@@ -708,198 +283,15 @@ export const actions: Actions = {
 		let turbotownDestination = JSON.parse(formData.get('turbotownDestination')?.toString() || '');
 		console.log('turbotownDestination', turbotownDestination)
 
-		try {
-			let tx_result = await prisma.$transaction(async (tx) => {
-				// 1. Verify that the user has at least one of the item in inventory
-				// look for itemID 7 (orchid)
-				console.log(`[orchid] looking for item in inventory`)
-				let orchidCheck = await tx.turbotownItem.findFirstOrThrow({
-					where: {
-						AND: [{ itemID: 7 }, { turbotownID }]
-					}
-				});
-
-				// 2. Decrement item from the user
-				if (orchidCheck) {
-					const sender = await tx.turbotownItem.delete({
-						where: {
-							id: orchidCheck.id
-						}
-					});
-
-					if (!sender) {
-						throw new Error(`${session.user.account_id} failed to delete item!`);
-					}
-
-					// 3. Check if the receiving user already has a orchid debuff applied
-					console.log(`[orchid] checking if the receiving user already has a orchid debuff applied`)
-					let statusActive = await tx.turbotownStatus.findFirst({
-						where: {
-							AND: [
-								{
-									turbotownID: turbotownDestination.id,
-									isActive: true,
-									name: "orchid"
-								}
-							]
-						},
-					})
-
-					if (statusActive) {
-						throw new Error(`${session.user.account_id} already has a orchid debuff applied!`);
-					}
-
-					// 3. Check if the user that is receiving the debuff has a protection item applied
-					console.log(`[orchid] checking if the receiving user has a protection item`)
-					let buffCheck = await tx.turbotownStatus.findMany({
-						where: {
-							AND: [
-								{
-									turbotownID: turbotownDestination.id,
-									isActive: true,
-									OR: [
-										{ name: "lotus orb" },
-										{ name: "linkens" }
-									]
-
-								}
-							]
-						},
-					})
-
-					let actionResult: string = '';
-					console.log('buff check: ', buffCheck)
-					// if the receiving user has lotus, update the status in TurbotownStatus and apply the orchid to both sender and receiver
-					if (buffCheck.length > 0 && buffCheck.filter((item) => item.name === 'lotus orb').length > 0) {
-						console.log(`[orchid] turbotownDestinationID: ${turbotownDestination.id} has a lotus orb`)
-						console.log(`[orchid] updating resolve date to lotus orb in TurbotownStatus`)
-						// add resolvedDate to TurbotownStatus
-						let statusUpdateResult = await tx.turbotownStatus.update({
-							where: {
-								id: buffCheck[0].id
-							},
-							data: {
-								isActive: false,
-								resolvedDate: new Date(),
-								value: 'success'
-							}
-						});
-
-						if (!statusUpdateResult) {
-							throw new Error(`${session.user.account_id} failed to add status to`, turbotownDestination.account_id);
-						}
-
-						//apply orchid to sender
-						console.log(`[orchid] adding orchid status to sender's TurbotownStatus`)
-						let senderStatusCreateResult = await prisma.turbotownStatus.create({
-							data: {
-								turbotownID,
-								name: 'orchid',
-								isActive: true,
-								appliedDate: new Date(),
-								value: 'success'
-							}
-						})
-
-						if (!senderStatusCreateResult) {
-							throw new Error(`${session.user.account_id} failed to add status to`, turbotownDestination.account_id);
-						}
-
-						//apply orchid to receiver
-						console.log(`[orchid] adding orchid status to receiver's TurbotownStatus`)
-						let receiverStatusCreateResult = await prisma.turbotownStatus.create({
-							data: {
-								turbotownID: turbotownDestination.id,
-								name: 'orchid',
-								isActive: true,
-								appliedDate: new Date(),
-								value: 'success'
-							}
-						})
-
-						if (!receiverStatusCreateResult) {
-							throw new Error(`${session.user.account_id} failed to add status to`, turbotownDestination.account_id);
-						}
-
-						actionResult = statusUpdateResult.value
-					}
-					//if the receiving user has linkens, update the status in TurbotownStatus and do not apply orchid
-					else if (buffCheck.length > 0 && buffCheck.filter((item) => item.name === 'linkens').length > 0) {
-						console.log(`[orchid] turbotownDestinationID: ${turbotownDestination.id} has a linken's sphere`)
-						console.log(`[orchid] updating resolve date in TurbotownStatus`)
-
-						// add the status to the receiving user
-						let statusUpdateResult: any = null;
-
-						console.log(`[orchid] adding status to TurbotownStatus`)
-						statusUpdateResult = await tx.turbotownStatus.update({
-							where: {
-								id: buffCheck[0].id
-							},
-							data: {
-								isActive: false,
-								resolvedDate: new Date(),
-								value: 'success'
-							}
-						});
-
-						actionResult = 'failed'
-
-						if (!statusUpdateResult) {
-							throw new Error(`${session.user.account_id} failed to update status to`, turbotownDestination.account_id);
-						}
-					}
-					else {
-						// no protection items
-						console.log(`[orchid] no protection items found`)
-						// add the status to the receiving user
-						let statusUpdateResult: any = null;
-
-						console.log(`[orchid] adding status to TurbotownStatus`)
-						statusUpdateResult = await tx.turbotownStatus.create({
-							data: {
-								name: 'orchid',
-								turbotownID: turbotownDestination.id,
-								isActive: true,
-								appliedDate: new Date(),
-								resolvedDate: new Date(),
-								value: 'success'
-							}
-						});
-
-						actionResult = 'success'
-
-						if (!statusUpdateResult) {
-							throw new Error(`${session.user.account_id} failed to update status to`, turbotownDestination.account_id);
-						}
-					}
-
-					//add the action to TurbotownAction
-					console.log(`[orchid] adding action to TurbotownAction`)
-					const itemUseResponse = await tx.turbotownAction.create({
-						data: {
-							action: 'orchid',
-							turbotownID,
-							turbotownDestinationID: turbotownDestination.id,
-							appliedDate: new Date(),
-							endDate: new Date(),
-							value: actionResult
-						}
-					});
-					console.log(itemUseResponse);
-
-					return itemUseResponse;
-				}
-			});
-
-			if (tx_result) {
-				console.log('returning');
-				return { action: 'use item', result: tx_result, success: true };
-			} else console.error('no return from use item');
-		} catch (err) {
-			console.error(err);
-			return fail(400, { message: 'Could not delete item' });
+		let buffObj = {
+			session,
+			turbotownID,
+			turbotownDestinationID: turbotownDestination.id,
+			name: 'orchid',
+			id: 7
 		}
+
+		applyDebuff(buffObj);
 	},
 	useNullifier: async ({ request, locals, fetch }) => {
 		console.log('received usenullifier post in turbotown page server');
@@ -1162,3 +554,282 @@ export const actions: Actions = {
 		if (matchInsertResult) return { success: true, matchInsertResult };
 	},
 };
+
+async function applyBuff (inputBuffObj: any) {
+	try {
+		let tx_result = await prisma.$transaction(async (tx) => {
+			// 1. Verify that the user has at least one of the item in inventory
+			console.log(`[${inputBuffObj.name}] looking for item in inventory`)
+			let itemCheck = await tx.turbotownItem.findFirstOrThrow({
+				where: {
+					AND: [{ itemID: inputBuffObj.id }, { turbotownID: inputBuffObj.turbotownID }]
+				}
+			});
+
+			// 2. Decrement item from the user
+			if (itemCheck) {
+				const sender = await tx.turbotownItem.delete({
+					where: {
+						id: itemCheck.id
+					}
+				});
+
+				if (!sender) {
+					throw new Error(`${inputBuffObj.session.user.account_id} failed to delete item!`);
+				}
+
+				// 3. Check if the user already has a ethereal blade buff applied
+				console.log(`[${inputBuffObj.name}] checking if the receiving user already has the buff applied`)
+				let statusActive = await tx.turbotownStatus.findFirst({
+					where: {
+						AND: [
+							{
+								turbotownID: inputBuffObj.turbotownDestinationID,
+								isActive: true,
+								name: inputBuffObj.name
+							}
+						]
+					},
+				})
+
+				if (statusActive) {
+					throw new Error(`${inputBuffObj.session.user.account_id} already has ${inputBuffObj.name} buff applied!`);
+				}
+
+				//apply ethereal blade to sender
+				console.log(`[${inputBuffObj.name}] adding item status to sender's TurbotownStatus`)
+				let senderStatusCreateResult = await prisma.turbotownStatus.create({
+					data: {
+						turbotownID: inputBuffObj.turbotownDestinationID,
+						name: inputBuffObj.name,
+						isActive: true,
+						appliedDate: new Date(),
+						value: 'success'
+					}
+				})
+
+				if (!senderStatusCreateResult) {
+					throw new Error(`${inputBuffObj.session.user.account_id} failed to add status to turbotown ID`, inputBuffObj.turbotownDestinationID);
+				}
+
+				//add the action to TurbotownAction
+				console.log(`[${inputBuffObj.name}] adding action to TurbotownAction`)
+				const itemUseResponse = await tx.turbotownAction.create({
+					data: {
+						action: inputBuffObj.name,
+						turbotownID: inputBuffObj.turbotownID,
+						turbotownDestinationID: inputBuffObj.turbotownDestinationID,
+						appliedDate: new Date(),
+						endDate: new Date(),
+						value: 'success'
+					}
+				});
+				console.log(itemUseResponse);
+
+				return itemUseResponse;
+			}
+		});
+
+		if (tx_result) {
+			console.log('returning');
+			return { action: 'use item', result: tx_result, success: true };
+		} else console.error('no return from use item');
+	} catch (err) {
+		console.error(err);
+		return fail(400, { message: 'Could not delete item' });
+	}
+}
+
+async function applyDebuff (inputBuffObj: any) {
+	try {
+		let tx_result = await prisma.$transaction(async (tx) => {
+			// 1. Verify that the user has at least one of the item in inventory
+			console.log(`[${inputBuffObj.name}] looking for item in inventory`)
+			let itemCheck = await tx.turbotownItem.findFirstOrThrow({
+				where: {
+					AND: [{ itemID: inputBuffObj.id }, { turbotownID: inputBuffObj.turbotownID }]
+				}
+			});
+
+			// 2. Decrement item from the user
+			if (itemCheck) {
+				const sender = await tx.turbotownItem.delete({
+					where: {
+						id: itemCheck.id
+					}
+				});
+
+				if (!sender) {
+					throw new Error(`${inputBuffObj.session.user.account_id} failed to delete item!`);
+				}
+
+				// 3. Check if the receiving user already has the debuff applied
+				console.log(`[${inputBuffObj.name}] checking if the receiving user already has the debuff applied`)
+				let statusActive = await tx.turbotownStatus.findFirst({
+					where: {
+						AND: [
+							{
+								turbotownID: inputBuffObj.turbotownDestinationID,
+								isActive: true,
+								name: inputBuffObj.name
+							}
+						]
+					},
+				})
+
+				if (statusActive) {
+					throw new Error(`${inputBuffObj.session.user.account_id} already has ${inputBuffObj.name} debuff applied!`);
+				}
+
+				// 3. Check if the user that is receiving the debuff has a protection item applied
+				console.log(`[${inputBuffObj.name}] checking if the receiving user has a protection item`)
+				let buffCheck = await tx.turbotownStatus.findMany({
+					where: {
+						AND: [
+							{
+								turbotownID: inputBuffObj.turbotownDestinationID,
+								isActive: true,
+								OR: [
+									{ name: "lotus orb" },
+									{ name: "linkens" }
+								]
+
+							}
+						]
+					},
+				})
+
+				let actionResult: string = '';
+				console.log('buff check: ', buffCheck)
+				// if the receiving user has lotus, update the status in TurbotownStatus and apply the item to both sender and receiver
+				if (buffCheck.length > 0 && buffCheck.filter((item) => item.name === 'lotus orb').length > 0) {
+					console.log(`[${inputBuffObj.name}] turbotownDestinationID: ${inputBuffObj.turbotownDestinationID} has a lotus orb`)
+					console.log(`[${inputBuffObj.name}] updating resolve date to lotus orb in TurbotownStatus`)
+					// add resolvedDate to TurbotownStatus
+					let statusUpdateResult = await tx.turbotownStatus.update({
+						where: {
+							id: buffCheck[0].id
+						},
+						data: {
+							isActive: false,
+							resolvedDate: new Date(),
+							value: 'success'
+						}
+					});
+
+					if (!statusUpdateResult) {
+						throw new Error(`${inputBuffObj.session.user.account_id} failed to add status to turbotown id: `, inputBuffObj.turbotownDestinationID);
+					}
+
+					//apply item to sender
+					console.log(`[${inputBuffObj.name}] adding item status to sender's TurbotownStatus`)
+					let senderStatusCreateResult = await prisma.turbotownStatus.create({
+						data: {
+							turbotownID: inputBuffObj.turbotownID,
+							name: inputBuffObj.name,
+							isActive: true,
+							appliedDate: new Date(),
+							value: 'success'
+						}
+					})
+
+					if (!senderStatusCreateResult) {
+						throw new Error(`${inputBuffObj.session.user.account_id} failed to add status to turbotown id:`, inputBuffObj.turbotownDestinationID);
+					}
+
+					//apply item to receiver
+					console.log(`[${inputBuffObj.name}] adding item status to receiver's TurbotownStatus`)
+					let receiverStatusCreateResult = await prisma.turbotownStatus.create({
+						data: {
+							turbotownID: inputBuffObj.turbotownDestinationID,
+							name: inputBuffObj.name,
+							isActive: true,
+							appliedDate: new Date(),
+							value: 'success'
+						}
+					})
+
+					if (!receiverStatusCreateResult) {
+						throw new Error(`${inputBuffObj.session.user.account_id} failed to add status to turbotown id:`, inputBuffObj.turbotownDestinationID);
+					}
+
+					actionResult = statusUpdateResult.value
+				}
+				//if the receiving user has linkens, update the status in TurbotownStatus and do not apply item
+				else if (buffCheck.length > 0 && buffCheck.filter((item) => item.name === 'linkens').length > 0) {
+					console.log(`[${inputBuffObj.name}] turbotownDestinationID: ${inputBuffObj.turbotownDestinationID} has a linken's sphere`)
+					console.log(`[${inputBuffObj.name}] updating resolve date in TurbotownStatus`)
+
+					// add the status to the receiving user
+					let statusUpdateResult: any = null;
+
+					console.log(`[${inputBuffObj.name}] adding status to TurbotownStatus`)
+					statusUpdateResult = await tx.turbotownStatus.update({
+						where: {
+							id: buffCheck[0].id
+						},
+						data: {
+							isActive: false,
+							resolvedDate: new Date(),
+							value: 'success'
+						}
+					});
+
+					actionResult = 'failed'
+
+					if (!statusUpdateResult) {
+						throw new Error(`${inputBuffObj.session.user.account_id} failed to update status to: turbotown id:`, inputBuffObj.turbotownDestinationID);
+					}
+				}
+				else {
+					// no protection items
+					console.log(`[${inputBuffObj.name}] no protection items found`)
+					// add the status to the receiving user
+					let statusUpdateResult: any = null;
+
+					console.log(`[${inputBuffObj.name}] adding status to TurbotownStatus`)
+					statusUpdateResult = await tx.turbotownStatus.create({
+						data: {
+							name: inputBuffObj.name,
+							turbotownID: inputBuffObj.turbotownDestinationID,
+							isActive: true,
+							appliedDate: new Date(),
+							resolvedDate: new Date(),
+							value: 'success'
+						}
+					});
+
+					actionResult = 'success'
+
+					if (!statusUpdateResult) {
+						throw new Error(`${inputBuffObj.session.user.account_id} failed to update status to: turbotown id:`, inputBuffObj.turbotownDestinationID);
+					}
+				}
+
+				//add the action to TurbotownAction
+				console.log(`[${inputBuffObj.name}] adding action to TurbotownAction`)
+				const itemUseResponse = await tx.turbotownAction.create({
+					data: {
+						action: inputBuffObj.name,
+						turbotownID: inputBuffObj.turbotownID,
+						turbotownDestinationID: inputBuffObj.turbotownDestinationID,
+						appliedDate: new Date(),
+						endDate: new Date(),
+						value: actionResult
+					}
+				});
+				console.log(itemUseResponse);
+
+				return itemUseResponse;
+			}
+		});
+
+		if (tx_result) {
+			console.log('returning');
+			return { action: 'use item', result: tx_result, success: true };
+		} else console.error('no return from use item');
+	} catch (err) {
+		console.error(err);
+		return fail(400, { message: 'Could not delete item' });
+	}
+}
