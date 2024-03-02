@@ -73,7 +73,8 @@ export const load: PageServerLoad = async ({ locals, parent, params }) => {
 				},
 				seasons: {
 					where: {
-						AND: [{ type: 'random', active: true }]
+						//AND: [{ type: 'random', active: true }]
+						id: parseInt(params.slug)
 					},
 					include: {
 						randoms: {

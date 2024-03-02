@@ -219,7 +219,7 @@ model Random {
 //turbotown models
 model Turbotown {
   id          Int               @id @default(autoincrement())
-  account_id  Int               @unique
+  account_id  Int               
   seasonID    Int
   lastUpdated DateTime          @default(now())
   createdDate DateTime
@@ -231,6 +231,8 @@ model Turbotown {
   statuses    TurbotownStatus[]
   actions     TurbotownAction[] @relation("user")
   debuffs     TurbotownAction[] @relation("target")
+
+  @@unique([account_id, seasonID], name: "accountPlusSeason")
 }
 
 model TurbotownMetric {
