@@ -246,7 +246,7 @@ export const actions: Actions = {
 
 					statusResult = await prisma.turbotown.update({
 						where: {
-							account_id: turbotownDestination.account_id
+							id: turbotownDestination.id
 						},
 						data: {
 							statuses: {

@@ -281,7 +281,10 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 					headers: {
 						'Content-Type': 'application/json'
 					},
-					body: JSON.stringify(quest)
+					body: JSON.stringify({
+						quest,
+						currentTown
+					})
 				});
 
 				//console.log(questCompleteResponse);

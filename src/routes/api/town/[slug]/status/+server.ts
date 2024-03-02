@@ -30,18 +30,23 @@ export const POST: RequestHandler = async ({ request, params, url, locals }) => 
         let account_id: number = parseInt(params.slug || '0');
         console.log(`\n-----------\n[POST /api/town/${account_id}/status] account_id: ${account_id}\n-------------\n`);
 
-        turbotown = await prisma.turbotown.findUnique({
+        turbotown = await prisma.turbotown.findMany({
             where: {
                 account_id
             },
             include: {
                 statuses: true
+            },
+            orderBy: {
+                seasonID: 'desc'
             }
         })
 
+        let currentTown = turbotown[0]
+
         statusResult = await prisma.turbotown.update({
             where: {
-                account_id
+                id: currentTown.id
             },
             data: {
                 statuses: {

@@ -54,15 +54,20 @@ export const POST: RequestHandler = async ({ request, params, url, locals, fetch
 
 		let randomStatusComplete: boolean = false;
 		let completedRandom: Random | null = null;
-		if (requestData.random.status === 'active') {
+
+		let completedQuest = requestData.quest
+		let currentTown = requestData.currentTown
+		let currentTownID = currentTown.id
+
+		if (completedQuest.random.status === 'active') {
 			const response = await fetch(
-				`/api/players/${session.user.account_id}/randoms/${requestData.random.id}/complete`,
+				`/api/players/${session.user.account_id}/randoms/${completedQuest.random.id}/complete`,
 				{
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json'
 					},
-					body: JSON.stringify({ random: requestData.random })
+					body: JSON.stringify({ random: completedQuest.random })
 				}
 			);
 			//console.log(`[api/town/${account_id}/quest/${questID}/complete] check random response: `, response);
@@ -73,9 +78,9 @@ export const POST: RequestHandler = async ({ request, params, url, locals, fetch
 				completedRandom = responseData.randomCompleteResults;
 			}
 		} else {
-			if (requestData.random.status === 'completed') {
+			if (completedQuest.random.status === 'completed') {
 				randomStatusComplete = true;
-				completedRandom = requestData.random;
+				completedRandom = completedQuest.random;
 			}
 		}
 
@@ -97,7 +102,7 @@ export const POST: RequestHandler = async ({ request, params, url, locals, fetch
 					if (quest && completedRandom) {
 						const townQuestUpdateResult = await tx.turbotown.update({
 							where: {
-								account_id
+								id: currentTownID
 							},
 							data: {
 								quests: {
@@ -140,7 +145,7 @@ export const POST: RequestHandler = async ({ request, params, url, locals, fetch
 						) {
 							const townGoldUpdateResult = await tx.turbotown.update({
 								where: {
-									account_id
+									id: currentTownID
 								},
 								data: {
 									metrics: {
@@ -158,7 +163,7 @@ export const POST: RequestHandler = async ({ request, params, url, locals, fetch
 
 							const townXPUpdateResult = await tx.turbotown.update({
 								where: {
-									account_id
+									id: currentTownID
 								},
 								data: {
 									metrics: {
@@ -215,7 +220,7 @@ export const POST: RequestHandler = async ({ request, params, url, locals, fetch
 					status: 'fail',
 					message: 'random was not completed',
 					success: false,
-					random: requestData.random,
+					random: completedQuest.random,
 					questID
 				})
 			);
