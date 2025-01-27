@@ -279,7 +279,7 @@
 				<svelte:fragment slot="trail">
 					<div class="flex justify-around space-x-8 items-center mr-8">
 						{#key data.session}
-							<div class={"h-full m-auto grid" + (dev ? " grid-cols-2" : "grid-cols-1")}>
+							<div class={"h-full m-auto grid grid-cols-2"}>
 								{#if data.session && !$page.url.pathname.includes('herostats')}
 										<div class="flex justify-center items-center">
 											<a href="/feed" class="h-10 w-10">

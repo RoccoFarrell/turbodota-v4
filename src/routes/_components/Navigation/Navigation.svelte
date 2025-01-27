@@ -54,9 +54,21 @@
 			sectionHeader: false,
 		},
 		{
+			label: 'DotaDeck',
+			path: '/dotadeck',
+			iconClassAndColor: 'fi fi-rr-playing-cards text-amber-500',
+			sectionHeader: false,
+		},
+		{
 			label: 'Skills',
 			path: '/turbotown/skills',
 			iconClassAndColor: 'fi fi-rr-head-side-brain text-red-500',
+			sectionHeader: false,
+		},
+		{
+			label: 'Cards',
+			path: '/cards',
+			iconClassAndColor: 'fi fi-rr-playing-cards text-amber-500',
 			sectionHeader: false,
 		},
 		{
