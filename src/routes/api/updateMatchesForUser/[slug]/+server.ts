@@ -50,8 +50,8 @@ async function writeRecordsChunked(partialArr: Match[], account_id: number) {
 			}
 		},
 		{
-			maxWait: 10000, // default: 2000
-			timeout: 20000 // default: 5000
+			maxWait: 20000, // default: 2000
+			timeout: 30000 // default: 5000
 		}
 	);
 

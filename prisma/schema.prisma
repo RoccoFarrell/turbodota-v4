@@ -34,7 +34,9 @@ model User {
   dota_user    DotaUser?   @relation(fields: [account_id], references: [account_id])
 
   //matches      Match[]
-  Turbotown Turbotown[]
+  Turbotown    Turbotown[]
+  userCards    UserCard[]
+  dotaDeckGames DotaDeckGame[]
 }
 
 model UserPrefs {
@@ -82,6 +84,7 @@ model Match {
   radiant_win   Boolean
   skill         Int?
   start_time    BigInt
+  hero_variant  Int?
   version       Int?
   randoms       Random[]
   //user          User?   @relation(fields: [account_id], references: [account_id])
@@ -148,6 +151,7 @@ model PlayersMatchDetail {
   kda              Float
   benchmarks       String
   match_detail     MatchDetail? @relation(fields: [match_id], references: [match_id])
+  rounds           Round[]
   //user             User?        @relation(fields: [account_id], references: [account_id])
 
   @@unique([match_id, account_id], name: "matchPlusAccount")
@@ -353,4 +357,127 @@ model FriendshipMMR {
   dota_user   DotaUser    @relation(fields: [account_id], references: [account_id])
 
   @@unique([match_id, account_id], name: "matchPlusAccount")
+}
+
+// DotaDeck Game Models
+enum StatType {
+  KILLS
+  ASSISTS
+  NET_WORTH
+  LAST_HITS
+  DENIES
+  DAMAGE
+  HEALING
+  BUILDING
+  SUPPORT
+  SCORE
+}
+
+enum EffectType {
+  STAT_MULTIPLIER
+  STAT_ADDER
+  SCORE_MULTIPLIER
+}
+
+model HeroCard {
+  id          String      @id @default(cuid())
+  name        String      @unique
+  cost        Int
+  baseFormula String      
+  effectType  EffectType
+  statType    StatType
+  description String      
+  imageUrl    String
+  
+  isActive    Boolean     @default(false)
+  requiresTarget Boolean  @default(false)
+  isDurationBased Boolean @default(false)
+  isStackable Boolean     @default(false)
+  
+  owners      UserCard[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+model UserCard {
+  id          String    @id @default(cuid())
+  userId      String
+  cardId      String
+  acquiredAt  DateTime  @default(now())
+  timesPlayed Int       @default(0)
+  totalScore  Float     @default(0)
+  lastPlayedAt DateTime?
+  rounds      RoundUserCard[]
+
+  user        User      @relation(fields: [userId], references: [id])
+  card        HeroCard  @relation(fields: [cardId], references: [id])
+
+  @@unique([userId, cardId])
+  @@index([userId])
+  @@index([cardId])
+}
+
+enum GameStatus {
+  ACTIVE
+  COMPLETED
+}
+
+model DotaDeckGame {
+  id              String    @id @default(cuid())
+  userId          String
+  gold            Int       @default(0)
+  score           Int       @default(0)
+  status          GameStatus @default(ACTIVE)
+  soloGamesPlayed Int       @default(0)
+  winStreak       Int       @default(0)
+  playStreak      Int       @default(0)
+  lastPlayedAt    DateTime?
+  completedAt     DateTime?
+  user            User      @relation(fields: [userId], references: [id])
+  rounds          Round[]
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+enum RoundStatus {
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
+model Round {
+  id          String    @id @default(cuid())
+  matchId     BigInt?
+  accountId   Int
+  finalScore  Int       @default(0)
+  status      RoundStatus @default(IN_PROGRESS)
+  
+  gameId      String
+  game        DotaDeckGame @relation(fields: [gameId], references: [id])
+  activeCards RoundUserCard[]
+  matchStats  PlayersMatchDetail? @relation(fields: [matchId, accountId], references: [match_id, account_id])
+  
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+  
+  @@index([gameId])
+  @@index([matchId, accountId])
+}
+
+model RoundUserCard {
+  id          String    @id @default(cuid())
+  roundId     String
+  userCardId  String
+  
+  multiplierAchieved  Float     @default(1.0)
+  scoreContribution   Int       @default(0)
+  
+  round       Round     @relation(fields: [roundId], references: [id])
+  userCard    UserCard  @relation(fields: [userCardId], references: [id])
+  
+  @@index([roundId])
+  @@index([userCardId])
 }

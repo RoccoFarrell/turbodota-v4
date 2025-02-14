@@ -1,130 +1,232 @@
 import { PrismaClient } from '@prisma/client';
-const prisma = new PrismaClient({ log: ['query', 'error'] });
+import { EffectType, StatType } from '@prisma/client';
 
-//dayjs
-import dayjs from 'dayjs';
-import bigIntSupport from 'dayjs/plugin/bigIntSupport.js';
-dayjs.extend(bigIntSupport);
-
-//constants
-import { playersWeCareAbout } from '../src/lib/constants/playersWeCareAbout.ts';
-import winOrLoss from '../src/lib/helpers/winOrLoss.ts';
-
-function sleep(ms: any) {
-	return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-async function generateDotaUsers(){
-	const DotaUserResponse = await prisma.dotaUser.createMany({
-		data: [
-			{ account_id: 80636612, lastUpdated: new Date() },
-			{ account_id: 125251142, lastUpdated: new Date() },
-			{ account_id: 67762413, lastUpdated: new Date() },
-			{ account_id: 113003047, lastUpdated: new Date() },
-			{ account_id: 65110965, lastUpdated: new Date() },
-			{ account_id: 68024789, lastUpdated: new Date() },
-			{ account_id: 423076846, lastUpdated: new Date() },
-			{ account_id: 34940151, lastUpdated: new Date() }
-		]
-	})
-}
+const prisma = new PrismaClient();
 
 async function main() {
-	await generateDotaUsers()
-	//get available heroes
-	const response = await fetch(`http://localhost:5173/api/getHeroes`, {
-		method: 'Get',
-		headers: {
-			'content-type': 'application/json'
+	const cards = [
+		{
+			name: "Kill Kill Kill",
+			cost: 3,
+			baseFormula: "x3",
+			effectType: EffectType.STAT_MULTIPLIER,
+			statType: StatType.KILLS,
+			description: "Multiplies kill stat multiplier by 3",
+			imageUrl: "/cards/default.png",
+			isActive: true,
+			requiresTarget: false,
+			isDurationBased: false,
+			isStackable: false
+		},
+		{
+			name: "Touch, Don't Kill",
+			cost: 3,
+			baseFormula: "x3",
+			effectType: EffectType.STAT_MULTIPLIER,
+			statType: StatType.ASSISTS,
+			description: "Multiplies assist stat multiplier by 3",
+			imageUrl: "/cards/default.png",
+			isActive: true,
+			requiresTarget: false,
+			isDurationBased: false,
+			isStackable: false
+		},
+		{
+			name: "Line Goes Up",
+			cost: 3,
+			baseFormula: "x3",
+			effectType: EffectType.STAT_MULTIPLIER,
+			statType: StatType.NET_WORTH,
+			description: "Multiplies net worth stat multiplier by 3",
+			imageUrl: "/cards/default.png",
+			isActive: true,
+			requiresTarget: false,
+			isDurationBased: false,
+			isStackable: false
+		},
+		{
+			name: "Stop Taking My Last Hits",
+			cost: 3,
+			baseFormula: "x3",
+			effectType: EffectType.STAT_MULTIPLIER,
+			statType: StatType.LAST_HITS,
+			description: "Multiplies last hit stat multiplier by 3",
+			imageUrl: "/cards/default.png",
+			isActive: true,
+			requiresTarget: false,
+			isDurationBased: false,
+			isStackable: false
+		},
+		{
+			name: "Denied",
+			cost: 3,
+			baseFormula: "x3",
+			effectType: EffectType.STAT_MULTIPLIER,
+			statType: StatType.DENIES,
+			description: "Multiplies denies stat multiplier by 3",
+			imageUrl: "/cards/default.png",
+			isActive: true,
+			requiresTarget: false,
+			isDurationBased: false,
+			isStackable: false
+		},
+		{
+			name: "Zeus Spammer",
+			cost: 3,
+			baseFormula: "x3",
+			effectType: EffectType.STAT_MULTIPLIER,
+			statType: StatType.DAMAGE,
+			description: "Multiplies damage stat multiplier by 3",
+			imageUrl: "/cards/default.png",
+			isActive: true,
+			requiresTarget: false,
+			isDurationBased: false,
+			isStackable: false
+		},
+		{
+			name: "I Need Healing",
+			cost: 3,
+			baseFormula: "x3",
+			effectType: EffectType.STAT_MULTIPLIER,
+			statType: StatType.HEALING,
+			description: "Multiplies healing stat multiplier by 3",
+			imageUrl: "/cards/default.png",
+			isActive: true,
+			requiresTarget: false,
+			isDurationBased: false,
+			isStackable: false
+		},
+		{
+			name: "Ben AFK Splitpush",
+			cost: 3,
+			baseFormula: "x3",
+			effectType: EffectType.STAT_MULTIPLIER,
+			statType: StatType.BUILDING,
+			description: "Multiplies building stat multiplier by 3",
+			imageUrl: "/cards/default.png",
+			isActive: true,
+			requiresTarget: false,
+			isDurationBased: false,
+			isStackable: false
+		},
+		{
+			name: "4/10",
+			cost: 4,
+			baseFormula: "+1",
+			effectType: EffectType.STAT_ADDER,
+			statType: StatType.SUPPORT,
+			description: "Adds 1 to the support multiplier",
+			imageUrl: "/cards/default.png",
+			isActive: true,
+			requiresTarget: false,
+			isDurationBased: false,
+			isStackable: false
+		},
+		{
+			name: "Just End",
+			cost: 5,
+			baseFormula: "x3 - (.1 * 20-gamelength(minutes))",
+			effectType: EffectType.SCORE_MULTIPLIER,
+			statType: StatType.SCORE,
+			description: "3X mult if game is under 20 minutes, -.1X mult for every minute over, minimum of x1",
+			imageUrl: "/cards/default.png",
+			isActive: true,
+			requiresTarget: false,
+			isDurationBased: false,
+			isStackable: false
+		},
+		{
+			name: "All I Do Is Win",
+			cost: 5,
+			baseFormula: "x2 + (.1 * # of wins)",
+			effectType: EffectType.SCORE_MULTIPLIER,
+			statType: StatType.SCORE,
+			description: "Adds 0.1 to base 2x score per win while having the card active",
+			imageUrl: "/cards/default.png",
+			isActive: true,
+			requiresTarget: false,
+			isDurationBased: false,
+			isStackable: true
+		},
+		{
+			name: "Playstreak",
+			cost: 3,
+			baseFormula: "x3 + (.2 * days played in a row)",
+			effectType: EffectType.SCORE_MULTIPLIER,
+			statType: StatType.SCORE,
+			description: "Multiplies score by 3 + 0.2* days with a game played in a row",
+			imageUrl: "/cards/default.png",
+			isActive: true,
+			requiresTarget: false,
+			isDurationBased: false,
+			isStackable: true
+		},
+		{
+			name: "Get A Life",
+			cost: 4,
+			baseFormula: "x3 + (.5 every 5 games played solo)",
+			effectType: EffectType.SCORE_MULTIPLIER,
+			statType: StatType.SCORE,
+			description: "Multiplies score by 3 + 0.5* every 5 games played solo",
+			imageUrl: "/cards/default.png",
+			isActive: true,
+			requiresTarget: false,
+			isDurationBased: false,
+			isStackable: true
+		},
+		{
+			name: "Party Time",
+			cost: 4,
+			baseFormula: "x1 + (.1 per game per teammate in your stack)",
+			effectType: EffectType.SCORE_MULTIPLIER,
+			statType: StatType.SCORE,
+			description: "Add .1 to multiplier for every game and every teammate in your stack",
+			imageUrl: "/cards/default.png",
+			isActive: true,
+			requiresTarget: false,
+			isDurationBased: false,
+			isStackable: true
+		},
+		{
+			name: "Dota is Dead",
+			cost: 3,
+			baseFormula: "x3 + (.1 per day you don't play a game of dota)",
+			effectType: EffectType.SCORE_MULTIPLIER,
+			statType: StatType.SCORE,
+			description: "Add .1 to multiplier every day you don't queue a game of dota",
+			imageUrl: "/cards/default.png",
+			isActive: true,
+			requiresTarget: false,
+			isDurationBased: false,
+			isStackable: true
+		},
+		{
+			name: "The Duel",
+			cost: 5,
+			baseFormula: "+2x mult per stat (1 round)",
+			effectType: EffectType.SCORE_MULTIPLIER,
+			statType: StatType.SCORE,
+			description: "+2x mult for this round per stat you beat a chosen duel member",
+			imageUrl: "/cards/default.png",
+			isActive: true,
+			requiresTarget: true,
+			isDurationBased: true,
+			isStackable: false
 		}
-	});
+	];
 
-	let responseData = await response.json();
-	//console.log(responseData)
-
-	console.log(`found ${responseData.allHeroes.length} heroes`);
-
-	let allHeroes = responseData.allHeroes;
-	//console.log(allHeroes[0]);
-
-	//add randoms
-
-	playersWeCareAbout.map(async (player) => {
-		await sleep(1000);
-		let allRandoms: any[] = [];
-		let randomCount = Math.floor(Math.random() * 10) + 1;
-		console.log(`Generating ${randomCount} randoms for ${player.playerID}`);
-		while (randomCount > 0) {
-			console.log(`Generating random #${randomCount}`);
-			randomCount -= 1;
-
-			let randomHero = allHeroes[Math.floor(Math.random() * allHeroes.length)];
-
-			//find match with that hero
-
-			const matchResult = await prisma.match.findFirst({
-				where: { AND: [{ hero_id: randomHero.id }, { account_id: player.playerID }] }
-			});
-
-			//console.log(matchResult);
-
-			let randomDays = Math.floor(Math.random() * 3);
-			let randomDateStart = dayjs(Number(matchResult?.start_time) * 1000).subtract(randomDays + 1, 'days');
-			let randomDateEnd = dayjs(Number(matchResult?.start_time) * 1000);
-
-			if (matchResult) {
-				let randomWin = winOrLoss(matchResult.player_slot, matchResult.radiant_win);
-				console.log(`${randomWin ? 'Won ' : 'Lost '} on hero ${randomHero.localized_name}`);
-
-				let randomObj = {
-					account_id: player.playerID,
-					date: randomDateStart.format(),
-					availableHeroes: allHeroes.map((hero: any) => hero.id).toString(),
-					bannedHeroes: [].toString(),
-					selectedRoles: [].toString(),
-					expectedGold: 100,
-					modifierAmount: 3,
-					modifierTotal: 0,
-					randomedHero: randomHero.id,
-					active: false,
-					status: 'completed',
-					win: randomWin,
-					endDate: randomDateEnd.format(),
-					endMatchID: matchResult.id,
-					endGold: randomWin ? 100 : 0
-				};
-				allRandoms.push(randomObj);
-			}
-		}
-
-		console.log(`${allRandoms.length} total randoms for ${player.playerID}`);
-
-		//create randoms in table
-
-		console.log(allRandoms[0]);
-
-		let writeCopy = { ...allRandoms[0]}
-		// delete writeCopy.account_id
-		// delete writeCopy.endMatchID
-		const result = await prisma.random.create({ 
-			data: {
-				...writeCopy,
-				match: {
-					connect: {id: allRandoms[0].endMatchID}
-				},
-				user: {
-					connect: {account_id: allRandoms[0].account_id}
-				}
-			}
+	for (const card of cards) {
+		console.log(`Upserting card: ${card.name}`);
+		await prisma.heroCard.upsert({
+			where: { name: card.name },
+			update: card,
+			create: card,
 		});
-		// allRandoms.map(async (random) => {
-		// 	sleep(500);
-		// 	console.log(`attempting insert of random ${JSON.stringify(random)}`)
-		// 	const result = await prisma.random.create({ data: random });
-		// 	console.log(`Insert result: ${result}`);
-		// });
-	});
+	}
+
+	console.log('Seed completed successfully');
 }
+
 main()
 	.then(async () => {
 		await prisma.$disconnect();
