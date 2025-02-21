@@ -502,6 +502,7 @@ model SeasonUser {
     totalXP         Int         @default(0)
     heldCards       Card[]      @relation("CurrentHolder")
     cardHistory     CardHistory[]
+    heroDraws       HeroDraw[]
 
     @@unique([seasonId, accountId])
 }
@@ -559,4 +560,16 @@ enum CardAction {
     QUEST_WIN
     QUEST_LOSS
     PASSIVE_MOD
+}
+
+// Track when users draw heroes
+model HeroDraw {
+  id           String    @id @default(cuid())
+  seasonUserId String
+  heroId       Int
+  drawnAt      DateTime  @default(now())
+  seasonUser   SeasonUser @relation(fields: [seasonUserId], references: [id])
+  // Optional: track if they won with this hero
+  matchResult  Boolean?  // true = won, false = lost, null = not played yet
+  matchId      String?   // reference to the match if they played it
 }

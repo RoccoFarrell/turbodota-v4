@@ -4,36 +4,34 @@ import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const session = await locals.auth.validate();
-	if (!session) throw redirect(302, '/login');
+	if (!session) return { status: 401 };
 
-	const activeSeason = await prisma.season.findFirst({
-		where: { active: true }
-	});
-
-	if (!activeSeason) throw error(404, 'No active season found');
-
-	let seasonUser = await prisma.seasonUser.findUnique({
+	console.log("Loading for account:", session.user.account_id);
+	const seasonUser = await prisma.seasonUser.findFirst({
 		where: {
-			seasonId_accountId: {
-				seasonId: activeSeason.id,
-				accountId: session.user.account_id
+			accountId: session.user.account_id,
+			season: {
+				active: true
+			}
+		},
+		include: {
+			heroDraws: {
+				where: {
+					matchResult: null  // Only get active draws
+				},
+				orderBy: {
+					drawnAt: 'desc'
+				},
+				take: 3  // Limit to hand size
 			}
 		}
 	});
 
-	if (!seasonUser) {
-		// Create a new season user if they don't exist
-		seasonUser = await prisma.seasonUser.create({
-			data: {
-				seasonId: activeSeason.id,
-				accountId: session.user.account_id
-			}
-		});
-	}
+	console.log("Found hero draws:", seasonUser?.heroDraws);
 
 	const activeDeck = await prisma.deck.findFirst({
 		where: {
-			seasonId: activeSeason.id,
+			seasonId: seasonUser?.seasonId,
 			isActive: true
 		},
 		include: {
