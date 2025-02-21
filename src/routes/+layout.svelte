@@ -35,6 +35,7 @@
 	import Loading from '$lib/components/Loading.svelte';
 	import HeroGrid from './turbotown/_components/HeroGrid/HeroGrid.svelte';
 	import AdminTools from '$lib/components/AdminTools.svelte';
+	import DeckView from './dotadeck/_components/DeckView.svelte';
 
 	//assets
 	import '@flaticon/flaticon-uicons/css/all/all.css';
@@ -162,7 +163,8 @@
 	const modalRegistry: Record<string, ModalComponent> = {
 		// Set a unique modal ID, then pass the component reference
 		heroGrid: { ref: HeroGrid },
-		adminTools: { ref: AdminTools }
+		adminTools: { ref: AdminTools },
+		deckView: { ref: DeckView }
 		// ...
 	};
 

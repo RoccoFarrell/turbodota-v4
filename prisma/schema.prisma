@@ -2,16 +2,16 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// datasource db {
-//   provider = "postgresql"
-//   url      = env("DEV_URL")
-// }
-
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
+  url      = env("DEV_URL")
 }
+
+// datasource db {
+//   provider  = "postgresql"
+//   url       = env("DATABASE_URL")
+//   directUrl = env("DIRECT_URL")
+// }
 
 // user models
 model User {
@@ -59,8 +59,9 @@ model DotaUser {
   newestMatchID BigInt?
   leagues       League[]
   seasons       Season[]
-  user          User?
+  user          User?                                                                                                                                                                
   FriendshipMMR FriendshipMMR[]
+  games       SeasonUser[]
 
   @@index([account_id])
 }
@@ -184,6 +185,8 @@ model Season {
   members        DotaUser[]
   season_results SeasonResult[]
   turbotowns     Turbotown[]
+  decks          Deck[]
+  users          SeasonUser[]
 }
 
 model SeasonResult {
@@ -344,6 +347,7 @@ model Hero {
   attack_type    String
   roles          String
   legs           Int?
+  cards          Card[]
 }
 
 model FriendshipMMR {
@@ -467,6 +471,7 @@ model Round {
   @@index([matchId, accountId])
 }
 
+
 model RoundUserCard {
   id          String    @id @default(cuid())
   roundId     String
@@ -480,4 +485,78 @@ model RoundUserCard {
   
   @@index([roundId])
   @@index([userCardId])
+}
+
+model SeasonUser {
+    id              String      @id @default(cuid())
+    seasonId        Int
+    season          Season      @relation(fields: [seasonId], references: [id])
+    accountId       Int
+    user            DotaUser    @relation(fields: [accountId], references: [account_id])
+    handSize        Int         @default(3)
+    passiveMod      Int         @default(1)
+    joinedAt        DateTime    @default(now())
+    gamesPlayed     Int         @default(0)
+    questsCompleted Int         @default(0)
+    totalGold       Int         @default(0)
+    totalXP         Int         @default(0)
+    heldCards       Card[]      @relation("CurrentHolder")
+    cardHistory     CardHistory[]
+
+    @@unique([seasonId, accountId])
+}
+
+model Card {
+    id              String      @id @default(cuid())
+    heroId          Int
+    hero            Hero        @relation(fields: [heroId], references: [id])
+    baseGold        Int         @default(100)
+    baseXP          Int         @default(100)
+    goldMod         Int         @default(0)
+    xpMod           Int         @default(0)
+    drawLockCount   Int         @default(0)
+    lastDrawn       DateTime?
+    currentHolder   SeasonUser? @relation("CurrentHolder", fields: [holderId], references: [id])
+    holderId        String?
+    drawnAt         DateTime?
+    deckId          String?     
+    deck            Deck?       @relation(fields: [deckId], references: [id])
+    position        Int?        // Optional: position in the deck
+    history         CardHistory[]
+
+    @@index([deckId])
+    @@index([heroId])
+}
+
+model Deck {
+    id          String      @id @default(cuid())
+    name        String      
+    seasonId    Int
+    season      Season      @relation(fields: [seasonId], references: [id])
+    cards       Card[]
+    isActive    Boolean     @default(true)
+    createdAt   DateTime    @default(now())
+    updatedAt   DateTime    @updatedAt
+
+    @@unique([seasonId, name])
+}
+
+model CardHistory {
+    id              String      @id @default(cuid())
+    cardId          String
+    card            Card        @relation(fields: [cardId], references: [id])
+    action          CardAction  
+    seasonUserId    String      
+    seasonUser      SeasonUser  @relation(fields: [seasonUserId], references: [id])
+    timestamp       DateTime    @default(now())
+    goldMod         Int         
+    xpMod           Int         
+}
+
+enum CardAction {
+    DRAWN
+    DISCARDED
+    QUEST_WIN
+    QUEST_LOSS
+    PASSIVE_MOD
 }

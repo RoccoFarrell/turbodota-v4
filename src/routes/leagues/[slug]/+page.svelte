@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { setContext } from 'svelte';
 	import { enhance } from '$app/forms';
+	import { invalidate } from '$app/navigation';
 	import Trophy_light from '$lib/assets/trophy_light.png';
 	import { fade } from 'svelte/transition';
 	import type { User, League } from '@prisma/client';
@@ -54,6 +55,26 @@
 
 	let selectedLeague: LeagueWithSeasonsAndMembers = data.selectedLeague;
 
+	// Update season table data when form indicates success
+	$: if (form?.success) {
+		// Refetch the league data to get the new season
+		fetch(`/leagues/${selectedLeague.id}`)
+			.then(response => response.json())
+			.then(data => {
+				selectedLeague = data.selectedLeague;
+				// Update the table data with new seasons
+				seasonTableData = selectedLeague.seasons.map((season: any) => ({
+					id: season.id,
+					name: season.name,
+					type: season.type,
+					startDate: dayjs(season.startDate).format('MM/DD/YYYY'),
+					endDate: dayjs(season.endDate).format('MM/DD/YYYY'),
+					membersCount: season.members.length,
+					active: season.active
+				}));
+			});
+	}
+
 	let seasonTableData = selectedLeague.seasons.map((season: any) => {
 		return {
 			id: season.id,
@@ -62,17 +83,18 @@
 			//creatorID: season.creator.username,
 			startDate: dayjs(season.startDate).format('MM/DD/YYYY'),
 			endDate: dayjs(season.endDate).format('MM/DD/YYYY'),
-			membersCount: season.members.length
+			membersCount: season.members.length,
+			active: season.active
 		};
 	});
 
 	const tableSource: TableSource = {
 		// A list of heading labels.
-		head: ['Name', 'ID', 'Type', 'Start Date', 'End Date', 'Members'],
+		head: ['Name', 'ID', 'Type', 'Start Date', 'End Date', 'Members', 'Status'],
 		// The data visibly shown in your table body UI.
-		body: tableMapperValues(seasonTableData, ['name', 'id', 'type', 'startDate', 'endDate', 'membersCount']),
+		body: tableMapperValues(seasonTableData, ['name', 'id', 'type', 'startDate', 'endDate', 'membersCount', 'active']),
 		// Optional: The data returned when interactive is enabled and a row is clicked.
-		meta: tableMapperValues(seasonTableData, ['name', 'id', 'type', 'startDate', 'endDate', 'membersCount'])
+		meta: tableMapperValues(seasonTableData, ['name', 'id', 'type', 'startDate', 'endDate', 'membersCount', 'active'])
 		// Optional: A list of footer labels.
 		//foot: ['Total', '', '<code class="code">5</code>']
 	};
@@ -93,6 +115,8 @@
 		};
 
 		toastStore.trigger(t);
+		// Invalidate the current page data to trigger a refresh
+		invalidate('app:leagues');
 	}
 	let tabSetOuter: number = 1;
 	let tabSetInner: number = 0;
@@ -124,6 +148,47 @@
 	// $: (value: any) => {
 	// 	FormData.
 	// }
+
+	async function handleSeasonStatusUpdate(seasonId: number, active: boolean) {
+		try {
+			const response = await fetch(`/api/seasons/${seasonId}/status`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({ active })
+			});
+
+			if (response.ok) {
+				// Update local state immediately
+				seasonTableData = seasonTableData.map(season => {
+					if (season.id === seasonId) {
+						return { ...season, active };
+					}
+					return season;
+				});
+
+				// Force table to update
+				tableSource.body = tableMapperValues(seasonTableData, ['name', 'id', 'type', 'startDate', 'endDate', 'membersCount', 'active']);
+				tableSource.meta = tableSource.body;
+
+				// Refresh the data
+				await invalidate(`/leagues/${selectedLeague.id}`);
+
+				const t: ToastSettings = {
+					message: `Season status updated`,
+					background: 'variant-filled-success'
+				};
+				toastStore.trigger(t);
+			}
+		} catch (error) {
+			const t: ToastSettings = {
+				message: `Failed to update season status`,
+				background: 'variant-filled-error'
+			};
+			toastStore.trigger(t);
+		}
+	}
 </script>
 
 <section class="lg:w-3/4 w-full h-screen px-4 lg:mx-auto my-4 space-y-8">
@@ -181,6 +246,29 @@
 								<td>{row[3]}</td>
 								<td>{row[4]}</td>
 								<td>{row[5]}</td>
+								<td>
+									{#if row[6]}
+										<div class="flex items-center gap-2">
+											<span class="chip variant-filled-success">Active</span>
+											<button
+												class="btn btn-sm variant-soft-warning"
+												on:click={() => handleSeasonStatusUpdate(parseInt(row[1]), false)}
+											>
+												Deactivate
+											</button>
+										</div>
+									{:else}
+										<div class="flex items-center gap-2">
+											<span class="chip variant-filled-surface">Inactive</span>
+											<button
+												class="btn btn-sm variant-soft-success"
+												on:click={() => handleSeasonStatusUpdate(parseInt(row[1]), true)}
+											>
+												Activate
+											</button>
+										</div>
+									{/if}
+								</td>
 							</tr>
 						{/each}
 					</tbody>
@@ -486,6 +574,7 @@
 										<span>Season Type</span>
 										<select class="select" name="seasonType">
 											<option value="random">Random Romp</option>
+											<option value="dotadeck">Dotadeck</option>
 											<option value="snake" disabled>Snake Draft Survival</option>
 											<option value="none" disabled>More season types to come soon!</option>
 											<!-- <option value="4">Option 4</option>

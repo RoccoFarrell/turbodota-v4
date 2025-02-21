@@ -88,3 +88,50 @@ https://joyofcode.xyz/working-with-forms-in-sveltekit#working-with-forms-using-a
 
 - @pilcrow on the Lucia Discord
 - @khromov on the Svelte Discord
+
+## Database Setup
+
+### Local Development
+
+The project uses Supabase for both production and local development. To work with a local database:
+
+1. Start the Supabase dev server:
+   ```bash
+   supabase start
+   ```
+
+2. Check server status and get connection details:
+   ```bash
+   supabase status
+   ```
+
+3. In `prisma/schema.prisma`, switch to the dev database:
+   ```prisma
+   datasource db {
+     provider = "postgresql"
+     url      = env("DEV_URL") // Local development DB
+   }
+
+   // Production config (commented out during local dev)
+   // datasource db {
+   //   provider  = "postgresql"
+   //   url       = env("DATABASE_URL")
+   //   directUrl = env("DIRECT_URL")
+   // }
+   ```
+
+4. Add local connection string to `.env`:
+   ```env
+   DEV_URL="postgresql://postgres:postgres@localhost:54322/postgres"
+   ```
+
+5. Push schema changes:
+   ```bash
+   npx prisma db push
+   ```
+
+### Switching Back to Production
+
+1. Revert `schema.prisma` to use production config
+2. Ensure `DATABASE_URL` and `DIRECT_URL` are set in your environment
+3. Run `npx prisma generate` to update the client
