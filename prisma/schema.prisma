@@ -524,6 +524,7 @@ model Card {
     deck            Deck?       @relation(fields: [deckId], references: [id])
     position        Int?        // Optional: position in the deck
     history         CardHistory[]
+    heroDraws       HeroDraw[]
 
     @@index([deckId])
     @@index([heroId])
@@ -568,8 +569,9 @@ model HeroDraw {
   seasonUserId String
   heroId       Int
   drawnAt      DateTime  @default(now())
+  matchResult  Boolean?
+  matchId      String?
+  cardId       String?
   seasonUser   SeasonUser @relation(fields: [seasonUserId], references: [id])
-  // Optional: track if they won with this hero
-  matchResult  Boolean?  // true = won, false = lost, null = not played yet
-  matchId      String?   // reference to the match if they played it
+  card         Card?     @relation(fields: [cardId], references: [id])
 }

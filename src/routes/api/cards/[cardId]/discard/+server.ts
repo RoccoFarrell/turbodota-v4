@@ -1,10 +1,38 @@
 import { json } from '@sveltejs/kit';
 import prisma from '$lib/server/prisma';
 import type { RequestHandler } from './$types';
+import { DOTADECK } from '$lib/constants/dotadeck';
 
 export const POST: RequestHandler = async ({ params, request }) => {
 	const { cardId } = params;
 	const { seasonUserId } = await request.json();
+
+	// Get the season user to get the season ID
+	const seasonUser = await prisma.seasonUser.findUnique({
+		where: { id: seasonUserId }
+	});
+	
+	if (!seasonUser) {
+		return json({ success: false, error: 'Season user not found' });
+	}
+
+	// Get all currently held heroes in the league
+	const heldCards = await prisma.card.findMany({
+		where: {
+			deck: {
+				seasonId: seasonUser.seasonId,
+				isActive: true
+			},
+			holderId: {
+				not: null
+			},
+			heroDraws: {
+				some: {
+					matchResult: null
+				}
+			}
+		}
+	});
 
 	try {
 		// Start a transaction to handle all updates
@@ -50,15 +78,24 @@ export const POST: RequestHandler = async ({ params, request }) => {
 			const updatedCard = await tx.card.update({
 				where: { id: cardId },
 				data: {
-					baseGold: { increment: 10 },
-					baseXP: { increment: 10 }
+					baseXP: { increment: DOTADECK.DISCARD_BONUS.XP },
+					baseGold: { increment: DOTADECK.DISCARD_BONUS.GOLD },
+					holderId: null
 				}
 			});
 
 			return updatedCard;
 		});
 
-		return json({ success: true, card: result });
+		return json({ 
+			success: true, 
+			card: result,
+			heldHeroIds: heldCards.map(card => card.heroId),
+			updatedHero: {
+				id: result.heroId,
+				isHeld: false
+			}
+		});
 	} catch (error) {
 		console.error('Error discarding card:', error);
 		return json({ 

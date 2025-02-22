@@ -54,34 +54,66 @@ export const POST: RequestHandler = async ({ request, fetch }) => {
             orderBy: {
                 match_detail: { start_time: 'desc' }
             },
+            take: 5,
             include: {
                 match_detail: true
             }
         });
 
+        const heroes = await prisma.hero.findMany();
+
         const latestMatch = recentMatches[0];
         const latestMatchInfo = latestMatch ? {
             heroId: latestMatch.hero_id,
-            timestamp: new Date(Number(latestMatch.match_detail.start_time) * 1000)
+            timestamp: new Date(Number(latestMatch.match_detail?.start_time || 0) * 1000)
         } : null;
 
         // Process each hero draw
-        const results = heroDraws.map(heroDraw => {
+        const results = await Promise.all(heroDraws.map(async heroDraw => {
             const heroMatches = recentMatches.filter(m => 
                 m.hero_id === heroDraw.heroId && 
-                m.match_detail.start_time > BigInt(Math.floor(heroDraw.drawnAt.getTime() / 1000))
+                (m.match_detail?.start_time || 0n) > BigInt(Math.floor(heroDraw.drawnAt.getTime() / 1000))
             );
             const latestMatch = heroMatches[0];
             const cardId = heroDraw.seasonUser.heldCards[0]?.id;
             
             if (latestMatch && cardId) {
-                // Process win
+                // Update the hero draw with match result
+                await prisma.heroDraw.update({
+                    where: { id: heroDraw.id },
+                    data: { 
+                        matchResult: latestMatch.win === true,
+                        matchId: latestMatch.match_id.toString()
+                    }
+                });
+                
+                // Update card stats
+                await prisma.card.update({
+                    where: { id: cardId },
+                    data: {
+                        baseXP: latestMatch.win ? 100 : { increment: 50 },
+                        baseGold: latestMatch.win ? 100 : { increment: 50 }
+                    }
+                });
+
+                // Add card history
+                await prisma.cardHistory.create({
+                    data: {
+                        cardId: cardId,
+                        seasonUserId: heroDraw.seasonUserId,
+                        action: latestMatch.win ? 'QUEST_WIN' : 'QUEST_LOSS',
+                        xpMod: latestMatch.win ? 100 : 50,
+                        goldMod: latestMatch.win ? 100 : 50
+                    }
+                });
+
                 return {
                     heroId: heroDraw.heroId,
                     matchFound: true,
+                    win: latestMatch.win === true,
                     latestMatch: {
                         heroId: latestMatch.hero_id,
-                        timestamp: new Date(Number(latestMatch.match_detail.start_time) * 1000)
+                        timestamp: new Date(Number(latestMatch.match_detail?.start_time || 0) * 1000)
                     }
                 };
             }
@@ -91,9 +123,28 @@ export const POST: RequestHandler = async ({ request, fetch }) => {
                 matchFound: false,
                 latestMatch: null
             };
-        });
+        }));
 
-        return json({ success: true, results, latestMatchInfo });
+        return json({ 
+            success: true, 
+            results, 
+            latestMatchInfo,
+            recentMatches: recentMatches.map(m => ({
+                match_id: m.match_id,
+                result: m.win ? 'Won Match' : 'Lost Match',
+                hero: {
+                    id: m.hero_id,
+                    name: heroes.find(h => h.id === m.hero_id)?.name || 'Unknown',
+                    localized_name: heroes.find(h => h.id === m.hero_id)?.localized_name || 'Unknown'
+                },
+                win: m.win,
+                kills: m.kills,
+                deaths: m.deaths,
+                assists: m.assists,
+                kda: ((m.kills + m.assists) / (m.deaths || 1)).toFixed(2),
+                start_time: new Date(Number(m.match_detail?.start_time) * 1000).toLocaleString()
+            }))
+        });
 
     } catch (error) {
         console.error('Error checking matches:', error);

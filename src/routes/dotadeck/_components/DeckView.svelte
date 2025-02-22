@@ -2,7 +2,6 @@
 	import type { Hero } from '@prisma/client';
 	import { getModalStore } from '@skeletonlabs/skeleton';
 	import { heroPoolStore } from '$lib/stores/heroPoolStore';
-	import { drawnHeroes } from '$lib/stores/drawnHeroesStore';
 	import { fade } from 'svelte/transition';
 
 	interface GameHero extends Hero {
@@ -18,22 +17,28 @@
 	let showRaisedXP = false;
 	let showRaisedGold = false;
 
-	$: filteredHeroes = $heroPoolStore.availableHeroes.map((hero) => ({
-		...(hero as GameHero),
+	$: filteredHeroes = $heroPoolStore.allHeroes
+	.sort((a, b) => {
+		if(a.localized_name < b.localized_name) return -1;
+		else if(a.localized_name > b.localized_name) return 1;
+		else return 0;
+	})
+	.map((hero) => ({
+		...hero,
 		isFiltered:
-			(!showRaisedXP || (hero as GameHero).xp > 100) &&
-			(!showRaisedGold || (hero as GameHero).gold > 100),
-		isDrawn: $drawnHeroes.has(hero.id)
+			(!showRaisedXP || (hero.xp ?? 100) > 100) &&
+			(!showRaisedGold || (hero.gold ?? 100) > 100),
+		isDrawn: hero.isHeld
 	})) as FilteredGameHero[];
 
-	console.log(filteredHeroes);
-
 	export let isAnimating: boolean = false;
-	export let selectedHeroId: number | null = null;
 	export let currentHighlightId: number | null = null;
-	export let updatedStats: { heroId: number, gold: number, xp: number } | null = null;
 
 	$: heroes = $heroPoolStore.allHeroes;
+
+	$: isHeroDisabled = (heroId: number) => {
+		return $heroPoolStore.allHeroes.find(h => h.id === heroId)?.isHeld ?? false;
+	};
 </script>
 
 <div class="p-4 w-full max-h-[80vh] overflow-auto">
@@ -58,9 +63,10 @@
 		{#each filteredHeroes as hero}
 			<div
 				class={`object-contain m-1 relative h-16 w-16 border-lime-700 border-2 rounded-lg
-					${!hero.isFiltered ? 'opacity-10' : ''}
-					${hero.isDrawn ? 'opacity-20 brightness-50 cursor-not-allowed' : 'cursor-pointer hover:scale-110'}
-					${currentHighlightId === hero.id ? 'border-4 border-primary-500' : ''}`}
+					${!hero.isFiltered ? 'opacity-10 cursor-not-allowed' : ''}
+					${hero.isDrawn ? 'opacity-10 cursor-not-allowed' : 'cursor-pointer hover:scale-110'}
+					${currentHighlightId === hero.id ? 'border-4 border-primary-500' : ''}
+					${isHeroDisabled(hero.id) ? 'opacity-10' : ''}`}
 			>
 				<div class="w-8 h-8 transition-all duration-200 relative mx-auto mt-2"
 					class:scale-150={currentHighlightId === hero.id && isAnimating}

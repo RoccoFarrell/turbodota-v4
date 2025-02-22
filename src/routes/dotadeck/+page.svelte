@@ -2,16 +2,23 @@
 	import { browser } from '$app/environment';
 	import { onDestroy, onMount } from 'svelte';
 	import { heroPoolStore } from '$lib/stores/heroPoolStore';
-	import { drawnHeroes } from '$lib/stores/drawnHeroesStore';
-	import { getToastStore } from '@skeletonlabs/skeleton';
+	import { getToastStore, getModalStore } from '@skeletonlabs/skeleton';
 	import type { Hero } from '@prisma/client';
 	import type { PageData } from './$types';
 	import { redirect } from '@sveltejs/kit';
+	import { DOTADECK } from '$lib/constants/dotadeck';
 	import DeckView from './_components/DeckView.svelte';
 	import HeroSelectionAnimation from './_components/HeroSelectionAnimation.svelte';
 	import StatBoostModal from './_components/StatBoostModal.svelte';
+	import StatUpdateAnimation from './_components/StatUpdateAnimation.svelte';
+	import LeaderboardModal from './_components/LeaderboardModal.svelte';
+	import RulesModal from './_components/RulesModal.svelte';
+	import HistoryModal from './_components/HistoryModal.svelte';
+	import MatchHistory from '$lib/components/MatchHistory.svelte';
+	import type { StatBoostData } from '$lib/types/dotadeck';
 
 	const toastStore = getToastStore();
+	const modalStore = getModalStore();
 
 	export let data: PageData;
 
@@ -24,23 +31,35 @@
 		xp: number;
 		gold: number;
 		cardId?: string;
+		holderId?: string | null;
+		isHeld?: boolean;
 	}
 
 	// Define match check result type
 	interface MatchCheckResult {
 		heroId: number;
 		matchFound: boolean;
+		win: boolean;
 		latestMatch: { heroId: number; timestamp: Date } | null;
 	}
 
 	// Initialize hero pool with default values
 	if (browser && data.heroDescriptions && data.seasonUser) {
-		const heroesWithStats: CardHero[] = data.heroDescriptions.map((hero: Hero) => ({
-			...hero,
-			xp: data.activeDeck?.cards.find((c: { heroId: number }) => c.heroId === hero.id)?.baseXP ?? 100,
-			gold: data.activeDeck?.cards.find((c: { heroId: number }) => c.heroId === hero.id)?.baseGold ?? 100,
-			cardId: data.activeDeck?.cards.find((c: { heroId: number }) => c.heroId === hero.id)?.id
-		}));
+		console.log('Current user draws:', data.seasonUser.heroDraws.filter(draw => !draw.matchResult));
+		console.log('All held heroes in league:', data.heldHeroIds);
+		
+		const heroesWithStats: CardHero[] = data.heroDescriptions.map((hero: Hero) => {
+			const card = data.activeDeck?.cards.find((c: { heroId: number }) => c.heroId === hero.id);
+			const isHeld = data.heldHeroIds.includes(hero.id);
+			//console.log(`Hero ${hero.id} (${hero.localized_name}): isHeld=${isHeld}`);
+			return {
+				...hero,
+				xp: card?.baseXP ?? 100,
+				gold: card?.baseGold ?? 100,
+				cardId: card?.id,
+				isHeld
+			};
+		});
 		heroPoolStore.setAllHeroes(heroesWithStats);
 	}
 
@@ -48,40 +67,49 @@
 	let hand: (CardHero | null)[] = Array(data.seasonUser.handSize).fill(null);
 	if (data.seasonUser.heroDraws) {
 		// Only use active (non-discarded) draws
-		const activeDraws = data.seasonUser.heroDraws.filter(draw => !draw.matchResult);
-		activeDraws.forEach(draw => {
-			const hero = data.heroDescriptions.find(h => h.id === draw.heroId);
+		const activeDraws = data.seasonUser.heroDraws.filter((draw) => !draw.matchResult);
+		activeDraws.forEach((draw) => {
+			const hero = data.heroDescriptions.find((h) => h.id === draw.heroId);
 			if (hero) {
 				const cardHero: CardHero = {
 					...hero,
 					xp: data.activeDeck?.cards.find((c: { heroId: number }) => c.heroId === hero.id)?.baseXP ?? 100,
 					gold: data.activeDeck?.cards.find((c: { heroId: number }) => c.heroId === hero.id)?.baseGold ?? 100,
-					cardId: data.activeDeck?.cards.find((c: { heroId: number }) => c.heroId === hero.id)?.id
+					cardId: data.activeDeck?.cards.find((c: { heroId: number }) => c.heroId === hero.id)?.id,
+					holderId: data.activeDeck?.cards.find((c: { heroId: number }) => c.heroId === hero.id)?.holderId
 				};
 				// Find first empty slot
-				const emptySlot = hand.findIndex(h => h === null);
+				const emptySlot = hand.findIndex((h) => h === null);
 				if (emptySlot !== -1) {
 					hand[emptySlot] = cardHero;
-					drawnHeroes.update(set => {
-						set.add(hero.id);
-						return set;
-					});
 				}
 			}
 		});
 	}
 
-	let showingAnimation: boolean  = false;
+	$: console.log(hand);
+
+	let showingAnimation: boolean = false;
+	let showingStatUpdate: boolean = false;
 	let selectedHero: CardHero | null = null;
 	let currentHighlightId: number | null = null;
 	let animationInterval: NodeJS.Timeout;
 	let activeSlot: number | null = null;
-	let updatedCardStats: { heroId: number, gold: number, xp: number } | null = null;
+	let updatedCardStats: { heroId: number; gold: number; xp: number } | null = null;
 	let showStatBoost = false;
-	let statBoostData: { heroId: number; oldStats: { gold: number; xp: number }; newStats: { gold: number; xp: number } } | null = null;
+	let statBoostData: StatBoostData | null = null;
 	let isCheckingWins = false;
+	let recentMatches = data.matchTableData;
+	let statUpdateData: { 
+		heroId: number;
+		isWin: boolean;
+		oldStats: { xp: number; gold: number };
+		newStats: { xp: number; gold: number };
+	} | null = null;
+	let isDrawing: boolean = false;
 
 	function startHeroAnimation(hero: CardHero, slotIndex: number) {
+		isDrawing = true;
 		showingAnimation = true;
 		selectedHero = hero;
 		activeSlot = slotIndex;
@@ -96,7 +124,7 @@
 				iterations++;
 
 				if (iterations > maxIterations * 0.6) {
-					speed = speed * 1.5;
+					iterations < maxIterations * 0.9 ? speed = speed * 1.5 : speed * 1.05;
 					clearInterval(animationInterval);
 					if (iterations >= maxIterations) {
 						currentHighlightId = hero.id;
@@ -106,6 +134,7 @@
 							if (activeSlot !== null) {
 								completeDrawHero(activeSlot);
 							}
+							isDrawing = false;
 						}, 300);
 					} else {
 						animate();
@@ -122,8 +151,16 @@
 	});
 
 	function drawHero(slotIndex: number) {
-		const hero = $heroPoolStore.availableHeroes[
-			Math.floor(Math.random() * $heroPoolStore.availableHeroes.length)
+		// Filter out held heroes from available pool
+		const availableHeroes = $heroPoolStore.availableHeroes.filter(h => !h.isHeld);
+
+		if (availableHeroes.length === 0) {
+			showError('No heroes available to draw!');
+			return;
+		}
+
+		const hero = availableHeroes[
+			Math.floor(Math.random() * availableHeroes.length)
 		] as CardHero;
 
 		if (hero) {
@@ -142,42 +179,22 @@
 		showingAnimation = false;
 		if (selectedHero) {
 			const hero = selectedHero;
-			hand[slotIndex] = hero;
-			drawnHeroes.update(set => {
-				set.add(hero.id);
-				return set;
-			});
-			hand = [...hand];
-			
-			// Save to DB
 			if (hero.cardId) {
-				console.log('Drawing hero:', hero.id);
 				const response = await fetch(`/api/cards/${hero.cardId}/draw`, {
 					method: 'POST',
 					body: JSON.stringify({ seasonUserId: data.seasonUser!.id })
 				});
 				const result = await response.json();
-				
+
 				if (!result.success) {
-					// Revert the draw if it failed
-					drawnHeroes.update(set => {
-						set.delete(hero.id);
-						return set;
-					});
-					hand[slotIndex] = null;
-					hand = [...hand];
 					showError('Failed to draw card');
+				} else {
+					// Update the drawn hero's status
+					heroPoolStore.updateHeroStatus(result.updatedHero.id, true);
+					
+					hand[slotIndex] = hero;
+					hand = [...hand];
 				}
-			} else {
-				// Handle case where hero.cardId is not defined
-				showError('Failed to draw card: Card ID not found');
-				// Revert the draw
-				drawnHeroes.update(set => {
-					set.delete(hero.id);
-					return set;
-				});
-				hand[slotIndex] = null;
-				hand = [...hand];
 			}
 		}
 	}
@@ -185,26 +202,23 @@
 	async function discardHero(slotIndex: number) {
 		const oldHero = hand[slotIndex];
 		if (oldHero) {
-			try {
-				const response = await fetch(`/api/cards/${oldHero.cardId}/discard`, {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json'
-					},
-					body: JSON.stringify({ seasonUserId: data.seasonUser!.id })
-				});
-				const result = await response.json();
-				
-				if (!result.success) {
-					showError(`Failed to discard card: ${result.error}`);
-					return;
-				}
+			const response = await fetch(`/api/cards/${oldHero.cardId}/discard`, {
+				method: 'POST',
+				body: JSON.stringify({ seasonUserId: data.seasonUser!.id })
+			});
+			const result = await response.json();
 
+			if (!result.success) {
+				showError(`Failed to discard card: ${result.error}`);
+			} else {
 				// Show stat boost modal
 				statBoostData = {
 					heroId: oldHero.id,
 					oldStats: { gold: oldHero.gold, xp: oldHero.xp },
-					newStats: { gold: result.card.baseGold, xp: result.card.baseXP }
+					newStats: { 
+						gold: oldHero.gold + DOTADECK.DISCARD_BONUS.GOLD,
+						xp: oldHero.xp + DOTADECK.DISCARD_BONUS.XP 
+					}
 				};
 				showStatBoost = true;
 				setTimeout(() => {
@@ -212,114 +226,101 @@
 					statBoostData = null;
 				}, 2000);
 
+				// Update the discarded hero's status
+				heroPoolStore.updateHeroStatus(result.updatedHero.id, false);
+
 				// Update hero stats in store
 				const updatedHeroes = $heroPoolStore.allHeroes.map(h => {
 					if (h.id === oldHero.id) {
-						return { ...h, gold: (h as CardHero).gold + 20, xp: (h as CardHero).xp + 20 } as CardHero;
+						return {
+							...h,
+							gold: (h.gold ?? 100) + DOTADECK.DISCARD_BONUS.GOLD,
+							xp: (h.xp ?? 100) + DOTADECK.DISCARD_BONUS.XP
+						};
 					}
 					return h;
 				});
 				heroPoolStore.setAllHeroes(updatedHeroes);
 
-				// Remove from hand
-				drawnHeroes.update(set => {
-					set.delete(oldHero.id);
-					return set;
-				});
 				hand[slotIndex] = null;
 				hand = [...hand];
-			} catch (error) {
-				showError('Failed to discard card: Network error');
-				console.error('Discard error:', error);
 			}
 		}
 	}
 
 	async function checkForWins() {
 		isCheckingWins = true;
+		toastStore.trigger({
+			message: 'Checking for wins...',
+			background: 'variant-filled-primary'
+		});
+		
 		try {
-			// Get all hero IDs from hand
-			const heroIds = hand.filter(Boolean).map(h => h!.id);
-			
-			if (heroIds.length === 0) {
-				toastStore.trigger({
-					message: 'No heroes in hand to check',
-					background: 'variant-filled-warning'
-				});
-				return;
-			}
-			
-			// Check all heroes at once
 			const response = await fetch('/api/matches/check', {
 				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
 					seasonUserId: data.seasonUser!.id,
-					heroIds
+					heroIds: hand.filter(h => h !== null).map(h => h!.id)
 				})
 			});
-			
-			const { success, results } = await response.json();
-			
-			if (success) {
-				// Build summary message
-				const winsFound = results.filter((r: MatchCheckResult) => r.matchFound);
-				const noMatches = results.filter((r: MatchCheckResult) => !r.matchFound);
-				
-				let message = '';
-				
-				// Add latest match info
-				if (results.length > 0 && results[0].latestMatchInfo) {
-					const hero = $heroPoolStore.allHeroes.find(h => h.id === results[0].latestMatchInfo.heroId);
-					message += `Latest match: ${hero?.localized_name} at ${results[0].latestMatchInfo.timestamp.toLocaleString()}\n\n`;
-				}
-				
-				// Add wins summary
-				if (winsFound.length > 0) {
-					const winHeroes = winsFound.map((r: MatchCheckResult) => {
-						const hero = hand.find(h => h?.id === r.heroId);
-						return hero?.localized_name;
-					}).join(', ');
-					message += `Found wins with: ${winHeroes}\n`;
-				}
-				
-				// Add no matches summary
-				if (noMatches.length > 0) {
-					const pendingHeroes = noMatches.map((r: MatchCheckResult) => {
-						const hero = hand.find(h => h?.id === r.heroId);
-						return hero?.localized_name;
-					}).join(', ');
-					message += `No matches found for: ${pendingHeroes}`;
-				}
+			const result = await response.json();
 
+			if (result.success && result.results) {
 				toastStore.trigger({
-					message,
-					background: winsFound.length > 0 ? 'variant-filled-success' : 'variant-filled-warning'
+					message: 'Check complete!',
+					background: 'variant-filled-success'
 				});
-
+				
 				// Process wins
-				winsFound.forEach((result: MatchCheckResult) => {
-					const hero = hand.find(h => h?.id === result.heroId);
-					if (!hero) return;
-					
+				result.results.forEach((result: MatchCheckResult) => {
+					const hero = hand.find((h) => h?.id === result.heroId);
+					if (!hero || !result.matchFound) return;
+
+					// Mark hero as no longer held since match was found
+					heroPoolStore.updateHeroStatus(hero.id, false);
+
+					// Show stat update modal
+					statUpdateData = {
+						heroId: hero.id,
+						isWin: result.win,
+						oldStats: { xp: hero.xp, gold: hero.gold },
+						newStats: result.win 
+							? { xp: 100, gold: 100 }  // Reset to base stats on win
+							: { xp: hero.xp + DOTADECK.LOSS_REWARD.XP, gold: hero.gold + DOTADECK.LOSS_REWARD.GOLD }
+					};
+					modalStore.trigger({
+						type: 'component',
+						component: {
+							ref: StatUpdateAnimation,
+							props: statUpdateData
+						}
+					});
+
 					// Update hero stats and remove from hand
-					const updatedHeroes = $heroPoolStore.allHeroes.map(h => {
+					const updatedHeroes = $heroPoolStore.allHeroes.map((h) => {
 						if (h.id === hero.id) {
-							return { ...h, gold: (h as CardHero).gold + 20, xp: (h as CardHero).xp + 20 } as CardHero;
+							return { 
+								...h, 
+								...(h as CardHero),
+								gold: result.win ? 100 : (h as CardHero).gold + DOTADECK.LOSS_REWARD.GOLD,
+								xp: result.win ? 100 : (h as CardHero).xp + DOTADECK.LOSS_REWARD.XP,
+								isHeld: false
+							} as CardHero;
 						}
 						return h;
 					});
 					heroPoolStore.setAllHeroes(updatedHeroes);
-					
-					const index = hand.findIndex(h => h?.id === hero.id);
-					if (index !== -1) {
-						drawnHeroes.update(set => {
-							set.delete(hero.id);
-							return set;
-						});
-						hand[index] = null;
-						hand = [...hand];
-					}
+
+					// Remove from hand after animation completes
+					setTimeout(() => {
+						const index = hand.findIndex((h) => h?.id === hero.id);
+						if (index !== -1) {
+							hand[index] = null;
+							hand = [...hand];
+						}
+						showingStatUpdate = false;
+						statUpdateData = null;
+					}, 2000);
 				});
 			}
 		} catch (error) {
@@ -332,88 +333,144 @@
 			isCheckingWins = false;
 		}
 	}
+
+	async function showLeaderboard() {
+		const response = await fetch('/api/dotadeck/leaderboard');
+		const leaderboardData = await response.json();
+		
+		modalStore.trigger({
+			type: 'component',
+			component: {
+				ref: LeaderboardModal,
+				props: {
+					players: leaderboardData.success ? leaderboardData.players : []
+				}
+			}
+		});
+	}
+
+	async function showRules() {
+		modalStore.trigger({
+			type: 'component',
+			component: {
+				ref: RulesModal
+			}
+		});
+	}
+
+	async function showHistory() {
+		const response = await fetch('/api/dotadeck/history');
+		const historyData = await response.json();
+		
+		modalStore.trigger({
+			type: 'component',
+			component: {
+				ref: HistoryModal,
+				props: {
+					history: historyData.success ? historyData.history : []
+				}
+			}
+		});
+	}
 </script>
 
-<div class="container mx-auto p-4 flex flex-col gap-8">
+<div class="flex flex-col w-full">
 	<!-- Action Bar -->
-	<div class="w-full bg-surface-800/50 rounded-lg border border-surface-700/50 p-4">
+	<div class="w-full bg-surface-800/50 rounded-lg border border-surface-700/50 p-4 mb-2 shadow-xl">
 		<div class="flex justify-between items-center">
 			<h2 class="text-lg font-bold text-primary-500">Actions</h2>
 			<div class="flex gap-4">
-				<button 
-					class="btn variant-filled-primary"
-					on:click={checkForWins}
-					disabled={isCheckingWins}
-				>
+				<button class="btn btn-sm variant-filled-tertiary" on:click={showRules}>
+					<i class="fi fi-rr-book-bookmark mr-2"></i>
+					Rules
+				</button>
+				<button class="btn btn-sm bg-amber-500 text-black" on:click={showHistory}>
+					<i class="fi fi-rr-time-past mr-2"></i>
+					History
+				</button>
+				<button class="btn btn-sm variant-filled-secondary" on:click={showLeaderboard}>
+					<div class="flex items-center justify-center">
+					<i class="fi fi-rr-trophy-star mr-2"></i>
+					Leaderboard
+					</div>
+				</button>
+				<button class="btn btn-sm variant-filled-primary" on:click={checkForWins} disabled={isCheckingWins}>
 					{#if isCheckingWins}
-						<i class="fa fa-spinner fa-spin mr-2"></i>
+						<i class="fi fi-rr-loading animate-spin mr-2"></i>
 						Checking Wins...
 					{:else}
-						<i class="fa fa-refresh mr-2"></i>
-						Check for Wins
+						<i class="fi fi-rr-comment-question mr-2"></i>
+						Check for Matches
 					{/if}
 				</button>
 			</div>
 		</div>
 	</div>
+	<div class="container flex flex-col gap-4">
+		<!-- Deck View -->
+		<div class="w-full bg-surface-800/50 rounded-lg border border-surface-700/50">
+			<DeckView
+				isAnimating={showingAnimation}
+				{currentHighlightId}
+			/>
+		</div>
 
-	<!-- Deck View -->
-	<div class="w-full bg-surface-800/50 rounded-lg border border-surface-700/50">
-		<DeckView 
-			isAnimating={showingAnimation}
-			selectedHeroId={selectedHero?.id ?? null}
-			currentHighlightId={currentHighlightId}
-			updatedStats={updatedCardStats}
-		/>
-	</div>
-
-	<!-- Hand -->
-	<div class="w-full bg-surface-800/50 rounded-lg border border-surface-700/50 p-4">
-		<h2 class="text-lg font-bold text-primary-500 mb-4">Hand</h2>
-		<div class="flex justify-center gap-4">
-			{#each hand as hero, i}
-				<div class="relative w-32 h-48 bg-surface-700/50 rounded-lg border-2 border-surface-600/50 shadow-xl hover:shadow-2xl transition-all duration-200">
-					{#if hero}
-						<div class="absolute top-2 left-2">
-							<i class={`d2mh hero-${hero.id} scale-150`}></i>
+		<div class="grid grid-cols-2 gap-8">
+			<!-- Hand -->
+			<div class="w-full bg-surface-800/50 rounded-lg border border-surface-700/50 p-4">
+				<h2 class="text-lg font-bold text-primary-500 mb-4">Hand</h2>
+				<div class="flex justify-center gap-4">
+					{#each hand as hero, i}
+						<div
+							class="relative w-32 h-48 bg-surface-700/50 rounded-lg border-2 border-surface-600/50 shadow-xl hover:shadow-2xl transition-all duration-200"
+						>
+							{#if hero}
+								<div class="absolute top-2 left-2">
+									<i class={`d2mh hero-${hero.id} scale-150`}></i>
+								</div>
+								<div class="absolute top-14 left-0 right-0 text-center">
+									<span class="text-xs font-bold text-yellow-300/90 drop-shadow-[0_0_3px_rgba(0,0,0,1)]">
+										{hero.localized_name}
+									</span>
+								</div>
+								<div class="absolute top-2 right-2 text-sm font-bold">
+									<div class="text-yellow-400">{hero.gold}g</div>
+									<div class="text-blue-400">{hero.xp}xp</div>
+								</div>
+								<div class="absolute bottom-2 w-full flex justify-center">
+									<button class="btn btn-sm variant-soft-error" on:click={() => discardHero(i)}> Discard </button>
+								</div>
+							{:else}
+								<div class="w-full h-full flex items-center justify-center">
+									<button 
+										class="btn variant-filled-primary" 
+										on:click={() => drawHero(i)}
+										disabled={isDrawing}
+									> 
+										Draw 
+									</button>
+								</div>
+							{/if}
+							{#if showingAnimation && selectedHero && hero && currentHighlightId === hero.id}
+								<div class="absolute inset-0 bg-surface-900/80">
+									<HeroSelectionAnimation
+										heroes={$heroPoolStore.availableHeroes}
+										finalHero={selectedHero}
+										onComplete={() => completeDrawHero(i)}
+									/>
+								</div>
+							{/if}
 						</div>
-						<div class="absolute top-2 right-2 text-sm font-bold">
-							<div class="text-yellow-400">{hero.gold}g</div>
-							<div class="text-blue-400">{hero.xp}xp</div>
-						</div>
-						<div class="absolute bottom-2 w-full flex justify-center">
-							<button 
-								class="btn btn-sm variant-soft-error" 
-								on:click={() => discardHero(i)}
-							>
-								Discard
-							</button>
-						</div>
-					{:else}
-						<div class="w-full h-full flex items-center justify-center">
-							<button 
-								class="btn variant-filled-primary" 
-								on:click={() => drawHero(i)}
-							> 
-								Draw 
-							</button>
-						</div>
-					{/if}
-					{#if showingAnimation && selectedHero && hero && currentHighlightId === hero.id}
-						<div class="absolute inset-0 bg-surface-900/80">
-							<HeroSelectionAnimation 
-								heroes={$heroPoolStore.availableHeroes}
-								finalHero={selectedHero}
-								onComplete={() => completeDrawHero(i)}
-							/>
-						</div>
-					{/if}
+					{/each}
 				</div>
-			{/each}
+			</div>
+			<!-- Match History -->
+
+			<MatchHistory matchTableData={recentMatches} />
 		</div>
 	</div>
 </div>
 
 {#if showStatBoost && statBoostData}
-	<StatBoostModal {...statBoostData} />
+	<StatBoostModal data={statBoostData} />
 {/if}
