@@ -1,70 +1,102 @@
 import { json } from '@sveltejs/kit';
 import prisma from '$lib/server/prisma';
+import type { RequestHandler } from './$types';
 
-export async function POST({ request, fetch }) {
-    const { seasonUserId, heroId } = await request.json();
-    
-    console.log("Creating hero draw for:", { seasonUserId, heroId });
-    // Get the season user
-    const seasonUser = await prisma.seasonUser.findUnique({
-        where: { id: seasonUserId },
-        select: {
-            accountId: true
-        }
-    });
-
-    console.log("Found season user:", seasonUser);
-    if (!seasonUser) return json({ success: false });
+export const POST: RequestHandler = async ({ request, fetch }) => {
+    const { seasonUserId, heroIds } = await request.json();
 
     try {
-        // Create hero draw record
-        const heroDraw = await prisma.heroDraw.create({
-            data: {
-                seasonUserId,
-                heroId,
+        // First get all active hero draws to find the account ID
+        const firstDraw = await prisma.heroDraw.findFirst({
+            where: { seasonUserId },
+            include: {
+                seasonUser: {
+                    select: { accountId: true }
+                }
             }
         });
 
-        console.log("Created hero draw:", heroDraw);
-
-        // Update matches using existing endpoint with full URL
-        const baseUrl = process.env.ORIGIN || 'http://localhost:5173';
-        await fetch(`${baseUrl}/api/updateMatchesForUser/${seasonUser.accountId}`);
-
-        // Check if any matches were played with this hero since the draw
-        const matchAfterDraw = await prisma.match.findFirst({
-            where: {
-                account_id: seasonUser.accountId,
-                hero_id: heroId,
-                start_time: {
-                    gt: Math.floor(heroDraw.drawnAt.getTime() / 1000)
-                }
-            },
-            orderBy: {
-                start_time: 'desc'
-            }
-        });
-
-        if (matchAfterDraw) {
-            // Update the draw record with the match result
-            const won = matchAfterDraw.player_slot <= 127 ? matchAfterDraw.radiant_win : !matchAfterDraw.radiant_win;
-            await prisma.heroDraw.update({
-                where: { id: heroDraw.id },
-                data: {
-                    matchResult: won,
-                    matchId: matchAfterDraw.match_id.toString()
-                }
-            });
-
-            return json({ success: true, won, matchId: matchAfterDraw.match_id });
+        if (!firstDraw) {
+            return json({ success: false, error: 'No season user found' });
         }
 
-        return json({ success: true });
-    } catch (error) {
-        console.error("Error creating hero draw:", error);
-        return json({ 
-            success: false, 
-            error: error instanceof Error ? error.message : 'Unknown error'
+        // Update matches first
+        await fetch(`/api/updateMatchesForUser/${firstDraw.seasonUser.accountId}`);
+
+        // Get all active hero draws
+        const heroDraws = await prisma.heroDraw.findMany({
+            where: {
+                seasonUserId,
+                heroId: { in: heroIds },
+                matchResult: null
+            },
+            include: {
+                seasonUser: {
+                    select: {
+                        accountId: true,
+                        heldCards: {
+                            where: { heroId: { in: heroIds } }
+                        }
+                    }
+                }
+            }
         });
+
+        if (!heroDraws.length) {
+            return json({ success: false, error: 'No active draws found' });
+        }
+
+        // Get all recent matches for the user
+        const recentMatches = await prisma.playersMatchDetail.findMany({
+            where: {
+                account_id: heroDraws[0].seasonUser.accountId,
+            },
+            orderBy: {
+                match_detail: { start_time: 'desc' }
+            },
+            include: {
+                match_detail: true
+            }
+        });
+
+        const latestMatch = recentMatches[0];
+        const latestMatchInfo = latestMatch ? {
+            heroId: latestMatch.hero_id,
+            timestamp: new Date(Number(latestMatch.match_detail.start_time) * 1000)
+        } : null;
+
+        // Process each hero draw
+        const results = heroDraws.map(heroDraw => {
+            const heroMatches = recentMatches.filter(m => 
+                m.hero_id === heroDraw.heroId && 
+                m.match_detail.start_time > BigInt(Math.floor(heroDraw.drawnAt.getTime() / 1000))
+            );
+            const latestMatch = heroMatches[0];
+            const cardId = heroDraw.seasonUser.heldCards[0]?.id;
+            
+            if (latestMatch && cardId) {
+                // Process win
+                return {
+                    heroId: heroDraw.heroId,
+                    matchFound: true,
+                    latestMatch: {
+                        heroId: latestMatch.hero_id,
+                        timestamp: new Date(Number(latestMatch.match_detail.start_time) * 1000)
+                    }
+                };
+            }
+            
+            return {
+                heroId: heroDraw.heroId,
+                matchFound: false,
+                latestMatch: null
+            };
+        });
+
+        return json({ success: true, results, latestMatchInfo });
+
+    } catch (error) {
+        console.error('Error checking matches:', error);
+        return json({ success: false, error: 'Failed to check matches' });
     }
-} 
+}; 

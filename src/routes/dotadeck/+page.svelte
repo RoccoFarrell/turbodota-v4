@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { browser } from '$app/environment';
-	import { onDestroy } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 	import { heroPoolStore } from '$lib/stores/heroPoolStore';
 	import { drawnHeroes } from '$lib/stores/drawnHeroesStore';
 	import { getToastStore } from '@skeletonlabs/skeleton';
@@ -9,6 +9,9 @@
 	import { redirect } from '@sveltejs/kit';
 	import DeckView from './_components/DeckView.svelte';
 	import HeroSelectionAnimation from './_components/HeroSelectionAnimation.svelte';
+	import StatBoostModal from './_components/StatBoostModal.svelte';
+
+	const toastStore = getToastStore();
 
 	export let data: PageData;
 
@@ -21,6 +24,13 @@
 		xp: number;
 		gold: number;
 		cardId?: string;
+	}
+
+	// Define match check result type
+	interface MatchCheckResult {
+		heroId: number;
+		matchFound: boolean;
+		latestMatch: { heroId: number; timestamp: Date } | null;
 	}
 
 	// Initialize hero pool with default values
@@ -37,7 +47,9 @@
 	// Hand management
 	let hand: (CardHero | null)[] = Array(data.seasonUser.handSize).fill(null);
 	if (data.seasonUser.heroDraws) {
-		data.seasonUser.heroDraws.forEach(draw => {
+		// Only use active (non-discarded) draws
+		const activeDraws = data.seasonUser.heroDraws.filter(draw => !draw.matchResult);
+		activeDraws.forEach(draw => {
 			const hero = data.heroDescriptions.find(h => h.id === draw.heroId);
 			if (hero) {
 				const cardHero: CardHero = {
@@ -64,6 +76,10 @@
 	let currentHighlightId: number | null = null;
 	let animationInterval: NodeJS.Timeout;
 	let activeSlot: number | null = null;
+	let updatedCardStats: { heroId: number, gold: number, xp: number } | null = null;
+	let showStatBoost = false;
+	let statBoostData: { heroId: number; oldStats: { gold: number; xp: number }; newStats: { gold: number; xp: number } } | null = null;
+	let isCheckingWins = false;
 
 	function startHeroAnimation(hero: CardHero, slotIndex: number) {
 		showingAnimation = true;
@@ -116,7 +132,6 @@
 	}
 
 	function showError(message: string) {
-		const toastStore = getToastStore();
 		toastStore.trigger({
 			message,
 			background: 'variant-filled-error'
@@ -143,24 +158,6 @@
 				});
 				const result = await response.json();
 				
-				// Record the hero draw and check for matches
-				const drawResponse = await fetch('/api/matches/check', {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json'
-					},
-					body: JSON.stringify({ 
-						seasonUserId: data.seasonUser!.id,
-						heroId: hero.id
-					})
-				});
-
-				console.log('Draw response:', await drawResponse.clone().text());
-				const drawResult = await drawResponse.json();
-				if (!drawResult.success) {
-					showError(`Failed to save hero draw: ${drawResult.error}`);
-				}
-
 				if (!result.success) {
 					// Revert the draw if it failed
 					drawnHeroes.update(set => {
@@ -186,43 +183,187 @@
 	}
 
 	async function discardHero(slotIndex: number) {
-		const hero = hand[slotIndex];
-		if (hero) {
-			const oldHero = hero;
-			drawnHeroes.update(set => {
-				set.delete(hero.id);
-				return set;
-			});
-			hand[slotIndex] = null;
-			hand = [...hand];
-			// Save to DB
-			if (hero.cardId) {
-				const response = await fetch(`/api/cards/${hero.cardId}/discard`, {
+		const oldHero = hand[slotIndex];
+		if (oldHero) {
+			try {
+				const response = await fetch(`/api/cards/${oldHero.cardId}/discard`, {
 					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
 					body: JSON.stringify({ seasonUserId: data.seasonUser!.id })
 				});
 				const result = await response.json();
+				
 				if (!result.success) {
-					// Revert the discard if it failed
-					drawnHeroes.update(set => {
-						set.add(oldHero.id);
-						return set;
-					});
-					hand[slotIndex] = oldHero;
-					hand = [...hand];
+					showError(`Failed to discard card: ${result.error}`);
+					return;
 				}
+
+				// Show stat boost modal
+				statBoostData = {
+					heroId: oldHero.id,
+					oldStats: { gold: oldHero.gold, xp: oldHero.xp },
+					newStats: { gold: result.card.baseGold, xp: result.card.baseXP }
+				};
+				showStatBoost = true;
+				setTimeout(() => {
+					showStatBoost = false;
+					statBoostData = null;
+				}, 2000);
+
+				// Update hero stats in store
+				const updatedHeroes = $heroPoolStore.allHeroes.map(h => {
+					if (h.id === oldHero.id) {
+						return { ...h, gold: (h as CardHero).gold + 20, xp: (h as CardHero).xp + 20 } as CardHero;
+					}
+					return h;
+				});
+				heroPoolStore.setAllHeroes(updatedHeroes);
+
+				// Remove from hand
+				drawnHeroes.update(set => {
+					set.delete(oldHero.id);
+					return set;
+				});
+				hand[slotIndex] = null;
+				hand = [...hand];
+			} catch (error) {
+				showError('Failed to discard card: Network error');
+				console.error('Discard error:', error);
 			}
+		}
+	}
+
+	async function checkForWins() {
+		isCheckingWins = true;
+		try {
+			// Get all hero IDs from hand
+			const heroIds = hand.filter(Boolean).map(h => h!.id);
+			
+			if (heroIds.length === 0) {
+				toastStore.trigger({
+					message: 'No heroes in hand to check',
+					background: 'variant-filled-warning'
+				});
+				return;
+			}
+			
+			// Check all heroes at once
+			const response = await fetch('/api/matches/check', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					seasonUserId: data.seasonUser!.id,
+					heroIds
+				})
+			});
+			
+			const { success, results } = await response.json();
+			
+			if (success) {
+				// Build summary message
+				const winsFound = results.filter((r: MatchCheckResult) => r.matchFound);
+				const noMatches = results.filter((r: MatchCheckResult) => !r.matchFound);
+				
+				let message = '';
+				
+				// Add latest match info
+				if (results.length > 0 && results[0].latestMatchInfo) {
+					const hero = $heroPoolStore.allHeroes.find(h => h.id === results[0].latestMatchInfo.heroId);
+					message += `Latest match: ${hero?.localized_name} at ${results[0].latestMatchInfo.timestamp.toLocaleString()}\n\n`;
+				}
+				
+				// Add wins summary
+				if (winsFound.length > 0) {
+					const winHeroes = winsFound.map((r: MatchCheckResult) => {
+						const hero = hand.find(h => h?.id === r.heroId);
+						return hero?.localized_name;
+					}).join(', ');
+					message += `Found wins with: ${winHeroes}\n`;
+				}
+				
+				// Add no matches summary
+				if (noMatches.length > 0) {
+					const pendingHeroes = noMatches.map((r: MatchCheckResult) => {
+						const hero = hand.find(h => h?.id === r.heroId);
+						return hero?.localized_name;
+					}).join(', ');
+					message += `No matches found for: ${pendingHeroes}`;
+				}
+
+				toastStore.trigger({
+					message,
+					background: winsFound.length > 0 ? 'variant-filled-success' : 'variant-filled-warning'
+				});
+
+				// Process wins
+				winsFound.forEach((result: MatchCheckResult) => {
+					const hero = hand.find(h => h?.id === result.heroId);
+					if (!hero) return;
+					
+					// Update hero stats and remove from hand
+					const updatedHeroes = $heroPoolStore.allHeroes.map(h => {
+						if (h.id === hero.id) {
+							return { ...h, gold: (h as CardHero).gold + 20, xp: (h as CardHero).xp + 20 } as CardHero;
+						}
+						return h;
+					});
+					heroPoolStore.setAllHeroes(updatedHeroes);
+					
+					const index = hand.findIndex(h => h?.id === hero.id);
+					if (index !== -1) {
+						drawnHeroes.update(set => {
+							set.delete(hero.id);
+							return set;
+						});
+						hand[index] = null;
+						hand = [...hand];
+					}
+				});
+			}
+		} catch (error) {
+			console.error('Error checking wins:', error);
+			toastStore.trigger({
+				message: 'Failed to check for wins',
+				background: 'variant-filled-error'
+			});
+		} finally {
+			isCheckingWins = false;
 		}
 	}
 </script>
 
 <div class="container mx-auto p-4 flex flex-col gap-8">
+	<!-- Action Bar -->
+	<div class="w-full bg-surface-800/50 rounded-lg border border-surface-700/50 p-4">
+		<div class="flex justify-between items-center">
+			<h2 class="text-lg font-bold text-primary-500">Actions</h2>
+			<div class="flex gap-4">
+				<button 
+					class="btn variant-filled-primary"
+					on:click={checkForWins}
+					disabled={isCheckingWins}
+				>
+					{#if isCheckingWins}
+						<i class="fa fa-spinner fa-spin mr-2"></i>
+						Checking Wins...
+					{:else}
+						<i class="fa fa-refresh mr-2"></i>
+						Check for Wins
+					{/if}
+				</button>
+			</div>
+		</div>
+	</div>
+
 	<!-- Deck View -->
 	<div class="w-full bg-surface-800/50 rounded-lg border border-surface-700/50">
 		<DeckView 
 			isAnimating={showingAnimation}
 			selectedHeroId={selectedHero?.id ?? null}
 			currentHighlightId={currentHighlightId}
+			updatedStats={updatedCardStats}
 		/>
 	</div>
 
@@ -272,3 +413,7 @@
 		</div>
 	</div>
 </div>
+
+{#if showStatBoost && statBoostData}
+	<StatBoostModal {...statBoostData} />
+{/if}
