@@ -6,7 +6,7 @@
     "dev": "cross-env NODE_ENV=development vite dev",
     "dev:prod": "cross-env NODE_ENV=production vite dev",
     "dev:msw-server": "concurrently \"npx ts-node-esm src/mocks/server.ts\" \"npm run dev\"",
-    "build": "cross-env NODE_ENV=production npx prisma generate && vite build",
+    "build": "npx prisma generate && vite build",
     "preview": "cross-env NODE_ENV=production vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
