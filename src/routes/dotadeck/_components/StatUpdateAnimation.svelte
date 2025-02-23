@@ -42,13 +42,13 @@
         <div class="text-yellow-400 font-bold">
             {oldStats.gold}g → {newStats.gold}g
             <span class="text-sm ml-2" in:fade={{ delay: 500, duration: 300 }}>
-                ({isWin ? 'Reset' : '+50'})
+                ({isWin ? 'Reset' : `+${DOTADECK.LOSS_REWARD.GOLD}`})
             </span>
         </div>
         <div class="text-blue-400 font-bold">
             {oldStats.xp}xp → {newStats.xp}xp
             <span class="text-sm ml-2" in:fade={{ delay: 500, duration: 300 }}>
-                ({isWin ? 'Reset' : '+50'})
+                ({isWin ? 'Reset' : `+${DOTADECK.LOSS_REWARD.XP}`})
             </span>
         </div>
     </div>

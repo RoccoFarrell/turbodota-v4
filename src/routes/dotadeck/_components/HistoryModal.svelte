@@ -2,25 +2,27 @@
     import { getModalStore } from '@skeletonlabs/skeleton';
     const modalStore = getModalStore();
 
-    export let history: {
-        cardId: string;
-        action: 'DRAWN' | 'DISCARDED' | 'QUEST_WIN' | 'QUEST_LOSS' | 'PASSIVE_MOD';
-        timestamp: Date;
-        goldMod: number;
-        xpMod: number;
+    interface HistoryEvent {
+        card: {
+            hero: {
+                id: number;
+                localized_name: string;
+            };
+        };
         seasonUser: {
             user: {
                 user: {
                     username: string;
-                }
-            }
+                };
+            };
         };
-        card: {
-            hero: {
-                localized_name: string;
-            }
-        };
-    }[] = [];
+        action: 'DRAWN' | 'DISCARDED' | 'QUEST_WIN' | 'QUEST_LOSS' | 'PASSIVE_MOD';
+        timestamp: Date;
+        goldMod: number;
+        xpMod: number;
+    }
+
+    export let history: HistoryEvent[];
 
     const actionLabels = {
         DRAWN: 'drew',

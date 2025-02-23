@@ -3,6 +3,7 @@
 	import { getModalStore } from '@skeletonlabs/skeleton';
 	import { heroPoolStore } from '$lib/stores/heroPoolStore';
 	import { fade } from 'svelte/transition';
+	import CardHistoryTooltip from './CardHistoryTooltip.svelte';
 
 	interface GameHero extends Hero {
 		xp: number;
@@ -39,6 +40,10 @@
 	$: isHeroDisabled = (heroId: number) => {
 		return $heroPoolStore.allHeroes.find(h => h.id === heroId)?.isHeld ?? false;
 	};
+
+	let hoveredHeroId: number | null = null;
+	let mouseX = 0;
+	let mouseY = 0;
 </script>
 
 <div class="p-4 w-full max-h-[80vh] overflow-auto">
@@ -67,6 +72,12 @@
 					${hero.isDrawn ? 'opacity-10 cursor-not-allowed' : 'cursor-pointer hover:scale-110'}
 					${currentHighlightId === hero.id ? 'border-4 border-primary-500' : ''}
 					${isHeroDisabled(hero.id) ? 'opacity-10' : ''}`}
+				on:mouseenter={(e) => {
+					hoveredHeroId = hero.id;
+					mouseX = e.clientX;
+					mouseY = e.clientY;
+				}}
+				on:mouseleave={() => hoveredHeroId = null}
 			>
 				<div class="w-8 h-8 transition-all duration-200 relative mx-auto mt-2"
 					class:scale-150={currentHighlightId === hero.id && isAnimating}
@@ -94,4 +105,12 @@
 			</div>
 		{/each}
 	</div>
-</div> 
+</div>
+
+{#if hoveredHeroId}
+	<CardHistoryTooltip 
+		heroId={hoveredHeroId}
+		x={mouseX}
+		y={mouseY}
+	/>
+{/if} 

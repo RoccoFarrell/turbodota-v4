@@ -1,6 +1,7 @@
 import { json } from '@sveltejs/kit';
 import prisma from '$lib/server/prisma';
 import type { RequestHandler } from './$types';
+import { DOTADECK } from '$lib/constants/dotadeck';
 
 export const POST: RequestHandler = async ({ request, fetch }) => {
     const { seasonUserId, heroIds } = await request.json();
@@ -38,7 +39,8 @@ export const POST: RequestHandler = async ({ request, fetch }) => {
                             where: { heroId: { in: heroIds } }
                         }
                     }
-                }
+                },
+                card: true  // Include card for creating history
             }
         });
 
@@ -105,6 +107,12 @@ export const POST: RequestHandler = async ({ request, fetch }) => {
                         xpMod: latestMatch.win ? 100 : 50,
                         goldMod: latestMatch.win ? 100 : 50
                     }
+                });
+
+                // Reset discard tokens
+                await prisma.seasonUser.update({
+                    where: { id: heroDraw.seasonUserId },
+                    data: { discardTokens: 5 }
                 });
 
                 return {

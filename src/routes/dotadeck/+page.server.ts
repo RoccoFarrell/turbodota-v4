@@ -7,6 +7,11 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const session = await locals.auth.validate();
 	if (!session) return { status: 401 };
 
+	// Get user data
+	const user = await prisma.user.findUnique({
+		where: { id: session.user.userId }
+	});
+
 	console.log("Loading for account:", session.user.account_id);
 	const seasonUser = await prisma.seasonUser.findFirst({
 		where: {
@@ -16,6 +21,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 			}
 		},
 		include: {
+			user: true,  // Include user data
 			heroDraws: {
 				where: {
 					matchResult: null  // Only get active draws
@@ -98,7 +104,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 		activeDeck,
 		heroDescriptions,
 		heldHeroIds: heldCards.map(card => card.heroId),
-		matchTableData
+		matchTableData,
+		user  // Pass user data to the client
 	};
 };
 

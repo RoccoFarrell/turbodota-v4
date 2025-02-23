@@ -40,8 +40,7 @@ export async function initializeDotaDeckSeason(season: Season) {
                 data: {
                     seasonId: season.id,
                     accountId: member.account_id,
-                    handSize: 3,
-                    passiveMod: 1
+                    handSize: 3
                 }
             })
         );

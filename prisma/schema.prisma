@@ -2,16 +2,16 @@ generator client {
   provider = "prisma-client-js"
 }
 
-datasource db {
-  provider = "postgresql"
-  url      = env("DEV_URL")
-}
-
 // datasource db {
-//   provider  = "postgresql"
-//   url       = env("DATABASE_URL")
-//   directUrl = env("DIRECT_URL")
+//   provider = "postgresql"
+//   url      = env("DEV_URL")
 // }
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
 
 // user models
 model User {
@@ -489,12 +489,13 @@ model RoundUserCard {
 
 model SeasonUser {
     id              String      @id @default(cuid())
-    seasonId        Int
-    season          Season      @relation(fields: [seasonId], references: [id])
     accountId       Int
-    user            DotaUser    @relation(fields: [accountId], references: [account_id])
+    seasonId        Int
     handSize        Int         @default(3)
-    passiveMod      Int         @default(1)
+    discardTokens   Int         @default(5)
+    hasSeenRules    Boolean     @default(false)
+    season          Season      @relation(fields: [seasonId], references: [id])
+    user            DotaUser    @relation(fields: [accountId], references: [account_id])
     joinedAt        DateTime    @default(now())
     gamesPlayed     Int         @default(0)
     questsCompleted Int         @default(0)

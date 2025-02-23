@@ -73,6 +73,18 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 				}
 			});
 
+			// Create card history entry for the draw
+			await tx.cardHistory.create({
+				data: {
+					cardId: card.id,
+					seasonUserId,
+					action: 'DRAWN',
+					timestamp: new Date(),
+					goldMod: 0,
+					xpMod: 0
+				}
+			});
+
 			// Update card holder
 			const updatedCard = await tx.card.update({
 				where: { id: params.cardId },

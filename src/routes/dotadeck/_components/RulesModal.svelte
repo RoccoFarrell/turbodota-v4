@@ -1,66 +1,51 @@
 <script lang="ts">
     import { getModalStore } from '@skeletonlabs/skeleton';
+    import dotadeckLogo from '$lib/assets/dotadeck_logo.png';
     const modalStore = getModalStore();
 </script>
 
-<div class="card p-4 w-full max-w-3xl">
-    <header class="flex justify-between items-center mb-4">
-        <h2 class="h2 text-primary-500">DotaDeck Rules</h2>
-        <button class="btn btn-sm variant-filled-surface" on:click={() => modalStore.close()}>✕</button>
-    </header>
+<div class="card p-8 w-[1000px] max-h-[80vh] overflow-y-auto">
+    <div class="grid grid-cols-2 gap-8">
+        <div class="flex items-center justify-center">
+            <img src={dotadeckLogo} alt="DotaDeck Logo" class="w-full max-w-md border border-amber-500 shadow-2xl">
+        </div>
+        <div>
+            <h2 class="h2 text-primary-500 mb-4">DotaDeck Rules</h2>
 
-    <div class="space-y-2">
-        <section>
-            <h3 class="h3 text-primary-400 mb-2">Overview</h3>
-            <p>DotaDeck is a card game where you draw heroes and play matches with them to earn rewards.</p>
-        </section>
+            <div class="space-y-4">
+                <div>
+                    <h3 class="h3 text-secondary-500">Overview</h3>
+                    <p>DotaDeck is a competitive card game where players draw Hero Cards and compete to win matches with them.</p>
+                </div>
 
-        <section>
-            <h3 class="h3 text-primary-400 mb-2">Drawing Cards</h3>
-            <ul class="list-disc list-inside space-y-2">
-                <li>Each player has a hand of up to 3 hero cards</li>
-                <li>Draw a hero card by clicking the "Draw" button in an empty slot</li>
-                <li>Each hero card starts with base stats of 100 XP and 100 Gold</li>
-            </ul>
-        </section>
+                <div>
+                    <h3 class="h3 text-secondary-500">Drawing Cards</h3>
+                    <ul class="list-disc list-inside space-y-2">
+                        <li>Draw up to 3 Hero Cards into your hand</li>
+                        <li>Each card has Gold and XP values that increase when players lose with them</li>
+                        <li>The higher the values, the bigger the reward for winning!</li>
+                    </ul>
+                </div>
 
-        <section>
-            <h3 class="h3 text-primary-400 mb-2">Playing Matches</h3>
-            <ul class="list-disc list-inside space-y-2">
-                <li>Play a Dota 2 match with any hero in your hand</li>
-                <li>Click "Check for Wins" to see if you've won with your heroes</li>
-                <li>Winning a match adds the gold and xp to your user stats and resets the hero's stats to 100/100</li>
-                <li>Losing a match adds +50 XP and +50 Gold</li>
-                <li>When you win with a hero, their current XP and Gold are added to your total score</li>
-            </ul>
-        </section>
+                <div>
+                    <h3 class="h3 text-secondary-500">Playing Matches</h3>
+                    <ul class="list-disc list-inside space-y-2">
+                        <li>Play a match with any hero in your hand</li>
+                        <li>Win: Claim the card's Gold and XP values as points!</li>
+                        <li>Lose: The card's values increase, making it more valuable</li>
+                    </ul>
+                </div>
 
-        <section>
-            <h3 class="h3 text-primary-400 mb-2">Scoring</h3>
-            <ul class="list-disc list-inside space-y-2">
-                <li>Your total score consists of accumulated Gold and XP from successful hero matches</li>
-                <li>The higher a hero's stats when you win with them, the more points you earn</li>
-                <li>Strategy tip: Build up a hero's stats through losses or discards before winning with them</li>
-                <li>Example: Winning with a 200/200 hero gives you 200 gold and 200 xp</li>
-            </ul>
-        </section>
-
-        <section>
-            <h3 class="h3 text-primary-400 mb-2">Discarding</h3>
-            <ul class="list-disc list-inside space-y-2">
-                <li>You can discard a hero card if you don't want to play it</li>
-                <li>Discarding gives the hero +20 XP and +20 Gold</li>
-                <li>These bonuses are permanent and carry over to future draws</li>
-            </ul>
-        </section>
-
-        <section>
-            <h3 class="h3 text-primary-400 mb-2">Leaderboard</h3>
-            <ul class="list-disc list-inside space-y-2">
-                <li>The leaderboard shows all players' current standings</li>
-                <li>Players are ranked by their total gold earned</li>
-                <li>You can see other players' current hands and win/loss records</li>
-            </ul>
-        </section>
+                <div>
+                    <h3 class="h3 text-secondary-500">Discarding</h3>
+                    <ul class="list-disc list-inside space-y-2">
+                        <li>You have 5 discard tokens</li>
+                        <li>Use a token to discard an unwanted hero</li>
+                        <li>Discarding slightly increases the card's values</li>
+                        <li>Tokens refresh after completing a match</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
     </div>
 </div> 

@@ -16,6 +16,8 @@
 	import HistoryModal from './_components/HistoryModal.svelte';
 	import MatchHistory from '$lib/components/MatchHistory.svelte';
 	import type { StatBoostData } from '$lib/types/dotadeck';
+	import { cardHistoryStore } from '$lib/stores/cardHistoryStore';
+	import type { CardHistoryEntry } from '$lib/stores/cardHistoryStore';
 
 	const toastStore = getToastStore();
 	const modalStore = getModalStore();
@@ -23,6 +25,7 @@
 	export let data: PageData;
 
 	if (!data.seasonUser) {
+		console.error("No season user found for logged in user: ", data.user);
 		throw redirect(302, '/');
 	}
 
@@ -107,6 +110,21 @@
 		newStats: { xp: number; gold: number };
 	} | null = null;
 	let isDrawing: boolean = false;
+	$: discardsRemaining = data.seasonUser?.discardTokens ?? 0;
+
+	let lastNotificationTime = 0;
+	const NOTIFICATION_COOLDOWN = 10000; // 10 seconds in milliseconds
+
+	function showDiscardNotification() {
+		const now = Date.now();
+		if (now - lastNotificationTime >= NOTIFICATION_COOLDOWN) {
+			toastStore.trigger({
+				message: 'Play a match with one of your heroes to refresh your discard tokens!',
+				background: 'variant-filled-warning'
+			});
+			lastNotificationTime = now;
+		}
+	}
 
 	function startHeroAnimation(hero: CardHero, slotIndex: number) {
 		isDrawing = true;
@@ -175,6 +193,14 @@
 		});
 	}
 
+	async function refreshCardHistories() {
+		const response = await fetch('/api/cards/history');
+		const data = await response.json();
+		if (data.success) {
+			cardHistoryStore.setHistories(data.histories);
+		}
+	}
+
 	async function completeDrawHero(slotIndex: number) {
 		showingAnimation = false;
 		if (selectedHero) {
@@ -189,6 +215,9 @@
 				if (!result.success) {
 					showError('Failed to draw card');
 				} else {
+					// Refresh card histories
+					await refreshCardHistories();
+
 					// Update the drawn hero's status
 					heroPoolStore.updateHeroStatus(result.updatedHero.id, true);
 					
@@ -200,6 +229,10 @@
 	}
 
 	async function discardHero(slotIndex: number) {
+		if (discardsRemaining <= 0) {
+			showError('No discard tokens remaining - you must play a match first');
+			return;
+		}
 		const oldHero = hand[slotIndex];
 		if (oldHero) {
 			const response = await fetch(`/api/cards/${oldHero.cardId}/discard`, {
@@ -211,6 +244,14 @@
 			if (!result.success) {
 				showError(`Failed to discard card: ${result.error}`);
 			} else {
+				// Update local discard tokens count
+				if (data.seasonUser) {
+					data.seasonUser.discardTokens--;
+				}
+
+				// Refresh card histories
+				await refreshCardHistories();
+
 				// Show stat boost modal
 				statBoostData = {
 					heroId: oldHero.id,
@@ -272,12 +313,20 @@
 				});
 				
 				// Process wins
-				result.results.forEach((result: MatchCheckResult) => {
+				result.results.forEach(async (result: MatchCheckResult) => {
 					const hero = hand.find((h) => h?.id === result.heroId);
 					if (!hero || !result.matchFound) return;
 
+					// Update local discard tokens count on match completion
+					if (data.seasonUser) {
+						data.seasonUser.discardTokens = 5;
+					}
+
 					// Mark hero as no longer held since match was found
 					heroPoolStore.updateHeroStatus(hero.id, false);
+
+					// Refresh card histories
+					await refreshCardHistories();
 
 					// Show stat update modal
 					statUpdateData = {
@@ -372,6 +421,24 @@
 			}
 		});
 	}
+
+	// Load card histories on mount
+	onMount(async () => {
+		const response = await fetch('/api/cards/history');
+		const data = await response.json();
+		if (data.success) {
+			cardHistoryStore.setHistories(data.histories);
+		}
+	});
+
+	// Show rules modal when data is loaded and user hasn't seen rules
+	$: if (data.seasonUser && !data.seasonUser.hasSeenRules) {
+		showRules();
+		fetch('/api/seasonUser/updateRulesSeen', {
+			method: 'POST',
+			body: JSON.stringify({ seasonUserId: data.seasonUser.id })
+		});
+	}
 </script>
 
 <div class="flex flex-col w-full">
@@ -418,7 +485,15 @@
 		<div class="grid grid-cols-2 gap-8">
 			<!-- Hand -->
 			<div class="w-full bg-surface-800/50 rounded-lg border border-surface-700/50 p-4">
-				<h2 class="text-lg font-bold text-primary-500 mb-4">Hand</h2>
+				<div class="flex justify-between items-center mb-4">
+					<h2 class="text-lg font-bold text-primary-500">Hand</h2>
+					<div class="flex items-center gap-2">
+						<i class="fi fi-rr-recycle text-surface-400"></i>
+						<span class="text-sm text-surface-400">
+							Discards remaining: {discardsRemaining}
+						</span>
+					</div>
+				</div>
 				<div class="flex justify-center gap-4">
 					{#each hand as hero, i}
 						<div
@@ -438,7 +513,16 @@
 									<div class="text-blue-400">{hero.xp}xp</div>
 								</div>
 								<div class="absolute bottom-2 w-full flex justify-center">
-									<button class="btn btn-sm variant-soft-error" on:click={() => discardHero(i)}> Discard </button>
+									<button 
+										class="btn btn-sm variant-soft-error" 
+										on:click={() => discardHero(i)}
+										disabled={discardsRemaining <= 0}
+										on:mouseenter={() => {
+											if (discardsRemaining <= 0) showDiscardNotification();
+										}}
+									> 
+										Discard 
+									</button>
 								</div>
 							{:else}
 								<div class="w-full h-full flex items-center justify-center">
