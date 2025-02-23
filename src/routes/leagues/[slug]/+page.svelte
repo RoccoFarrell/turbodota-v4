@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { setContext } from 'svelte';
 	import { enhance } from '$app/forms';
+	import { invalidate } from '$app/navigation';
 	import Trophy_light from '$lib/assets/trophy_light.png';
 	import { fade } from 'svelte/transition';
 	import type { User, League } from '@prisma/client';
@@ -54,6 +55,38 @@
 
 	let selectedLeague: LeagueWithSeasonsAndMembers = data.selectedLeague;
 
+	// Update season table data when form indicates success
+	$: if (form?.success) {
+		const t: ToastSettings = {
+			message: `Season created!`,
+			background: 'variant-filled-success'
+		};
+		toastStore.trigger(t);
+	}
+
+	// Watch for data changes and update table
+	$: {
+		// Only update if we have valid data
+		if (data.selectedLeague?.seasons) {
+			seasonTableData = selectedLeague.seasons.map((season: any) => ({
+				id: season.id,
+				name: season.name,
+				type: season.type,
+				startDate: dayjs(season.startDate).format('MM/DD/YYYY'),
+				endDate: dayjs(season.endDate).format('MM/DD/YYYY'),
+				membersCount: season.members.length,
+				active: season.active
+			}));
+			
+			// Update table source
+			tableSource.body = tableMapperValues(seasonTableData, ['name', 'id', 'type', 'startDate', 'endDate', 'membersCount', 'active']);
+			tableSource.meta = tableSource.body;
+		}
+	}
+
+	// Watch selectedLeague for changes
+	$: selectedLeague = data.selectedLeague;
+
 	let seasonTableData = selectedLeague.seasons.map((season: any) => {
 		return {
 			id: season.id,
@@ -62,17 +95,18 @@
 			//creatorID: season.creator.username,
 			startDate: dayjs(season.startDate).format('MM/DD/YYYY'),
 			endDate: dayjs(season.endDate).format('MM/DD/YYYY'),
-			membersCount: season.members.length
+			membersCount: season.members.length,
+			active: season.active
 		};
 	});
 
 	const tableSource: TableSource = {
 		// A list of heading labels.
-		head: ['Name', 'ID', 'Type', 'Start Date', 'End Date', 'Members'],
+		head: ['Name', 'ID', 'Type', 'Start Date', 'End Date', 'Members', 'Status'],
 		// The data visibly shown in your table body UI.
-		body: tableMapperValues(seasonTableData, ['name', 'id', 'type', 'startDate', 'endDate', 'membersCount']),
+		body: tableMapperValues(seasonTableData, ['name', 'id', 'type', 'startDate', 'endDate', 'membersCount', 'active']),
 		// Optional: The data returned when interactive is enabled and a row is clicked.
-		meta: tableMapperValues(seasonTableData, ['name', 'id', 'type', 'startDate', 'endDate', 'membersCount'])
+		meta: tableMapperValues(seasonTableData, ['name', 'id', 'type', 'startDate', 'endDate', 'membersCount', 'active'])
 		// Optional: A list of footer labels.
 		//foot: ['Total', '', '<code class="code">5</code>']
 	};
@@ -93,6 +127,8 @@
 		};
 
 		toastStore.trigger(t);
+		// Invalidate the current page data to trigger a refresh
+		invalidate('app:leagues');
 	}
 	let tabSetOuter: number = 1;
 	let tabSetInner: number = 0;
@@ -124,6 +160,95 @@
 	// $: (value: any) => {
 	// 	FormData.
 	// }
+
+	async function handleSeasonStatusUpdate(seasonId: number, active: boolean) {
+		try {
+			const response = await fetch(`/api/seasons/${seasonId}/status`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({ active })
+			});
+
+			if (response.ok) {
+				// Update local state immediately
+				seasonTableData = seasonTableData.map(season => {
+					if (season.id === seasonId) {
+						return { ...season, active };
+					}
+					return season;
+				});
+
+				// Force table to update
+				tableSource.body = tableMapperValues(seasonTableData, ['name', 'id', 'type', 'startDate', 'endDate', 'membersCount', 'active']);
+				tableSource.meta = tableSource.body;
+
+				// Refresh the data
+				await invalidate(`/leagues/${selectedLeague.id}`);
+
+				const t: ToastSettings = {
+					message: `Season status updated`,
+					background: 'variant-filled-success'
+				};
+				toastStore.trigger(t);
+			}
+		} catch (error) {
+			const t: ToastSettings = {
+				message: `Failed to update season status`,
+				background: 'variant-filled-error'
+			};
+			toastStore.trigger(t);
+		}
+	}
+
+	async function handleDeleteSeason(season: { id: number, name: string }) {
+		const confirmed = confirm(`Are you sure you want to delete ${season.name}? This cannot be undone.`);
+		if (!confirmed) return;
+
+		const response = await fetch(`/api/leagues/${selectedLeague.id}/seasons/${season.id}`, {
+			method: 'DELETE'
+		});
+
+		const result = await response.json();
+		if (result.success) {
+			// Remove season from local state
+			seasonTableData = seasonTableData.filter(s => s.id !== season.id);
+
+			// Force table to update
+			tableSource.body = tableMapperValues(seasonTableData, ['name', 'id', 'type', 'startDate', 'endDate', 'membersCount', 'active']);
+			tableSource.meta = tableSource.body;
+
+			// Refresh the data
+			await invalidate(`/leagues/${selectedLeague.id}`);
+
+			const t: ToastSettings = {
+				message: 'Season deleted successfully',
+				background: 'variant-filled-success'
+			};
+			toastStore.trigger(t);
+		} else {
+			const t: ToastSettings = {
+				message: 'Failed to delete season',
+				background: 'variant-filled-error'
+			};
+			toastStore.trigger(t);
+		}
+	}
+
+	// Form enhancement function
+	const enhanceForm = ({ form }: any) => {
+		return async ({ result, update }: any) => {
+			if (result.type === 'success') {
+				await Promise.all([
+					invalidate(`/leagues/${data.selectedLeague.id}`),
+					invalidate('app:leagues'),
+					update()
+				]);
+				form.reset();
+			}
+		};
+	};
 </script>
 
 <section class="lg:w-3/4 w-full h-screen px-4 lg:mx-auto my-4 space-y-8">
@@ -181,6 +306,39 @@
 								<td>{row[3]}</td>
 								<td>{row[4]}</td>
 								<td>{row[5]}</td>
+								<td>
+									{#if row[6]}
+										<div class="flex items-center gap-2">
+											<span class="chip variant-filled-success">Active</span>
+											<button
+												class="btn btn-sm variant-soft-warning"
+												on:click={() => handleSeasonStatusUpdate(parseInt(row[1]), false)}
+											>
+												Deactivate
+											</button>
+										</div>
+									{:else}
+										<div class="flex items-center gap-2">
+											<span class="chip variant-filled-surface">Inactive</span>
+											<button
+												class="btn btn-sm variant-soft-success"
+												on:click={() => handleSeasonStatusUpdate(parseInt(row[1]), true)}
+											>
+												Activate
+											</button>
+										</div>
+									{/if}
+								</td>
+								<td>
+									<div class="flex gap-2">
+										<button
+											class="btn variant-filled-error"
+											on:click={() => handleDeleteSeason({ id: parseInt(row[1]), name: row[0] })}
+										>
+											<i class="fi fi-bs-trash"></i>
+										</button>
+									</div>
+								</td>
 							</tr>
 						{/each}
 					</tbody>
@@ -414,9 +572,12 @@
 								method="POST"
 								class="space-y-8"
 								action="?/createSeason"
-								use:enhance
-								on:change={(e) => console.log()}
+								use:enhance={enhanceForm}
 							>
+								<input type="hidden" name="leagueID" value={selectedLeague.id} />
+								<input type="hidden" name="creatorID" value={data.session?.user.account_id} />
+								<input type="hidden" name="members" value={leagueMemberIDs.join(',')} />
+
 								<div class="space-y-8">
 									<h4 class="h4 text-amber-500">Create a Season</h4>
 									<!-- <label class="label">
@@ -484,7 +645,8 @@
 									</div>
 									<label class="label" for="seasonType">
 										<span>Season Type</span>
-										<select class="select" name="seasonType">
+										<select class="select" name="seasonType" required>
+											<option value="dotadeck">Dotadeck</option>
 											<option value="random">Random Romp</option>
 											<option value="snake" disabled>Snake Draft Survival</option>
 											<option value="none" disabled>More season types to come soon!</option>
@@ -509,14 +671,14 @@
 												<p class="h4 text-secondary-500">Your season will run from:</p>
 												{#if value.start && value.end}
 													<label class="label" for="seasonStartDate" hidden>
-														<input type="text" name="seasonStartDate" bind:value={value.start} />
+														<input type="hidden" name="seasonStartDate" value={value.start.toString()} required />
 													</label>
 													<p class="font-bold text-green-500">
 														{dayjs(value.start.toString()).format('dddd [-] MM/DD/YYYY')}
 													</p>
 													<p class="text-xs italic">to</p>
 													<label class="label" for="seasonEndDate" hidden>
-														<input type="text" name="seasonEndDate" bind:value={value.end} />
+														<input type="hidden" name="seasonEndDate" value={value.end.toString()} required />
 													</label>
 													<p class="font-bold text-green-500">
 														{dayjs(value.end.toString()).format('dddd [-] MM/DD/YYYY')}

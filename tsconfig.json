@@ -48,7 +48,8 @@
 			]
 		},
 		"outDir": "dist",
-		"lib": ["esnext", "dom"]
+		"lib": ["esnext", "dom"],
+		"allowArbitraryExtensions": true
 	},
 	// Path aliases are handled by https://kit.svelte.dev/docs/configuration#alias
 	//

@@ -3,13 +3,13 @@
 	import dayjs from 'dayjs';
 
 	export let data;
-	console.log('leagues slug layout data:', data);
+	//console.log('leagues slug layout data:', data);
 
 	import Trophy_light from '$lib/assets/trophy_light.png';
 
-	console.log($page.url);
+	//console.log($page.url);
 	let breadcrumbs = $page.url.pathname.split('/');
-	console.log(`breadcrumbs length: `, breadcrumbs);
+	//console.log(`breadcrumbs length: `, breadcrumbs);
 </script>
 
 <main class="w-full">

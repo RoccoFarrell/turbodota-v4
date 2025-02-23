@@ -15,15 +15,17 @@
 		// Optional: The data returned when interactive is enabled and a row is clicked.
 		meta: tableMapperValues(matchTableData, ['match_id', 'start_time', 'result', 'hero', 'kda'])
 	};
+
+	console.log(tableMatch);
 </script>
 
 <!-- <Table source={tableMatch}/> -->
 <!-- <div class="w-full flex flex-col p-1 space-y-4 md:w-full max-md:max-w-sm"> -->
 <div
-	class="w-full h-fit max-md:max-w-sm space-y-10 dark:bg-surface-600/30 bg-surface-200/30 border border-surface-200 dark:border-surface-700 rounded-lg relative"
+	class="w-full h-fit max-md:max-w-sm space-y-2 dark:bg-surface-600/30 bg-surface-200/30 border border-surface-200 dark:border-surface-700 rounded-lg relative"
 >
     <div class="w-full justify-center items-center px-2">
-        <h2 class="h2 text-primary-500 w-full border-b border-primary-500 border-dashed py-2">Last 5 Turbos</h2>
+        <h2 class="h2 text-primary-500 w-full border-b border-primary-500 border-dashed">Last 5 Turbos</h2>
     </div>
 
 	<div class="h-full">

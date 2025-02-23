@@ -78,7 +78,7 @@
                         <h4 class="h4 text-amber-500">Add a Fake Match</h4>
                     
 
-					<form method="POST" class="" action="/turbotown?/addFakeMatch" use:enhance>
+					<form method="POST" class="" action="?/addFakeMatch" use:enhance>
 						<div class="flex flex-col space-y-2">
 							<label class="label">
 								<span class="font-semibold text-primary-500">User ID</span>

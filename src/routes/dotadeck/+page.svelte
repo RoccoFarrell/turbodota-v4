@@ -1,294 +1,560 @@
 <script lang="ts">
-    import type { PageData } from './$types';
-    import HeroCard from '$lib/components/HeroCard.svelte';
-    
-    export let data: PageData;
+	import { browser } from '$app/environment';
+	import { onDestroy, onMount } from 'svelte';
+	import { heroPoolStore } from '$lib/stores/heroPoolStore';
+	import { getToastStore, getModalStore } from '@skeletonlabs/skeleton';
+	import type { Hero } from '@prisma/client';
+	import type { PageData } from './$types';
+	import { redirect } from '@sveltejs/kit';
+	import { DOTADECK } from '$lib/constants/dotadeck';
+	import DeckView from './_components/DeckView.svelte';
+	import HeroSelectionAnimation from './_components/HeroSelectionAnimation.svelte';
+	import StatBoostModal from './_components/StatBoostModal.svelte';
+	import StatUpdateAnimation from './_components/StatUpdateAnimation.svelte';
+	import LeaderboardModal from './_components/LeaderboardModal.svelte';
+	import RulesModal from './_components/RulesModal.svelte';
+	import HistoryModal from './_components/HistoryModal.svelte';
+	import MatchHistory from '$lib/components/MatchHistory.svelte';
+	import type { StatBoostData } from '$lib/types/dotadeck';
+	import { cardHistoryStore } from '$lib/stores/cardHistoryStore';
+	import type { CardHistoryEntry } from '$lib/stores/cardHistoryStore';
 
-    interface UserCard {
-        id: string;
-        card: HeroCard;
-        timesPlayed: number;
-        totalScore: number;
-        lastPlayedAt: Date | null;
-    }
+	const toastStore = getToastStore();
+	const modalStore = getModalStore();
 
-    interface HeroCard {
-        id: string;
-        name: string;
-        imageUrl: string;
-        cost: number;
-        description: string;
-        effectType: EffectType;
-        statType: StatType;
-        isActive: boolean;
-    }
+	export let data: PageData;
 
-    type EffectType = 'STAT_MULTIPLIER' | 'STAT_ADDER' | 'SCORE_MULTIPLIER';
+	if (!data.seasonUser) {
+		console.error("No season user found for logged in user: ", data.user);
+		throw redirect(302, '/');
+	}
 
-    type StatType = 'KILLS' | 'ASSISTS' | 'NET_WORTH' | 'LAST_HITS' | 'DENIES' | 
-                    'DAMAGE' | 'HEALING' | 'BUILDING' | 'SUPPORT' | 'SCORE';
+	// Define extended hero type with game stats
+	interface CardHero extends Hero {
+		xp: number;
+		gold: number;
+		cardId?: string;
+		holderId?: string | null;
+		isHeld?: boolean;
+	}
 
-    let currentHand: UserCard[] = data.userCards ?? [];
-    let selectedHandCards = new Set<string>();
-    let score = data.score ?? 0;
-    let gold = data.gold ?? 0;
-    let currentRound = data.currentRound ?? null;
-    $: shopCards = data.shopCards ?? [];
+	// Define match check result type
+	interface MatchCheckResult {
+		heroId: number;
+		matchFound: boolean;
+		win: boolean;
+		latestMatch: { heroId: number; timestamp: Date } | null;
+	}
 
-    const colors = {
-        STAT_MULTIPLIER: '#4A90E2',
-        STAT_ADDER: '#50E3C2',
-        SCORE_MULTIPLIER: '#F5A623'
-    } as const;
+	// Initialize hero pool with default values
+	if (browser && data.heroDescriptions && data.seasonUser) {
+		console.log('Current user draws:', data.seasonUser.heroDraws.filter(draw => !draw.matchResult));
+		console.log('All held heroes in league:', data.heldHeroIds);
+		
+		const heroesWithStats: CardHero[] = data.heroDescriptions.map((hero: Hero) => {
+			const card = data.activeDeck?.cards.find((c: { heroId: number }) => c.heroId === hero.id);
+			const isHeld = data.heldHeroIds.includes(hero.id);
+			//console.log(`Hero ${hero.id} (${hero.localized_name}): isHeld=${isHeld}`);
+			return {
+				...hero,
+				xp: card?.baseXP ?? 100,
+				gold: card?.baseGold ?? 100,
+				cardId: card?.id,
+				isHeld
+			};
+		});
+		heroPoolStore.setAllHeroes(heroesWithStats);
+	}
 
-    let isShopOpen = false;
-    let isLeaderboardOpen = false;
-    let selectedCards = new Set<string>();
+	// Hand management
+	let hand: (CardHero | null)[] = Array(data.seasonUser.handSize).fill(null);
+	if (data.seasonUser.heroDraws) {
+		// Only use active (non-discarded) draws
+		const activeDraws = data.seasonUser.heroDraws.filter((draw) => !draw.matchResult);
+		activeDraws.forEach((draw) => {
+			const hero = data.heroDescriptions.find((h) => h.id === draw.heroId);
+			if (hero) {
+				const cardHero: CardHero = {
+					...hero,
+					xp: data.activeDeck?.cards.find((c: { heroId: number }) => c.heroId === hero.id)?.baseXP ?? 100,
+					gold: data.activeDeck?.cards.find((c: { heroId: number }) => c.heroId === hero.id)?.baseGold ?? 100,
+					cardId: data.activeDeck?.cards.find((c: { heroId: number }) => c.heroId === hero.id)?.id,
+					holderId: data.activeDeck?.cards.find((c: { heroId: number }) => c.heroId === hero.id)?.holderId
+				};
+				// Find first empty slot
+				const emptySlot = hand.findIndex((h) => h === null);
+				if (emptySlot !== -1) {
+					hand[emptySlot] = cardHero;
+				}
+			}
+		});
+	}
 
-    // Create audio element for purchase sound
-    let purchaseSound: HTMLAudioElement;
-    if (typeof window !== 'undefined') {
-        purchaseSound = new Audio('/sounds/purchase.mp3');
-    }
+	$: console.log(hand);
 
-    function toggleCardSelection(card: HeroCard) {
-        if (selectedCards.has(card.id)) {
-            selectedCards.delete(card.id);
-        } else {
-            selectedCards.add(card.id);
-        }
-        selectedCards = selectedCards; // Trigger reactivity
-    }
+	let showingAnimation: boolean = false;
+	let showingStatUpdate: boolean = false;
+	let selectedHero: CardHero | null = null;
+	let currentHighlightId: number | null = null;
+	let animationInterval: NodeJS.Timeout;
+	let activeSlot: number | null = null;
+	let updatedCardStats: { heroId: number; gold: number; xp: number } | null = null;
+	let showStatBoost = false;
+	let statBoostData: StatBoostData | null = null;
+	let isCheckingWins = false;
+	let recentMatches = data.matchTableData;
+	let statUpdateData: { 
+		heroId: number;
+		isWin: boolean;
+		oldStats: { xp: number; gold: number };
+		newStats: { xp: number; gold: number };
+	} | null = null;
+	let isDrawing: boolean = false;
+	$: discardsRemaining = data.seasonUser?.discardTokens ?? 0;
 
-    function clearSelection() {
-        selectedCards.clear();
-        selectedCards = selectedCards;
-    }
+	let lastNotificationTime = 0;
+	const NOTIFICATION_COOLDOWN = 10000; // 10 seconds in milliseconds
 
-    async function purchaseCard(card: HeroCard) {
-        if (gold < card.cost) return;
+	function showDiscardNotification() {
+		const now = Date.now();
+		if (now - lastNotificationTime >= NOTIFICATION_COOLDOWN) {
+			toastStore.trigger({
+				message: 'Play a match with one of your heroes to refresh your discard tokens!',
+				background: 'variant-filled-warning'
+			});
+			lastNotificationTime = now;
+		}
+	}
 
-        const response = await fetch('/api/cards/purchase', {
-            method: 'POST',
-            body: JSON.stringify({ cardId: card.id })
-        });
+	function startHeroAnimation(hero: CardHero, slotIndex: number) {
+		isDrawing = true;
+		showingAnimation = true;
+		selectedHero = hero;
+		activeSlot = slotIndex;
+		let speed = 50;
+		let iterations = 0;
+		const maxIterations = 20;
 
-        if (response.ok) {
-            const result = await response.json();
-            gold = result.gameStats.gold;
-            currentHand = [...currentHand, {
-                id: result.userCard.id,
-                card: card,
-                timesPlayed: 0,
-                totalScore: 0,
-                lastPlayedAt: null
-            }];
-        }
-    }
+		function animate() {
+			animationInterval = setInterval(() => {
+				const availableHeroes = $heroPoolStore.availableHeroes;
+				currentHighlightId = availableHeroes[Math.floor(Math.random() * availableHeroes.length)].id;
+				iterations++;
 
-    async function purchaseSelectedCards() {
-        for (const cardId of selectedCards) {
-            const card = shopCards.find(c => c.id === cardId);
-            if (card) {
-                await purchaseCard(card);
-            }
-        }
-        clearSelection();
-        // Play sound and close shop
-        purchaseSound?.play();
-        isShopOpen = false;
-    }
+				if (iterations > maxIterations * 0.6) {
+					iterations < maxIterations * 0.9 ? speed = speed * 1.5 : speed * 1.05;
+					clearInterval(animationInterval);
+					if (iterations >= maxIterations) {
+						currentHighlightId = hero.id;
+						showingAnimation = false;
+						setTimeout(() => {
+							currentHighlightId = null;
+							if (activeSlot !== null) {
+								completeDrawHero(activeSlot);
+							}
+							isDrawing = false;
+						}, 300);
+					} else {
+						animate();
+					}
+				}
+			}, speed);
+		}
 
-    async function toggleShop() {
-        if (!isShopOpen) {
-            const response = await fetch('/api/cards/shop');
-            if (response.ok) {
-                const result = await response.json();
-                shopCards = result.cards;
-            }
-        }
-        isShopOpen = !isShopOpen;
-        isLeaderboardOpen = false;
-    }
+		animate();
+	}
 
-    function toggleLeaderboard() {
-        isLeaderboardOpen = !isLeaderboardOpen;
-        isShopOpen = false;
-    }
+	onDestroy(() => {
+		if (animationInterval) clearInterval(animationInterval);
+	});
 
-    async function startRound() {
-        if (currentRound) return;
-        
-        const response = await fetch('/api/rounds/start', {
-            method: 'POST',
-            body: JSON.stringify({ userCardIds: currentHand.map(uc => uc.id) })
-        });
+	function drawHero(slotIndex: number) {
+		// Filter out held heroes from available pool
+		const availableHeroes = $heroPoolStore.availableHeroes.filter(h => !h.isHeld);
 
-        if (response.ok) {
-            const result = await response.json();
-            currentRound = result.round;
-        }
-    }
+		if (availableHeroes.length === 0) {
+			showError('No heroes available to draw!');
+			return;
+		}
 
-    function toggleHandCardSelection(userCard: UserCard) {
-        if (selectedHandCards.has(userCard.id)) {
-            selectedHandCards.delete(userCard.id);
-        } else {
-            selectedHandCards.add(userCard.id);
-        }
-        selectedHandCards = selectedHandCards;
-    }
+		const hero = availableHeroes[
+			Math.floor(Math.random() * availableHeroes.length)
+		] as CardHero;
 
-    function clearHandSelection() {
-        selectedHandCards.clear();
-        selectedHandCards = selectedHandCards;
-    }
+		if (hero) {
+			startHeroAnimation(hero, slotIndex);
+		}
+	}
 
-    async function deleteSelectedCards() {
-        for (const userCardId of selectedHandCards) {
-            const response = await fetch('/api/cards/delete', {
-                method: 'POST',
-                headers: {
-                    'content-type': 'application/json'
-                },
-                body: JSON.stringify({ userCardId })
-            });
+	function showError(message: string) {
+		toastStore.trigger({
+			message,
+			background: 'variant-filled-error'
+		});
+	}
 
-            if (response.ok) {
-                currentHand = currentHand.filter(uc => uc.id !== userCardId);
-            }
-        }
-        clearHandSelection();
-    }
+	async function refreshCardHistories() {
+		const response = await fetch('/api/cards/history');
+		const data = await response.json();
+		if (data.success) {
+			cardHistoryStore.setHistories(data.histories);
+		}
+	}
+
+	async function completeDrawHero(slotIndex: number) {
+		showingAnimation = false;
+		if (selectedHero) {
+			const hero = selectedHero;
+			if (hero.cardId) {
+				const response = await fetch(`/api/cards/${hero.cardId}/draw`, {
+					method: 'POST',
+					body: JSON.stringify({ seasonUserId: data.seasonUser!.id })
+				});
+				const result = await response.json();
+
+				if (!result.success) {
+					showError('Failed to draw card');
+				} else {
+					// Refresh card histories
+					await refreshCardHistories();
+
+					// Update the drawn hero's status
+					heroPoolStore.updateHeroStatus(result.updatedHero.id, true);
+					
+					hand[slotIndex] = hero;
+					hand = [...hand];
+				}
+			}
+		}
+	}
+
+	async function discardHero(slotIndex: number) {
+		if (discardsRemaining <= 0) {
+			showError('No discard tokens remaining - you must play a match first');
+			return;
+		}
+		const oldHero = hand[slotIndex];
+		if (oldHero) {
+			const response = await fetch(`/api/cards/${oldHero.cardId}/discard`, {
+				method: 'POST',
+				body: JSON.stringify({ seasonUserId: data.seasonUser!.id })
+			});
+			const result = await response.json();
+
+			if (!result.success) {
+				showError(`Failed to discard card: ${result.error}`);
+			} else {
+				// Update local discard tokens count
+				if (data.seasonUser) {
+					data.seasonUser.discardTokens--;
+				}
+
+				// Refresh card histories
+				await refreshCardHistories();
+
+				// Show stat boost modal
+				statBoostData = {
+					heroId: oldHero.id,
+					oldStats: { gold: oldHero.gold, xp: oldHero.xp },
+					newStats: { 
+						gold: oldHero.gold + DOTADECK.DISCARD_BONUS.GOLD,
+						xp: oldHero.xp + DOTADECK.DISCARD_BONUS.XP 
+					}
+				};
+				showStatBoost = true;
+				setTimeout(() => {
+					showStatBoost = false;
+					statBoostData = null;
+				}, 2000);
+
+				// Update the discarded hero's status
+				heroPoolStore.updateHeroStatus(result.updatedHero.id, false);
+
+				// Update hero stats in store
+				const updatedHeroes = $heroPoolStore.allHeroes.map(h => {
+					if (h.id === oldHero.id) {
+						return {
+							...h,
+							gold: (h.gold ?? 100) + DOTADECK.DISCARD_BONUS.GOLD,
+							xp: (h.xp ?? 100) + DOTADECK.DISCARD_BONUS.XP
+						};
+					}
+					return h;
+				});
+				heroPoolStore.setAllHeroes(updatedHeroes);
+
+				hand[slotIndex] = null;
+				hand = [...hand];
+			}
+		}
+	}
+
+	async function checkForWins() {
+		isCheckingWins = true;
+		toastStore.trigger({
+			message: 'Checking for wins...',
+			background: 'variant-filled-primary'
+		});
+		
+		try {
+			const response = await fetch('/api/matches/check', {
+				method: 'POST',
+				body: JSON.stringify({
+					seasonUserId: data.seasonUser!.id,
+					heroIds: hand.filter(h => h !== null).map(h => h!.id)
+				})
+			});
+			const result = await response.json();
+
+			if (result.success && result.results) {
+				toastStore.trigger({
+					message: 'Check complete!',
+					background: 'variant-filled-success'
+				});
+				
+				// Process wins
+				result.results.forEach(async (result: MatchCheckResult) => {
+					const hero = hand.find((h) => h?.id === result.heroId);
+					if (!hero || !result.matchFound) return;
+
+					// Update local discard tokens count on match completion
+					if (data.seasonUser) {
+						data.seasonUser.discardTokens = 5;
+					}
+
+					// Mark hero as no longer held since match was found
+					heroPoolStore.updateHeroStatus(hero.id, false);
+
+					// Refresh card histories
+					await refreshCardHistories();
+
+					// Show stat update modal
+					statUpdateData = {
+						heroId: hero.id,
+						isWin: result.win,
+						oldStats: { xp: hero.xp, gold: hero.gold },
+						newStats: result.win 
+							? { xp: 100, gold: 100 }  // Reset to base stats on win
+							: { xp: hero.xp + DOTADECK.LOSS_REWARD.XP, gold: hero.gold + DOTADECK.LOSS_REWARD.GOLD }
+					};
+					modalStore.trigger({
+						type: 'component',
+						component: {
+							ref: StatUpdateAnimation,
+							props: statUpdateData
+						}
+					});
+
+					// Update hero stats and remove from hand
+					const updatedHeroes = $heroPoolStore.allHeroes.map((h) => {
+						if (h.id === hero.id) {
+							return { 
+								...h, 
+								...(h as CardHero),
+								gold: result.win ? 100 : (h as CardHero).gold + DOTADECK.LOSS_REWARD.GOLD,
+								xp: result.win ? 100 : (h as CardHero).xp + DOTADECK.LOSS_REWARD.XP,
+								isHeld: false
+							} as CardHero;
+						}
+						return h;
+					});
+					heroPoolStore.setAllHeroes(updatedHeroes);
+
+					// Remove from hand after animation completes
+					setTimeout(() => {
+						const index = hand.findIndex((h) => h?.id === hero.id);
+						if (index !== -1) {
+							hand[index] = null;
+							hand = [...hand];
+						}
+						showingStatUpdate = false;
+						statUpdateData = null;
+					}, 2000);
+				});
+			}
+		} catch (error) {
+			console.error('Error checking wins:', error);
+			toastStore.trigger({
+				message: 'Failed to check for wins',
+				background: 'variant-filled-error'
+			});
+		} finally {
+			isCheckingWins = false;
+		}
+	}
+
+	async function showLeaderboard() {
+		const response = await fetch('/api/dotadeck/leaderboard');
+		const leaderboardData = await response.json();
+		
+		modalStore.trigger({
+			type: 'component',
+			component: {
+				ref: LeaderboardModal,
+				props: {
+					players: leaderboardData.success ? leaderboardData.players : []
+				}
+			}
+		});
+	}
+
+	async function showRules() {
+		modalStore.trigger({
+			type: 'component',
+			component: {
+				ref: RulesModal
+			}
+		});
+	}
+
+	async function showHistory() {
+		const response = await fetch('/api/dotadeck/history');
+		const historyData = await response.json();
+		
+		modalStore.trigger({
+			type: 'component',
+			component: {
+				ref: HistoryModal,
+				props: {
+					history: historyData.success ? historyData.history : []
+				}
+			}
+		});
+	}
+
+	// Load card histories on mount
+	onMount(async () => {
+		const response = await fetch('/api/cards/history');
+		const data = await response.json();
+		if (data.success) {
+			cardHistoryStore.setHistories(data.histories);
+		}
+	});
+
+	// Show rules modal when data is loaded and user hasn't seen rules
+	$: if (data.seasonUser && !data.seasonUser.hasSeenRules) {
+		showRules();
+		fetch('/api/seasonUser/updateRulesSeen', {
+			method: 'POST',
+			body: JSON.stringify({ seasonUserId: data.seasonUser.id })
+		});
+	}
 </script>
 
-<div class="game-container flex flex-col h-[calc(100vh-64px)] w-full bg-gray-950 relative">
-    <!-- Game Nav -->
-    <div class="bg-gradient-to-r from-gray-900 to-gray-800 p-6 border-b border-gray-700/50 shadow-xl">
-        <div class="flex justify-between items-center">
-            <div class="flex items-center gap-4">
-                <div class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 to-amber-500 
-                            drop-shadow-[0_0_10px_rgba(251,191,36,0.3)]">
-                    Score: {score}
-                </div>
-                <div class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 to-amber-500 
-                            drop-shadow-[0_0_10px_rgba(251,191,36,0.3)]">
-                    Gold: ${gold}
-                </div>
-            </div>
-            <div class="flex gap-6">
-                <button class="px-8 py-3 rounded-lg bg-gradient-to-br from-gray-700 to-gray-800 text-white 
-                            transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_4px_20px_rgba(251,191,36,0.3)]
-                            border border-gray-700/50"
-                        on:click={toggleShop}>
-                    Card Shop
-                </button>
-                <button class="px-6 py-2 rounded-lg bg-gray-700 text-white transition-all duration-200 
-                             hover:-translate-y-1 hover:shadow-[0_2px_8px_rgba(255,215,0,0.2)]"
-                        on:click={toggleLeaderboard}>
-                    Leaderboard
-                </button>
-                <button class="px-6 py-2 rounded-lg bg-gray-700 text-white transition-all duration-200 
-                             hover:-translate-y-1 hover:shadow-[0_2px_8px_rgba(255,215,0,0.2)]">
-                    Ready to Play
-                </button>
-            </div>
-        </div>
-    </div>
+<div class="flex flex-col w-full">
+	<!-- Action Bar -->
+	<div class="w-full bg-surface-800/50 rounded-lg border border-surface-700/50 p-4 mb-2 shadow-xl">
+		<div class="flex justify-between items-center">
+			<h2 class="text-lg font-bold text-primary-500">Actions</h2>
+			<div class="flex gap-4">
+				<button class="btn btn-sm variant-filled-tertiary" on:click={showRules}>
+					<i class="fi fi-rr-book-bookmark mr-2"></i>
+					Rules
+				</button>
+				<button class="btn btn-sm bg-amber-500 text-black" on:click={showHistory}>
+					<i class="fi fi-rr-time-past mr-2"></i>
+					History
+				</button>
+				<button class="btn btn-sm variant-filled-secondary" on:click={showLeaderboard}>
+					<div class="flex items-center justify-center">
+					<i class="fi fi-rr-trophy-star mr-2"></i>
+					Leaderboard
+					</div>
+				</button>
+				<button class="btn btn-sm variant-filled-primary" on:click={checkForWins} disabled={isCheckingWins}>
+					{#if isCheckingWins}
+						<i class="fi fi-rr-loading animate-spin mr-2"></i>
+						Checking Wins...
+					{:else}
+						<i class="fi fi-rr-comment-question mr-2"></i>
+						Check for Matches
+					{/if}
+				</button>
+			</div>
+		</div>
+	</div>
+	<div class="container flex flex-col gap-4">
+		<!-- Deck View -->
+		<div class="w-full bg-surface-800/50 rounded-lg border border-surface-700/50">
+			<DeckView
+				isAnimating={showingAnimation}
+				{currentHighlightId}
+			/>
+		</div>
 
-    <!-- Game Content -->
-    <div class="flex-1 p-12 overflow-auto bg-gradient-to-b from-gray-900 to-gray-950">
-        <div class="bg-gradient-to-br from-[#2d5a44] to-[#1e3c2d] p-10 rounded-2xl 
-                    shadow-[inset_0_0_30px_rgba(0,0,0,0.4)] border border-emerald-800/30">
-            <h2 class="text-2xl font-bold text-emerald-100/90 mb-6 drop-shadow-lg">Current Hand</h2>
-            <div class="relative flex justify-center min-h-[300px] border-2 border-emerald-700/30 rounded-xl p-8
-                        bg-gradient-to-b from-emerald-900/20 to-transparent backdrop-blur-sm overflow-x-auto">
-                <div class="flex gap-6 min-w-fit px-4">
-                    {#each currentHand.filter(uc => uc?.card) as userCard}
-                        <HeroCard 
-                            card={userCard.card}
-                            selected={selectedHandCards.has(userCard.id)}
-                            showStats={true}
-                            timesPlayed={userCard.timesPlayed}
-                            totalScore={userCard.totalScore}
-                            ringColor="red"
-                            on:click={() => toggleHandCardSelection(userCard)}
-                        />
-                    {/each}
-                </div>
-            </div>
-            <div class="mt-6 flex justify-end gap-6">
-                <button
-                    class="px-8 py-3 rounded-lg bg-gradient-to-br from-red-600 to-red-700 text-white
-                           shadow-[0_0_20px_rgba(220,38,38,0.3)] border border-red-500/30
-                           transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_4px_25px_rgba(220,38,38,0.4)]"
-                    disabled={selectedHandCards.size === 0}
-                    on:click={deleteSelectedCards}
-                >
-                    Delete Selected ({selectedHandCards.size})
-                </button>
-                <button
-                    class="px-6 py-2 rounded-lg bg-gray-600 text-white transition-all duration-200 
-                           hover:-translate-y-1 hover:shadow-lg"
-                    on:click={clearHandSelection}
-                >
-                    Clear Selection
-                </button>
-            </div>
-        </div>
-    </div>
+		<div class="grid grid-cols-2 gap-8">
+			<!-- Hand -->
+			<div class="w-full bg-surface-800/50 rounded-lg border border-surface-700/50 p-4">
+				<div class="flex justify-between items-center mb-4">
+					<h2 class="text-lg font-bold text-primary-500">Hand</h2>
+					<div class="flex items-center gap-2">
+						<i class="fi fi-rr-recycle text-surface-400"></i>
+						<span class="text-sm text-surface-400">
+							Discards remaining: {discardsRemaining}
+						</span>
+					</div>
+				</div>
+				<div class="flex justify-center gap-4">
+					{#each hand as hero, i}
+						<div
+							class="relative w-32 h-48 bg-surface-700/50 rounded-lg border-2 border-surface-600/50 shadow-xl hover:shadow-2xl transition-all duration-200"
+						>
+							{#if hero}
+								<div class="absolute top-2 left-2">
+									<i class={`d2mh hero-${hero.id} scale-150`}></i>
+								</div>
+								<div class="absolute top-14 left-0 right-0 text-center">
+									<span class="text-xs font-bold text-yellow-300/90 drop-shadow-[0_0_3px_rgba(0,0,0,1)]">
+										{hero.localized_name}
+									</span>
+								</div>
+								<div class="absolute top-2 right-2 text-sm font-bold">
+									<div class="text-yellow-400">{hero.gold}g</div>
+									<div class="text-blue-400">{hero.xp}xp</div>
+								</div>
+								<div class="absolute bottom-2 w-full flex justify-center">
+									<button 
+										class="btn btn-sm variant-soft-error" 
+										on:click={() => discardHero(i)}
+										disabled={discardsRemaining <= 0}
+										on:mouseenter={() => {
+											if (discardsRemaining <= 0) showDiscardNotification();
+										}}
+									> 
+										Discard 
+									</button>
+								</div>
+							{:else}
+								<div class="w-full h-full flex items-center justify-center">
+									<button 
+										class="btn variant-filled-primary" 
+										on:click={() => drawHero(i)}
+										disabled={isDrawing}
+									> 
+										Draw 
+									</button>
+								</div>
+							{/if}
+							{#if showingAnimation && selectedHero && hero && currentHighlightId === hero.id}
+								<div class="absolute inset-0 bg-surface-900/80">
+									<HeroSelectionAnimation
+										heroes={$heroPoolStore.availableHeroes}
+										finalHero={selectedHero}
+										onComplete={() => completeDrawHero(i)}
+									/>
+								</div>
+							{/if}
+						</div>
+					{/each}
+				</div>
+			</div>
+			<!-- Match History -->
 
-    {#if isShopOpen}
-        <div class="absolute top-[10%] left-[10%] right-[10%] bottom-[10%] 
-                    bg-gradient-to-br from-gray-900 to-gray-950 rounded-xl 
-                    shadow-[0_0_50px_rgba(0,0,0,0.5)] border border-gray-800/50
-                    backdrop-blur-sm flex flex-col">
-            <div class="flex justify-between items-center p-8 pb-4">
-                <div class="flex items-center gap-4">
-                    <h2>Select a Card</h2>
-                    {#if selectedCards.size > 0}
-                        <div class="text-yellow-400 font-bold text-lg drop-shadow-[0_0_8px_rgba(255,215,0,0.5)]">
-                            Total Cost: ${[...selectedCards].reduce((sum, id) => {
-                                const card = shopCards.find(c => c.id === id);
-                                return sum + (card?.cost || 0);
-                            }, 0)}
-                        </div>
-                    {/if}
-                </div>
-                <button class="text-4xl bg-transparent border-none text-white cursor-pointer"
-                        on:click={toggleShop}>×</button>
-            </div>
-            <div class="grid grid-cols-5 gap-2 justify-items-center p-8 pt-0 overflow-y-auto">
-                {#each shopCards as card}
-                    <HeroCard 
-                        card={card}
-                        selected={selectedCards.has(card.id)}
-                        disabled={gold < card.cost || (selectedCards.size > 0 && !selectedCards.has(card.id))}
-                        ringColor="green"
-                        on:click={() => toggleCardSelection(card)}
-                    />
-                {/each}
-            </div>
-            <div class="bg-gray-800 p-4 flex justify-center gap-4 mt-auto">
-                <button
-                    class="px-6 py-2 rounded-lg bg-green-600 text-white transition-all duration-200 
-                           hover:-translate-y-1 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={selectedCards.size === 0 || ![...selectedCards].every(id => {
-                        const card = shopCards.find(c => c.id === id);
-                        return card && gold >= card.cost;
-                    })}
-                    on:click={purchaseSelectedCards}
-                >
-                    Purchase Selected ({selectedCards.size})
-                </button>
-                <button
-                    class="px-6 py-2 rounded-lg bg-gray-600 text-white transition-all duration-200 
-                           hover:-translate-y-1 hover:shadow-lg"
-                    on:click={clearSelection}
-                >
-                    Clear Selection
-                </button>
-            </div>
-        </div>
-    {/if}
-</div> 
+			<MatchHistory matchTableData={recentMatches} />
+		</div>
+	</div>
+</div>
+
+{#if showStatBoost && statBoostData}
+	<StatBoostModal data={statBoostData} />
+{/if}

@@ -46,6 +46,7 @@
 	//stores
 	import { randomStore } from '$lib/stores/randomStore';
 	import { townStore } from '$lib/stores/townStore';
+	import { heroPoolStore } from '$lib/stores/heroPoolStore';
 
 	//images
 	import Lock from '$lib/assets/lock.png';
@@ -55,6 +56,9 @@
 
 	if (browser) {
 		console.log('data: ', data);
+
+		// Initialize hero pool store with all heroes
+		heroPoolStore.setAllHeroes(data.heroDescriptions.allHeroes);
 	}
 
 	//$: console.log('data changed: ', data);
@@ -74,6 +78,9 @@
 
 					let setList = data.heroDescriptions.allHeroes.filter((hero: Hero) => randomBanListParsed.includes(hero.id));
 
+					// Update hero pool store with banned heroes
+					heroPoolStore.setBannedHeroes(setList);
+
 					return setList;
 				} else {
 					console.error('[quests page.svelte] - couldnt get ban list in checkForBanList');
@@ -90,9 +97,15 @@
 	let animateSlot2: boolean = false;
 	let animateSlot3: boolean = false;
 	$: animateSlot1, animateSlot2, animateSlot3;
+
+	// Subscribe to hero pool changes
+	let availableHeroCount: number;
+	heroPoolStore.subscribe(state => {
+		availableHeroCount = state.availableHeroes.length;
+	});
+
 	const onQuestComplete = (quests: any) => {
 		console.log('data.quests changed');
-		//console.log(quests)
 
 		let activeQuests = quests.questChecks.forEach((check: any) => {
 			if (check?.tx_result?.quest) {
@@ -258,6 +271,25 @@
 
 <div class="container h-full mx-auto w-full max-sm:mb-20">
 	<div class="flex flex-col items-center text-center">
+		<!-- Available Heroes Display -->
+		<div id=#availableHeroesDisplay class="w-full max-w-[1200px] p-4 bg-surface-800/50 rounded-lg mb-8 border border-surface-700/50">
+			<div class="flex items-center justify-between mb-4">
+				<h3 class="text-lg font-bold text-primary-500">Available Hero Pool</h3>
+				<div class="text-sm text-gray-400">
+					{availableHeroCount} Heroes Available
+				</div>
+			</div>
+			<div class="flex flex-wrap gap-1 justify-center">
+				{#each $heroPoolStore.availableHeroes as hero}
+				<div class={`object-contain m-2 relative`}>
+					<div class="w-8 h-8 hover:scale-150  transition-transform">
+						<div class=""><i class={`z-0 d2mh hero-${hero.id} scale-125`}></i></div>
+					</div>
+				</div>
+				{/each}
+			</div>
+		</div>
+
 		<!-- Quest Board and ban heroes -->
 		<div id="questBoardContainer" class="flex w-full">
 			<!-- Quest Board -->
