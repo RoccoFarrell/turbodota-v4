@@ -79,7 +79,10 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 					cardId: card.id,
 					seasonUserId,
 					action: 'DRAWN',
+					modType: 'MODIFY',
 					timestamp: new Date(),
+					currentGold: card.baseGold,
+					currentXP: card.baseXP,
 					goldMod: 0,
 					xpMod: 0
 				}

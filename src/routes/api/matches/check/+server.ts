@@ -35,13 +35,10 @@ export const POST: RequestHandler = async ({ request, fetch }) => {
             include: {
                 seasonUser: {
                     select: {
-                        accountId: true,
-                        heldCards: {
-                            where: { heroId: { in: heroIds } }
-                        }
+                        accountId: true
                     }
                 },
-                card: true  // Include card for creating history
+                card: true  // We'll use this directly
             }
         });
 
@@ -75,10 +72,16 @@ export const POST: RequestHandler = async ({ request, fetch }) => {
                 m.start_time > BigInt(Math.floor(heroDraw.drawnAt.getTime() / 1000))
             );
             const latestMatch = heroMatches[0];
-            const cardId = heroDraw.seasonUser.heldCards[0]?.id;
+            const cardId = heroDraw.card?.id;  // Add null check
             
             if (latestMatch && cardId) {
                 const matchWon = winOrLoss(latestMatch.player_slot, latestMatch.radiant_win);
+                
+                // Get current card values before resetting
+                const currentCard = await prisma.card.findUnique({
+                    where: { id: cardId }
+                });
+                
                 // Update the hero draw with match result
                 await prisma.heroDraw.update({
                     where: { id: heroDraw.id },
@@ -92,8 +95,8 @@ export const POST: RequestHandler = async ({ request, fetch }) => {
                 await prisma.card.update({
                     where: { id: cardId },
                     data: {
-                        baseXP: matchWon ? 100 : { increment: 50 },
-                        baseGold: matchWon ? 100 : { increment: 50 }
+                        baseXP: matchWon ? DOTADECK.BASE_STATS.XP : { increment: DOTADECK.LOSS_REWARD.XP },
+                        baseGold: matchWon ? DOTADECK.BASE_STATS.GOLD : { increment: DOTADECK.LOSS_REWARD.GOLD }
                     }
                 });
 
@@ -103,8 +106,11 @@ export const POST: RequestHandler = async ({ request, fetch }) => {
                         cardId: cardId,
                         seasonUserId: heroDraw.seasonUserId,
                         action: matchWon ? 'QUEST_WIN' : 'QUEST_LOSS',
-                        xpMod: matchWon ? 100 : 50,
-                        goldMod: matchWon ? 100 : 50
+                        modType: matchWon ? 'RESET' : 'ADD',
+                        currentGold: currentCard?.baseGold ?? DOTADECK.BASE_STATS.GOLD,
+                        currentXP: currentCard?.baseXP ?? DOTADECK.BASE_STATS.XP,
+                        xpMod: matchWon ? currentCard?.baseXP ?? DOTADECK.BASE_STATS.XP : DOTADECK.LOSS_REWARD.XP,
+                        goldMod: matchWon ? currentCard?.baseGold ?? DOTADECK.BASE_STATS.GOLD : DOTADECK.LOSS_REWARD.GOLD
                     }
                 });
 

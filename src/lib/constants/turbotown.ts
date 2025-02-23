@@ -1,5 +1,5 @@
-export const constant_townVersion: string = "4.11"
-export const constant_patchLink: string ="season-3-update"
+export const constant_townVersion: string = "5.0"
+export const constant_patchLink: string ="dotadeck-launch"
 export const constant_questXP: number = 100
 export const constant_questGold: number = 100
 export const questWin_xpMultiplier: number = 1.5

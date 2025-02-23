@@ -25,10 +25,10 @@ export const GET: RequestHandler = async ({ locals }) => {
                     }
                 }
             },
+            cardHistory: true,
             heroDraws: {
-                include: {
-                    card: true
-                }
+                where: { matchResult: null },
+                include: { card: true }
             }
         }
     });
@@ -36,30 +36,25 @@ export const GET: RequestHandler = async ({ locals }) => {
     const heroes = await prisma.hero.findMany();
 
     const players = seasonUsers.map(su => {
-        const wins = su.heroDraws.filter(d => d.matchResult === true);
-        const losses = su.heroDraws.filter(d => d.matchResult === false && d.matchId);
-        const discards = su.heroDraws.filter(d => d.matchResult === false && !d.matchId);
-
-        // Calculate total gold/xp earned from wins
-        const totalGoldEarned = wins.reduce((acc, draw) => acc + (draw.card?.baseGold ?? DOTADECK.BASE_STATS.GOLD), 0);
-        const totalXPEarned = wins.reduce((acc, draw) => acc + (draw.card?.baseXP ?? DOTADECK.BASE_STATS.XP), 0);
-        const winCount = wins.length;
+        // Calculate all stats from card history
+        const stats = su.cardHistory.reduce((acc, h) => ({
+            gold: acc.gold + (h.action === 'QUEST_WIN' ? h.goldMod : 0),
+            xp: acc.xp + (h.action === 'QUEST_WIN' ? h.xpMod : 0),
+            wins: acc.wins + (h.action === 'QUEST_WIN' ? 1 : 0),
+            losses: acc.losses + (h.action === 'QUEST_LOSS' ? 1 : 0),
+            discards: acc.discards + (h.action === 'DISCARDED' ? 1 : 0)
+        }), { gold: 0, xp: 0, wins: 0, losses: 0, discards: 0 });
 
         return {
             user: su.user.user,
             stats: {
-                gold: totalGoldEarned,
-                xp: totalXPEarned,
-                wins: winCount,
-                losses: losses.length,
-                discards: discards.length,
-                avgBounty: winCount > 0 ? {
-                    gold: Math.round(totalGoldEarned / winCount),
-                    xp: Math.round(totalXPEarned / winCount)
+                ...stats,
+                avgBounty: stats.wins > 0 ? {
+                    gold: Math.round(stats.gold / stats.wins),
+                    xp: Math.round(stats.xp / stats.wins)
                 } : null
             },
             currentHand: su.heroDraws
-                .filter(d => d.matchResult === null)
                 .map(d => ({
                     id: d.heroId,
                     localized_name: heroes.find(h => h.id === d.heroId)?.localized_name || 'Unknown',

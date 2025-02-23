@@ -56,6 +56,9 @@ export const POST: RequestHandler = async ({ params, request }) => {
 					seasonUserId,
 					cardId,
 					action: 'DISCARDED',
+					modType: 'ADD',
+					currentGold: card.baseGold,
+					currentXP: card.baseXP,
 					goldMod: DOTADECK.DISCARD_BONUS.GOLD,
 					xpMod: DOTADECK.DISCARD_BONUS.XP
 				}

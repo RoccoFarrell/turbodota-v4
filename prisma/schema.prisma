@@ -34,8 +34,8 @@ model User {
   dota_user    DotaUser?   @relation(fields: [account_id], references: [account_id])
 
   //matches      Match[]
-  Turbotown    Turbotown[]
-  userCards    UserCard[]
+  Turbotown     Turbotown[]
+  userCards     UserCard[]
   dotaDeckGames DotaDeckGame[]
 }
 
@@ -59,9 +59,9 @@ model DotaUser {
   newestMatchID BigInt?
   leagues       League[]
   seasons       Season[]
-  user          User?                                                                                                                                                                
+  user          User?
   FriendshipMMR FriendshipMMR[]
-  games       SeasonUser[]
+  games         SeasonUser[]
 
   @@index([account_id])
 }
@@ -226,7 +226,7 @@ model Random {
 //turbotown models
 model Turbotown {
   id          Int               @id @default(autoincrement())
-  account_id  Int               
+  account_id  Int
   seasonID    Int
   lastUpdated DateTime          @default(now())
   createdDate DateTime
@@ -384,37 +384,37 @@ enum EffectType {
 }
 
 model HeroCard {
-  id          String      @id @default(cuid())
-  name        String      @unique
+  id          String     @id @default(cuid())
+  name        String     @unique
   cost        Int
-  baseFormula String      
+  baseFormula String
   effectType  EffectType
   statType    StatType
-  description String      
+  description String
   imageUrl    String
-  
-  isActive    Boolean     @default(false)
-  requiresTarget Boolean  @default(false)
+
+  isActive        Boolean @default(false)
+  requiresTarget  Boolean @default(false)
   isDurationBased Boolean @default(false)
-  isStackable Boolean     @default(false)
-  
-  owners      UserCard[]
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  isStackable     Boolean @default(false)
+
+  owners    UserCard[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 }
 
 model UserCard {
-  id          String    @id @default(cuid())
-  userId      String
-  cardId      String
-  acquiredAt  DateTime  @default(now())
-  timesPlayed Int       @default(0)
-  totalScore  Float     @default(0)
+  id           String          @id @default(cuid())
+  userId       String
+  cardId       String
+  acquiredAt   DateTime        @default(now())
+  timesPlayed  Int             @default(0)
+  totalScore   Float           @default(0)
   lastPlayedAt DateTime?
-  rounds      RoundUserCard[]
+  rounds       RoundUserCard[]
 
-  user        User      @relation(fields: [userId], references: [id])
-  card        HeroCard  @relation(fields: [cardId], references: [id])
+  user User     @relation(fields: [userId], references: [id])
+  card HeroCard @relation(fields: [cardId], references: [id])
 
   @@unique([userId, cardId])
   @@index([userId])
@@ -427,21 +427,21 @@ enum GameStatus {
 }
 
 model DotaDeckGame {
-  id              String    @id @default(cuid())
+  id              String     @id @default(cuid())
   userId          String
-  gold            Int       @default(0)
-  score           Int       @default(0)
+  gold            Int        @default(0)
+  score           Int        @default(0)
   status          GameStatus @default(ACTIVE)
-  soloGamesPlayed Int       @default(0)
-  winStreak       Int       @default(0)
-  playStreak      Int       @default(0)
+  soloGamesPlayed Int        @default(0)
+  winStreak       Int        @default(0)
+  playStreak      Int        @default(0)
   lastPlayedAt    DateTime?
   completedAt     DateTime?
-  user            User      @relation(fields: [userId], references: [id])
+  user            User       @relation(fields: [userId], references: [id])
   rounds          Round[]
 
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([userId])
 }
@@ -453,126 +453,131 @@ enum RoundStatus {
 }
 
 model Round {
-  id          String    @id @default(cuid())
-  matchId     BigInt?
-  accountId   Int
-  finalScore  Int       @default(0)
-  status      RoundStatus @default(IN_PROGRESS)
-  
+  id         String      @id @default(cuid())
+  matchId    BigInt?
+  accountId  Int
+  finalScore Int         @default(0)
+  status     RoundStatus @default(IN_PROGRESS)
+
   gameId      String
-  game        DotaDeckGame @relation(fields: [gameId], references: [id])
+  game        DotaDeckGame        @relation(fields: [gameId], references: [id])
   activeCards RoundUserCard[]
   matchStats  PlayersMatchDetail? @relation(fields: [matchId, accountId], references: [match_id, account_id])
-  
+
   startedAt   DateTime  @default(now())
   completedAt DateTime?
-  
+
   @@index([gameId])
   @@index([matchId, accountId])
 }
 
-
 model RoundUserCard {
-  id          String    @id @default(cuid())
-  roundId     String
-  userCardId  String
-  
-  multiplierAchieved  Float     @default(1.0)
-  scoreContribution   Int       @default(0)
-  
-  round       Round     @relation(fields: [roundId], references: [id])
-  userCard    UserCard  @relation(fields: [userCardId], references: [id])
-  
+  id         String @id @default(cuid())
+  roundId    String
+  userCardId String
+
+  multiplierAchieved Float @default(1.0)
+  scoreContribution  Int   @default(0)
+
+  round    Round    @relation(fields: [roundId], references: [id])
+  userCard UserCard @relation(fields: [userCardId], references: [id])
+
   @@index([roundId])
   @@index([userCardId])
 }
 
 model SeasonUser {
-    id              String      @id @default(cuid())
-    accountId       Int
-    seasonId        Int
-    handSize        Int         @default(3)
-    discardTokens   Int         @default(5)
-    hasSeenRules    Boolean     @default(false)
-    season          Season      @relation(fields: [seasonId], references: [id])
-    user            DotaUser    @relation(fields: [accountId], references: [account_id])
-    joinedAt        DateTime    @default(now())
-    gamesPlayed     Int         @default(0)
-    questsCompleted Int         @default(0)
-    totalGold       Int         @default(0)
-    totalXP         Int         @default(0)
-    heldCards       Card[]      @relation("CurrentHolder")
-    cardHistory     CardHistory[]
-    heroDraws       HeroDraw[]
+  id            String        @id @default(cuid())
+  accountId     Int
+  seasonId      Int
+  handSize      Int           @default(3)
+  discardTokens Int           @default(5)
+  hasSeenRules  Boolean       @default(false)
+  season        Season        @relation(fields: [seasonId], references: [id])
+  user          DotaUser      @relation(fields: [accountId], references: [account_id])
+  joinedAt      DateTime      @default(now())
+  heldCards     Card[]        @relation("CurrentHolder")
+  cardHistory   CardHistory[]
+  heroDraws     HeroDraw[]
 
-    @@unique([seasonId, accountId])
+  @@unique([seasonId, accountId])
 }
 
 model Card {
-    id              String      @id @default(cuid())
-    heroId          Int
-    hero            Hero        @relation(fields: [heroId], references: [id])
-    baseGold        Int         @default(100)
-    baseXP          Int         @default(100)
-    goldMod         Int         @default(0)
-    xpMod           Int         @default(0)
-    drawLockCount   Int         @default(0)
-    lastDrawn       DateTime?
-    currentHolder   SeasonUser? @relation("CurrentHolder", fields: [holderId], references: [id])
-    holderId        String?
-    drawnAt         DateTime?
-    deckId          String?     
-    deck            Deck?       @relation(fields: [deckId], references: [id])
-    position        Int?        // Optional: position in the deck
-    history         CardHistory[]
-    heroDraws       HeroDraw[]
+  id            String        @id @default(cuid())
+  heroId        Int
+  hero          Hero          @relation(fields: [heroId], references: [id])
+  baseGold      Int           @default(100)
+  baseXP        Int           @default(100)
+  goldMod       Int           @default(0)
+  xpMod         Int           @default(0)
+  drawLockCount Int           @default(0)
+  lastDrawn     DateTime?
+  currentHolder SeasonUser?   @relation("CurrentHolder", fields: [holderId], references: [id])
+  holderId      String?
+  drawnAt       DateTime?
+  deckId        String?
+  deck          Deck?         @relation(fields: [deckId], references: [id])
+  position      Int? // Optional: position in the deck
+  history       CardHistory[]
+  heroDraws     HeroDraw[]
 
-    @@index([deckId])
-    @@index([heroId])
+  @@index([deckId])
+  @@index([heroId])
 }
 
 model Deck {
-    id          String      @id @default(cuid())
-    name        String      
-    seasonId    Int
-    season      Season      @relation(fields: [seasonId], references: [id])
-    cards       Card[]
-    isActive    Boolean     @default(true)
-    createdAt   DateTime    @default(now())
-    updatedAt   DateTime    @updatedAt
+  id        String   @id @default(cuid())
+  name      String
+  seasonId  Int
+  season    Season   @relation(fields: [seasonId], references: [id])
+  cards     Card[]
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-    @@unique([seasonId, name])
-}
-
-model CardHistory {
-    id              String      @id @default(cuid())
-    cardId          String
-    card            Card        @relation(fields: [cardId], references: [id])
-    action          CardAction  
-    seasonUserId    String      
-    seasonUser      SeasonUser  @relation(fields: [seasonUserId], references: [id])
-    timestamp       DateTime    @default(now())
-    goldMod         Int         
-    xpMod           Int         
+  @@unique([seasonId, name])
 }
 
 enum CardAction {
-    DRAWN
-    DISCARDED
-    QUEST_WIN
-    QUEST_LOSS
-    PASSIVE_MOD
+  DRAWN
+  DISCARDED
+  QUEST_WIN
+  QUEST_LOSS
+  PASSIVE_MOD
+}
+
+enum ModType {
+  ADD
+  SUBTRACT
+  RESET
+  MODIFY
+}
+
+model CardHistory {
+  id           String     @id @default(cuid())
+  cardId       String
+  card         Card       @relation(fields: [cardId], references: [id])
+  action       CardAction
+  modType      ModType
+  seasonUserId String
+  seasonUser   SeasonUser @relation(fields: [seasonUserId], references: [id])
+  timestamp    DateTime   @default(now())
+  currentGold  Int
+  currentXP    Int
+  goldMod      Int
+  xpMod        Int
 }
 
 // Track when users draw heroes
 model HeroDraw {
-  id           String    @id @default(cuid())
+  id           String     @id @default(cuid())
   seasonUserId String
   heroId       Int
-  drawnAt      DateTime  @default(now())
+  drawnAt      DateTime   @default(now())
   matchResult  Boolean?
   matchId      String?
   cardId       String?
   seasonUser   SeasonUser @relation(fields: [seasonUserId], references: [id])
-  card         Card?     @relation(fields: [cardId], references: [id])
+  card         Card?      @relation(fields: [cardId], references: [id])
 }

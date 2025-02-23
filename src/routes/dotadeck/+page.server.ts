@@ -31,7 +31,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 					drawnAt: 'desc'
 				},
 				take: 3  // Limit to hand size
-			}
+			},
+			cardHistory: true
 		}
 	});
 
@@ -97,13 +98,23 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	console.log('Found held cards:', heldCards);
 
+	// Calculate totals from card history
+	const totals = seasonUser?.cardHistory.reduce((acc, h) => ({
+		gold: acc.gold + (h.action === 'QUEST_WIN' ? h.goldMod : 0),
+		xp: acc.xp + (h.action === 'QUEST_WIN' ? h.xpMod : 0)
+	}), { gold: 0, xp: 0 });
+
 	return {
 		seasonUser,
 		activeDeck,
 		heroDescriptions,
 		heldHeroIds: heldCards.map(card => card.heroId),
 		matchTableData,
-		user  // Pass user data to the client
+		user,  // Pass user data to the client
+		stats: {
+			totalGold: totals?.gold ?? 0,
+			totalXP: totals?.xp ?? 0
+		}
 	};
 };
 

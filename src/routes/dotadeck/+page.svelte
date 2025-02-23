@@ -29,6 +29,47 @@
 		throw redirect(302, '/');
 	}
 
+	let isCheckingWins = false;
+	let autoCheckEnabled = true;  // Default to enabled
+	let visibilityHandler: () => Promise<void>;
+
+	// Setup visibility change handler in onMount
+	onMount(() => {
+		let checkTimeout: NodeJS.Timeout;
+		
+		visibilityHandler = async () => {
+			if (!isCheckingWins && autoCheckEnabled) {
+				console.log('Checking for wins...');
+				// Clear any pending timeout
+				if (checkTimeout) clearTimeout(checkTimeout);
+				
+				// Set a small delay to debounce multiple events
+				checkTimeout = setTimeout(() => {
+					const activeHeroes = hand.filter(h => h !== null).map(h => h!.id);
+					console.log('Active heroes:', activeHeroes);
+					if (activeHeroes.length > 0) {
+						checkForWins();
+					}
+				}, 100);
+			} else {
+				console.log('Current check status:', { isCheckingWins, autoCheckEnabled, visibilityState: document.visibilityState });
+			}
+		};
+	
+		if (browser) {
+			console.log('Setting up visibility and focus handlers');
+			document.addEventListener('visibilitychange', visibilityHandler);
+			window.addEventListener('focus', visibilityHandler);
+		}
+	});
+
+	onDestroy(() => {
+		if (browser && visibilityHandler) {
+			document.removeEventListener('visibilitychange', visibilityHandler);
+			window.removeEventListener('focus', visibilityHandler);
+		}
+	});
+
 	// Define extended hero type with game stats
 	interface CardHero extends Hero {
 		xp: number;
@@ -101,7 +142,6 @@
 	let updatedCardStats: { heroId: number; gold: number; xp: number } | null = null;
 	let showStatBoost = false;
 	let statBoostData: StatBoostData | null = null;
-	let isCheckingWins = false;
 	let recentMatches = data.matchTableData;
 	let statUpdateData: { 
 		heroId: number;
@@ -290,6 +330,7 @@
 	}
 
 	async function checkForWins() {
+		console.log('Checking for wins...');
 		isCheckingWins = true;
 		toastStore.trigger({
 			message: 'Checking for wins...',
@@ -441,12 +482,15 @@
 	}
 </script>
 
-<div class="flex flex-col w-full">
-	<!-- Action Bar -->
-	<div class="w-full bg-surface-800/50 rounded-lg border border-surface-700/50 p-4 mb-2 shadow-xl">
+<div class="container mx-auto p-4 space-y-8">
+	<div class="card p-4 sticky top-0 z-10">
 		<div class="flex justify-between items-center">
-			<h2 class="text-lg font-bold text-primary-500">Actions</h2>
 			<div class="flex gap-4">
+				<span class="text-yellow-400 font-bold">{(data.stats.totalGold)}g</span>
+				<span class="text-blue-400 font-bold">{(data.stats.totalXP)}xp</span>
+			</div>
+			<div class="flex gap-2">
+				
 				<button class="btn btn-sm variant-filled-tertiary" on:click={showRules}>
 					<i class="fi fi-rr-book-bookmark mr-2"></i>
 					Rules
@@ -469,6 +513,15 @@
 						<i class="fi fi-rr-comment-question mr-2"></i>
 						Check for Matches
 					{/if}
+				</button>
+				<button 
+					class="btn btn-sm {autoCheckEnabled ? 'variant-filled-success' : 'variant-filled-surface'}" 
+					on:click={() => autoCheckEnabled = !autoCheckEnabled}
+					data-tooltip="When enabled, automatically checks for matches when you return to this tab"
+					data-tooltip-placement="bottom"
+				>
+					<i class="fi {autoCheckEnabled ? 'fi-rr-refresh' : 'fi-rr-pause'} mr-2"></i>
+					Auto Check {autoCheckEnabled ? 'On' : 'Off'}
 				</button>
 			</div>
 		</div>
@@ -517,6 +570,7 @@
 										class="btn btn-sm variant-soft-error" 
 										on:click={() => discardHero(i)}
 										disabled={discardsRemaining <= 0}
+										role="button"
 										on:mouseenter={() => {
 											if (discardsRemaining <= 0) showDiscardNotification();
 										}}

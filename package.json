@@ -3,10 +3,11 @@
   "version": "4.0.0",
   "private": true,
   "scripts": {
-    "dev": "vite dev",
+    "dev": "cross-env NODE_ENV=development vite dev",
+    "dev:prod": "cross-env NODE_ENV=production vite dev",
     "dev:msw-server": "concurrently \"npx ts-node-esm src/mocks/server.ts\" \"npm run dev\"",
-    "build": "npx prisma generate && vite build",
-    "preview": "vite preview",
+    "build": "cross-env NODE_ENV=production npx prisma generate && vite build",
+    "preview": "cross-env NODE_ENV=production vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "test": "vitest",
@@ -16,7 +17,8 @@
     "coverage": "npx vitest run --coverage",
     "lint": "prettier --check .",
     "format": "prettier --write .",
-    "prisma": "npx prisma generate && npx prisma db push"
+    "prisma": "cross-env NODE_ENV=development npx prisma generate && npx prisma db push",
+    "prisma:prod": "cross-env NODE_ENV=production npx prisma generate && npx prisma db push"
   },
   "devDependencies": {
     "@playwright/test": "^1.40.1",
