@@ -2,6 +2,7 @@ import { json } from '@sveltejs/kit';
 import prisma from '$lib/server/prisma';
 import type { RequestHandler } from './$types';
 import { DOTADECK } from '$lib/constants/dotadeck';
+import winOrLoss from '$lib/helpers/winOrLoss';
 
 export const POST: RequestHandler = async ({ request, fetch }) => {
     const { seasonUserId, heroIds } = await request.json();
@@ -49,17 +50,14 @@ export const POST: RequestHandler = async ({ request, fetch }) => {
         }
 
         // Get all recent matches for the user
-        const recentMatches = await prisma.playersMatchDetail.findMany({
+        const recentMatches = await prisma.match.findMany({
             where: {
                 account_id: heroDraws[0].seasonUser.accountId,
             },
             orderBy: {
-                match_detail: { start_time: 'desc' }
+                start_time: 'desc'
             },
-            take: 5,
-            include: {
-                match_detail: true
-            }
+            take: 5
         });
 
         const heroes = await prisma.hero.findMany();
@@ -67,24 +65,25 @@ export const POST: RequestHandler = async ({ request, fetch }) => {
         const latestMatch = recentMatches[0];
         const latestMatchInfo = latestMatch ? {
             heroId: latestMatch.hero_id,
-            timestamp: new Date(Number(latestMatch.match_detail?.start_time || 0) * 1000)
+            timestamp: new Date(Number(latestMatch.start_time) * 1000)
         } : null;
 
         // Process each hero draw
         const results = await Promise.all(heroDraws.map(async heroDraw => {
             const heroMatches = recentMatches.filter(m => 
                 m.hero_id === heroDraw.heroId && 
-                (m.match_detail?.start_time || 0n) > BigInt(Math.floor(heroDraw.drawnAt.getTime() / 1000))
+                m.start_time > BigInt(Math.floor(heroDraw.drawnAt.getTime() / 1000))
             );
             const latestMatch = heroMatches[0];
             const cardId = heroDraw.seasonUser.heldCards[0]?.id;
             
             if (latestMatch && cardId) {
+                const matchWon = winOrLoss(latestMatch.player_slot, latestMatch.radiant_win);
                 // Update the hero draw with match result
                 await prisma.heroDraw.update({
                     where: { id: heroDraw.id },
                     data: { 
-                        matchResult: latestMatch.win === true,
+                        matchResult: matchWon,
                         matchId: latestMatch.match_id.toString()
                     }
                 });
@@ -93,8 +92,8 @@ export const POST: RequestHandler = async ({ request, fetch }) => {
                 await prisma.card.update({
                     where: { id: cardId },
                     data: {
-                        baseXP: latestMatch.win ? 100 : { increment: 50 },
-                        baseGold: latestMatch.win ? 100 : { increment: 50 }
+                        baseXP: matchWon ? 100 : { increment: 50 },
+                        baseGold: matchWon ? 100 : { increment: 50 }
                     }
                 });
 
@@ -103,9 +102,9 @@ export const POST: RequestHandler = async ({ request, fetch }) => {
                     data: {
                         cardId: cardId,
                         seasonUserId: heroDraw.seasonUserId,
-                        action: latestMatch.win ? 'QUEST_WIN' : 'QUEST_LOSS',
-                        xpMod: latestMatch.win ? 100 : 50,
-                        goldMod: latestMatch.win ? 100 : 50
+                        action: matchWon ? 'QUEST_WIN' : 'QUEST_LOSS',
+                        xpMod: matchWon ? 100 : 50,
+                        goldMod: matchWon ? 100 : 50
                     }
                 });
 
@@ -118,10 +117,10 @@ export const POST: RequestHandler = async ({ request, fetch }) => {
                 return {
                     heroId: heroDraw.heroId,
                     matchFound: true,
-                    win: latestMatch.win === true,
+                    win: matchWon,
                     latestMatch: {
                         heroId: latestMatch.hero_id,
-                        timestamp: new Date(Number(latestMatch.match_detail?.start_time || 0) * 1000)
+                        timestamp: new Date(Number(latestMatch.start_time) * 1000)
                     }
                 };
             }
@@ -139,18 +138,18 @@ export const POST: RequestHandler = async ({ request, fetch }) => {
             latestMatchInfo,
             recentMatches: recentMatches.map(m => ({
                 match_id: m.match_id,
-                result: m.win ? 'Won Match' : 'Lost Match',
+                result: winOrLoss(m.player_slot, m.radiant_win) ? 'Won Match' : 'Lost Match',
                 hero: {
                     id: m.hero_id,
                     name: heroes.find(h => h.id === m.hero_id)?.name || 'Unknown',
                     localized_name: heroes.find(h => h.id === m.hero_id)?.localized_name || 'Unknown'
                 },
-                win: m.win,
+                win: winOrLoss(m.player_slot, m.radiant_win),
                 kills: m.kills,
                 deaths: m.deaths,
                 assists: m.assists,
                 kda: ((m.kills + m.assists) / (m.deaths || 1)).toFixed(2),
-                start_time: new Date(Number(m.match_detail?.start_time) * 1000).toLocaleString()
+                start_time: new Date(Number(m.start_time) * 1000).toLocaleString()
             }))
         });
 

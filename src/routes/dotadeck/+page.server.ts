@@ -1,3 +1,4 @@
+import winOrLoss from '$lib/helpers/winOrLoss';
 import prisma from '$lib/server/prisma';
 import type { PageServerLoad } from './$types';
 import type { Actions } from './$types';
@@ -39,29 +40,26 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const heroDescriptions = await prisma.hero.findMany();
 
 	// Get recent matches
-	const recentMatches = await prisma.playersMatchDetail.findMany({
+	const recentMatches = await prisma.match.findMany({
 		where: {
 			account_id: session.user.account_id
 		},
 		orderBy: {
-			match_detail: { start_time: 'desc' }
+			start_time: 'desc'
 		},
-		take: 5,
-		include: {
-			match_detail: true
-		}
+		take: 5
 	});
 
 	const matchTableData = recentMatches.map(m => ({
 		match_id: m.match_id,
-		result: m.win ? true : false,
+		result: winOrLoss(m.player_slot, m.radiant_win),
 		hero: m.hero_id,
-		win: m.win,
+		win: winOrLoss(m.player_slot, m.radiant_win),
 		kills: m.kills,
 		deaths: m.deaths,
 		assists: m.assists,
 		kda: ((m.kills + m.assists) / (m.deaths || 1)).toFixed(2),
-		start_time: new Date(Number(m.match_detail?.start_time) * 1000).toLocaleString()
+		start_time: new Date(Number(m.start_time) * 1000).toLocaleString()
 	}));
 
 	const activeDeck = await prisma.deck.findFirst({

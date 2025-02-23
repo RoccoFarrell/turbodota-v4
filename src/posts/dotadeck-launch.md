@@ -18,7 +18,6 @@ Greetings Turbodota challengers! 🔥
 We're thrilled to announce the launch of DotaDeck, where players compete over a shared deck of Hero Cards! In this exciting new game mode, you'll:
 
 - Draw Hero Cards into your hand
-- Level them up through victories
 - Earn gold and XP for each match win
 - Hunt for the highest-value Hero Cards
 
@@ -28,7 +27,7 @@ All players share the same deck of Hero Cards, with each card's value growing ov
 
 - **Win a match**: Claim the bounty of gold and XP! The Hero Card returns to base stats and goes back into the shared pool
 - **Lose a match**: The Hero Card gains gold and XP, making it an even bigger prize for the next player
-- **Discard a hero**: Boost the Hero Card's stats before returning it to the pool (limited to 5 discards)
+- **Discard a hero**: Boost the Hero Card's stats when returning it to the pool (limited to 5 discards)
 
 ### Managing Your Discards
 
