@@ -5,4 +5,10 @@
 
 .animate-fly-up {
   animation: fly-up 1s ease-out forwards;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0) translateY(-8px); }
+  25% { transform: translateX(-1px) translateY(-8px); }
+  75% { transform: translateX(1px) translateY(-8px); }
 } 

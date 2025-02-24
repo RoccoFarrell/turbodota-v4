@@ -2,7 +2,7 @@
 	import { browser } from '$app/environment';
 	import { onDestroy, onMount } from 'svelte';
 	import { heroPoolStore } from '$lib/stores/heroPoolStore';
-	import { getToastStore, getModalStore } from '@skeletonlabs/skeleton';
+	import { getToastStore, getModalStore} from '@skeletonlabs/skeleton';
 	import type { Hero } from '@prisma/client';
 	import type { PageData } from './$types';
 	import { redirect } from '@sveltejs/kit';
@@ -14,10 +14,12 @@
 	import LeaderboardModal from './_components/LeaderboardModal.svelte';
 	import RulesModal from './_components/RulesModal.svelte';
 	import HistoryModal from './_components/HistoryModal.svelte';
-	import MatchHistory from '$lib/components/MatchHistory.svelte';
+	import HeroHistory from './_components/HeroHistory.svelte';
 	import type { StatBoostData } from '$lib/types/dotadeck';
 	import { cardHistoryStore } from '$lib/stores/cardHistoryStore';
 	import type { CardHistoryEntry } from '$lib/stores/cardHistoryStore';
+	import AutoCheckTooltip from './_components/AutoCheckTooltip.svelte';
+	import MatchHistory from '$lib/components/MatchHistory.svelte';
 
 	const toastStore = getToastStore();
 	const modalStore = getModalStore();
@@ -30,7 +32,9 @@
 	}
 
 	let isCheckingWins = false;
-	let autoCheckEnabled = true;  // Default to enabled
+	let autoCheckEnabled = browser ? 
+		JSON.parse(sessionStorage.getItem('autoCheckEnabled') ?? 'true') : 
+		true;
 	let visibilityHandler: () => Promise<void>;
 
 	// Setup visibility change handler in onMount
@@ -208,21 +212,43 @@
 		if (animationInterval) clearInterval(animationInterval);
 	});
 
-	function drawHero(slotIndex: number) {
-		// Filter out held heroes from available pool
-		const availableHeroes = $heroPoolStore.availableHeroes.filter(h => !h.isHeld);
+	async function drawHero(index: number) {
+		// Count current non-null heroes in hand
+		const currentHeroCount = hand.filter(h => h !== null).length;
 
-		if (availableHeroes.length === 0) {
-			showError('No heroes available to draw!');
+		// Check if drawing would exceed hand size
+		if (currentHeroCount >= data.seasonUser!.handSize) {
+			toastStore.trigger({
+				message: `Cannot draw more than ${data.seasonUser!.handSize} heroes`,
+				background: 'variant-filled-error'
+			});
 			return;
 		}
 
-		const hero = availableHeroes[
-			Math.floor(Math.random() * availableHeroes.length)
-		] as CardHero;
+		if (isDrawing) return;
+		isDrawing = true;
 
-		if (hero) {
-			startHeroAnimation(hero, slotIndex);
+		try {
+			// Filter out held heroes from available pool
+			const availableHeroes = $heroPoolStore.availableHeroes.filter(h => !h.isHeld);
+
+			if (availableHeroes.length === 0) {
+				showError('No heroes available to draw!');
+				return;
+			}
+
+			const hero = availableHeroes[
+				Math.floor(Math.random() * availableHeroes.length)
+			] as CardHero;
+
+			if (hero) {
+				startHeroAnimation(hero, index);
+			}
+		} catch (error) {
+			console.error('Error drawing hero:', error);
+			showError('Failed to draw hero');
+		} finally {
+			isDrawing = false;
 		}
 	}
 
@@ -463,6 +489,18 @@
 		});
 	}
 
+	async function showMatchHistory() {
+		modalStore.trigger({
+			type: 'component',
+			component: {
+				ref: MatchHistory,
+				props: {
+					matchTableData: recentMatches
+				}
+			}
+		});
+	}
+
 	// Load card histories on mount
 	onMount(async () => {
 		const response = await fetch('/api/cards/history');
@@ -480,6 +518,13 @@
 			body: JSON.stringify({ seasonUserId: data.seasonUser.id })
 		});
 	}
+
+	// Add state variables for tooltip
+	let showAutoCheckTooltip = false;
+	let tooltipX = 0;
+	let tooltipY = 0;
+
+	let selectedHeroId: number | null = null;
 </script>
 
 <div class="container mx-auto p-4 space-y-8">
@@ -490,21 +535,26 @@
 				<span class="text-blue-400 font-bold">{(data.stats.totalXP)}xp</span>
 			</div>
 			<div class="flex gap-2">
-				
-				<button class="btn btn-sm variant-filled-tertiary" on:click={showRules}>
-					<i class="fi fi-rr-book-bookmark mr-2"></i>
-					Rules
-				</button>
-				<button class="btn btn-sm bg-amber-500 text-black" on:click={showHistory}>
-					<i class="fi fi-rr-time-past mr-2"></i>
-					History
-				</button>
 				<button class="btn btn-sm variant-filled-secondary" on:click={showLeaderboard}>
 					<div class="flex items-center justify-center">
 					<i class="fi fi-rr-trophy-star mr-2"></i>
 					Leaderboard
 					</div>
 				</button>
+				<button class="btn btn-sm variant-filled-tertiary" on:click={showRules}>
+					<i class="fi fi-rr-book-bookmark mr-2"></i>
+					Rules
+				</button>
+				<div class="border-l border-surface-500 mx-2"></div>
+				<button class="btn btn-sm bg-amber-500 text-black" on:click={showHistory}>
+					<i class="fi fi-rr-time-past mr-2"></i>
+					Game History
+				</button>
+				<button class="btn btn-sm bg-purple-800 text-white" on:click={showMatchHistory}>
+					<i class="fi fi-rr-chart-line-up mr-2"></i>
+					Recent Matches
+				</button>
+				<div class="border-l border-surface-500 mx-2"></div>
 				<button class="btn btn-sm variant-filled-primary" on:click={checkForWins} disabled={isCheckingWins}>
 					{#if isCheckingWins}
 						<i class="fi fi-rr-loading animate-spin mr-2"></i>
@@ -516,9 +566,18 @@
 				</button>
 				<button 
 					class="btn btn-sm {autoCheckEnabled ? 'variant-filled-success' : 'variant-filled-surface'}" 
-					on:click={() => autoCheckEnabled = !autoCheckEnabled}
-					data-tooltip="When enabled, automatically checks for matches when you return to this tab"
-					data-tooltip-placement="bottom"
+					on:click={() => {
+						autoCheckEnabled = !autoCheckEnabled;
+						if (browser) {
+							sessionStorage.setItem('autoCheckEnabled', JSON.stringify(autoCheckEnabled));
+						}
+					}}
+					on:mouseenter={(e) => {
+						tooltipX = e.clientX;
+						tooltipY = e.clientY;
+						showAutoCheckTooltip = true;
+					}}
+					on:mouseleave={() => showAutoCheckTooltip = false}
 				>
 					<i class="fi {autoCheckEnabled ? 'fi-rr-refresh' : 'fi-rr-pause'} mr-2"></i>
 					Auto Check {autoCheckEnabled ? 'On' : 'Off'}
@@ -532,10 +591,12 @@
 			<DeckView
 				isAnimating={showingAnimation}
 				{currentHighlightId}
+				{selectedHeroId}
+				on:selectHero={(e) => selectedHeroId = e.detail.heroId}
 			/>
 		</div>
 
-		<div class="grid grid-cols-2 gap-8">
+		<div class="grid grid-cols-2 gap-4">
 			<!-- Hand -->
 			<div class="w-full bg-surface-800/50 rounded-lg border border-surface-700/50 p-4">
 				<div class="flex justify-between items-center mb-4">
@@ -550,27 +611,47 @@
 				<div class="flex justify-center gap-4">
 					{#each hand as hero, i}
 						<div
-							class="relative w-32 h-48 bg-surface-700/50 rounded-lg border-2 border-surface-600/50 shadow-xl hover:shadow-2xl transition-all duration-200"
+							class="relative w-40 h-60 bg-surface-700/50 rounded-lg border-2 border-surface-600/50 shadow-xl 
+								hover:shadow-2xl transition-all duration-200 cursor-pointer
+								hover:-translate-y-2 hover:scale-105
+								{selectedHeroId === hero?.id ? 'ring-4 ring-amber-500' : ''}"
+							role="button"
+							tabindex="0"
+							on:click={() => {
+								if (hero) {
+									selectedHeroId = selectedHeroId === hero.id ? null : hero.id;
+								}
+							}}
+							on:keypress={(e) => {
+								if (e.key === 'Enter' && hero) {
+									selectedHeroId = selectedHeroId === hero.id ? null : hero.id;
+								}
+							}}
 						>
 							{#if hero}
-								<div class="absolute top-2 left-2">
-									<i class={`d2mh hero-${hero.id} scale-150`}></i>
-								</div>
-								<div class="absolute top-14 left-0 right-0 text-center">
-									<span class="text-xs font-bold text-yellow-300/90 drop-shadow-[0_0_3px_rgba(0,0,0,1)]">
+								<div class="absolute top-10 left-0 right-0 text-center">
+									<span class="text-md font-bold text-yellow-300/90 drop-shadow-[0_0_3px_rgba(0,0,0,1)] animate-pulse">
 										{hero.localized_name}
 									</span>
 								</div>
-								<div class="absolute top-2 right-2 text-sm font-bold">
-									<div class="text-yellow-400">{hero.gold}g</div>
-									<div class="text-blue-400">{hero.xp}xp</div>
+								<div class="absolute -top-1 -left-1">
+									<div class="rounded-full bg-surface-900/80 w-10 h-10 flex items-center justify-center border border-amber-500">
+										<span class="text-xs font-bold text-yellow-400">{hero.gold}g</span>
+									</div>
+								</div>
+								<div class="absolute -top-1 -right-1">
+									<div class="rounded-full bg-surface-900/80 w-10 h-10 flex items-center justify-center border border-amber-500">
+										<span class="text-xs font-bold text-blue-400">{hero.xp}xp</span>
+									</div>
+								</div>
+								<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+									<i class={`d2mh hero-${hero.id} scale-[2]`}></i>
 								</div>
 								<div class="absolute bottom-2 w-full flex justify-center">
 									<button 
 										class="btn btn-sm variant-soft-error" 
 										on:click={() => discardHero(i)}
 										disabled={discardsRemaining <= 0}
-										role="button"
 										on:mouseenter={() => {
 											if (discardsRemaining <= 0) showDiscardNotification();
 										}}
@@ -589,22 +670,12 @@
 									</button>
 								</div>
 							{/if}
-							{#if showingAnimation && selectedHero && hero && currentHighlightId === hero.id}
-								<div class="absolute inset-0 bg-surface-900/80">
-									<HeroSelectionAnimation
-										heroes={$heroPoolStore.availableHeroes}
-										finalHero={selectedHero}
-										onComplete={() => completeDrawHero(i)}
-									/>
-								</div>
-							{/if}
 						</div>
 					{/each}
 				</div>
 			</div>
-			<!-- Match History -->
-
-			<MatchHistory matchTableData={recentMatches} />
+			<!-- Hero History -->
+			<HeroHistory {selectedHeroId} />
 		</div>
 	</div>
 </div>
@@ -612,3 +683,17 @@
 {#if showStatBoost && statBoostData}
 	<StatBoostModal data={statBoostData} />
 {/if}
+
+{#if showAutoCheckTooltip}
+	<AutoCheckTooltip x={tooltipX} y={tooltipY} />
+{/if}
+
+<!-- {#if showingAnimation && selectedHero && activeSlot !== null}
+	<div class="fixed inset-0 bg-surface-900/80 z-50 flex items-center justify-center">
+		<HeroSelectionAnimation
+			heroes={$heroPoolStore.availableHeroes}
+			finalHero={selectedHero}
+			onComplete={() => completeDrawHero(activeSlot)}
+		/>
+	</div>
+{/if} -->

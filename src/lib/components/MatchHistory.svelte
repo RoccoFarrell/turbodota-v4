@@ -22,7 +22,7 @@
 <!-- <Table source={tableMatch}/> -->
 <!-- <div class="w-full flex flex-col p-1 space-y-4 md:w-full max-md:max-w-sm"> -->
 <div
-	class="w-full h-fit max-md:max-w-sm space-y-2 dark:bg-surface-600/30 bg-surface-200/30 border border-surface-200 dark:border-surface-700 rounded-lg relative"
+	class="w-full h-fit max-md:max-w-sm space-y-2 dark:bg-surface-600 bg-surface-200 border border-surface-200 dark:border-surface-700 rounded-lg relative p-4"
 >
     <div class="w-full justify-center items-center px-2">
         <h2 class="h2 text-primary-500 w-full border-b border-primary-500 border-dashed">Last 5 Turbos</h2>

@@ -54,7 +54,7 @@
                             <span class="text-blue-400">{event.xpMod > 0 ? '+' : ''}{event.xpMod}xp</span>
                         {/if}
                     </span>
-                    <span class="text-surface-500 text-sm ml-auto">
+                    <span class="text-surface-300 text-sm ml-auto">
                         {new Date(event.timestamp).toLocaleString()}
                     </span>
                 </div>

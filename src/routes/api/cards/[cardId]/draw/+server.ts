@@ -8,34 +8,50 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 	
 	const { seasonUserId } = await request.json();
 	
-	// Get the season user to get the season ID
-	const seasonUser = await prisma.seasonUser.findUnique({
-		where: { id: seasonUserId }
-	});
-	
-	if (!seasonUser) {
-		return json({ success: false, error: 'Season user not found' });
-	}
-	
-	// Get all currently held heroes in the league
-	const heldCards = await prisma.card.findMany({
-		where: {
-			deck: {
-				seasonId: seasonUser.seasonId,
-				isActive: true
-			},
-			holderId: {
-				not: null
-			},
-			heroDraws: {
-				some: {
-					matchResult: null
+	try {
+		// Get current hand count and hand size limit
+		const [seasonUser, currentHand] = await prisma.$transaction([
+			prisma.seasonUser.findUnique({
+				where: { id: seasonUserId }
+			}),
+			prisma.heroDraw.count({
+				where: {
+					seasonUserId,
+					matchResult: null  // Only count active draws
+				}
+			})
+		]);
+
+		if (!seasonUser) {
+			return json({ success: false, error: 'Season user not found' });
+		}
+
+		// Validate hand size
+		if (currentHand >= seasonUser.handSize) {
+			return json({ 
+				success: false, 
+				error: `Cannot draw more than ${seasonUser.handSize} heroes` 
+			});
+		}
+
+		// Get all currently held heroes in the league
+		const heldCards = await prisma.card.findMany({
+			where: {
+				deck: {
+					seasonId: seasonUser.seasonId,
+					isActive: true
+				},
+				holderId: {
+					not: null
+				},
+				heroDraws: {
+					some: {
+						matchResult: null
+					}
 				}
 			}
-		}
-	});
+		});
 
-	try {
 		const result = await prisma.$transaction(async (tx) => {
 			// Get the card
 			const card = await tx.card.findUnique({

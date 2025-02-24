@@ -4,6 +4,7 @@
 	import { heroPoolStore } from '$lib/stores/heroPoolStore';
 	import { fade } from 'svelte/transition';
 	import CardHistoryTooltip from './CardHistoryTooltip.svelte';
+	import { createEventDispatcher } from 'svelte';
 
 	interface GameHero extends Hero {
 		xp: number;
@@ -17,6 +18,10 @@
 
 	let showRaisedXP = false;
 	let showRaisedGold = false;
+
+	const dispatch = createEventDispatcher<{
+		selectHero: { heroId: number };
+	}>();
 
 	$: filteredHeroes = $heroPoolStore.allHeroes
 		.sort((a, b) => {
@@ -32,6 +37,7 @@
 
 	export let isAnimating: boolean = false;
 	export let currentHighlightId: number | null = null;
+	export let selectedHeroId: number | null = null;
 
 	$: heroes = $heroPoolStore.allHeroes;
 
@@ -69,6 +75,7 @@
 					${!hero.isFiltered ? 'opacity-10 cursor-not-allowed' : ''}
 					${hero.isDrawn ? 'opacity-10 cursor-not-allowed' : 'cursor-pointer hover:scale-110'}
 					${currentHighlightId === hero.id ? 'border-4 border-primary-500' : ''}
+					${selectedHeroId === hero.id ? 'ring-4 ring-amber-500' : ''}
 					${isHeroDisabled(hero.id) ? 'opacity-10' : ''}`}
 				role="button"
 				tabindex="0"
@@ -78,6 +85,10 @@
 					mouseY = e.clientY;
 				}}
 				on:mouseleave={() => (hoveredHeroId = null)}
+				on:click={() => {
+					selectedHeroId = selectedHeroId === hero.id ? null : hero.id;
+					dispatch('selectHero', { heroId: selectedHeroId });
+				}}
 			>
 				<div
 					class="w-8 h-8 transition-all duration-200 relative mx-auto mt-2"
