@@ -23,11 +23,21 @@
 		selectHero: { heroId: number };
 	}>();
 
+	type SortType = 'alpha' | 'xp' | 'gold';
+	let currentSort: SortType = 'alpha';
+
 	$: filteredHeroes = $heroPoolStore.allHeroes
 		.sort((a, b) => {
-			if (a.localized_name < b.localized_name) return -1;
-			else if (a.localized_name > b.localized_name) return 1;
-			else return 0;
+			switch (currentSort) {
+				case 'alpha':
+					return a.localized_name.localeCompare(b.localized_name);
+				case 'xp':
+					return (b.xp ?? 0) - (a.xp ?? 0);
+				case 'gold':
+					return (b.gold ?? 0) - (a.gold ?? 0);
+				default:
+					return 0;
+			}
 		})
 		.map((hero) => ({
 			...hero,
@@ -54,6 +64,31 @@
 	<div class="flex justify-between items-center mb-4">
 		<h2 class="text-lg font-bold text-primary-500">Deck View</h2>
 		<div class="flex gap-4">
+			<div class="flex flex-col gap-2">
+				
+				<div class="flex gap-2 justify-center align-middle">
+					<span class="text-xs text-white-500">Sort:</span>
+					<button
+						class="btn btn-sm {currentSort === 'alpha' ? 'variant-filled-surface' : 'variant-soft-surface'}"
+						on:click={() => currentSort = 'alpha'}
+					>
+						<i class="fi fi-rr-text-alt text-xs">Alphabetical</i>
+					</button>
+					<button
+						class="btn btn-sm {currentSort === 'xp' ? 'variant-filled-primary' : 'variant-soft-primary'}"
+						on:click={() => currentSort = 'xp'}
+					>
+						<span class="text-xs">XP</span>
+					</button>
+					<button
+						class="btn btn-sm {currentSort === 'gold' ? 'variant-filled-warning' : 'variant-soft-warning'}"
+						on:click={() => currentSort = 'gold'}
+					>
+						<span class="text-xs">Gold</span>
+					</button>
+				</div>
+			</div>
+			<div class="divider-vertical h-8"></div>
 			<button
 				class="btn btn-sm {showRaisedXP ? 'variant-filled-primary' : 'variant-soft-primary'}"
 				on:click={() => (showRaisedXP = !showRaisedXP)}
@@ -87,7 +122,17 @@
 				on:mouseleave={() => (hoveredHeroId = null)}
 				on:click={() => {
 					selectedHeroId = selectedHeroId === hero.id ? null : hero.id;
-					dispatch('selectHero', { heroId: selectedHeroId });
+					if (selectedHeroId !== null) {
+						dispatch('selectHero', { heroId: selectedHeroId });
+					}
+				}}
+				on:keypress={(e) => {
+					if (e.key === 'Enter') {
+						selectedHeroId = selectedHeroId === hero.id ? null : hero.id;
+						if (selectedHeroId !== null) {
+							dispatch('selectHero', { heroId: selectedHeroId });
+						}
+					}
 				}}
 			>
 				<div

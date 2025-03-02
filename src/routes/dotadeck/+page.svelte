@@ -294,63 +294,75 @@
 		}
 	}
 
+	let isDiscarding = false;
+
 	async function discardHero(slotIndex: number) {
 		if (discardsRemaining <= 0) {
 			showError('No discard tokens remaining - you must play a match first');
 			return;
 		}
+		if (isDiscarding) return;
+		isDiscarding = true;
+		
 		const oldHero = hand[slotIndex];
 		if (oldHero) {
-			const response = await fetch(`/api/cards/${oldHero.cardId}/discard`, {
-				method: 'POST',
-				body: JSON.stringify({ seasonUserId: data.seasonUser!.id })
-			});
-			const result = await response.json();
-
-			if (!result.success) {
-				showError(`Failed to discard card: ${result.error}`);
-			} else {
-				// Update local discard tokens count
-				if (data.seasonUser) {
-					data.seasonUser.discardTokens--;
-				}
-
-				// Refresh card histories
-				await refreshCardHistories();
-
-				// Show stat boost modal
-				statBoostData = {
-					heroId: oldHero.id,
-					oldStats: { gold: oldHero.gold, xp: oldHero.xp },
-					newStats: { 
-						gold: oldHero.gold + DOTADECK.DISCARD_BONUS.GOLD,
-						xp: oldHero.xp + DOTADECK.DISCARD_BONUS.XP 
-					}
-				};
-				showStatBoost = true;
-				setTimeout(() => {
-					showStatBoost = false;
-					statBoostData = null;
-				}, 2000);
-
-				// Update the discarded hero's status
-				heroPoolStore.updateHeroStatus(result.updatedHero.id, false);
-
-				// Update hero stats in store
-				const updatedHeroes = $heroPoolStore.allHeroes.map(h => {
-					if (h.id === oldHero.id) {
-						return {
-							...h,
-							gold: (h.gold ?? 100) + DOTADECK.DISCARD_BONUS.GOLD,
-							xp: (h.xp ?? 100) + DOTADECK.DISCARD_BONUS.XP
-						};
-					}
-					return h;
+			try {
+				const response = await fetch(`/api/cards/${oldHero.cardId}/discard`, {
+					method: 'POST',
+					body: JSON.stringify({ seasonUserId: data.seasonUser!.id })
 				});
-				heroPoolStore.setAllHeroes(updatedHeroes);
+				const result = await response.json();
 
-				hand[slotIndex] = null;
-				hand = [...hand];
+				if (!result.success) {
+					showError(`Failed to discard card: ${result.error}`);
+				} else {
+					// Update local discard tokens count
+					if (data.seasonUser) {
+						data.seasonUser.discardTokens--;
+					}
+
+					// Refresh card histories
+					await refreshCardHistories();
+
+					// Show stat boost modal
+					statBoostData = {
+						heroId: oldHero.id,
+						oldStats: { gold: oldHero.gold, xp: oldHero.xp },
+						newStats: { 
+							gold: oldHero.gold + DOTADECK.DISCARD_BONUS.GOLD,
+							xp: oldHero.xp + DOTADECK.DISCARD_BONUS.XP 
+						}
+					};
+					showStatBoost = true;
+					setTimeout(() => {
+						showStatBoost = false;
+						statBoostData = null;
+					}, 2000);
+
+					// Update the discarded hero's status
+					heroPoolStore.updateHeroStatus(result.updatedHero.id, false);
+
+					// Update hero stats in store
+					const updatedHeroes = $heroPoolStore.allHeroes.map(h => {
+						if (h.id === oldHero.id) {
+							return {
+								...h,
+								gold: (h.gold ?? 100) + DOTADECK.DISCARD_BONUS.GOLD,
+								xp: (h.xp ?? 100) + DOTADECK.DISCARD_BONUS.XP
+							};
+						}
+						return h;
+					});
+					heroPoolStore.setAllHeroes(updatedHeroes);
+
+					hand[slotIndex] = null;
+					hand = [...hand];
+				}
+			} catch (error) {
+				console.error('Error discarding hero:', error);
+				showError('Failed to discard hero');
+			} finally {
+				isDiscarding = false;
 			}
 		}
 	}
@@ -372,7 +384,7 @@
 				})
 			});
 			const result = await response.json();
-
+			console.log(result);
 			if (result.success && result.results) {
 				toastStore.trigger({
 					message: 'Check complete!',
@@ -651,12 +663,17 @@
 									<button 
 										class="btn btn-sm variant-soft-error" 
 										on:click={() => discardHero(i)}
-										disabled={discardsRemaining <= 0}
+										disabled={discardsRemaining <= 0 || isDiscarding}
 										on:mouseenter={() => {
 											if (discardsRemaining <= 0) showDiscardNotification();
 										}}
 									> 
-										Discard 
+										{#if isDiscarding}
+											<i class="fi fi-rr-loading animate-spin mr-2"></i>
+											Discarding...
+										{:else}
+											Discard
+										{/if}
 									</button>
 								</div>
 							{:else}

@@ -67,6 +67,8 @@ export const POST: RequestHandler = async ({ request, fetch }) => {
 
         // Process each hero draw
         const results = await Promise.all(heroDraws.map(async heroDraw => {
+            console.log('Hero Draw:', heroDraw.heroId, BigInt(Math.floor(heroDraw.drawnAt.getTime() / 1000)));
+            console.log('Recent Matches:', recentMatches.forEach(m => console.log(m.hero_id, m.start_time)));
             const heroMatches = recentMatches.filter(m => 
                 m.hero_id === heroDraw.heroId && 
                 m.start_time > BigInt(Math.floor(heroDraw.drawnAt.getTime() / 1000))
@@ -74,6 +76,7 @@ export const POST: RequestHandler = async ({ request, fetch }) => {
             const latestMatch = heroMatches[0];
             const cardId = heroDraw.card?.id;  // Add null check
             
+            console.log('Latest match:', latestMatch, 'Card ID:', cardId);
             if (latestMatch && cardId) {
                 const matchWon = winOrLoss(latestMatch.player_slot, latestMatch.radiant_win);
                 

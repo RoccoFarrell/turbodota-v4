@@ -10,7 +10,7 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 	
 	try {
 		// Get current hand count and hand size limit
-		const [seasonUser, currentHand] = await prisma.$transaction([
+		const [seasonUser, currentHand, activeDraws] = await prisma.$transaction([
 			prisma.seasonUser.findUnique({
 				where: { id: seasonUserId }
 			}),
@@ -18,6 +18,17 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 				where: {
 					seasonUserId,
 					matchResult: null  // Only count active draws
+				}
+			}),
+			// Get all currently held heroes in the league
+			prisma.heroDraw.findMany({
+				where: {
+					matchResult: null,  // Active draws only
+					seasonUser: {
+						season: {
+							active: true
+						}
+					}
 				}
 			})
 		]);
@@ -34,51 +45,21 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 			});
 		}
 
-		// Get all currently held heroes in the league
-		const heldCards = await prisma.card.findMany({
-			where: {
-				deck: {
-					seasonId: seasonUser.seasonId,
-					isActive: true
-				},
-				holderId: {
-					not: null
-				},
-				heroDraws: {
-					some: {
-						matchResult: null
-					}
-				}
-			}
+		// Get the card being drawn
+		const card = await prisma.card.findUnique({
+			where: { id: params.cardId }
 		});
 
+		if (!card) {
+			return json({ success: false, error: 'Card not found' });
+		}
+
+		// Check if hero is already held
+		if (activeDraws.some(draw => draw.heroId === card.heroId)) {
+			return json({ success: false, error: 'This hero is currently held in the league' });
+		}
+
 		const result = await prisma.$transaction(async (tx) => {
-			// Get the card
-			const card = await tx.card.findUnique({
-				where: { id: params.cardId }
-			});
-
-			if (!card) {
-				throw new Error('Card not found');
-			}
-
-			// Check if hero is already held by someone in the active season
-			const existingDraw = await tx.heroDraw.findFirst({
-				where: {
-					heroId: card.heroId,
-					matchResult: null,  // Active draw
-					seasonUser: {
-						season: {
-							active: true
-						}
-					}
-				}
-			});
-
-			if (existingDraw) {
-				throw new Error('This hero is currently held in the league');
-			}
-
 			// Create hero draw record
 			await tx.heroDraw.create({
 				data: {
@@ -119,7 +100,7 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 		return json({ 
 			success: true, 
 			card: result,
-			heldHeroIds: heldCards.map(card => card.heroId),
+			heldHeroIds: activeDraws.map(draw => draw.heroId),
 			updatedHero: {
 				id: result.heroId,
 				isHeld: true
