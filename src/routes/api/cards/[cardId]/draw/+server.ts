@@ -9,26 +9,31 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 	const { seasonUserId } = await request.json();
 	
 	try {
-		// Get current hand count and hand size limit
-		const [seasonUser, currentHand, activeDraws] = await prisma.$transaction([
+		// Get current hand count, hand size limit, and available cards
+		const [seasonUser, currentHand, activeDraws, availableCards] = await prisma.$transaction([
 			prisma.seasonUser.findUnique({
 				where: { id: seasonUserId }
 			}),
 			prisma.heroDraw.count({
 				where: {
 					seasonUserId,
-					matchResult: null  // Only count active draws
+					matchResult: null
 				}
 			}),
-			// Get all currently held heroes in the league
 			prisma.heroDraw.findMany({
 				where: {
-					matchResult: null,  // Active draws only
+					matchResult: null,
 					seasonUser: {
-						season: {
-							active: true
-						}
+						season: { active: true }
 					}
+				}
+			}),
+			prisma.card.findMany({
+				where: {
+					deck: {
+						season: { active: true }
+					},
+					holderId: null
 				}
 			})
 		]);
@@ -39,24 +44,23 @@ export const POST: RequestHandler = async ({ params, request, locals }) => {
 
 		// Validate hand size
 		if (currentHand >= seasonUser.handSize) {
-			return json({ 
-				success: false, 
-				error: `Cannot draw more than ${seasonUser.handSize} heroes` 
-			});
+			return json({ success: false, error: `Cannot draw more than ${seasonUser.handSize} heroes` });
 		}
 
-		// Get the card being drawn
-		const card = await prisma.card.findUnique({
-			where: { id: params.cardId }
-		});
+		// Filter out held heroes
+		const availableHeroes = availableCards.filter(
+			card => !activeDraws.some(draw => draw.heroId === card.heroId)
+		);
+
+		if (availableHeroes.length === 0) {
+			return json({ success: false, error: 'No heroes available to draw' });
+		}
+
+		// Randomly select a card from available heroes
+		const card = availableHeroes[Math.floor(Math.random() * availableHeroes.length)];
 
 		if (!card) {
 			return json({ success: false, error: 'Card not found' });
-		}
-
-		// Check if hero is already held
-		if (activeDraws.some(draw => draw.heroId === card.heroId)) {
-			return json({ success: false, error: 'This hero is currently held in the league' });
 		}
 
 		const result = await prisma.$transaction(async (tx) => {

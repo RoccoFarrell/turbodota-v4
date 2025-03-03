@@ -66,7 +66,7 @@ export const POST: RequestHandler = async ({ params, request }) => {
 
 			// Update card with increased stats
 			const updatedCard = await tx.card.update({
-				where: { id: cardId },
+				where: { id: card.id },
 				data: {
 					baseXP: { increment: DOTADECK.DISCARD_BONUS.XP },
 					baseGold: { increment: DOTADECK.DISCARD_BONUS.GOLD },

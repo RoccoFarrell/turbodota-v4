@@ -99,7 +99,8 @@ export const POST: RequestHandler = async ({ request, fetch }) => {
                     where: { id: cardId },
                     data: {
                         baseXP: matchWon ? DOTADECK.BASE_STATS.XP : { increment: DOTADECK.LOSS_REWARD.XP },
-                        baseGold: matchWon ? DOTADECK.BASE_STATS.GOLD : { increment: DOTADECK.LOSS_REWARD.GOLD }
+                        baseGold: matchWon ? DOTADECK.BASE_STATS.GOLD : { increment: DOTADECK.LOSS_REWARD.GOLD },
+                        holderId: null
                     }
                 });
 

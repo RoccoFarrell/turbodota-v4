@@ -8,7 +8,7 @@
 	import { redirect } from '@sveltejs/kit';
 	import { DOTADECK } from '$lib/constants/dotadeck';
 	import DeckView from './_components/DeckView.svelte';
-	import HeroSelectionAnimation from './_components/HeroSelectionAnimation.svelte';
+	//import HeroSelectionAnimation from './_components/HeroSelectionAnimation.svelte';
 	import StatBoostModal from './_components/StatBoostModal.svelte';
 	import StatUpdateAnimation from './_components/StatUpdateAnimation.svelte';
 	import LeaderboardModal from './_components/LeaderboardModal.svelte';
@@ -17,7 +17,7 @@
 	import HeroHistory from './_components/HeroHistory.svelte';
 	import type { StatBoostData } from '$lib/types/dotadeck';
 	import { cardHistoryStore } from '$lib/stores/cardHistoryStore';
-	import type { CardHistoryEntry } from '$lib/stores/cardHistoryStore';
+	//import type { CardHistoryEntry } from '$lib/stores/cardHistoryStore';
 	import AutoCheckTooltip from './_components/AutoCheckTooltip.svelte';
 	import MatchHistory from '$lib/components/MatchHistory.svelte';
 
@@ -170,86 +170,113 @@
 		}
 	}
 
-	function startHeroAnimation(hero: CardHero, slotIndex: number) {
-		isDrawing = true;
-		showingAnimation = true;
-		selectedHero = hero;
-		activeSlot = slotIndex;
-		let speed = 50;
+	function startHeroAnimation(finalHeroId: number, onComplete: () => void) {
+		const availableHeroes = $heroPoolStore.availableHeroes;
+		let speed = 75;
 		let iterations = 0;
-		const maxIterations = 20;
+		const maxIterations = 15;
+		const ANIMATION_TIME = 1500; // 1.5 seconds
+		const startTime = Date.now();
+		let completed = false;
+		let lingerTimeout: NodeJS.Timeout;
+
+		// Clear any existing highlight
+		currentHighlightId = null;
 
 		function animate() {
 			animationInterval = setInterval(() => {
-				const availableHeroes = $heroPoolStore.availableHeroes;
+				// Check if we've reached 1.5 seconds
+				if (Date.now() - startTime >= ANIMATION_TIME) {
+					clearInterval(animationInterval);
+					currentHighlightId = finalHeroId;
+					if (!completed) {
+						completed = true;
+						// Complete the draw immediately
+						onComplete();
+					}
+					// Keep highlighting for 2 more seconds
+					lingerTimeout = setTimeout(() => {
+						currentHighlightId = null;
+						showingAnimation = false;
+					}, 2000);
+					return;
+				}
+
 				currentHighlightId = availableHeroes[Math.floor(Math.random() * availableHeroes.length)].id;
 				iterations++;
 
 				if (iterations > maxIterations * 0.6) {
-					iterations < maxIterations * 0.9 ? speed = speed * 1.5 : speed * 1.05;
+					speed = iterations < maxIterations * 0.8 ? speed * 1.2 : speed * 1.1;
 					clearInterval(animationInterval);
-					if (iterations >= maxIterations) {
-						currentHighlightId = hero.id;
-						showingAnimation = false;
-						setTimeout(() => {
-							currentHighlightId = null;
-							if (activeSlot !== null) {
-								completeDrawHero(activeSlot);
-							}
-							isDrawing = false;
-						}, 300);
-					} else {
-						animate();
-					}
+					animate();
 				}
 			}, speed);
 		}
 
 		animate();
+
+		// Cleanup function
+		return () => {
+			if (animationInterval) clearInterval(animationInterval);
+			if (lingerTimeout) clearTimeout(lingerTimeout);
+			currentHighlightId = null;
+			showingAnimation = false;
+		};
 	}
 
 	onDestroy(() => {
 		if (animationInterval) clearInterval(animationInterval);
+		currentHighlightId = null;
 	});
 
-	async function drawHero(index: number) {
-		// Count current non-null heroes in hand
-		const currentHeroCount = hand.filter(h => h !== null).length;
+	async function drawHero(slotIndex: number) {
+		if (isDrawing) return;
+		isDrawing = true;
+		activeSlot = slotIndex;
+		if (hand[slotIndex] !== null) return; // Prevent drawing if slot is occupied
+		showingAnimation = true;
+		currentHighlightId = null; // Reset any existing highlight
 
-		// Check if drawing would exceed hand size
-		if (currentHeroCount >= data.seasonUser!.handSize) {
-			toastStore.trigger({
-				message: `Cannot draw more than ${data.seasonUser!.handSize} heroes`,
-				background: 'variant-filled-error'
-			});
+		// Start server call immediately
+		const response = await fetch(`/api/cards/draw`, {
+			method: 'POST',
+			body: JSON.stringify({ seasonUserId: data.seasonUser!.id })
+		});
+		const result = await response.json();
+
+		if (!result.success) {
+			showError(result.error);
+			isDrawing = false;
+			activeSlot = null;
+			showingAnimation = false;
 			return;
 		}
 
-		if (isDrawing) return;
-		isDrawing = true;
+		// Start animation that will end on the drawn hero
+		startHeroAnimation(result.card.id, () => {
+			completeDrawHero(slotIndex, result);
+		});
+	}
 
-		try {
-			// Filter out held heroes from available pool
-			const availableHeroes = $heroPoolStore.availableHeroes.filter(h => !h.isHeld);
+	async function completeDrawHero(slotIndex: number, result: any) {
+		// Update hand and hero pool
+		hand[slotIndex] = result.card;
+		hand = [...hand];
+		
+		// Refresh card histories
+		await refreshCardHistories();
 
-			if (availableHeroes.length === 0) {
-				showError('No heroes available to draw!');
-				return;
-			}
+		// Wait for highlight animation to finish before updating hero pool
+		setTimeout(() => {
+			showingAnimation = false;
+			// Give time for the fade transition to complete
+			setTimeout(() => {
+				heroPoolStore.updateHeroStatus(result.updatedHero.id, true);
+			}, 200);
+		}, 2000);
 
-			const hero = availableHeroes[
-				Math.floor(Math.random() * availableHeroes.length)
-			] as CardHero;
-
-			if (hero) {
-				startHeroAnimation(hero, index);
-			}
-		} catch (error) {
-			console.error('Error drawing hero:', error);
-			showError('Failed to draw hero');
-		} finally {
-			isDrawing = false;
-		}
+		isDrawing = false;
+		activeSlot = null;
 	}
 
 	function showError(message: string) {
@@ -267,33 +294,6 @@
 		}
 	}
 
-	async function completeDrawHero(slotIndex: number) {
-		showingAnimation = false;
-		if (selectedHero) {
-			const hero = selectedHero;
-			if (hero.cardId) {
-				const response = await fetch(`/api/cards/${hero.cardId}/draw`, {
-					method: 'POST',
-					body: JSON.stringify({ seasonUserId: data.seasonUser!.id })
-				});
-				const result = await response.json();
-
-				if (!result.success) {
-					showError('Failed to draw card');
-				} else {
-					// Refresh card histories
-					await refreshCardHistories();
-
-					// Update the drawn hero's status
-					heroPoolStore.updateHeroStatus(result.updatedHero.id, true);
-					
-					hand[slotIndex] = hero;
-					hand = [...hand];
-				}
-			}
-		}
-	}
-
 	let isDiscarding = false;
 
 	async function discardHero(slotIndex: number) {
@@ -307,6 +307,10 @@
 		const oldHero = hand[slotIndex];
 		if (oldHero) {
 			try {
+				// Ensure we're using the correct cardId from the drawn card
+				if (!oldHero.cardId) {
+					throw new Error('No card ID found');
+				}
 				const response = await fetch(`/api/cards/${oldHero.cardId}/discard`, {
 					method: 'POST',
 					body: JSON.stringify({ seasonUserId: data.seasonUser!.id })
@@ -661,8 +665,9 @@
 								</div>
 								<div class="absolute bottom-2 w-full flex justify-center">
 									<button 
-										class="btn btn-sm variant-soft-error" 
+										class="btn btn-sm variant-soft-error hover:variant-soft-error-hover" 
 										on:click={() => discardHero(i)}
+										on:click|stopPropagation
 										disabled={discardsRemaining <= 0 || isDiscarding}
 										on:mouseenter={() => {
 											if (discardsRemaining <= 0) showDiscardNotification();

@@ -20,6 +20,39 @@
 	};
 
 	let matchTimestamp: number = dayjs().unix();
+
+    import { getToastStore } from '@skeletonlabs/skeleton';
+    const toastStore = getToastStore();
+
+    //export let seasonUserId: string;
+
+    async function resetStats() {
+        // ... existing code ...
+    }
+
+    async function resetDiscards() {
+        try {
+            const response = await fetch('/api/seasonUser/resetDiscards', {
+                method: 'POST',
+                body: JSON.stringify({ accountId: session.user.account_id })
+            });
+            const result = await response.json();
+            if (result.success) {
+                // Refresh the page to update UI state
+                window.location.reload();
+                toastStore.trigger({
+                    message: 'Discards reset to 10',
+                    background: 'variant-filled-success'
+                });
+            }
+        } catch (error) {
+            console.error('Error resetting discards:', error);
+            toastStore.trigger({
+                message: 'Failed to reset discards',
+                background: 'variant-filled-error'
+            });
+        }
+    }
 </script>
 
 <section id="adminTools" data-test-id="adminTools" class="w-3/4 h-[calc(100vh-128px)] p-4">
@@ -71,6 +104,15 @@
 				>
 					Change xp
 				</button>
+
+					<button class="btn variant-filled-error" on:click={resetStats}>
+						Reset Stats
+					</button>
+					<button class="btn variant-filled-warning" on:click={resetDiscards}>
+						Reset Discards
+					</button>
+
+				
 			</div>
 			<div class="h-full m-4 border-l border-dashed border-orange-500">
 				<div class="h-full m-4 card p-4">
