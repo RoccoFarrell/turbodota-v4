@@ -122,7 +122,7 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
 
 		console.log(`[matches][${account_id}] ${matchesResult.length} matches returned from Database`);
 		//console.log(matchesResult)
-		matchStats = matchesResult;
+		matchStats = matchesResult as unknown as Match[];
 		dataSource = 'db';
 	} else if (userResult && allowUpdates) {
 		console.log(`[matches][${account_id}] allow update true, and user was last updated >${timeoutInterval} minutes - fetch from OD`);
@@ -286,9 +286,8 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
 
 		console.log(`[matches][${account_id}] ${matchStats.length} matches returned from OpenDota`);
 		console.log(`[matches][${account_id}] ${matchesResult.length} matches returned from Database`);
-		//if(matchStats.filter(match => match.id === 7482782346).length > 0) console.log('found 7482782346 in Open Dota')
-		//if(matchesResult.filter(match => match.id === 7482782346).length > 0) console.log('found 7482782346 in matches result')
-		matchStats = matchesResult;
+		//console.log(matchesResult)
+		matchStats = matchesResult as unknown as Match[];
 		dataSource = 'db';
 	}
 

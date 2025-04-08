@@ -2,6 +2,7 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// i dont think this is how its done anymore, can probably remove
 // datasource db {
 //   provider = "postgresql"
 //   url      = env("DEV_URL")
@@ -80,6 +81,7 @@ model Match {
   kills         Int
   leaver_status Int?
   lobby_type    Int?
+  //cursorrules: do not change this line below
   party_size    Int?
   player_slot   Int
   radiant_win   Boolean
@@ -493,12 +495,15 @@ model SeasonUser {
   handSize      Int           @default(3)
   discardTokens Int           @default(5)
   hasSeenRules  Boolean       @default(false)
+  gold          Int           @default(0)
   season        Season        @relation(fields: [seasonId], references: [id])
   user          DotaUser      @relation(fields: [accountId], references: [account_id])
   joinedAt      DateTime      @default(now())
   heldCards     Card[]        @relation("CurrentHolder")
   cardHistory   CardHistory[]
   heroDraws     HeroDraw[]
+  items         SeasonUserItem[]
+  charmEffects  DotadeckCharmEffect[]
 
   @@unique([seasonId, accountId])
 }
@@ -552,6 +557,7 @@ enum ModType {
   SUBTRACT
   RESET
   MODIFY
+  CHARM
 }
 
 model CardHistory {
@@ -567,6 +573,7 @@ model CardHistory {
   currentXP    Int
   goldMod      Int
   xpMod        Int
+  charmEffects CardHistoryCharmEffect[]
 }
 
 // Track when users draw heroes
@@ -580,4 +587,59 @@ model HeroDraw {
   cardId       String?
   seasonUser   SeasonUser @relation(fields: [seasonUserId], references: [id])
   card         Card?      @relation(fields: [cardId], references: [id])
+}
+
+// Many-to-many relationship between CardHistory and DotadeckCharmEffect
+model CardHistoryCharmEffect {
+  id            String     @id @default(cuid())
+  cardHistoryId String
+  charmEffectId String
+  cardHistory   CardHistory @relation(fields: [cardHistoryId], references: [id], onDelete: Cascade)
+  charmEffect   DotadeckCharmEffect @relation(fields: [charmEffectId], references: [id], onDelete: Cascade)
+  goldMod       Int        @default(0)
+  xpMod         Int        @default(0)
+  
+  @@unique([cardHistoryId, charmEffectId])
+}
+
+// User's inventory of items
+model SeasonUserItem {
+  id          String      @id @default(cuid())
+  seasonUserId String
+  itemId      String
+  quantity    Int         @default(1)
+  createdAt   DateTime    @default(now())
+  purchasedAt DateTime    @default(now())
+  seasonUser  SeasonUser  @relation(fields: [seasonUserId], references: [id], onDelete: Cascade)
+  item        DotadeckItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+}
+
+// Active charm effects for users
+model DotadeckCharmEffect {
+  id            String      @id @default(cuid())
+  seasonUserId  String
+  itemId        String
+  effectType    String      // "BOUNTY_MULTIPLIER" or "XP_MULTIPLIER"
+  effectValue   Float       // The multiplier value (e.g., 2.0 for 2x)
+  createdAt     DateTime    @default(now())
+  expiresAt     DateTime?   // Optional expiration date
+  isActive      Boolean     @default(true)
+  seasonUser    SeasonUser  @relation(fields: [seasonUserId], references: [id], onDelete: Cascade)
+  item          DotadeckItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  cardHistories CardHistoryCharmEffect[]
+}
+
+// Dotadeck Shop Models
+model DotadeckItem {
+  id          String      @id @default(cuid())
+  name        String
+  description String
+  cost        Int
+  sellValue   Int         // Percentage of cost that can be recovered when selling
+  effectType  String      // Type of effect (e.g., "DISCARD_TOKEN", "BOUNTY_MULTIPLIER")
+  effectValue Float       // Value of the effect (e.g., 1 for +1 discard, 2 for 2x bounty)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  seasonUserItems SeasonUserItem[]
+  charmEffects DotadeckCharmEffect[]
 }

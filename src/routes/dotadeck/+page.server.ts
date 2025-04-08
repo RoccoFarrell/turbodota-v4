@@ -32,7 +32,12 @@ export const load: PageServerLoad = async ({ locals }) => {
 				},
 				take: 3  // Limit to hand size
 			},
-			cardHistory: true
+			cardHistory: true,
+			items: {
+				include: {
+					item: true
+				}
+			}
 		}
 	});
 
@@ -70,6 +75,17 @@ export const load: PageServerLoad = async ({ locals }) => {
 		},
 		include: {
 			cards: true
+		}
+	});
+
+	// Get active charm effects
+	const activeCharms = await prisma.dotadeckCharmEffect.findMany({
+		where: {
+			seasonUserId: seasonUser?.id,
+			isActive: true,
+			expiresAt: {
+				gt: new Date()
+			}
 		}
 	});
 
@@ -114,7 +130,9 @@ export const load: PageServerLoad = async ({ locals }) => {
 		stats: {
 			totalGold: totals?.gold ?? 0,
 			totalXP: totals?.xp ?? 0
-		}
+		},
+		activeCharms,
+		inventory: seasonUser?.items ?? []
 	};
 };
 

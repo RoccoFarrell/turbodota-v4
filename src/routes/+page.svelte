@@ -11,7 +11,10 @@
 </script>
 
 
-<div class="">
+<div class="container mx-auto px-4 py-8">
+	<div class="flex justify-between items-center mb-8">
+		<h1 class="text-4xl font-bold text-white">Dotadeck</h1>
+	</div>
 	<TurbotownIntro/>
 </div>
 

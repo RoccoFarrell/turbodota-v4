@@ -17,9 +17,12 @@
 	import HeroHistory from './_components/HeroHistory.svelte';
 	import type { StatBoostData } from '$lib/types/dotadeck';
 	import { cardHistoryStore } from '$lib/stores/cardHistoryStore';
+	import type { DotadeckCharmEffect } from '@prisma/client';
 	//import type { CardHistoryEntry } from '$lib/stores/cardHistoryStore';
 	import AutoCheckTooltip from './_components/AutoCheckTooltip.svelte';
 	import MatchHistory from '$lib/components/MatchHistory.svelte';
+	import ShopInventoryManager from './_components/shop/ShopInventoryManager.svelte';
+	import { invalidate } from '$app/navigation';
 
 	const toastStore = getToastStore();
 	const modalStore = getModalStore();
@@ -98,7 +101,7 @@
 		
 		const heroesWithStats: CardHero[] = data.heroDescriptions.map((hero: Hero) => {
 			const card = data.activeDeck?.cards.find((c: { heroId: number }) => c.heroId === hero.id);
-			const isHeld = data.heldHeroIds.includes(hero.id);
+			const isHeld = data.heldHeroIds?.includes(hero.id) ?? false;
 			//console.log(`Hero ${hero.id} (${hero.localized_name}): isHeld=${isHeld}`);
 			return {
 				...hero,
@@ -113,11 +116,11 @@
 
 	// Hand management
 	let hand: (CardHero | null)[] = Array(data.seasonUser.handSize).fill(null);
-	if (data.seasonUser.heroDraws) {
+	if (data.seasonUser.heroDraws && data.heroDescriptions) {
 		// Only use active (non-discarded) draws
 		const activeDraws = data.seasonUser.heroDraws.filter((draw) => !draw.matchResult);
 		activeDraws.forEach((draw) => {
-			const hero = data.heroDescriptions.find((h) => h.id === draw.heroId);
+			const hero = data.heroDescriptions?.find((h) => h.id === draw.heroId);
 			if (hero) {
 				const cardHero: CardHero = {
 					...hero,
@@ -289,6 +292,7 @@
 	async function refreshCardHistories() {
 		const response = await fetch('/api/cards/history');
 		const data = await response.json();
+		console.log("Refreshing card histories", data);
 		if (data.success) {
 			cardHistoryStore.setHistories(data.histories);
 		}
@@ -521,6 +525,7 @@
 	onMount(async () => {
 		const response = await fetch('/api/cards/history');
 		const data = await response.json();
+		console.log("Getting card histories", data);
 		if (data.success) {
 			cardHistoryStore.setHistories(data.histories);
 		}
@@ -541,66 +546,117 @@
 	let tooltipY = 0;
 
 	let selectedHeroId: number | null = null;
+
+	// Function to refresh data
+	async function refreshData(event?: { detail?: { activeCharms?: any[] } }) {
+		// If we have active charms data from the event, update it immediately
+		if (event?.detail?.activeCharms) {
+			data.activeCharms = [...event.detail.activeCharms];
+			// Force a UI update by triggering a reactive update
+			data = data;
+		}
+		await invalidate('app:data');
+	}
+
+	// Set up auto-refresh when visibility changes
+	onMount(() => {
+		if (browser) {
+			document.addEventListener('visibilitychange', () => {
+				if (document.visibilityState === 'visible') {
+					refreshData();
+				}
+			});
+		}
+	});
 </script>
 
 <div class="container mx-auto p-4 space-y-8">
-	<div class="card p-4 sticky top-0 z-10">
-		<div class="flex justify-between items-center">
-			<div class="flex gap-4">
-				<span class="text-yellow-400 font-bold">{(data.stats.totalGold)}g</span>
-				<span class="text-blue-400 font-bold">{(data.stats.totalXP)}xp</span>
+	<div id="dotaDeckNav" class="card p-4 sticky top-0 z-10">
+		<div class="flex flex-col gap-2">
+			<div class="flex justify-between items-center">
+				<div class="flex gap-4">
+					<span class="text-yellow-400 font-bold">{(data.stats?.totalGold ?? 0)}g</span>
+					<span class="text-blue-400 font-bold">{(data.stats?.totalXP ?? 0)}xp</span>
+				</div>
+				<div class="flex gap-2">
+					<button class="btn btn-sm variant-filled-secondary" on:click={showLeaderboard}>
+						<div class="flex items-center justify-center">
+						<i class="fi fi-rr-trophy-star mr-2"></i>
+						Leaderboard
+						</div>
+					</button>
+					<button class="btn btn-sm variant-filled-tertiary" on:click={showRules}>
+						<i class="fi fi-rr-book-bookmark mr-2"></i>
+						Rules
+					</button>
+					<div class="border-l border-surface-500 mx-2"></div>
+					<button class="btn btn-sm bg-amber-500 text-black" on:click={showHistory}>
+						<i class="fi fi-rr-time-past mr-2"></i>
+						Game History
+					</button>
+					<button class="btn btn-sm bg-purple-800 text-white" on:click={showMatchHistory}>
+						<i class="fi fi-rr-chart-line-up mr-2"></i>
+						Recent Matches
+					</button>
+					<div class="border-l border-surface-500 mx-2"></div>
+					<button class="btn btn-sm variant-filled-primary" on:click={checkForWins} disabled={isCheckingWins}>
+						{#if isCheckingWins}
+							<i class="fi fi-rr-loading animate-spin mr-2"></i>
+							Checking Wins...
+						{:else}
+							<i class="fi fi-rr-comment-question mr-2"></i>
+							Check for Matches
+						{/if}
+					</button>
+					<button 
+						class="btn btn-sm {autoCheckEnabled ? 'variant-filled-success' : 'variant-filled-surface'}" 
+						on:click={() => {
+							autoCheckEnabled = !autoCheckEnabled;
+							if (browser) {
+								sessionStorage.setItem('autoCheckEnabled', JSON.stringify(autoCheckEnabled));
+							}
+						}}
+						on:mouseenter={(e) => {
+							tooltipX = e.clientX;
+							tooltipY = e.clientY;
+							showAutoCheckTooltip = true;
+						}}
+						on:mouseleave={() => showAutoCheckTooltip = false}
+					>
+						<i class="fi {autoCheckEnabled ? 'fi-rr-refresh' : 'fi-rr-pause'} mr-2"></i>
+						Auto Check {autoCheckEnabled ? 'On' : 'Off'}
+					</button>
+				</div>
+				<ShopInventoryManager 
+					inventory={data.inventory} 
+					on:itemUsed={(e) => {
+						console.log('Item used event received:', e.detail);
+						refreshData(e);
+					}}
+				/>
 			</div>
-			<div class="flex gap-2">
-				<button class="btn btn-sm variant-filled-secondary" on:click={showLeaderboard}>
-					<div class="flex items-center justify-center">
-					<i class="fi fi-rr-trophy-star mr-2"></i>
-					Leaderboard
+			
+			{#if data.activeCharms && data.activeCharms.length > 0}
+				<div class="flex items-center gap-4 border-t border-primary-500/50 border-dashed pt-2">
+					<h3 class="text-sm font-bold text-primary-500">Active Charms</h3>
+					<div class="flex gap-2 flex-wrap">
+						{#each data.activeCharms as charm}
+							<div class="flex items-center gap-1 px-2 py-1 rounded bg-surface-700/50">
+								{#if charm.effectType === DOTADECK.CHARM_EFFECTS.BOUNTY_MULTIPLIER}
+									<i class="fi fi-rr-coins text-yellow-400"></i>
+									<span class="text-yellow-400 text-sm">{charm.effectValue}x Gold</span>
+								{:else if charm.effectType === DOTADECK.CHARM_EFFECTS.XP_MULTIPLIER}
+									<i class="fi fi-rr-star text-blue-400"></i>
+									<span class="text-blue-400 text-sm">{charm.effectValue}x XP</span>
+								{/if}
+							</div>
+						{/each}
 					</div>
-				</button>
-				<button class="btn btn-sm variant-filled-tertiary" on:click={showRules}>
-					<i class="fi fi-rr-book-bookmark mr-2"></i>
-					Rules
-				</button>
-				<div class="border-l border-surface-500 mx-2"></div>
-				<button class="btn btn-sm bg-amber-500 text-black" on:click={showHistory}>
-					<i class="fi fi-rr-time-past mr-2"></i>
-					Game History
-				</button>
-				<button class="btn btn-sm bg-purple-800 text-white" on:click={showMatchHistory}>
-					<i class="fi fi-rr-chart-line-up mr-2"></i>
-					Recent Matches
-				</button>
-				<div class="border-l border-surface-500 mx-2"></div>
-				<button class="btn btn-sm variant-filled-primary" on:click={checkForWins} disabled={isCheckingWins}>
-					{#if isCheckingWins}
-						<i class="fi fi-rr-loading animate-spin mr-2"></i>
-						Checking Wins...
-					{:else}
-						<i class="fi fi-rr-comment-question mr-2"></i>
-						Check for Matches
-					{/if}
-				</button>
-				<button 
-					class="btn btn-sm {autoCheckEnabled ? 'variant-filled-success' : 'variant-filled-surface'}" 
-					on:click={() => {
-						autoCheckEnabled = !autoCheckEnabled;
-						if (browser) {
-							sessionStorage.setItem('autoCheckEnabled', JSON.stringify(autoCheckEnabled));
-						}
-					}}
-					on:mouseenter={(e) => {
-						tooltipX = e.clientX;
-						tooltipY = e.clientY;
-						showAutoCheckTooltip = true;
-					}}
-					on:mouseleave={() => showAutoCheckTooltip = false}
-				>
-					<i class="fi {autoCheckEnabled ? 'fi-rr-refresh' : 'fi-rr-pause'} mr-2"></i>
-					Auto Check {autoCheckEnabled ? 'On' : 'Off'}
-				</button>
-			</div>
+				</div>
+			{/if}
 		</div>
 	</div>
+
 	<div class="container flex flex-col gap-4">
 		<!-- Deck View -->
 		<div class="w-full bg-surface-800/50 rounded-lg border border-surface-700/50">

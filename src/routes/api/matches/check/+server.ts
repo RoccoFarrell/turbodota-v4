@@ -3,6 +3,7 @@ import prisma from '$lib/server/prisma';
 import type { RequestHandler } from './$types';
 import { DOTADECK } from '$lib/constants/dotadeck';
 import winOrLoss from '$lib/helpers/winOrLoss';
+import type { DotadeckCharmEffect } from '@prisma/client';
 
 export const POST: RequestHandler = async ({ request, fetch }) => {
     const { seasonUserId, heroIds } = await request.json();
@@ -84,6 +85,36 @@ export const POST: RequestHandler = async ({ request, fetch }) => {
                 const currentCard = await prisma.card.findUnique({
                     where: { id: cardId }
                 });
+
+                // Get active charm effects
+                const activeCharms = await prisma.dotadeckCharmEffect.findMany({
+                    where: {
+                        seasonUserId: heroDraw.seasonUserId,
+                        isActive: true,
+                        expiresAt: {
+                            gt: new Date()
+                        }
+                    }
+                });
+
+                // Calculate XP and gold modifiers from charms
+                let xpMultiplier = 1;
+                let goldMultiplier = 1;
+
+                activeCharms.forEach((charm: DotadeckCharmEffect) => {
+                    if (charm.effectType === DOTADECK.CHARM_EFFECTS.XP_MULTIPLIER) {
+                        xpMultiplier = charm.effectValue;
+                    } else if (charm.effectType === DOTADECK.CHARM_EFFECTS.BOUNTY_MULTIPLIER) {
+                        goldMultiplier = charm.effectValue;
+                    }
+                });
+
+                // Calculate final XP and gold values
+                const baseXP = matchWon ? DOTADECK.BASE_STATS.XP : DOTADECK.LOSS_REWARD.XP;
+                const baseGold = matchWon ? DOTADECK.BASE_STATS.GOLD : DOTADECK.LOSS_REWARD.GOLD;
+                
+                const finalXP = Math.floor(baseXP * xpMultiplier);
+                const finalGold = Math.floor(baseGold * goldMultiplier);
                 
                 // Update the hero draw with match result
                 await prisma.heroDraw.update({
@@ -98,14 +129,14 @@ export const POST: RequestHandler = async ({ request, fetch }) => {
                 await prisma.card.update({
                     where: { id: cardId },
                     data: {
-                        baseXP: matchWon ? DOTADECK.BASE_STATS.XP : { increment: DOTADECK.LOSS_REWARD.XP },
-                        baseGold: matchWon ? DOTADECK.BASE_STATS.GOLD : { increment: DOTADECK.LOSS_REWARD.GOLD },
+                        baseXP: matchWon ? DOTADECK.BASE_STATS.XP : { increment: finalXP },
+                        baseGold: matchWon ? DOTADECK.BASE_STATS.GOLD : { increment: finalGold },
                         holderId: null
                     }
                 });
 
                 // Add card history
-                await prisma.cardHistory.create({
+                const cardHistory = await prisma.cardHistory.create({
                     data: {
                         cardId: cardId,
                         seasonUserId: heroDraw.seasonUserId,
@@ -113,8 +144,34 @@ export const POST: RequestHandler = async ({ request, fetch }) => {
                         modType: matchWon ? 'RESET' : 'ADD',
                         currentGold: currentCard?.baseGold ?? DOTADECK.BASE_STATS.GOLD,
                         currentXP: currentCard?.baseXP ?? DOTADECK.BASE_STATS.XP,
-                        xpMod: matchWon ? currentCard?.baseXP ?? DOTADECK.BASE_STATS.XP : DOTADECK.LOSS_REWARD.XP,
-                        goldMod: matchWon ? currentCard?.baseGold ?? DOTADECK.BASE_STATS.GOLD : DOTADECK.LOSS_REWARD.GOLD
+                        xpMod: matchWon ? currentCard?.baseXP ?? DOTADECK.BASE_STATS.XP : finalXP,
+                        goldMod: matchWon ? currentCard?.baseGold ?? DOTADECK.BASE_STATS.GOLD : finalGold
+                    }
+                });
+
+                // Add charm effects to the card history
+                for (const charm of activeCharms) {
+                    await prisma.cardHistoryCharmEffect.create({
+                        data: {
+                            cardHistoryId: cardHistory.id,
+                            charmEffectId: charm.id,
+                            goldMod: charm.effectType === DOTADECK.CHARM_EFFECTS.BOUNTY_MULTIPLIER ? 
+                                (matchWon ? DOTADECK.BASE_STATS.GOLD : DOTADECK.LOSS_REWARD.GOLD) * (charm.effectValue - 1) : 0,
+                            xpMod: charm.effectType === DOTADECK.CHARM_EFFECTS.XP_MULTIPLIER ? 
+                                (matchWon ? DOTADECK.BASE_STATS.XP : DOTADECK.LOSS_REWARD.XP) * (charm.effectValue - 1) : 0
+                        }
+                    });
+                }
+
+                // Deactivate used charms
+                await prisma.dotadeckCharmEffect.updateMany({
+                    where: {
+                        id: {
+                            in: activeCharms.map((charm: DotadeckCharmEffect) => charm.id)
+                        }
+                    },
+                    data: {
+                        isActive: false
                     }
                 });
 

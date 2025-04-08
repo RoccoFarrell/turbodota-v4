@@ -28,6 +28,15 @@ export const GET: RequestHandler = async ({ locals }) => {
                 include: {
                     hero: true
                 }
+            },
+            charmEffects: {
+                include: {
+                    charmEffect: {
+                        include: {
+                            item: true
+                        }
+                    }
+                }
             }
         },
         orderBy: {
@@ -35,5 +44,18 @@ export const GET: RequestHandler = async ({ locals }) => {
         }
     });
 
-    return json({ success: true, history });
+    return json({ 
+        success: true, 
+        history: history.map(h => ({
+            ...h,
+            modType: h.modType,
+            charmEffects: h.charmEffects.map(ce => ({
+                effectType: ce.charmEffect.effectType,
+                effectValue: ce.charmEffect.effectValue,
+                itemName: ce.charmEffect.item.name,
+                goldMod: ce.goldMod,
+                xpMod: ce.xpMod
+            }))
+        }))
+    });
 }; 

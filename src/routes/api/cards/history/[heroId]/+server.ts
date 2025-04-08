@@ -23,6 +23,15 @@ export const GET: RequestHandler = async ({ params }) => {
                     include: {
                         user: true
                     }
+                },
+                charmEffects: {
+                    include: {
+                        charmEffect: {
+                            include: {
+                                item: true
+                            }
+                        }
+                    }
                 }
             },
             orderBy: {
@@ -37,7 +46,15 @@ export const GET: RequestHandler = async ({ params }) => {
                 timestamp: h.timestamp,
                 username: h.seasonUser.user.username,
                 goldMod: h.goldMod,
-                xpMod: h.xpMod
+                xpMod: h.xpMod,
+                modType: h.modType,
+                charmEffects: h.charmEffects.map(ce => ({
+                    effectType: ce.charmEffect.effectType,
+                    effectValue: ce.charmEffect.effectValue,
+                    itemName: ce.charmEffect.item.name,
+                    goldMod: ce.goldMod,
+                    xpMod: ce.xpMod
+                }))
             }))
         });
     } catch (error) {

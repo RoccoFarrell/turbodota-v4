@@ -173,12 +173,12 @@
 					</div>
 				</div>
 				<div
-					class="absolute -bottom-1 -left-1 w-5 h-5 rounded-full bg-blue-500 border border-blue-400 flex items-center justify-center"
+					class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-blue-500 border border-blue-400 flex items-center justify-center"
 				>
 					<span class="text-[10px] font-bold text-black">{hero.xp}</span>
 				</div>
 				<div
-					class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-yellow-500 border border-yellow-400 flex items-center justify-center"
+					class="absolute -bottom-1 -left-1 w-5 h-5 rounded-full bg-yellow-500 border border-yellow-400 flex items-center justify-center"
 				>
 					<span class="text-[10px] font-bold text-black">{hero.gold}</span>
 				</div>
