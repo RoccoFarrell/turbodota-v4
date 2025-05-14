@@ -71,7 +71,7 @@
             // Show card modifications (gold and XP lost)
             result = `Card modified: +${Math.abs(mainEntry.goldMod || 0)}g/+${Math.abs(mainEntry.xpMod || 0)}xp`;
         }
-        
+         
         return result;
     }
 

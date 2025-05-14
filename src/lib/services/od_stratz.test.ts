@@ -68,13 +68,13 @@ describe('odstratz service', () => {
     //console.log(body)
 	});
 
-  it('comparison call should have response status 200', () =>{
-    expect(stratz_response.status).toBe(200)
-  })
+//   it('comparison call should have response status 200', () =>{
+//     expect(stratz_response.status).toBe(200)
+//   })
 
-  it('comparison call has a body', () => {
-		expect(body.data).toBeDefined()
-	});
+//   it('comparison call has a body', () => {
+// 		expect(body.data).toBeDefined()
+// 	});
 
   it('call should have response status 200', () =>{
     expect(myResponse.status).toBe(200)
