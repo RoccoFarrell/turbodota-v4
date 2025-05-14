@@ -328,8 +328,9 @@
 <div id="tablePageContainer" class="m-4 md:mx-8 md:my-4 w-full max-w-[90%]">
 	<div>
 		<!-- Header-->
+		 
 		<div id="header" class="container mx-auto md:my-2 my-1">
-			<div class="flex items-center justify-around space-x-4">
+			<div class="flex items-center justify-around ">
 				<div class="flex flex-col items-center">
 					<h1 class="h1 text-primary-500">Hero Stats</h1>
 					<div class="flex justify-center items-center space-x-8 my-2 max-md:hidden">
@@ -337,6 +338,7 @@
 						<img class="w-8 lg:w-12" alt="turboking" src={turboking} />
 					</div>
 				</div>
+				<!--Development stats-->
 				<div>
 					{#each data.playersWeCareAbout as player}
 						<div class="flex flex-col">
@@ -358,18 +360,18 @@
 					{/each}
 				</div>
 				<!-- <div class="flex flex-col">
-						<h3 class="h3 text-primary-500">Data sources</h3>
-						<div>
-							Open Dota: <p class="inline text-orange-500 font-bold">
-								{matchStats.filter((player) => player.dataSource !== 'db').length}
-							</p>
-						</div>
-						<div>
-							Database: <p class="inline text-green-500 font-bold">
-								{matchStats.filter((player) => player.dataSource === 'db').length}
-							</p>
-						</div>
-					</div> -->
+					<h3 class="h3 text-primary-500">Data sources</h3>
+					<div>
+						Open Dota: <p class="inline text-orange-500 font-bold">
+							{matchStats.filter((player) => player.dataSource !== 'db').length}
+						</p>
+					</div>
+					<div>
+						Database: <p class="inline text-green-500 font-bold">
+							{matchStats.filter((player) => player.dataSource === 'db').length}
+						</p>
+					</div>
+				</div> -->
 			</div>
 		</div>
 
@@ -417,6 +419,23 @@
 							<Loading />
 						</div>
 					{:then matchStats}
+
+						{#if tabSet === 0}
+							<div class="flex justify-center items-center gap-4 my-4">
+								{#if $sortData.heroID === -1}
+									<span class="text-2xl font-bold text-amber-500">All Heroes</span>
+								{:else}
+									{#each heroList as hero}
+										{#if hero.id === $sortData.heroID}
+											<div class="flex items-center gap-4">
+												<div class="d2mh {hero.name?.toLowerCase()}" />
+												<span class="text-2xl font-bold text-amber-500">{hero.localized_name}</span>
+											</div>
+										{/if}
+									{/each}
+								{/if}
+							</div>
+						{/if}
 						<!-- Filter elements -->
 						<div class="container mx-auto p-4">
 							<div class="max-md:flex-col flex justify-center items-center md:space-x-2 max-md:space-y-2">
