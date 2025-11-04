@@ -69,6 +69,8 @@ This document outlines the plan to upgrade all dependencies to their latest stab
 
 ## Phased Upgrade Strategy
 
+⚠️ **IMPORTANT**: Skeleton v3 requires Svelte 5, SvelteKit v2, and latest Tailwind CSS. The upgrade order is critical.
+
 ### Phase 1: Pre-Upgrade Preparation (Estimated: 1-2 days)
 **Goal**: Prepare codebase and verify compatibility
 
@@ -77,30 +79,47 @@ This document outlines the plan to upgrade all dependencies to their latest stab
 git checkout -b upgrade/dependencies-v5
 git push -u origin upgrade/dependencies-v5
 ```
+✅ **Complete**: Already on upgrade branch
 
 #### 1.2 Verify Compatibility
-- [ ] Check Skeleton UI Svelte 5 compatibility status
-- [ ] Check bits-ui Svelte 5 compatibility
-- [ ] Check svelte-chartjs Svelte 5 compatibility
-- [ ] Review all Svelte-related package changelogs
-- [ ] Document breaking changes for each package
+- [x] Check Skeleton UI v3 requirements (Svelte 5, SvelteKit v2, Tailwind version)
+- [x] Check bits-ui Svelte 5 compatibility
+- [x] Check svelte-chartjs Svelte 5 compatibility
+- [x] Review all Svelte-related package changelogs
+- [x] Document breaking changes for each package
+
+**See**: [compatibility-check.md](./compatibility-check.md) for detailed results
 
 #### 1.3 Audit Current Codebase
-- [ ] Run `npm audit` to identify security issues
-- [ ] Run `npm outdated` to see current vs latest versions
-- [ ] Document all Svelte 4 patterns used (reactive statements, stores, etc.)
-- [ ] Count usage of `$:` reactive statements
-- [ ] Identify all components using Skeleton UI
+- [x] Run `npm audit` to identify security issues (19 vulnerabilities found)
+- [x] Run `npm outdated` to see current vs latest versions
+- [x] Document all Svelte 4 patterns used (reactive statements, stores, etc.)
+- [x] Count usage of `$:` reactive statements (98 instances across 29 files)
+- [x] Identify all components using Skeleton UI
+
+**See**: [compatibility-check.md](./compatibility-check.md) for detailed analysis
 
 #### 1.4 Set Up Testing Baseline
-- [ ] Ensure all tests pass before upgrade
-- [ ] Document manual testing checklist
-- [ ] Set up CI/CD to catch issues early
+- [x] Document test status (tests currently failing due to version mismatches)
+- [x] Document manual testing checklist
+- [ ] Set up CI/CD to catch issues early (optional)
+
+**See**: [testing-baseline.md](./testing-baseline.md) for testing checklist
 
 ---
 
 ### Phase 2: Non-Breaking Updates (Estimated: 2-3 hours)
-**Goal**: Update dependencies that don't require code changes
+**Goal**: Update dependencies that don't require code changes (excluding Svelte ecosystem)
+
+**⚠️ Note**: The `node_modules` directory is from a previous migration attempt. We'll do a clean install at the start of this phase.
+
+#### 2.0 Clean Install (If Needed)
+```bash
+# Optional: Remove old node_modules for clean start
+# rm -rf node_modules package-lock.json  # Unix/Mac
+# Remove-Item -Recurse -Force node_modules, package-lock.json  # Windows PowerShell
+# npm install  # Fresh install from package.json
+```
 
 #### 2.1 Update Build & Dev Tools
 ```bash
@@ -131,7 +150,87 @@ npm install -D postcss@latest autoprefixer@latest
 npm install tailwind-merge@latest tailwind-variants@latest
 ```
 
-#### 2.5 Test After Updates
+#### 2.5 Update Additional Packages
+```bash
+# Update packages that may have Svelte 5 compatible versions
+npm install -D mdsvex@latest
+npm install svelte-headless-table@latest
+npm install svelte-confetti@latest
+```
+
+#### 2.6 Clean Install After Updates
+```bash
+# Ensure clean state after all updates
+npm install
+```
+
+#### 2.7 Test After Updates
+- [x] Run `npm run build` - ensure build succeeds ✅ (build successful, only adapter warning about Node version)
+- [ ] Run `npm run test` - ensure tests pass (may still fail if Svelte 5 not yet installed)
+- [ ] Run `npm run dev` - verify dev server works
+- [ ] Manual smoke test of application
+
+**Note on Lucia/Prisma Compatibility**: 
+- Lucia v3 is deprecated and requires a full migration (breaking change)
+- Lucia v2 doesn't support Prisma v6
+- **Decision**: Kept lucia v2 and Prisma v5 for Phase 2 compatibility
+- Lucia v3 migration should be handled separately as a breaking change
+- svelte-confetti v2.3.2 uses Svelte 5 runes but build still succeeds (warnings only)
+
+---
+
+### Phase 3: Svelte 5 Migration (Estimated: 3-5 days)
+**Goal**: Upgrade to Svelte 5 FIRST (required for Skeleton v3)
+
+#### 3.1 Update Svelte Core
+```bash
+npm install svelte@latest
+npm install -D svelte-check@latest prettier-plugin-svelte@latest
+```
+
+#### 3.2 Run Svelte Migration Tool
+```bash
+npx sv migrate
+```
+- [ ] Review all migration changes
+- [ ] Test migrated code
+
+#### 3.3 Manual Migration Tasks
+
+##### 3.3.1 Convert Reactive Statements to Runes
+- [ ] Replace `$:` with `$state`, `$derived`, `$effect`
+- [ ] Update reactive declarations in all components
+- [ ] Migrate reactive assignments
+
+##### 3.3.2 Update Component Props
+- [ ] Convert `export let` props to `let { prop }: { prop: Type }`
+- [ ] Update all component prop definitions
+
+##### 3.3.3 Migrate Stores (if needed)
+- [ ] Review store usage patterns
+- [ ] Determine if runes can replace stores
+- [ ] Migrate context stores if applicable
+
+##### 3.3.4 Update Event Handlers
+- [ ] Review event handling patterns
+- [ ] Update to new event system if needed
+
+##### 3.3.5 Update Transitions
+- [ ] Verify transitions still work
+- [ ] Update transition usage if API changed
+
+#### 3.4 Update Svelte-Specific Packages
+- [ ] Update `@testing-library/svelte` if Svelte 5 compatible
+- [ ] Update `svelte-confetti` if available
+- [ ] Update `svelte-headless-table` if available
+- [ ] Update `radix-icons-svelte` if available
+- [ ] Update `svelte-chartjs` - remove override if compatible
+
+#### 3.5 Update package.json Overrides
+- [ ] Remove or update `svelte-chartjs` override if no longer needed
+- [ ] Check if other overrides are needed
+
+#### 3.6 Test After Svelte 5 Migration
 - [ ] Run `npm run build` - ensure build succeeds
 - [ ] Run `npm run test` - ensure tests pass
 - [ ] Run `npm run dev` - verify dev server works
@@ -139,111 +238,182 @@ npm install tailwind-merge@latest tailwind-variants@latest
 
 ---
 
-### Phase 3: Tailwind CSS v4 Migration (Estimated: 1-2 days)
-**Goal**: Migrate from Tailwind v3 to v4
+### Phase 4: SvelteKit v2 Migration (Estimated: 1-2 days)
+**Goal**: Upgrade to SvelteKit v2 (required for Skeleton v3, requires Svelte 5)
 
-#### 3.1 Research Tailwind v4 Changes
-- [ ] Review [Tailwind CSS v4 documentation](https://tailwindcss.com/docs/v4-alpha)
-- [ ] Understand CSS-first configuration approach
-- [ ] Review plugin migration guide
-
-#### 3.2 Update Tailwind CSS
+#### 4.1 Update SvelteKit Ecosystem
 ```bash
-npm install -D tailwindcss@next # or @latest when stable
-```
-
-#### 3.3 Migrate Configuration
-- [ ] Convert `tailwind.config.ts` to CSS `@config` syntax
-- [ ] Update theme configuration in CSS file
-- [ ] Migrate plugin configurations (@tailwindcss/forms, @tailwindcss/typography)
-- [ ] Update @skeletonlabs/tw-plugin if needed
-
-#### 3.4 Update PostCSS Configuration
-- [ ] Check if PostCSS config changes needed
-- [ ] Update `postcss.config.js` if required
-
-#### 3.5 Update Vite Plugin
-- [ ] Check if `vite-plugin-tailwind-purgecss` needs updates
-- [ ] Verify safelist configuration still works
-
-#### 3.6 Test Tailwind Styles
-- [ ] Build application
-- [ ] Verify all styles render correctly
-- [ ] Check dark mode functionality
-- [ ] Test Skeleton UI theme integration
-
----
-
-### Phase 4: Svelte 5 Migration (Estimated: 3-5 days)
-**Goal**: Upgrade to Svelte 5 and migrate codebase
-
-#### 4.1 Update Svelte Ecosystem (if compatible)
-```bash
-# Only if Skeleton UI and other packages support Svelte 5
-npm install svelte@latest
 npm install @sveltejs/kit@latest @sveltejs/vite-plugin-svelte@latest
 npm install @sveltejs/adapter-vercel@latest
-npm install -D svelte-check@latest prettier-plugin-svelte@latest
 ```
 
-#### 4.2 Run Migration Tool
+#### 4.2 Run SvelteKit Migration Tool
 ```bash
-npx sv migrate
+npx svelte-migrate@latest sveltekit-2
 ```
 - [ ] Review all migration changes
 - [ ] Test migrated code
 
 #### 4.3 Manual Migration Tasks
+- [ ] Review SvelteKit v2 breaking changes
+- [ ] Update routing configurations if needed
+- [ ] Update server-side code if needed
+- [ ] Verify load functions work correctly
 
-##### 4.3.1 Convert Reactive Statements to Runes
-- [ ] Replace `$:` with `$state`, `$derived`, `$effect`
-- [ ] Update reactive declarations in all components
-- [ ] Migrate reactive assignments
-
-##### 4.3.2 Update Component Props
-- [ ] Convert `export let` props to `let { prop }: { prop: Type }`
-- [ ] Update all component prop definitions
-
-##### 4.3.3 Migrate Stores (if needed)
-- [ ] Review store usage patterns
-- [ ] Determine if runes can replace stores
-- [ ] Migrate context stores if applicable
-
-##### 4.3.4 Update Event Handlers
-- [ ] Review event handling patterns
-- [ ] Update to new event system if needed
-
-##### 4.3.5 Update Transitions
-- [ ] Verify transitions still work
-- [ ] Update transition usage if API changed
-
-#### 4.4 Update Svelte-Specific Packages
-- [ ] Update `@testing-library/svelte` if Svelte 5 compatible
-- [ ] Update `svelte-confetti` if available
-- [ ] Update `svelte-headless-table` if available
-- [ ] Update `radix-icons-svelte` if available
-- [ ] Update `svelte-chartjs` - remove override if compatible
-
-#### 4.5 Update package.json Overrides
-- [ ] Remove or update `svelte-chartjs` override if no longer needed
-- [ ] Check if other overrides are needed
+#### 4.4 Test After SvelteKit v2 Migration
+- [ ] Run `npm run build` - ensure build succeeds
+- [ ] Run `npm run test` - ensure tests pass
+- [ ] Run `npm run dev` - verify dev server works
+- [ ] Manual smoke test of application
 
 ---
 
-### Phase 5: UI Library Updates (Estimated: 1-2 days)
-**Goal**: Update UI libraries if compatible with Svelte 5
+### Phase 5: Tailwind CSS Update (Estimated: 1-2 days)
+**Goal**: Update Tailwind to Tailwind v4 (required for Skeleton v3)
 
-#### 5.1 Skeleton UI
-- [ ] Check for Svelte 5 compatible version
-- [ ] If not available, consider alternatives or wait
-- [ ] If available, update and test thoroughly
+**NOTE**: According to the [Skeleton v3 migration guide](https://v3.skeleton.dev/docs/get-started/migrate-from-v2), Skeleton v3 requires Tailwind v4. **Manual steps are required BEFORE running Tailwind's automated migration.**
 
-#### 5.2 bits-ui
+#### 5.1 Manual Pre-Migration Steps (REQUIRED)
+**⚠️ These steps MUST be completed before running Tailwind v4's migration script:**
+
+1. **Remove the Skeleton plugin from `tailwind.config.ts`**:
+   - Remove `import { skeleton } from '@skeletonlabs/tw-plugin';`
+   - Remove `skeleton({ ... })` from the `plugins` array
+   - Keep `forms` and `typography` plugins for now
+
+2. **Rename `app.pcss` to `app.css`**:
+   ```bash
+   # On Windows PowerShell:
+   Rename-Item src\app.pcss src\app.css
+   
+   # On Unix/Mac:
+   mv src/app.pcss src/app.css
+   ```
+   - Update import in `+layout.svelte` from `'../app.pcss'` to `'../app.css'`
+   - Note: This is temporary - Skeleton migration may handle this, but needed for Tailwind migration
+
+3. **Remove `purgecss` Vite plugin from `vite.config.ts`**:
+   - Remove `import { purgeCss } from 'vite-plugin-tailwind-purgecss';`
+   - Remove `purgeCss({ ... })` from the plugins array
+   - If you have safelist entries, note them down - you'll need them later
+
+#### 5.2 Run Tailwind v4 Migration
+- [ ] Review [Tailwind CSS v4 documentation](https://tailwindcss.com/docs/v4-alpha)
+- [ ] Understand CSS-first configuration approach
+- [ ] Review plugin migration guide
+- [ ] Run Tailwind's automated migration:
+```bash
+npm install -D tailwindcss@next # or @latest when stable
+# Follow Tailwind's migration guide for the migration script
+```
+
+#### 5.3 Post-Migration Tasks
+- [ ] Convert `tailwind.config.ts` to CSS `@config` syntax (or remove config file entirely)
+- [ ] Update theme configuration in CSS file using Tailwind v4's new approach
+- [ ] Re-add `@tailwindcss/forms` and `@tailwindcss/typography` plugins using v4 syntax
+- [ ] Handle safelist entries that were in purgecss plugin (using Tailwind v4 methods)
+
+#### 5.4 Migrate to Tailwind Vite Plugin
+According to Skeleton v3 migration guide, you should migrate from PostCSS to the Vite plugin:
+
+1. **Delete PostCSS config**:
+   ```bash
+   # Delete postcss.config.mjs (or postcss.config.cjs)
+   ```
+
+2. **Uninstall PostCSS packages**:
+   ```bash
+   npm uninstall postcss @tailwindcss/postcss
+   ```
+
+3. **Install Tailwind Vite plugin**:
+   ```bash
+   npm install @tailwindcss/vite
+   ```
+
+4. **Update `vite.config.ts`**:
+   - Import: `import tailwindcss from '@tailwindcss/vite'`
+   - Add `tailwindcss()` plugin ABOVE `sveltekit()` in plugins array:
+   ```typescript
+   plugins: [
+     tailwindcss(),
+     sveltekit()
+   ]
+   ```
+
+#### 5.5 Test Tailwind Styles
+- [ ] Build application
+- [ ] Verify all styles render correctly
+- [ ] Check dark mode functionality
+- [ ] Test Skeleton UI theme integration (before Skeleton upgrade)
+- [ ] Verify safelist classes (like `d2mh-*` patterns) still work
+
+---
+
+### Phase 6: Skeleton v2 → v3 Migration (Estimated: 1-2 days)
+**Goal**: Migrate Skeleton UI to v3 (requires Svelte 5, SvelteKit v2, latest Tailwind)
+
+#### 6.1 Prepare for Migration
+```bash
+# Create temporary app.css if project uses app.pcss
+Copy-Item src\app.pcss src\app.css
+```
+
+#### 6.2 Run Skeleton v3 Migration
+```bash
+npx skeleton migrate skeleton-3
+```
+- [ ] Answer prompts for folders using Skeleton (likely: `src`)
+- [ ] Review all migration changes
+- [ ] Merge changes from `app.css` back to `app.pcss` if needed
+- [ ] Delete temporary `app.css` if created
+
+#### 6.3 Manual Migration Tasks
+- [ ] Review Skeleton v3 breaking changes
+- [ ] Update component props if needed
+- [ ] Migrate utility classes if needed
+- [ ] Update theme configuration
+
+#### 6.4 Test After Skeleton v3 Migration
+- [ ] Run `npm run build` - ensure build succeeds
+- [ ] Run `npm run dev` - verify dev server works
+- [ ] Test all Skeleton UI components
+- [ ] Verify themes work correctly
+
+---
+
+### Phase 7: Skeleton v3 → v4 Migration (Estimated: 1 day)
+**Goal**: Migrate Skeleton UI to v4
+
+#### 7.1 Run Skeleton v4 Migration
+```bash
+npx skeleton migrate skeleton-4
+```
+- [ ] Answer prompts if needed
+- [ ] Review all migration changes
+
+#### 7.2 Manual Migration Tasks
+- [ ] Review Skeleton v4 breaking changes
+- [ ] Update component props if needed
+- [ ] Migrate utility classes if needed
+
+#### 7.3 Test After Skeleton v4 Migration
+- [ ] Run `npm run build` - ensure build succeeds
+- [ ] Run `npm run dev` - verify dev server works
+- [ ] Test all Skeleton UI components
+- [ ] Verify themes work correctly
+
+---
+
+### Phase 8: Other UI Library Updates (Estimated: 1-2 days)
+**Goal**: Update remaining UI libraries compatible with Svelte 5
+
+#### 8.1 bits-ui
 - [ ] Check Svelte 5 compatibility
 - [ ] Update if compatible
 - [ ] Test all UI components using bits-ui
 
-#### 5.3 Other UI Packages
+#### 8.2 Other UI Packages
 - [ ] Update `radix-icons-svelte` if compatible
 - [ ] Check other icon/UI packages
 

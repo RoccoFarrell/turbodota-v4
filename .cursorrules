@@ -1,0 +1,12 @@
+# Cursor Rules for TurboDota v4
+
+## Documentation Organization
+
+If you create any markdown files for planning or tracking, place them in the `docs` folder, and under a subfolder related to which part of the codebase it's related to.
+
+Example structure:
+- `docs/upgrades/` - for upgrade and migration plans
+- `docs/api/` - for API documentation
+- `docs/architecture/` - for architecture documentation
+- etc.
+
