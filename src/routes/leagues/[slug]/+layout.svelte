@@ -2,10 +2,10 @@
 	import { page } from '$app/stores';
 	import dayjs from 'dayjs';
 
-	export let data;
 	//console.log('leagues slug layout data:', data);
 
 	import Trophy_light from '$lib/assets/trophy_light.png';
+	let { data, children } = $props();
 
 	//console.log($page.url);
 	let breadcrumbs = $page.url.pathname.split('/');
@@ -69,6 +69,6 @@
 		</div> -->
 	</div>
 	<div class="mt-24">
-		<slot />
+		{@render children?.()}
 	</div>
 </main>

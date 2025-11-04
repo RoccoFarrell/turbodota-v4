@@ -1,19 +1,28 @@
 <script lang="ts">
+	import { createBubbler } from 'svelte/legacy';
+
+	const bubble = createBubbler();
 	import { cn } from "$lib/utils";
 	import type { HTMLAttributes } from "svelte/elements";
 
 	type $$Props = HTMLAttributes<HTMLTableSectionElement>;
 
-	let className: $$Props["class"] = undefined;
-	export { className as class };
+	interface Props {
+		class?: $$Props["class"];
+		children?: import('svelte').Snippet;
+		[key: string]: any
+	}
+
+	let { class: className = undefined, children, ...rest }: Props = $props();
+	
 </script>
 
-<!-- svelte-ignore a11y-no-noninteractive-element-interactions -->
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <thead
 	class={cn("[&_tr]:border-b", className)}
-	{...$$restProps}
-	on:click
-	on:keydown
+	{...rest}
+	onclick={bubble('click')}
+	onkeydown={bubble('keydown')}
 >
-	<slot />
+	{@render children?.()}
 </thead>

@@ -1,14 +1,23 @@
 <script lang="ts">
-    export let heroId: number;
-    export let isWin: boolean;
-    export let oldStats: { gold: number; xp: number };
-    export let newStats: { gold: number; xp: number };
 
     import { fade } from 'svelte/transition';
     import { quintOut } from 'svelte/easing';
     import { getModalStore } from '@skeletonlabs/skeleton';
     import Confetti from 'svelte-confetti';
     import { DOTADECK } from '$lib/constants/dotadeck';
+    interface Props {
+        heroId: number;
+        isWin: boolean;
+        oldStats: { gold: number; xp: number };
+        newStats: { gold: number; xp: number };
+    }
+
+    let {
+        heroId,
+        isWin,
+        oldStats,
+        newStats
+    }: Props = $props();
 
     const modalStore = getModalStore();
 

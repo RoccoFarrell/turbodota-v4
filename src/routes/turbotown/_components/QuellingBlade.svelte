@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import { setContext, getContext, onMount } from 'svelte';
 	import type { Hero, TurbotownQuest } from '@prisma/client';
 	import type { SvelteComponent } from 'svelte';
@@ -23,22 +25,36 @@
 	let seasonID: number = $modalStore[0].meta.seasonID;
     let quests: TurbotownQuest[] = $modalStore[0].meta.quests;
 
-	$: console.log('LOGGGINGGGGG');
-	$: console.log('heroes: ', heroes);
-	$: console.log('account_id:', account_id);
-	$: console.log('turbotownID: ', turbotownID);
-	$: console.log('seasonID: ', seasonID);
-    $: console.log('quests: ', quests);
+	run(() => {
+		console.log('LOGGGINGGGGG');
+	});
+	run(() => {
+		console.log('heroes: ', heroes);
+	});
+	run(() => {
+		console.log('account_id:', account_id);
+	});
+	run(() => {
+		console.log('turbotownID: ', turbotownID);
+	});
+	run(() => {
+		console.log('seasonID: ', seasonID);
+	});
+    run(() => {
+		console.log('quests: ', quests);
+	});
 
-	let currentQuestList: Array<any> = new Array<any>();
-	$: console.log('CURRENT QUEST list: ', currentQuestList);
+	let currentQuestList: Array<any> = $state(new Array<any>());
+	run(() => {
+		console.log('CURRENT QUEST list: ', currentQuestList);
+	});
 
 	currentQuestList = quests.filter(quest => quest.active).map(quest => quest)
     let temp2 = heroes.filter(hero => hero.id == currentQuestList[0].random.randomedHero)
     console.log("temp2", temp2[0].localized_name)
 
-    let inputQuestID: number
-    let inputrandomID : number
+    let inputQuestID: number = $state()
+    let inputrandomID : number = $state()
 
 	function onFormSubmit(selectedQuestID: any, randomID: any): void {
         inputQuestID = selectedQuestID
@@ -82,7 +98,7 @@
 							</h2>
                             <i class={`d2mh hero-${heroes.filter(hero => hero.id == quest.random.randomedHero)[0].id} scale-[3] m-12`}></i>
 							<div class="flex items-center justify-center">
-								<button class="btn variant-filled-primary w-full" on:click={() => onFormSubmit(quest.id, quest.randomID)}>
+								<button class="btn variant-filled-primary w-full" onclick={() => onFormSubmit(quest.id, quest.randomID)}>
 									<div class="italic">Select</div></button
 								>
 							</div>

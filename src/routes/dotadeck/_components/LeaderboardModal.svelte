@@ -2,7 +2,8 @@
     import { getModalStore } from '@skeletonlabs/skeleton';
     const modalStore = getModalStore();
 
-    export let players: {
+    interface Props {
+        players?: {
         user: {
             username: string;
             avatar_url: string | null;
@@ -24,13 +25,16 @@
             xp: number;
             gold: number;
         }[];
-    }[] = [];
+    }[];
+    }
+
+    let { players = [] }: Props = $props();
 </script>
 
 <div class="card p-4 w-full max-w-3/4">
     <header class="flex justify-between items-center mb-4">
         <h2 class="h2 text-primary-500">Leaderboard</h2>
-        <button class="btn btn-sm variant-filled-surface" on:click={() => modalStore.close()}>✕</button>
+        <button class="btn btn-sm variant-filled-surface" onclick={() => modalStore.close()}>✕</button>
     </header>
 
     <div class="table-container">

@@ -5,12 +5,16 @@
     import type { StatBoostData } from '$lib/types/dotadeck';
     const modalStore = getModalStore();
 
-    export let data: StatBoostData;
+    interface Props {
+        data: StatBoostData;
+    }
+
+    let { data }: Props = $props();
 
     const goldDiff = data.newStats.gold - data.oldStats.gold;
     const xpDiff = data.newStats.xp - data.oldStats.xp;
 
-    $: message = `Discarded! +${DOTADECK.DISCARD_BONUS.GOLD}g/+${DOTADECK.DISCARD_BONUS.XP}xp`;
+    let message = $derived(`Discarded! +${DOTADECK.DISCARD_BONUS.GOLD}g/+${DOTADECK.DISCARD_BONUS.XP}xp`);
 </script>
 
 <div

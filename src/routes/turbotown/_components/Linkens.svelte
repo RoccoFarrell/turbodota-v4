@@ -20,9 +20,9 @@
 	let allTurbotowns: any[] = $modalStore[0].meta.allTurbotowns;
 	let turbotownUsers: Array<any> = $modalStore[0].meta.turbotownUsers;
 
-	let selectedUser: String;
-	let selectedTown = allTurbotowns.filter((town) => town.user.account_id === account_id);
-	let selectedTownString: String = townToString(selectedTown[0]);
+	let selectedUser: String = $state();
+	let selectedTown = $state(allTurbotowns.filter((town) => town.user.account_id === account_id));
+	let selectedTownString: String = $state(townToString(selectedTown[0]));
 
 	function onFormSubmit(inputSelectedTown: any): void {
 		if ($modalStore[0].response) $modalStore[0].response(inputSelectedTown);
@@ -66,12 +66,12 @@
 				</div>
 				<h2 class="h2 text-center text-success-500">Select Town to Apply Linken's Sphere</h2>
 				<div class="h-full w-full grid grid-cols-3 mx-auto my-4 p-4 gap-4">
-					<select class="select" name="selectedUserID" bind:value={selectedUser} on:change={changeUserHandler}>
+					<select class="select" name="selectedUserID" bind:value={selectedUser} onchange={changeUserHandler}>
 						{#each turbotownUsers as townUser}
 							<option>{townUser.user.username}</option>
 						{/each}
 					</select>
-					<button class="btn variant-filled-primary w-full" on:click={() => onFormSubmit(selectedTown[0])}>
+					<button class="btn variant-filled-primary w-full" onclick={() => onFormSubmit(selectedTown[0])}>
 						<div class="italic">Select</div></button
 					>
 				</div>

@@ -1,4 +1,7 @@
 <script lang="ts">
+	import { run, createBubbler, stopPropagation, handlers } from 'svelte/legacy';
+
+	const bubble = createBubbler();
 	import { browser } from '$app/environment';
 	import { onDestroy, onMount } from 'svelte';
 	import { heroPoolStore } from '$lib/stores/heroPoolStore';
@@ -24,17 +27,21 @@
 	const toastStore = getToastStore();
 	const modalStore = getModalStore();
 
-	export let data: PageData;
+	interface Props {
+		data: PageData;
+	}
+
+	let { data = $bindable() }: Props = $props();
 
 	if (!data.seasonUser) {
 		console.error("No season user found for logged in user: ", data.user);
 		throw redirect(302, '/');
 	}
 
-	let isCheckingWins = false;
-	let autoCheckEnabled = browser ? 
+	let isCheckingWins = $state(false);
+	let autoCheckEnabled = $state(browser ? 
 		JSON.parse(sessionStorage.getItem('autoCheckEnabled') ?? 'true') : 
-		true;
+		true);
 	let visibilityHandler: () => Promise<void>;
 
 	// Setup visibility change handler in onMount
@@ -112,7 +119,7 @@
 	}
 
 	// Hand management
-	let hand: (CardHero | null)[] = Array(data.seasonUser.handSize).fill(null);
+	let hand: (CardHero | null)[] = $state(Array(data.seasonUser.handSize).fill(null));
 	if (data.seasonUser.heroDraws) {
 		// Only use active (non-discarded) draws
 		const activeDraws = data.seasonUser.heroDraws.filter((draw) => !draw.matchResult);
@@ -135,17 +142,19 @@
 		});
 	}
 
-	$: console.log(hand);
+	run(() => {
+		console.log(hand);
+	});
 
-	let showingAnimation: boolean = false;
+	let showingAnimation: boolean = $state(false);
 	let showingStatUpdate: boolean = false;
 	let selectedHero: CardHero | null = null;
-	let currentHighlightId: number | null = null;
+	let currentHighlightId: number | null = $state(null);
 	let animationInterval: NodeJS.Timeout;
 	let activeSlot: number | null = null;
 	let updatedCardStats: { heroId: number; gold: number; xp: number } | null = null;
-	let showStatBoost = false;
-	let statBoostData: StatBoostData | null = null;
+	let showStatBoost = $state(false);
+	let statBoostData: StatBoostData | null = $state(null);
 	let recentMatches = data.matchTableData;
 	let statUpdateData: { 
 		heroId: number;
@@ -153,8 +162,8 @@
 		oldStats: { xp: number; gold: number };
 		newStats: { xp: number; gold: number };
 	} | null = null;
-	let isDrawing: boolean = false;
-	$: discardsRemaining = data.seasonUser?.discardTokens ?? 0;
+	let isDrawing: boolean = $state(false);
+	let discardsRemaining = $derived(data.seasonUser?.discardTokens ?? 0);
 
 	let lastNotificationTime = 0;
 	const NOTIFICATION_COOLDOWN = 10000; // 10 seconds in milliseconds
@@ -294,7 +303,7 @@
 		}
 	}
 
-	let isDiscarding = false;
+	let isDiscarding = $state(false);
 
 	async function discardHero(slotIndex: number) {
 		if (discardsRemaining <= 0) {
@@ -527,20 +536,22 @@
 	});
 
 	// Show rules modal when data is loaded and user hasn't seen rules
-	$: if (data.seasonUser && !data.seasonUser.hasSeenRules) {
-		showRules();
-		fetch('/api/seasonUser/updateRulesSeen', {
-			method: 'POST',
-			body: JSON.stringify({ seasonUserId: data.seasonUser.id })
-		});
-	}
+	run(() => {
+		if (data.seasonUser && !data.seasonUser.hasSeenRules) {
+			showRules();
+			fetch('/api/seasonUser/updateRulesSeen', {
+				method: 'POST',
+				body: JSON.stringify({ seasonUserId: data.seasonUser.id })
+			});
+		}
+	});
 
 	// Add state variables for tooltip
-	let showAutoCheckTooltip = false;
-	let tooltipX = 0;
-	let tooltipY = 0;
+	let showAutoCheckTooltip = $state(false);
+	let tooltipX = $state(0);
+	let tooltipY = $state(0);
 
-	let selectedHeroId: number | null = null;
+	let selectedHeroId: number | null = $state(null);
 </script>
 
 <div class="container mx-auto p-4 space-y-8">
@@ -551,27 +562,27 @@
 				<span class="text-blue-400 font-bold">{(data.stats.totalXP)}xp</span>
 			</div>
 			<div class="flex gap-2">
-				<button class="btn btn-sm variant-filled-secondary" on:click={showLeaderboard}>
+				<button class="btn btn-sm variant-filled-secondary" onclick={showLeaderboard}>
 					<div class="flex items-center justify-center">
 					<i class="fi fi-rr-trophy-star mr-2"></i>
 					Leaderboard
 					</div>
 				</button>
-				<button class="btn btn-sm variant-filled-tertiary" on:click={showRules}>
+				<button class="btn btn-sm variant-filled-tertiary" onclick={showRules}>
 					<i class="fi fi-rr-book-bookmark mr-2"></i>
 					Rules
 				</button>
 				<div class="border-l border-surface-500 mx-2"></div>
-				<button class="btn btn-sm bg-amber-500 text-black" on:click={showHistory}>
+				<button class="btn btn-sm bg-amber-500 text-black" onclick={showHistory}>
 					<i class="fi fi-rr-time-past mr-2"></i>
 					Game History
 				</button>
-				<button class="btn btn-sm bg-purple-800 text-white" on:click={showMatchHistory}>
+				<button class="btn btn-sm bg-purple-800 text-white" onclick={showMatchHistory}>
 					<i class="fi fi-rr-chart-line-up mr-2"></i>
 					Recent Matches
 				</button>
 				<div class="border-l border-surface-500 mx-2"></div>
-				<button class="btn btn-sm variant-filled-primary" on:click={checkForWins} disabled={isCheckingWins}>
+				<button class="btn btn-sm variant-filled-primary" onclick={checkForWins} disabled={isCheckingWins}>
 					{#if isCheckingWins}
 						<i class="fi fi-rr-loading animate-spin mr-2"></i>
 						Checking Wins...
@@ -582,18 +593,18 @@
 				</button>
 				<button 
 					class="btn btn-sm {autoCheckEnabled ? 'variant-filled-success' : 'variant-filled-surface'}" 
-					on:click={() => {
+					onclick={() => {
 						autoCheckEnabled = !autoCheckEnabled;
 						if (browser) {
 							sessionStorage.setItem('autoCheckEnabled', JSON.stringify(autoCheckEnabled));
 						}
 					}}
-					on:mouseenter={(e) => {
+					onmouseenter={(e) => {
 						tooltipX = e.clientX;
 						tooltipY = e.clientY;
 						showAutoCheckTooltip = true;
 					}}
-					on:mouseleave={() => showAutoCheckTooltip = false}
+					onmouseleave={() => showAutoCheckTooltip = false}
 				>
 					<i class="fi {autoCheckEnabled ? 'fi-rr-refresh' : 'fi-rr-pause'} mr-2"></i>
 					Auto Check {autoCheckEnabled ? 'On' : 'Off'}
@@ -633,12 +644,12 @@
 								{selectedHeroId === hero?.id ? 'ring-4 ring-amber-500' : ''}"
 							role="button"
 							tabindex="0"
-							on:click={() => {
+							onclick={() => {
 								if (hero) {
 									selectedHeroId = selectedHeroId === hero.id ? null : hero.id;
 								}
 							}}
-							on:keypress={(e) => {
+							onkeypress={(e) => {
 								if (e.key === 'Enter' && hero) {
 									selectedHeroId = selectedHeroId === hero.id ? null : hero.id;
 								}
@@ -666,10 +677,9 @@
 								<div class="absolute bottom-2 w-full flex justify-center">
 									<button 
 										class="btn btn-sm variant-soft-error hover:variant-soft-error-hover" 
-										on:click={() => discardHero(i)}
-										on:click|stopPropagation
+										onclick={handlers(() => discardHero(i), stopPropagation(bubble('click')))}
 										disabled={discardsRemaining <= 0 || isDiscarding}
-										on:mouseenter={() => {
+										onmouseenter={() => {
 											if (discardsRemaining <= 0) showDiscardNotification();
 										}}
 									> 
@@ -685,7 +695,7 @@
 								<div class="w-full h-full flex items-center justify-center">
 									<button 
 										class="btn variant-filled-primary" 
-										on:click={() => drawHero(i)}
+										onclick={() => drawHero(i)}
 										disabled={isDrawing}
 									> 
 										Draw 

@@ -7,19 +7,23 @@
 	//stores
 	import { sortData } from '$lib/stores/sortData';
 
-	export let tableData: TableSource = {
+	interface Props {
+		tableData?: TableSource;
+		selectedPlayer?: string;
+		sortBy?: SortBy;
+	}
+
+	let { tableData = $bindable({
 		head: [],
 		body: []
-	};
-	export let selectedPlayer: string = 'All';
-	export let sortBy: SortBy = {
+	}), selectedPlayer = 'All', sortBy = $bindable({
 		sortObj: {
 			headerText: 'Games',
 			headerKey: 'games',
 			index: 1
 		},
 		ascending: false
-	};
+	}) }: Props = $props();
 
 	interface SortObj {
 		headerText: string;
@@ -112,7 +116,7 @@
 							([2, 3, 6, 7, 8].includes(i) ? ' max-sm:hidden md:visible' : '') +
 							(headerText === sortBy.sortObj.headerText && sortBy.ascending ? ' table-sort-asc' : '') +
 							(headerText === sortBy.sortObj.headerText && !sortBy.ascending ? ' table-sort-dsc' : '')}
-						on:click={() => handleSortHeaderClick(headerText)}>{headerText}</th
+						onclick={() => handleSortHeaderClick(headerText)}>{headerText}</th
 					>
 				{/each}
 			{:else}
@@ -123,7 +127,7 @@
 							([2, 3, 6, 7, 8].includes(i) ? ' max-sm:hidden md:visible' : '') +
 							(headerText === sortBy.sortObj.headerText && sortBy.ascending ? ' table-sort-asc' : '') +
 							(headerText === sortBy.sortObj.headerText && !sortBy.ascending ? ' table-sort-dsc' : '')}
-						on:click={() => handleSortHeaderClick(headerText)}>{headerText}</th
+						onclick={() => handleSortHeaderClick(headerText)}>{headerText}</th
 					>
 				{/each}
 			{/if}

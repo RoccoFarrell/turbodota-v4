@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import { setContext, getContext } from 'svelte';
 	import type { Hero, Session, UserPrefs } from '@prisma/client';
 
@@ -18,17 +20,29 @@
 	type BanStore = ReturnType<typeof createRandomStore>
 	import { banStore } from '$lib/stores/banStore'
 
-	export let randomFound = false;
-	export let session: Session | null = null;
-	export let heroes: Hero[] = [];
-	//export let parent: any;
-	export let freeBans: number = 3;
+	
+	interface Props {
+		randomFound?: boolean;
+		session?: Session | null;
+		heroes?: Hero[];
+		//export let parent: any;
+		freeBans?: number;
+	}
+
+	let {
+		randomFound = false,
+		session = $bindable(null),
+		heroes = $bindable([]),
+		freeBans = 3
+	}: Props = $props();
 	
 	if (heroes.length === 0) heroes = getContext('heroes');
 
 
 	console.log('banStore: ', $banStore)
-	$: console.log('banStore changed: ', $banStore)
+	run(() => {
+		console.log('banStore changed: ', $banStore)
+	});
 
 	/* Get session from context */
 	if (!session) session = getContext('session');
@@ -36,7 +50,8 @@
 	// if (!preferences || preferences.length === 0) preferences = getContext('userPreferences');
 	// console.log('[herogrid] preferences: ', preferences);
 
-	$: showHeroGrid = true;
+	let showHeroGrid = $state(true);
+	
 
 	const handleRoleSelect = (role: string) => {
 		//console.log(role);
@@ -163,7 +178,7 @@
 			>
 				<button
 					class="w-full"
-					on:click={() => {
+					onclick={() => {
 						showHeroGrid = !showHeroGrid;
 					}}
 				>
@@ -182,10 +197,10 @@
 						<div class="object-contain m-1 relative">
 							{#if $banStore.bannedHeroes.indexOf(hero) !== -1}
 								<div class="w-full h-full bg-red-600 rounded-xl z-10 absolute bg-opacity-70">
-									<button on:click={() => banStore.banHero(hero)} class="w-full h-full"></button>
+									<button onclick={() => banStore.banHero(hero)} class="w-full h-full"></button>
 								</div>
 							{/if}
-							<button on:click={() => banStore.banHero(hero)}><i class={`z-0 d2mh hero-${hero.id}`}></i></button>
+							<button onclick={() => banStore.banHero(hero)}><i class={`z-0 d2mh hero-${hero.id}`}></i></button>
 						</div>
 					{/each}
 				{/if}
@@ -202,10 +217,10 @@
 						<div class={`object-contain m-3 relative`}>
 							{#if $banStore.bannedHeroes.indexOf(hero) !== -1}
 								<div class="w-full h-full bg-red-600 rounded-xl z-10 absolute bg-opacity-70">
-									<button on:click={() => banStore.banHero(hero)} class="w-full h-full"></button>
+									<button onclick={() => banStore.banHero(hero)} class="w-full h-full"></button>
 								</div>
 							{/if}
-							<button on:click={() => banStore.banHero(hero)}
+							<button onclick={() => banStore.banHero(hero)}
 								><i class={`z-0 d2mh hero-${hero.id} scale-125`}></i></button
 							>
 						</div>
@@ -231,12 +246,12 @@
 					<button
 						class={'btn dark:bg-purple-800/50 bg-purple-500/50 w-1/3'}
 						disabled={!session}
-						on:click={() => saveBanList()}>{!session ? 'Log In to save 3 Free Bans' : 'Save Bans to account'}</button
+						onclick={() => saveBanList()}>{!session ? 'Log In to save 3 Free Bans' : 'Save Bans to account'}</button
 					>
 					<button
 						class="btn bg-red-500 w-1/3"
 						disabled={$banStore.bannedHeroes.length === 0}
-						on:click={() => setBanList()}>Clear</button
+						onclick={() => setBanList()}>Clear</button
 					>
 				</div>
 			</div>
@@ -267,7 +282,7 @@
 
 				<div class="mx-8 md:my-4 my-2">
 					<!-- <h3 class="h3">Auto Bans</h3> -->
-					<button class="btn dark:bg-amber-800 bg-amber-500 w-1/2 my-4" on:click={() => setBanList('garbage')}
+					<button class="btn dark:bg-amber-800 bg-amber-500 w-1/2 my-4" onclick={() => setBanList('garbage')}
 						>Garbage</button
 					>
 				</div>
@@ -288,7 +303,7 @@
 								<input
 									class="checkbox"
 									type="checkbox"
-									on:click={() => handleRoleSelect(role)}
+									onclick={() => handleRoleSelect(role)}
 									checked={$banStore.selectedRoles.includes(role)}
 								/>
 								<p>{role}</p>

@@ -15,7 +15,11 @@
 	import FeedItem from './_components/FeedItem.svelte';
 	import type { DateTimeDuration } from '@internationalized/date';
 
-	export let data: any;
+	interface Props {
+		data: any;
+	}
+
+	let { data }: Props = $props();
 	console.log('data in feed: ', data);
 	let allHeroes: Hero[] = data.heroDescriptions.allHeroes;
 	let towns = data.league.currentSeason.turbotowns;

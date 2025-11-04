@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
   import SeasonHeaderCard from '../leagues/[slug]/seasons/[slug]/SeasonHeaderCard.svelte';
 
 	import { onMount } from 'svelte';
@@ -31,13 +33,21 @@
 	import SeasonLeaderboard from '../leagues/[slug]/seasons/[slug]/SeasonLeaderboard.svelte';
 	import TurbotownIntro from '$lib/components/TurbotownIntro.svelte';
 
-	//data
-	export let data: PageData;
-	export let form;
+	
+	interface Props {
+		//data
+		data: PageData;
+		form: any;
+	}
 
-	$: training = false;
-	$: progressVal = 0;
-	$: skillCount = 0;
+	let { data, form }: Props = $props();
+
+	let training = $state(false);
+	
+	let progressVal = $state(0);
+	
+	let skillCount = $state(0);
+	
 
 	//calc leaderboard info for seasons panel
 	let randomSeasonStats = {
@@ -77,22 +87,26 @@
 	};
 	//modalStore.trigger(modal);
 
-	$: console.log(form)
-	$: if (form?.missing) {
-		const t: ToastSettings = {
-			message: `Enter at least one valid Dota User ID`,
-			background: 'variant-filled-error'
-		};
+	run(() => {
+		console.log(form)
+	});
+	run(() => {
+		if (form?.missing) {
+			const t: ToastSettings = {
+				message: `Enter at least one valid Dota User ID`,
+				background: 'variant-filled-error'
+			};
 
-		toastStore.trigger(t);
-	} else if (form?.success) {
-		const t: ToastSettings = {
-			message: `League created!`,
-			background: 'variant-filled-success'
-		};
+			toastStore.trigger(t);
+		} else if (form?.success) {
+			const t: ToastSettings = {
+				message: `League created!`,
+				background: 'variant-filled-success'
+			};
 
-		toastStore.trigger(t);
-	}
+			toastStore.trigger(t);
+		}
+	});
 </script>
 
 <div class="container">

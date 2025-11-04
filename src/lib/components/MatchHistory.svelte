@@ -1,11 +1,11 @@
 <script lang="ts">
-	export let matchTableData;
 
 	import { Table } from '@skeletonlabs/skeleton';
 	import { tableMapperValues } from '@skeletonlabs/skeleton';
 	import type { TableSource } from '@skeletonlabs/skeleton';
 
 	import { calculateKdaClasses } from '$lib/helpers/tableColors';
+	let { matchTableData } = $props();
 
 	const tableMatch: TableSource = {
 		// A list of heading labels.

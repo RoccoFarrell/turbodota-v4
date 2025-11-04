@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { formatDate } from '$lib/utils';
 
-	export let data;
+	let { data } = $props();
 </script>
 
 <!-- SEO -->
@@ -47,7 +47,7 @@
 			<div class="w-full border-b border-dashed border-primary-500 my-4"></div>
 			<!-- Post -->
 			<div class="prose dark:prose-invert mb-20">
-				<svelte:component this={data.content} />
+				<data.content />
 			</div>
 		</div>
 	</article>

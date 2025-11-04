@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import Shop from '../_components/Shop.svelte';
 	import { enhance } from '$app/forms';
 
@@ -9,12 +11,18 @@
 
 	//page data
 	import type { PageData } from './$types';
-	export let data: PageData;
 
-	export let form;
+	interface Props {
+		data: PageData;
+		form: any;
+	}
+
+	let { data, form }: Props = $props();
 	//console.log(data);
 
-	$: console.log(form);
+	run(() => {
+		console.log(form);
+	});
 
 	function onFormReturn(form: any) {
 		if (form && form.success) {
@@ -48,7 +56,9 @@
 		}
 	}
 
-	$: onFormReturn(form);
+	run(() => {
+		onFormReturn(form);
+	});
 
 </script>
 

@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	//SVELTE
 	import { enhance } from '$app/forms';
 
@@ -18,7 +20,7 @@
 	import * as Table from '$lib/components/ui/table';
 	import DataTableCheckbox from './data-table-checkbox.svelte';
 
-	export let data;
+	let { data = $bindable() } = $props();
 	console.log(`[/seasons/<ID>] data: `, data);
 
 	const table = createTable(readable(data.allRandoms), {
@@ -64,13 +66,13 @@
 
 	const { selectedDataIds } = pluginStates.select;
 
-	let formDataIds: any;
-	$: {
+	let formDataIds: any = $state();
+	run(() => {
 		formDataIds = Object.keys($selectedDataIds).map((dataId: any) => {
 			if ($selectedDataIds[dataId]) return data.allRandoms[dataId].id;
 		});
 		console.log('selectedDataIDs', $selectedDataIds);
-	}
+	});
 
 	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 	// @ts-ignore: Unreachable code error
@@ -93,7 +95,7 @@
 				</label>
 				<label class="label">
 					<span>Random IDs</span>
-					<textarea class="textarea" rows="3" name="selectedDataIds" bind:value={formDataIds} />
+					<textarea class="textarea" rows="3" name="selectedDataIds" bind:value={formDataIds}></textarea>
 				</label>
 				
 			</form>
@@ -105,11 +107,13 @@
 							<Subscribe rowAttrs={headerRow.attrs()}>
 								<Table.Row>
 									{#each headerRow.cells as cell (cell.id)}
-										<Subscribe attrs={cell.attrs()} let:attrs props={cell.props()}>
-											<Table.Head {...attrs} class="[&:has([role=checkbox])]:pl-3">
-												<Render of={cell.render()} />
-											</Table.Head>
-										</Subscribe>
+										<Subscribe attrs={cell.attrs()}  props={cell.props()}>
+											{#snippet children({ attrs })}
+																		<Table.Head {...attrs} class="[&:has([role=checkbox])]:pl-3">
+													<Render of={cell.render()} />
+												</Table.Head>
+																												{/snippet}
+																</Subscribe>
 									{/each}
 								</Table.Row>
 							</Subscribe>
@@ -117,17 +121,21 @@
 					</Table.Header>
 					<Table.Body {...$tableBodyAttrs}>
 						{#each $pageRows as row (row.id)}
-							<Subscribe rowAttrs={row.attrs()} let:rowAttrs>
-								<Table.Row {...rowAttrs} data-state={$selectedDataIds[row.id] && 'selected'}>
-									{#each row.cells as cell (cell.id)}
-										<Subscribe attrs={cell.attrs()} let:attrs>
-											<Table.Cell {...attrs}>
-												<Render of={cell.render()} />
-											</Table.Cell>
+							<Subscribe rowAttrs={row.attrs()} >
+								{#snippet children({ rowAttrs })}
+												<Table.Row {...rowAttrs} data-state={$selectedDataIds[row.id] && 'selected'}>
+										{#each row.cells as cell (cell.id)}
+											<Subscribe attrs={cell.attrs()} >
+												{#snippet children({ attrs })}
+																		<Table.Cell {...attrs}>
+														<Render of={cell.render()} />
+													</Table.Cell>
+																													{/snippet}
+																</Subscribe>
+										{/each}
+									</Table.Row>
+																			{/snippet}
 										</Subscribe>
-									{/each}
-								</Table.Row>
-							</Subscribe>
 						{/each}
 					</Table.Body>
 				</Table.Root>

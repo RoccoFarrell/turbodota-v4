@@ -28,7 +28,11 @@
 	import Linkens from './Linkens.svelte';
 	import QuellingBlade from './QuellingBlade.svelte';
 
-	export let data: any;
+	interface Props {
+		data: any;
+	}
+
+	let { data }: Props = $props();
 	if (browser) {
 		console.log('data in inventory: ', data);
 	}
@@ -207,7 +211,7 @@
 									<button
 										type="submit"
 										class="btn variant-filled-primary w-full max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:my-8 max-lg:mx-4 max-lg:max-w-[90%] md:max-w-[80%]"
-										on:click={() => useClickHandler(row[0])}
+										onclick={() => useClickHandler(row[0])}
 										>Use
 									</button>
 								</td>
@@ -218,6 +222,6 @@
 			</div>
 		</div>
 	</div>
-	<div class="z-30 bg-leather opacity-25 h-full w-full absolute top-16" />
-	<div class="z-20 bg-surface-900 h-full w-full absolute top-16" />
+	<div class="z-30 bg-leather opacity-25 h-full w-full absolute top-16"></div>
+	<div class="z-20 bg-surface-900 h-full w-full absolute top-16"></div>
 </div>

@@ -2,7 +2,11 @@
     import type { PageData } from './$types';
     import HeroCard from '$lib/components/HeroCard.svelte';
     
-    export let data: PageData;
+    interface Props {
+        data: PageData;
+    }
+
+    let { data }: Props = $props();
 
     interface UserCard {
         id: string;
@@ -28,12 +32,12 @@
     type StatType = 'KILLS' | 'ASSISTS' | 'NET_WORTH' | 'LAST_HITS' | 'DENIES' | 
                     'DAMAGE' | 'HEALING' | 'BUILDING' | 'SUPPORT' | 'SCORE';
 
-    let currentHand: UserCard[] = data.userCards ?? [];
-    let selectedHandCards = new Set<string>();
+    let currentHand: UserCard[] = $state(data.userCards ?? []);
+    let selectedHandCards = $state(new Set<string>());
     let score = data.score ?? 0;
-    let gold = data.gold ?? 0;
+    let gold = $state(data.gold ?? 0);
     let currentRound = data.currentRound ?? null;
-    $: shopCards = data.shopCards ?? [];
+    let shopCards = $derived(data.shopCards ?? []);
 
     const colors = {
         STAT_MULTIPLIER: '#4A90E2',
@@ -41,9 +45,9 @@
         SCORE_MULTIPLIER: '#F5A623'
     } as const;
 
-    let isShopOpen = false;
+    let isShopOpen = $state(false);
     let isLeaderboardOpen = false;
-    let selectedCards = new Set<string>();
+    let selectedCards = $state(new Set<string>());
 
     // Create audio element for purchase sound
     let purchaseSound: HTMLAudioElement;
@@ -180,12 +184,12 @@
                 <button class="px-8 py-3 rounded-lg bg-gradient-to-br from-gray-700 to-gray-800 text-white 
                             transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_4px_20px_rgba(251,191,36,0.3)]
                             border border-gray-700/50"
-                        on:click={toggleShop}>
+                        onclick={toggleShop}>
                     Card Shop
                 </button>
                 <button class="px-6 py-2 rounded-lg bg-gray-700 text-white transition-all duration-200 
                              hover:-translate-y-1 hover:shadow-[0_2px_8px_rgba(255,215,0,0.2)]"
-                        on:click={toggleLeaderboard}>
+                        onclick={toggleLeaderboard}>
                     Leaderboard
                 </button>
                 <button class="px-6 py-2 rounded-lg bg-gray-700 text-white transition-all duration-200 
@@ -223,14 +227,14 @@
                            shadow-[0_0_20px_rgba(220,38,38,0.3)] border border-red-500/30
                            transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_4px_25px_rgba(220,38,38,0.4)]"
                     disabled={selectedHandCards.size === 0}
-                    on:click={deleteSelectedCards}
+                    onclick={deleteSelectedCards}
                 >
                     Delete Selected ({selectedHandCards.size})
                 </button>
                 <button
                     class="px-6 py-2 rounded-lg bg-gray-600 text-white transition-all duration-200 
                            hover:-translate-y-1 hover:shadow-lg"
-                    on:click={clearHandSelection}
+                    onclick={clearHandSelection}
                 >
                     Clear Selection
                 </button>
@@ -256,7 +260,7 @@
                     {/if}
                 </div>
                 <button class="text-4xl bg-transparent border-none text-white cursor-pointer"
-                        on:click={toggleShop}>×</button>
+                        onclick={toggleShop}>×</button>
             </div>
             <div class="grid grid-cols-5 gap-2 justify-items-center p-8 pt-0 overflow-y-auto">
                 {#each shopCards as card}
@@ -277,14 +281,14 @@
                         const card = shopCards.find(c => c.id === id);
                         return card && gold >= card.cost;
                     })}
-                    on:click={purchaseSelectedCards}
+                    onclick={purchaseSelectedCards}
                 >
                     Purchase Selected ({selectedCards.size})
                 </button>
                 <button
                     class="px-6 py-2 rounded-lg bg-gray-600 text-white transition-all duration-200 
                            hover:-translate-y-1 hover:shadow-lg"
-                    on:click={clearSelection}
+                    onclick={clearSelection}
                 >
                     Clear Selection
                 </button>

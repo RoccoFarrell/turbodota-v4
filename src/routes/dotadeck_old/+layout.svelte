@@ -1,7 +1,12 @@
 <script lang="ts">
     import type { LayoutData } from './$types';
     
-    export let data: LayoutData;
+    interface Props {
+        data: LayoutData;
+        children?: import('svelte').Snippet;
+    }
+
+    let { data, children }: Props = $props();
 
     async function startNewGame() {
         try {
@@ -32,7 +37,7 @@
             <div class="flex gap-4">
                 <button
                     class="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700 transition-colors"
-                    on:click={startNewGame}
+                    onclick={startNewGame}
                 >
                     New Game
                 </button>
@@ -44,5 +49,5 @@
             </div>
         </div>
     </div>
-    <slot />
+    {@render children?.()}
 </div> 

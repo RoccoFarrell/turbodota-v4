@@ -7,12 +7,12 @@
         code: string;  // Added for API compatibility
     }
 
-    let selectedCards: Set<number> = new Set();
+    let selectedCards: Set<number> = $state(new Set());
     let deckId: string | null = null;
     
-    let cards: Card[] = [];
+    let cards: Card[] = $state([]);
 
-    $: totalScore = cards.reduce((total, card) => total + card.points, 0);
+    let totalScore = $derived(cards.reduce((total, card) => total + card.points, 0));
 
     async function initializeDeck() {
         const response = await fetch('https://deckofcardsapi.com/api/deck/new/shuffle/');
@@ -128,12 +128,12 @@
                                transition-all duration-200 hover:-translate-y-2 hover:shadow-[0_0_20px_rgba(255,215,0,0.6)]
                                {selectedCards.has(card.id) ? 'shadow-[0_0_20px_rgba(0,0,255,0.5)] -translate-y-1 relative' : ''}"
                         class:selected={selectedCards.has(card.id)}
-                        on:click={() => handleCardClick(card)}
-                        on:keydown={(e) => e.key === 'Enter' && handleCardClick(card)}
+                        onclick={() => handleCardClick(card)}
+                        onkeydown={(e) => e.key === 'Enter' && handleCardClick(card)}
                         draggable="true"
-                        on:dragstart={(e) => handleDragStart(e, card)}
-                        on:dragover={handleDragOver}
-                        on:drop={(e) => handleDrop(e, card)}
+                        ondragstart={(e) => handleDragStart(e, card)}
+                        ondragover={handleDragOver}
+                        ondrop={(e) => handleDrop(e, card)}
                     >
                         <img src={card.image} alt={card.name} class="w-full h-auto" />
                         {#if selectedCards.has(card.id)}
@@ -151,7 +151,7 @@
             class="px-8 py-2 text-xl rounded-lg bg-blue-600 text-white transition-all duration-200
                    hover:-translate-y-1 hover:shadow-[0_2px_8px_rgba(37,99,235,0.4)]
                    disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:transform-none"
-            on:click={discardSelected} 
+            onclick={discardSelected} 
             disabled={selectedCards.size === 0}
         >
             Discard ({selectedCards.size})
@@ -160,7 +160,7 @@
             class="px-8 py-2 text-xl rounded-lg bg-blue-600 text-white transition-all duration-200
                    hover:-translate-y-1 hover:shadow-[0_2px_8px_rgba(37,99,235,0.4)]
                    disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:transform-none"
-            on:click={drawCard}
+            onclick={drawCard}
             disabled={cards.length >= 5}
         >
             Draw {cards.length}/5

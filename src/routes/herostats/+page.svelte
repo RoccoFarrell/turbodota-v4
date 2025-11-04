@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { handlers } from 'svelte/legacy';
+
 	import type { PageData } from './$types';
 	import { page } from '$app/stores';
 	import { navigating } from '$app/stores';
@@ -34,8 +36,13 @@
 	//stores
 	import { sortData } from '$lib/stores/sortData';
 
-	//page data
-	export let data: PageData;
+	
+	interface Props {
+		//page data
+		data: PageData;
+	}
+
+	let { data }: Props = $props();
 
 	console.log(`[herostats page.svelte]`, data);
 	//console.log(page);
@@ -76,21 +83,21 @@
 		assists: number = 0;
 	}
 
-	let tabSet: number = 0;
+	let tabSet: number = $state(0);
 
-	let tableData: TableSource = {
+	let tableData: TableSource = $state({
 		head: [],
 		body: []
-	};
+	});
 
-	let sortBy: SortBy = {
+	let sortBy: SortBy = $state({
 		sortObj: {
 			headerText: 'Games',
 			headerKey: 'games',
 			index: 1
 		},
 		ascending: false
-	};
+	});
 
 	const sortMap: SortObj[] = [
 		{
@@ -386,11 +393,11 @@
 					recalcTable();
 				}}
 			>
-				<svelte:fragment slot="lead"
-					><div class="flex justify-center ml-2">
-						<div class="d2mh axe" />
-					</div></svelte:fragment
-				>
+				<svelte:fragment slot="lead">
+					<div class="flex justify-center ml-2">
+						<div class="d2mh axe"></div>
+					</div>
+				</svelte:fragment>
 				<span>Heroes</span>
 			</Tab>
 			<Tab
@@ -402,138 +409,136 @@
 					recalcTable();
 				}}
 			>
-				<svelte:fragment slot="lead"
-					><div class="flex justify-center ml-2">
+				<svelte:fragment slot="lead">
+					<div class="flex justify-center ml-2">
 						<img src={Knight} class="w-8" alt="Knight icon" />
-					</div></svelte:fragment
-				>
+					</div>
+				</svelte:fragment>
 				<span>Players</span>
 			</Tab>
 
 			<!-- Tab Panels --->
 			<svelte:fragment slot="panel">
-				<div class="flex flex-col justify-center">
-					{#await generateMatchStatsArr()}
-						<!-- {#await data.streamed.matchStats || true} -->
-						<div class="m-8 w-full">
-							<Loading />
-						</div>
-					{:then matchStats}
-
-						{#if tabSet === 0}
-							<div class="flex justify-center items-center gap-4 my-4">
-								{#if $sortData.heroID === -1}
-									<span class="text-2xl font-bold text-amber-500">All Heroes</span>
-								{:else}
-									{#each heroList as hero}
-										{#if hero.id === $sortData.heroID}
-											<div class="flex items-center gap-4">
-												<div class="d2mh {hero.name?.toLowerCase()}" />
-												<span class="text-2xl font-bold text-amber-500">{hero.localized_name}</span>
-											</div>
-										{/if}
-									{/each}
-								{/if}
+					
+					<div class="flex flex-col justify-center">
+						{#await generateMatchStatsArr()}
+							<!-- {#await data.streamed.matchStats || true} -->
+							<div class="m-8 w-full">
+								<Loading />
 							</div>
-						{/if}
-						<!-- Filter elements -->
-						<div class="container mx-auto p-4">
-							<div class="max-md:flex-col flex justify-center items-center md:space-x-2 max-md:space-y-2">
-								{#if tabSet === 0}
-									<div
-										class="flex md:flex-col max-sm:justify-around items-center w-full md:space-x-1 md:justify-center"
-									>
-										<p class="w-full inline text-primary-500 font-bold max-sm:w-1/4 md:text-center">Hero</p>
-										<select
-											class="select select-sm variant-ghost-surface w-full"
-											bind:value={$sortData.heroID}
-											on:change={() => ($sortData.role = 'All')}
-											on:change={() => recalcTable()}
-										>
-											{#each heroList as hero}
-												<option value={hero.id}>{hero.localized_name}</option>
-											{/each}
-										</select>
-									</div>
-								{/if}
-								{#if tabSet === 1}
-									<div
-										class="flex md:flex-col max-sm:justify-around items-center w-full md:space-x-1 md:justify-center"
-									>
-										<p class="w-full inline text-primary-500 font-bold max-sm:w-1/4 md:text-center">Player</p>
-										<select
-											class="select select-sm variant-ghost-surface w-full"
-											bind:value={$sortData.selectedPlayer}
-											on:change={() => recalcTable()}
-										>
-											{#each playersWeCareAbout as player}
-												<option>{player.playerName}</option>
-											{/each}
-										</select>
-									</div>
-								{/if}
-								<div class="flex md:flex-col max-sm:justify-around items-center w-full md:space-x-1 md:justify-center">
-									<p class="w-full inline text-primary-500 font-bold max-sm:w-1/4 md:text-center">Role</p>
-									<select
-										class="select select-sm variant-ghost-surface"
-										bind:value={$sortData.role}
-										on:change={() => ($sortData.heroID = -1)}
-										on:change={() => recalcTable()}
-									>
-										{#each heroRoles as role}
-											<option>{role}</option>
-										{/each}
-									</select>
-								</div>
+						{:then matchStats}
 
-								<div class="flex md:flex-col max-sm:justify-around items-center w-full md:space-x-1 md:justify-center">
-									<p class="w-full inline text-primary-500 font-bold max-sm:w-1/4 md:text-center">Start Date</p>
-									<input
-										type="date"
-										class="select select-sm variant-ghost-surface w-full"
-										bind:value={$sortData.startDate}
-										on:change={() => recalcTable()}
-									/>
+							{#if tabSet === 0}
+								<div class="flex justify-center items-center gap-4 my-4">
+									{#if $sortData.heroID === -1}
+										<span class="text-2xl font-bold text-amber-500">All Heroes</span>
+									{:else}
+										{#each heroList as hero}
+											{#if hero.id === $sortData.heroID}
+												<div class="flex items-center gap-4">
+													<div class="d2mh {hero.name?.toLowerCase()}"></div>
+													<span class="text-2xl font-bold text-amber-500">{hero.localized_name}</span>
+												</div>
+											{/if}
+										{/each}
+									{/if}
 								</div>
-								<div class="flex md:flex-col max-sm:justify-around items-center w-full md:space-x-1 md:justify-center">
-									<p class="w-full inline text-primary-500 font-bold max-sm:w-1/4 md:text-center">End Date</p>
-									<input
-										type="date"
-										class="select select-sm variant-ghost-surface w-full"
-										bind:value={$sortData.endDate}
-										on:change={() => recalcTable()}
-									/>
-								</div>
-								<div class="flex md:flex-col justify-around items-center w-full md:space-x-1 mt-6">
-									<button
-										type="button"
-										class="btn variant-ringed-error"
-										on:click={() =>
+							{/if}
+							<!-- Filter elements -->
+							<div class="container mx-auto p-4">
+								<div class="max-md:flex-col flex justify-center items-center md:space-x-2 max-md:space-y-2">
+									{#if tabSet === 0}
+										<div
+											class="flex md:flex-col max-sm:justify-around items-center w-full md:space-x-1 md:justify-center"
+										>
+											<p class="w-full inline text-primary-500 font-bold max-sm:w-1/4 md:text-center">Hero</p>
+											<select
+												class="select select-sm variant-ghost-surface w-full"
+												bind:value={$sortData.heroID}
+												onchange={handlers(() => ($sortData.role = 'All'), () => recalcTable())}
+											>
+												{#each heroList as hero}
+													<option value={hero.id}>{hero.localized_name}</option>
+												{/each}
+											</select>
+										</div>
+									{/if}
+									{#if tabSet === 1}
+										<div
+											class="flex md:flex-col max-sm:justify-around items-center w-full md:space-x-1 md:justify-center"
+										>
+											<p class="w-full inline text-primary-500 font-bold max-sm:w-1/4 md:text-center">Player</p>
+											<select
+												class="select select-sm variant-ghost-surface w-full"
+												bind:value={$sortData.selectedPlayer}
+												onchange={() => recalcTable()}
+											>
+												{#each playersWeCareAbout as player}
+													<option>{player.playerName}</option>
+												{/each}
+											</select>
+										</div>
+									{/if}
+									<div class="flex md:flex-col max-sm:justify-around items-center w-full md:space-x-1 md:justify-center">
+										<p class="w-full inline text-primary-500 font-bold max-sm:w-1/4 md:text-center">Role</p>
+										<select
+											class="select select-sm variant-ghost-surface"
+											bind:value={$sortData.role}
+											onchange={handlers(() => ($sortData.heroID = -1), () => recalcTable())}
+										>
+											{#each heroRoles as role}
+												<option>{role}</option>
+											{/each}
+										</select>
+									</div>
+
+									<div class="flex md:flex-col max-sm:justify-around items-center w-full md:space-x-1 md:justify-center">
+										<p class="w-full inline text-primary-500 font-bold max-sm:w-1/4 md:text-center">Start Date</p>
+										<input
+											type="date"
+											class="select select-sm variant-ghost-surface w-full"
+											bind:value={$sortData.startDate}
+											onchange={() => recalcTable()}
+										/>
+									</div>
+									<div class="flex md:flex-col max-sm:justify-around items-center w-full md:space-x-1 md:justify-center">
+										<p class="w-full inline text-primary-500 font-bold max-sm:w-1/4 md:text-center">End Date</p>
+										<input
+											type="date"
+											class="select select-sm variant-ghost-surface w-full"
+											bind:value={$sortData.endDate}
+											onchange={() => recalcTable()}
+										/>
+									</div>
+									<div class="flex md:flex-col justify-around items-center w-full md:space-x-1 mt-6">
+										<button
+											type="button"
+											class="btn variant-ringed-error"
+											onclick={handlers(() =>
 											(sortBy = {
 												sortObj: sortMap.filter((item) => item.headerText === 'Games')[0],
 												ascending: false
-											})}
-										on:click={() => {
+											}), () => {
 											sortData.reset();
 											recalcTable();
-										}}>Reset Table</button
-									>
+										})}>Reset Table</button
+										>
+									</div>
 								</div>
 							</div>
-						</div>
 
-						<!-- Skeleton table styling -->
-						<!-- Responsive Container (recommended) -->
-						<div class="table-container overflow-hidden mx-auto">
-							<!-- New Component -->
-							<!-- <div>{JSON.stringify($sortData)}</div>
-						<div>{JSON.stringify(sortBy)}</div> -->
-							<StatsTable {tableData} {sortBy} />
-						</div>
-					{:catch error}
-						{error.message}
-					{/await}
-				</div>
+							<!-- Skeleton table styling -->
+							<!-- Responsive Container (recommended) -->
+							<div class="table-container overflow-hidden mx-auto">
+								<!-- New Component -->
+								<!-- <div>{JSON.stringify($sortData)}</div>
+							<div>{JSON.stringify(sortBy)}</div> -->
+								<StatsTable {tableData} {sortBy} />
+							</div>
+						{:catch error}
+							{error.message}
+						{/await}
+					</div>
 			</svelte:fragment>
 		</TabGroup>
 	</div>

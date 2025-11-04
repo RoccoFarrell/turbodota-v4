@@ -11,8 +11,12 @@
 
 	//components
 	import { Avatar } from '@skeletonlabs/skeleton';
-	export let action: any;
-	export let items: any;
+	interface Props {
+		action: any;
+		items: any;
+	}
+
+	let { action, items }: Props = $props();
 
 	let observerURL = items.filter((item: any) => item.name === 'Observer Ward')[0].imgSrc;
 

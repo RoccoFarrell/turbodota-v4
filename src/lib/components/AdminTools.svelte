@@ -13,13 +13,13 @@
 
     let session: any = getContext('session')
 
-	let activeOptionID: number = 0;
+	let activeOptionID: number = $state(0);
 
 	const setActiveOption = (optionID: number) => {
 		activeOptionID = optionID;
 	};
 
-	let matchTimestamp: number = dayjs().unix();
+	let matchTimestamp: number = $state(dayjs().unix());
 
     import { getToastStore } from '@skeletonlabs/skeleton';
     const toastStore = getToastStore();
@@ -59,14 +59,14 @@
 	<div class="h-3/4 card p-8 top-10 mt-32">
 		<div class="flex justify-between border-b border-dashed border-primary-500 p-4">
 			<h1 class="h1 text-amber-500">Admin Tools</h1>
-			<button class="btn rounded-full variant-filled-primary" on:click={() => modalStore.close()}>X</button>
+			<button class="btn rounded-full variant-filled-primary" onclick={() => modalStore.close()}>X</button>
 		</div>
 
 		<div class="grid grid-cols-2 my-4 h-4/5">
 			<div class="w-full h-full flex flex-col justify-center space-y-4">
 				<button
 					class="btn variant-filled-secondary"
-					on:click={() => {
+					onclick={() => {
 						setActiveOption(0);
 					}}
 				>
@@ -74,7 +74,7 @@
 				</button>
 				<button
 					class="btn variant-filled-secondary"
-					on:click={() => {
+					onclick={() => {
 						setActiveOption(1);
 					}}
 				>
@@ -82,7 +82,7 @@
 				</button>
 				<button
 					class="btn variant-filled-secondary"
-					on:click={() => {
+					onclick={() => {
 						setActiveOption(2);
 					}}
 				>
@@ -90,7 +90,7 @@
 				</button>
 				<button
 					class="btn variant-filled-secondary"
-					on:click={() => {
+					onclick={() => {
 						setActiveOption(3);
 					}}
 				>
@@ -98,17 +98,17 @@
 				</button>
 				<button
 					class="btn variant-filled-secondary"
-					on:click={() => {
+					onclick={() => {
 						setActiveOption(4);
 					}}
 				>
 					Change xp
 				</button>
 
-					<button class="btn variant-filled-error" on:click={resetStats}>
+					<button class="btn variant-filled-error" onclick={resetStats}>
 						Reset Stats
 					</button>
-					<button class="btn variant-filled-warning" on:click={resetDiscards}>
+					<button class="btn variant-filled-warning" onclick={resetDiscards}>
 						Reset Discards
 					</button>
 

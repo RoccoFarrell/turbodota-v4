@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import { popup } from '@skeletonlabs/skeleton';
 	import type { PopupSettings } from '@skeletonlabs/skeleton';
 	import { enhance } from '$app/forms';
@@ -15,10 +17,14 @@
 	import type { Item } from '@prisma/client';
 	import DataTableCheckbox from '../../leagues/[slug]/seasons/[slug]/data-table-checkbox.svelte';
 
-	export let data: any;
-	export let form: any;
+	interface Props {
+		data: any;
+		form: any;
+	}
 
-	let items: Item[] = data.town.items;
+	let { data, form }: Props = $props();
+
+	let items: Item[] = $state(data.town.items);
 
 	items = items.sort((a: ShopItem, b: ShopItem) => {
 		if(a.name > b.name) return 1
@@ -60,7 +66,7 @@
 		totalCost: number = 0;
 	}
 
-	let userShoppingCart: ShoppingCart = new ShoppingCart();
+	let userShoppingCart: ShoppingCart = $state(new ShoppingCart());
 
 	const tableSource: TableSource = {
 		// A list of heading labels.
@@ -73,8 +79,7 @@
 		//foot:
 	};
 
-	let selectedDetailItem = new ShopItem();
-	$: console.log(selectedDetailItem);
+	let selectedDetailItem = $state(new ShopItem());
 
 	const modifyCart = (itemName: string, mode: string) => {
 		let item = items.filter((item: ShopItem) => item.name === itemName)[0];
@@ -102,7 +107,6 @@
 		selectedDetailItem = item;
 	};
 
-	$: clearCart(form);
 	const clearCart = (form: any) => {
 		if (form && form.success) {
 			(userShoppingCart.itemList = []), (userShoppingCart.totalCost = 0);
@@ -121,6 +125,12 @@
 
 	//$: console.log('user cart: ', userShoppingCart);
 	//$: console.log('table source: ', tableSource);
+	run(() => {
+		console.log(selectedDetailItem);
+	});
+	run(() => {
+		clearCart(form);
+	});
 </script>
 
 {#if data.town.turbotown}
@@ -191,9 +201,9 @@
 							<tbody>
 								{#each tableSource.body as row, i}
 									<tr
-										on:click={() => rowFocusHandler(row[0])}
-										on:mouseover={() => rowFocusHandler(row[0])}
-										on:focus={() => {}}
+										onclick={() => rowFocusHandler(row[0])}
+										onmouseover={() => rowFocusHandler(row[0])}
+										onfocus={() => {}}
 										class="relative"
 										tabindex={i}
 									>
@@ -221,15 +231,15 @@
 										<td class="align-middle text-center">{row[2]}</td>
 										<td class="">
 											<div class="h-full flex items-center justify-center">
-												<button class="btn-icon" on:click={() => modifyCart(row[0], 'remove')}>
-													<i class="fi fi-sr-square-minus" /></button
+												<button class="btn-icon" onclick={() => modifyCart(row[0], 'remove')}>
+													<i class="fi fi-sr-square-minus"></i></button
 												>
 												<p>{userShoppingCart.itemList.filter((item) => item.name === row[0]).length}</p>
 												<!-- <button class="btn-icon" on:click={() => quantityPlusClickHandler(tableSource, i)}>
 												<i class="fi fi-sr-square-plus" />
 											</button> -->
-												<button class="btn-icon" on:click={() => modifyCart(row[0], 'add')}>
-													<i class="fi fi-sr-square-plus" />
+												<button class="btn-icon" onclick={() => modifyCart(row[0], 'add')}>
+													<i class="fi fi-sr-square-plus"></i>
 												</button>
 											</div>
 										</td>

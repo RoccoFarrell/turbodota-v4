@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import { fade, fly, slide } from 'svelte/transition';
 	import { quintOut } from 'svelte/easing';
 	import { flip } from 'svelte/animate';
@@ -14,7 +16,6 @@
 
 	//page data
 	import type { PageData } from './$types';
-	export let data: PageData;
 
 	//helpers
 	import winOrLoss from '$lib/helpers/winOrLoss';
@@ -46,6 +47,11 @@
 	import SeasonLogo from '$lib/assets/seasonLogo.png';
 	import TournamentLight from '$lib/assets/tournament_light.png';
 	import WantedPoster from '$lib/assets/wantedPoster.png';
+	interface Props {
+		data: PageData;
+	}
+
+	let { data }: Props = $props();
 
 	if (browser) {
 		console.log('data: ', data);
@@ -56,11 +62,13 @@
 	let quest1Store = $townStore.quests.quest1;
 	let quest2Store = $townStore.quests.quest2;
 	let quest3Store = $townStore.quests.quest3;
-	$: if(browser && $quest1Store){
-		console.log('town store quest 1 store: ', $quest1Store);
-		console.log('town store quest 2 store: ', $quest2Store);
-		console.log('town store quest 3 store: ', $quest3Store);
-	}
+	run(() => {
+		if(browser && $quest1Store){
+			console.log('town store quest 1 store: ', $quest1Store);
+			console.log('town store quest 2 store: ', $quest2Store);
+			console.log('town store quest 3 store: ', $quest3Store);
+		}
+	});
 
 	//loop through quests and set stores
 	let quest1 = data.quests.filter((quest: TurbotownQuest) => quest.questSlot === 1)
@@ -166,12 +174,12 @@
 	});
 
 	//calc random lifetime stats on load
-	let randomLifetimeStats = {
+	let randomLifetimeStats = $state({
 		wins: 0,
 		losses: 0,
 		totalGoldWon: 0,
 		totalLostGoldModifier: 0
-	};
+	});
 
 	let completedRandoms: Random[] = data.randoms.filter((random) => !random.active);
 	if (completedRandoms.length > 0) {
@@ -184,9 +192,9 @@
 	}
 
 	//calc leaderboard info for seasons panel
-	let randomSeasonStats = {
+	let randomSeasonStats = $state({
 		userPlace: -1
-	};
+	});
 	if (data.session && data.session.user) {
 		randomSeasonStats = {
 			userPlace:
@@ -313,16 +321,18 @@
 		background: 'variant-filled-warning'
 	};
 
-	let banLimitErrorVisible: boolean = false;
-	$: if (banLimitErrorVisible === true)
-		setTimeout(() => {
-			banLimitErrorVisible = false;
-		}, 5000);
+	let banLimitErrorVisible: boolean = $state(false);
+	run(() => {
+		if (banLimitErrorVisible === true)
+			setTimeout(() => {
+				banLimitErrorVisible = false;
+			}, 5000);
+	});
 
-	$: {
+	run(() => {
 		randomStore.updateCalculations();
 		if (banLimitErrorVisible) toastStore.trigger(t);
-	}
+	});
 
 	const modal: ModalSettings = {
 		type: 'component',
@@ -425,7 +435,7 @@
 		<div class="w-full m-4">
 			<button
 				class="btn variant-filled"
-				on:click={() => {
+				onclick={() => {
 					modalStore.trigger(modal);
 				}}>Ban Heroes</button
 			>

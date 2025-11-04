@@ -106,9 +106,7 @@
 					<tbody>
 						{#each tableSource.body as row, i}
 							<tr>
-								<a href={`/leagues/${row[1]}`}
-									><td class="font-bold text-amber-500 hover:underline hover:text-primary-600">{row[0]}</td></a
-								>
+								<td><a href={`/leagues/${row[1]}`} class="font-bold text-amber-500 hover:underline hover:text-primary-600">{row[0]}</a></td>
 								<td>{row[1]}</td>
 								<td>{row[2]}</td>
 								<td>{row[3]}</td>

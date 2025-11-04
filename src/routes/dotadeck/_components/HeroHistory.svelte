@@ -3,15 +3,19 @@
     import { cardHistoryStore } from '$lib/stores/cardHistoryStore';
     import { heroPoolStore } from '$lib/stores/heroPoolStore';
 
-    export let selectedHeroId: number | null = null;
-    
-    $: history = selectedHeroId ? 
-        $cardHistoryStore[selectedHeroId] || [] : 
-        [];
+    interface Props {
+        selectedHeroId?: number | null;
+    }
 
-    $: selectedHeroName = selectedHeroId ? 
+    let { selectedHeroId = null }: Props = $props();
+    
+    let history = $derived(selectedHeroId ? 
+        $cardHistoryStore[selectedHeroId] || [] : 
+        []);
+
+    let selectedHeroName = $derived(selectedHeroId ? 
         $heroPoolStore.allHeroes.find(h => h.id === selectedHeroId)?.localized_name : 
-        null;
+        null);
 </script>
 
 <div class="w-full bg-surface-800/50 rounded-lg border border-surface-700/50 p-4">

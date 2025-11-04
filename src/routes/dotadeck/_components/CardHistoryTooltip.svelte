@@ -3,14 +3,18 @@
     import type { CardHistoryEntry } from '$lib/stores/cardHistoryStore';
     import { DOTADECK } from '$lib/constants/dotadeck';
 
-    export let heroId: number;
-    export let x: number;
-    export let y: number;
+    interface Props {
+        heroId: number;
+        x: number;
+        y: number;
+    }
+
+    let { heroId, x, y }: Props = $props();
 
     // Calculate if tooltip should appear on left side (if mouse is in rightmost 300px of screen)
-    $: showOnLeft = x > window.innerWidth - 300;
+    let showOnLeft = $derived(x > window.innerWidth - 300);
 
-    $: history = $cardHistoryStore[heroId] || [];
+    let history = $derived($cardHistoryStore[heroId] || []);
 
     //$: console.log("history in card history tooltip", history);
     

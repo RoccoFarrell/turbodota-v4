@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import { slide, blur, fade } from 'svelte/transition';
 	import { flip } from 'svelte/animate';
 	import { quintIn, quintOut } from 'svelte/easing';
@@ -28,7 +30,6 @@
 
 	//page data
 	import type { PageData } from '../$types';
-	export let data: PageData;
 
 	//stores
 	//import { randomStore } from '$lib/stores/randomStore';
@@ -40,11 +41,17 @@
 	import type { ToastSettings, ToastStore } from '@skeletonlabs/skeleton';
 	const toastStore = getToastStore();
 
-	//component props
-	export let session: Session | null = null;
-	export let questSlot: number = 1;
+	
+	interface Props {
+		data: PageData;
+		//component props
+		session?: Session | null;
+		questSlot?: number;
+	}
 
-	let randomStore = $townStore.quests.quest1;
+	let { data, session = $bindable(null), questSlot = 1 }: Props = $props();
+
+	let randomStore = $state($townStore.quests.quest1);
 	if (questSlot === 1) randomStore = $townStore.quests.quest1;
 	else if (questSlot === 2) randomStore = $townStore.quests.quest2;
 	else if (questSlot === 3) randomStore = $townStore.quests.quest3;
@@ -67,10 +74,10 @@
 
 	//$: console.log('store data in component: ', $randomStore);
 
-	let generatedRandomHero: Hero | null = null;
+	let generatedRandomHero: Hero | null = $state(null);
 	if ($randomStore.randomedHero && $randomStore.randomedHero.id) generatedRandomHero = $randomStore.randomedHero;
 
-	let randomFound = false;
+	let randomFound = $state(false);
 
 	/* 
 		End Calculations
@@ -141,12 +148,14 @@
 		}
 	};
 
-	let newerStratzMatches: any[] = [];
+	let newerStratzMatches: any[] = $state([]);
 	//$: console.log(newerStratzMatches);
-	let stratzTimeout: boolean = false;
+	let stratzTimeout: boolean = $state(false);
 	let stratzTimeoutValue: number = 30;
-	let stratzTimeoutCountdown: number = 0;
-	$: stratzTimeoutCountdown;
+	let stratzTimeoutCountdown: number = $state(0);
+	run(() => {
+		stratzTimeoutCountdown;
+	});
 	//$: console.log(stratzTimeout);
 
 	const checkForRandomComplete = async () => {
@@ -189,14 +198,16 @@
 		return newerStratzMatches;
 	};
 
-	let stratzLoading: any = false;
+	let stratzLoading: any = $state(false);
 
 	//transitionCircle
-	let loadingCircle: boolean = false;
-	$: generatedRandomHero &&
-		setTimeout(() => {
-			loadingCircle = false;
-		}, 2000);
+	let loadingCircle: boolean = $state(false);
+	run(() => {
+		generatedRandomHero &&
+			setTimeout(() => {
+				loadingCircle = false;
+			}, 2000);
+	});
 </script>
 
 {#if generatedRandomHero}
@@ -252,7 +263,7 @@
 		</div> -->
 		<div class="w-full">
 			<button
-				on:click={generateRandomHero}
+				onclick={generateRandomHero}
 				disabled={randomFound}
 				class="z-50 btn variant-filled-primary w-full my-4 max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:my-8 max-lg:mx-4 max-lg:max-w-[90%] md:max-w-[80%]"
 				in:fade={{ delay: 0, duration: 1000, easing: quintIn }}
@@ -312,7 +323,7 @@
 							<button
 								class="btn variant-filled-success w-full"
 								disabled={stratzTimeout}
-								on:click={() => {
+								onclick={() => {
 									stratzLoading = checkForRandomComplete();
 								}}
 							>

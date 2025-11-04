@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
 
@@ -27,23 +29,33 @@
 	//components
 	import { Avatar, ProgressBar } from '@skeletonlabs/skeleton';
 
-	//data
-	export let data: PageData;
-	export let form;
+	
+	interface Props {
+		//data
+		data: PageData;
+		form: any;
+	}
 
-	$: training = false;
-	$: progressVal = 0;
-	$: skillCount = 0;
+	let { data, form }: Props = $props();
+
+	let training = $state(false);
+	
+	let progressVal = $state(0);
+	
+	let skillCount = $state(0);
+	
 
 	onMount(() => {
 		if (data.skills.count) skillCount = parseInt(data.skills.count);
 	});
 
-	$: if (browser) {
-		if (skillCount % 5 === 0) {
-			localStorage.setItem('skillCount', skillCount.toString());
+	run(() => {
+		if (browser) {
+			if (skillCount % 5 === 0) {
+				localStorage.setItem('skillCount', skillCount.toString());
+			}
 		}
-	}
+	});
 
 	//calc leaderboard info for seasons panel
 	let randomSeasonStats = {
@@ -83,22 +95,26 @@
 	};
 	//modalStore.trigger(modal);
 
-	$: console.log(form)
-	$: if (form?.missing) {
-		const t: ToastSettings = {
-			message: `Enter at least one valid Dota User ID`,
-			background: 'variant-filled-error'
-		};
+	run(() => {
+		console.log(form)
+	});
+	run(() => {
+		if (form?.missing) {
+			const t: ToastSettings = {
+				message: `Enter at least one valid Dota User ID`,
+				background: 'variant-filled-error'
+			};
 
-		toastStore.trigger(t);
-	} else if (form?.success) {
-		const t: ToastSettings = {
-			message: `League created!`,
-			background: 'variant-filled-success'
-		};
+			toastStore.trigger(t);
+		} else if (form?.success) {
+			const t: ToastSettings = {
+				message: `League created!`,
+				background: 'variant-filled-success'
+			};
 
-		toastStore.trigger(t);
-	}
+			toastStore.trigger(t);
+		}
+	});
 </script>
 
 <div class="container">
@@ -128,7 +144,7 @@
 				</p>
 			</div>
 			<ProgressBar value={progressVal} class="text-primary-500 fill-primary-500" transition="transition-width" />
-			<button class="btn variant-filled w-1/4 mx-auto" on:click={() => trainSkill()}>Train!</button>
+			<button class="btn variant-filled w-1/4 mx-auto" onclick={() => trainSkill()}>Train!</button>
 		</div>
 	</div>
 </div>

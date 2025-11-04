@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
 
@@ -28,18 +30,28 @@
 	import { Avatar, ProgressBar } from '@skeletonlabs/skeleton';
 	import SeasonLeaderboard from './SeasonLeaderboard.svelte';
 
-	//data
-	export let data: PageData;
-	$:  console.log('data in seasonheaderCard: ', data)
+	
+	interface Props {
+		//data
+		data: PageData;
+	}
 
-	$: training = false;
-	$: progressVal = 0;
-	$: skillCount = 0;
+	let { data }: Props = $props();
+	run(() => {
+		console.log('data in seasonheaderCard: ', data)
+	});
+
+	let training = $state(false);
+	
+	let progressVal = $state(0);
+	
+	let skillCount = $state(0);
+	
 
 	//calc leaderboard info for seasons panel
-	let randomSeasonStats = {
+	let randomSeasonStats = $state({
 		userPlace: -1
-	};
+	});
 	if (data.session && data.session.user && data.league.currentSeasonLeaderboard) {
 		randomSeasonStats = {
 			userPlace:

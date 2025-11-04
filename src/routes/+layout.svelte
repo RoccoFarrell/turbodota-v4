@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import '../app.pcss';
 
 	import { getContext, setContext } from 'svelte';
@@ -29,6 +31,15 @@
 	import type { PageData } from './$types';
 	import type { Session } from 'lucia';
 	import type { Hero } from '@prisma/client';
+
+	//props - must be declared before use in Svelte 5
+	interface Props {
+		//page data
+		data: PageData;
+		children?: import('svelte').Snippet;
+	}
+
+	let { data, children }: Props = $props();
 
 	//components
 	import Navigation from './_components/Navigation/Navigation.svelte';
@@ -98,9 +109,8 @@
 		});
 	}
 
-	//page data
+	
 
-	export let data: PageData;
 
 	if (browser) {
 		console.log('root data: ', data);
@@ -181,9 +191,11 @@
 	});
 
 	// popup
-	$: console.log(storePopup);
 	import { popup } from '@skeletonlabs/skeleton';
 	import type { PopupSettings } from '@skeletonlabs/skeleton';
+	run(() => {
+		console.log(storePopup);
+	});
 	const adminPopupClick: PopupSettings = {
 		event: 'click',
 		target: 'adminTools',
@@ -236,124 +248,132 @@
 
 	<Drawer><Navigation {session} /></Drawer>
 	<AppShell slotSidebarLeft="bg-surface-500/10 w-0 lg:w-64">
-		<svelte:fragment slot="header">
-			<!-- App Bar -->
+		{#snippet header()}
+			
+				<!-- App Bar -->
 
-			<AppBar shadow="shadow-md">
-				<svelte:fragment slot="lead">
-					<!-- Hamburger Button-->
-					<div class="flex items-center">
-						<button class="lg:hidden btn btn-sm mr-4" on:click={drawerOpen}>
-							<span>
-								<svg viewBox="0 0 100 80" class="fill-token w-4 h-4">
-									<rect width="100" height="20" />
-									<rect y="30" width="100" height="20" />
-									<rect y="60" width="100" height="20" />
-								</svg>
-							</span>
-						</button>
-						<img src={turbo_logo} class="w-14" alt="site logo" />
-						<strong class="text-sm lg:text-xl uppercase ml-4 text-center">Turbodota v4</strong>
-						{#if dev}
-							<div class="mx-8 flex flex-col">
-								<!-- <p>{`isReady: ${JSON.stringify(isReady)}`}</p> -->
-								<p>{`env: ${process.env.NODE_ENV}`}</p>
-							</div>
-							<!-- <button 
-							class="btn variant-ghost-warning" 
-							use:popup={adminPopupClick}>
-							Admin tools
-						</button> -->
-							<button
-								class="btn variant-ghost-warning"
-								on:click={() => {
+				<AppBar shadow="shadow-md">
+					{#snippet lead()}
+							
+							<!-- Hamburger Button-->
+							<div class="flex items-center">
+								<button class="lg:hidden btn btn-sm mr-4" onclick={drawerOpen}>
+									<span>
+										<svg viewBox="0 0 100 80" class="fill-token w-4 h-4">
+											<rect width="100" height="20" />
+											<rect y="30" width="100" height="20" />
+											<rect y="60" width="100" height="20" />
+										</svg>
+									</span>
+								</button>
+								<img src={turbo_logo} class="w-14" alt="site logo" />
+								<strong class="text-sm lg:text-xl uppercase ml-4 text-center">Turbodota v4</strong>
+								{#if dev}
+									<div class="mx-8 flex flex-col">
+										<!-- <p>{`isReady: ${JSON.stringify(isReady)}`}</p> -->
+										<p>{`env: ${process.env.NODE_ENV}`}</p>
+									</div>
+									<!-- <button 
+									class="btn variant-ghost-warning" 
+									use:popup={adminPopupClick}>
+									Admin tools
+								</button> -->
+									<button
+										class="btn variant-ghost-warning"
+										onclick={() => {
 									modalStore.trigger(modal);
 								}}>Admin Tools</button
-							>
-							<div class="z-50 card p-4 variant-filled-primary" data-popup="adminTools">
-								<p>Click Content</p>
-								<div class="arrow variant-filled-primary" />
-							</div>
-						{/if}
-					</div>
-				</svelte:fragment>
-
-				<svelte:fragment slot="trail">
-					<div class="flex justify-around space-x-8 items-center mr-8">
-						{#key data.session}
-							<div class={"h-full m-auto grid grid-cols-2"}>
-								{#if data.session && !$page.url.pathname.includes('herostats')}
-										<div class="flex justify-center items-center">
-											<a href="/feed" class="h-10 w-10">
-												<div class="relative inline-block mt-2">
-													<span class="vibrating badge-icon bg-primary-500 absolute -top-2 -right-0 z-50"
-														><p class="inline text-amber-500 font-bold"></p></span
-													>
-													<button class="hover:bg-amber-500/50 rounded-full w-10 h-10">
-														<i class="fi fi-rr-bell text-xl h-10 w-10"></i>
-													</button>
-												</div>
-											</a>
-										</div>
-									<div class="m-auto h-full text-center">
-										Welcome <p class="font-bold text-red-400">{`${data.session.user.username}`}</p>
+									>
+									<div class="z-50 card p-4 variant-filled-primary" data-popup="adminTools">
+										<p>Click Content</p>
+										<div class="arrow variant-filled-primary"></div>
 									</div>
 								{/if}
 							</div>
-						{/key}
-						<!-- <form method="POST">
-						<div class="flex flex-col lg:flex-row lg:space-x-2">	
-							<a class="btn btn-sm variant-ghost-surface" href="/">Home</a>
-							{#if !data.session || !data.session.user}
-								<a class="btn btn-sm variant-ghost-surface" href="/register">Register</a>
-	
-								<a class="btn btn-sm variant-ghost-surface" href="/login" role="button"
-									>Login
-									<img class="w-8 ml-1.5" alt="steamlogo" src={steam_logo} />
-								</a>
-							{:else}
-								<button class="btn btn-sm variant-ghost-surface" formaction="/logout" type="submit"
-									>Logout</button
-								>
-							{/if}
-						</div>
-					</form> -->
-						<!-- <LightSwitch /> -->
-					</div>
-				</svelte:fragment>
-			</AppBar>
-		</svelte:fragment>
+						
+							{/snippet}
 
-		<svelte:fragment slot="sidebarLeft">
-			<!-- Insert the list: -->
-			<div class="border-r border-primary-500/30 h-full flex flex-col justify-between">
-				<Navigation {session} />
-				<div class="flex flex-col items-center w-full justify-center bottom-0 relative">
-					<div class="p-2 flex flex-col justify-center items-center">
-						<a href={`/blog/${constant_patchLink}`}>
-							<p class="text-xs italic text-tertiary-500">Patch: {constant_townVersion}</p>
-						</a>
-						<a href="https://twitter.com/nosaltstudios" target="_blank" class="hover:text-blue-900">
-							<p class="text-sm font-bold italic text-slate-300 dark:text-surface-400 hover:text-blue-900">
-								No Salt Studios 2024
+					{#snippet trail()}
+							
+							<div class="flex justify-around space-x-8 items-center mr-8">
+								{#key data.session}
+									<div class={"h-full m-auto grid grid-cols-2"}>
+										{#if data.session && !$page.url.pathname.includes('herostats')}
+												<div class="flex justify-center items-center">
+													<a href="/feed" class="h-10 w-10">
+														<div class="relative inline-block mt-2">
+															<span class="vibrating badge-icon bg-primary-500 absolute -top-2 -right-0 z-50"
+																><p class="inline text-amber-500 font-bold"></p></span
+															>
+															<button class="hover:bg-amber-500/50 rounded-full w-10 h-10">
+																<i class="fi fi-rr-bell text-xl h-10 w-10"></i>
+															</button>
+														</div>
+													</a>
+												</div>
+											<div class="m-auto h-full text-center">
+												Welcome <p class="font-bold text-red-400">{`${data.session.user.username}`}</p>
+											</div>
+										{/if}
+									</div>
+								{/key}
+								<!-- <form method="POST">
+								<div class="flex flex-col lg:flex-row lg:space-x-2">	
+									<a class="btn btn-sm variant-ghost-surface" href="/">Home</a>
+									{#if !data.session || !data.session.user}
+										<a class="btn btn-sm variant-ghost-surface" href="/register">Register</a>
+			
+										<a class="btn btn-sm variant-ghost-surface" href="/login" role="button"
+											>Login
+											<img class="w-8 ml-1.5" alt="steamlogo" src={steam_logo} />
+										</a>
+									{:else}
+										<button class="btn btn-sm variant-ghost-surface" formaction="/logout" type="submit"
+											>Logout</button
+										>
+									{/if}
+								</div>
+							</form> -->
+								<!-- <LightSwitch /> -->
+							</div>
+						
+							{/snippet}
+				</AppBar>
+			
+			{/snippet}
+
+		{#snippet sidebarLeft()}
+			
+				<!-- Insert the list: -->
+				<div class="border-r border-primary-500/30 h-full flex flex-col justify-between">
+					<Navigation {session} />
+					<div class="flex flex-col items-center w-full justify-center bottom-0 relative">
+						<div class="p-2 flex flex-col justify-center items-center">
+							<a href={`/blog/${constant_patchLink}`}>
+								<p class="text-xs italic text-tertiary-500">Patch: {constant_townVersion}</p>
+							</a>
+							<a href="https://twitter.com/nosaltstudios" target="_blank" class="hover:text-blue-900">
+								<p class="text-sm font-bold italic text-slate-300 dark:text-surface-400 hover:text-blue-900">
+									No Salt Studios 2024
+								</p>
+							</a>
+
+							<p class="text-sm italic text-slate-300 dark:text-surface-400 text-center">
+								Dota 2 is a trademark of Valve Corporation
 							</p>
-						</a>
-
-						<p class="text-sm italic text-slate-300 dark:text-surface-400 text-center">
-							Dota 2 is a trademark of Valve Corporation
-						</p>
-					</div>
-					{#if openDotaDown}
-						<div class="h-16 w-[90%] bg-warning-500 p-2 flex flex-col justify-center items-center rounded-xl m-2">
-							<p class="font-bold text-lg text-primary-500 vibrating">WARNING</p>
-							<p class="font-bold text-red-500">Open Dota Down</p>
 						</div>
-					{/if}
+						{#if openDotaDown}
+							<div class="h-16 w-[90%] bg-warning-500 p-2 flex flex-col justify-center items-center rounded-xl m-2">
+								<p class="font-bold text-lg text-primary-500 vibrating">WARNING</p>
+								<p class="font-bold text-red-500">Open Dota Down</p>
+							</div>
+						{/if}
+					</div>
 				</div>
-			</div>
 
-			<!-- --- -->
-		</svelte:fragment>
+				<!-- --- -->
+			
+			{/snippet}
 
 		<!-- <svelte:fragment slot="pageFooter">
 				<div class="flex w-full justify-center m-auto p-2">
@@ -366,7 +386,7 @@
 			{#if ($navigating && !$navigating?.to?.url.pathname.includes('herostats')) || navigatingTest}
 				<div class="m-8 w-full"><Loading /></div>
 			{:else}
-				<slot />
+				{@render children?.()}
 			{/if}
 		</div>
 	</AppShell>

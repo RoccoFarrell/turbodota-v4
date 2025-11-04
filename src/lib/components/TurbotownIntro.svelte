@@ -23,7 +23,7 @@
 			<!-- <div class="w-full h-3/4 border border-red-500"></div> -->
 		</div>
 
-		<div class="h-full z-10 absolute top-0 bg-gradient-to-b from-surface-900/50 to-surface-900/100 w-full" />
+		<div class="h-full z-10 absolute top-0 bg-gradient-to-b from-surface-900/50 to-surface-900/100 w-full"></div>
 		<img src={Landscape} class="z-0 w-full" alt="the battle rages in the valley below" />
 	</div>
 

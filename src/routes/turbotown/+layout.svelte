@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import { slide } from 'svelte/transition';
 	import { quintOut, expoIn, expoOut } from 'svelte/easing';
 	import { setContext } from 'svelte';
@@ -35,10 +37,15 @@
 		constant_maxBans
 	} from '$lib/constants/random';
 
-	export let data: LayoutData;
+	interface Props {
+		data: LayoutData;
+		children?: import('svelte').Snippet;
+	}
+
+	let { data = $bindable(), children }: Props = $props();
 
 	//avatar
-	let avatarURL = '';
+	let avatarURL = $state('');
 	if (data.session && data.session.user.avatar_url) {
 		avatarURL = data.session.user.avatar_url.replace('.jpg', '_full.jpg');
 	}
@@ -50,7 +57,7 @@
 		console.log('data in town layout: ', data);
 	}
 
-	let showInventory = false;
+	let showInventory = $state(false);
 	const collapse = () => {
 		showInventory = !showInventory;
 	};
@@ -88,11 +95,6 @@
 	let questRandomIDs = [...new Set(data.town.turbotown?.quests.map((quest) => quest.randomID))];
 	let randomVariabilityPercent: number = questRandomIDs.length / data.town?.turbotown?.quests?.length;
 
-	//refresh turbotown on render
-	//$: data.town.turbotown
-	$: console.log('quests changed in layout');
-	$: data.quests && updateGoldAndXp();
-	$: data.quests && setQuestStores();
 
 	//set ban list
 	const checkForBanList = () => {
@@ -118,35 +120,6 @@
 		} else return [];
 	};
 
-	$: if (browser && $quest1Store) {
-		let setList = checkForBanList();
-		// if (setList.length > 0) {
-		// 	quest1Store.setBanList(setList);
-		// 	quest2Store.setBanList(setList);
-		// 	quest3Store.setBanList(setList);
-		// } else {
-		// 	console.error('[turbotown layout] - could not set bans, banList length 0');
-		// }
-
-		if (!$quest1Store.randomedHero) {
-			quest1Store.setBanList(setList);
-		}
-
-		if (!$quest2Store.randomedHero) {
-			quest2Store.setBanList(setList);
-		}
-
-		if (!$quest3Store.randomedHero) {
-			quest3Store.setBanList(setList);
-		}
-
-		console.log('town store quest 1 store after bans: ', $quest1Store, ' heroID: ');
-		$quest1Store.randomedHero ? console.log($quest1Store.randomedHero.id) : '';
-		console.log('town store quest 2 store after bans: ', $quest2Store, ' heroID: ');
-		$quest2Store.randomedHero ? console.log($quest2Store.randomedHero.id) : '';
-		console.log('town store quest 3 store after bans: ', $quest3Store, ' heroID: ');
-		$quest3Store.randomedHero ? console.log($quest3Store.randomedHero.id) : '';
-	}
 
 	function updateGoldAndXp() {
 		if (data.quests.questChecks?.length > 0 && data.town.turbotown) {
@@ -261,6 +234,48 @@
 		target: 'popupHover',
 		placement: 'bottom'
 	};
+	//refresh turbotown on render
+	//$: data.town.turbotown
+	run(() => {
+		console.log('quests changed in layout');
+	});
+	run(() => {
+		data.quests && updateGoldAndXp();
+	});
+	run(() => {
+		data.quests && setQuestStores();
+	});
+	run(() => {
+		if (browser && $quest1Store) {
+			let setList = checkForBanList();
+			// if (setList.length > 0) {
+			// 	quest1Store.setBanList(setList);
+			// 	quest2Store.setBanList(setList);
+			// 	quest3Store.setBanList(setList);
+			// } else {
+			// 	console.error('[turbotown layout] - could not set bans, banList length 0');
+			// }
+
+			if (!$quest1Store.randomedHero) {
+				quest1Store.setBanList(setList);
+			}
+
+			if (!$quest2Store.randomedHero) {
+				quest2Store.setBanList(setList);
+			}
+
+			if (!$quest3Store.randomedHero) {
+				quest3Store.setBanList(setList);
+			}
+
+			console.log('town store quest 1 store after bans: ', $quest1Store, ' heroID: ');
+			$quest1Store.randomedHero ? console.log($quest1Store.randomedHero.id) : '';
+			console.log('town store quest 2 store after bans: ', $quest2Store, ' heroID: ');
+			$quest2Store.randomedHero ? console.log($quest2Store.randomedHero.id) : '';
+			console.log('town store quest 3 store after bans: ', $quest3Store, ' heroID: ');
+			$quest3Store.randomedHero ? console.log($quest3Store.randomedHero.id) : '';
+		}
+	});
 </script>
 
 <div id="#townLayout" class="w-screen">
@@ -325,7 +340,7 @@
 										</div>
 										<div class="card p-4 variant-filled-secondary" data-popup="popupHover">
 											<p class="italic font-tertiary-500">Unique Randomed Heroes / Total Quests</p>
-											<div class="arrow variant-filled-secondary" />
+											<div class="arrow variant-filled-secondary"></div>
 										</div>
 									</div>
 								</div>
@@ -378,7 +393,7 @@
 				</div>
 			</div>
 			<div class="w-full mt-24 mb-16 py-4 px-2">
-				<slot />
+				{@render children?.()}
 			</div>
 
 			{#if !showInventory}
@@ -393,7 +408,7 @@
 					<div
 						class="w-full h-full rounded-t-3xl bg-yellow-950 hover:bg-yellow-900 border border-yellow-800 bg-gradient-to-b to-transparent from-yellow-950"
 					>
-						<button on:click={collapse} class="w-full h-full flex items-center justify-center space-x-4">
+						<button onclick={collapse} class="w-full h-full flex items-center justify-center space-x-4">
 							<i class="fi fi-rs-backpack text-3xl"></i>
 							<p>Inventory</p>
 						</button>
@@ -405,14 +420,14 @@
 				<div
 					transition:slide={{ delay: 50, duration: 400, easing: expoIn, axis: 'y' }}
 					class={'fixed bottom-0 left-[256px] w-[calc(100vw-256px)] h-[500px] z-50'}
-					on:blur={onBlur}
+					onblur={onBlur}
 					use:clickOutside
-					on:click_outside={onBlur}
+					onclick_outside={onBlur}
 				>
 					<div
 						class="w-full h-16 rounded-t-3xl bg-yellow-950 hover:bg-yellow-900 border-yellow-800 border-t border-l border-r bg-gradient-to-b to-transparent from-yellow-950"
 					>
-						<button on:click={collapse} class="w-full h-full flex items-center justify-center space-x-8"
+						<button onclick={collapse} class="w-full h-full flex items-center justify-center space-x-8"
 							><i class="fi fi-br-angle-small-down text-3xl"></i>Close Inventory</button
 						>
 					</div>

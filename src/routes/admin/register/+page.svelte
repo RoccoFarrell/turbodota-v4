@@ -1,31 +1,35 @@
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import { getToastStore, storeHighlightJs } from '@skeletonlabs/skeleton';
 	import type { ToastSettings, ToastStore } from '@skeletonlabs/skeleton';
 	const toastStore = getToastStore();
 
-	export let form
-	$: if (form?.missing) {
-		const t: ToastSettings = {
-			message: `Enter at least one valid Dota User ID`,
-			background: 'variant-filled-error'
-		};
+	let { form } = $props();
+	run(() => {
+		if (form?.missing) {
+			const t: ToastSettings = {
+				message: `Enter at least one valid Dota User ID`,
+				background: 'variant-filled-error'
+			};
 
-		toastStore.trigger(t);
-	} else if (form?.success) {
-		const t: ToastSettings = {
-			message: `League created!`,
-			background: 'variant-filled-success'
-		};
+			toastStore.trigger(t);
+		} else if (form?.success) {
+			const t: ToastSettings = {
+				message: `League created!`,
+				background: 'variant-filled-success'
+			};
 
-		toastStore.trigger(t);
-	} else if(form?.message){
-		const t: ToastSettings = {
-			message: `${form?.message}`,
-			background: 'variant-filled-warning'
-		};
+			toastStore.trigger(t);
+		} else if(form?.message){
+			const t: ToastSettings = {
+				message: `${form?.message}`,
+				background: 'variant-filled-warning'
+			};
 
-		toastStore.trigger(t);
-	}
+			toastStore.trigger(t);
+		}
+	});
 
 </script>
 

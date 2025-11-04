@@ -3,11 +3,15 @@
 
 	import type { Hero, Random } from '@prisma/client';
 
-	export let allHeroes: Hero[] = [];
-	export let completedRandoms: Random[] = [];
 
 	import { calculateKdaClasses } from '$lib/helpers/tableColors';
 	import daysAgoString from '$lib/helpers/daysAgo';
+	interface Props {
+		allHeroes?: Hero[];
+		completedRandoms?: Random[];
+	}
+
+	let { allHeroes = [], completedRandoms = $bindable([]) }: Props = $props();
 
 	//console.log(completedRandoms);
 

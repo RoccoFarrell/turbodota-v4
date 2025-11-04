@@ -1,3 +1,6 @@
+<script lang="ts">
+	import { randomStore } from '$lib/stores/randomStore';
+</script>
 			<!-- Hero ban grid -->
 			<div class="w-full flex flex-col items-center sm:h-fit relative max-md:max-w-sm">
 				{#if randomFound}

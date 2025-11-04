@@ -1,12 +1,16 @@
 <script lang="ts">
 	import type { Session } from 'lucia';
-	export let session: Session | null;
 
 	import { page } from '$app/stores';
 	import { dev } from '$app/environment';
 
 	import steam_logo from '$lib/assets/steam_logo.png';
 	import TurboTownDark from '$lib/assets/turbotown_dark_noText.png'
+	interface Props {
+		session: Session | null;
+	}
+
+	let { session }: Props = $props();
 
 	//console.log(session);
 
@@ -94,7 +98,7 @@
 					($page.url.pathname === route.path ? 'border border-secondary-500/60' : '')}
 			>
 				<a href={route.path} data-sveltekit-preload-data="tap" class="w-full">
-					<i class={route.iconClassAndColor} />
+					<i class={route.iconClassAndColor}></i>
 					<p class={$page.url.pathname === route.path ? 'font-bold' : ''}>{route.label}</p></a
 				>
 			</li>
@@ -121,7 +125,7 @@
 					($page.url.pathname.includes('/admin/login') ? 'border border-secondary-500/60' : '')}
 			>
 				<a href="/admin/login" data-sveltekit-preload-data="tap" class="w-full flex items-center space-x-8">
-					<i class="fi fi-br-binary h-4 text-sky-500" />
+					<i class="fi fi-br-binary h-4 text-sky-500"></i>
 					<p class={$page.url.pathname === '/admin/login' ? 'font-bold' : ''}>Login</p></a
 				>
 			</li>
@@ -130,7 +134,7 @@
 					($page.url.pathname.includes('/admin/register') ? 'border border-secondary-500/60' : '')}
 			>
 				<a href="/admin/register" data-sveltekit-preload-data="tap" class="w-full flex items-center space-x-8">
-					<i class="fi fi-br-binary h-4 text-sky-500" />
+					<i class="fi fi-br-binary h-4 text-sky-500"></i>
 					<p class={$page.url.pathname === '/admin/register' ? 'font-bold' : ''}>Register</p></a
 				>
 			</li>

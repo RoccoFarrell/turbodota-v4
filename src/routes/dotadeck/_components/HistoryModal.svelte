@@ -22,7 +22,11 @@
         xpMod: number;
     }
 
-    export let history: HistoryEvent[];
+    interface Props {
+        history: HistoryEvent[];
+    }
+
+    let { history }: Props = $props();
 
     const actionLabels = {
         DRAWN: 'drew',
@@ -36,7 +40,7 @@
 <div class="card p-4 w-full max-w-3xl">
     <header class="flex justify-between items-center mb-4">
         <h2 class="h2 text-primary-500">League History</h2>
-        <button class="btn btn-sm variant-filled-surface" on:click={() => modalStore.close()}>✕</button>
+        <button class="btn btn-sm variant-filled-surface" onclick={() => modalStore.close()}>✕</button>
     </header>
 
     <div class="space-y-2 max-h-[60vh] overflow-y-auto">

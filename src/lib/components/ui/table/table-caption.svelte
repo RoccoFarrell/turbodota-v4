@@ -4,13 +4,19 @@
 
 	type $$Props = HTMLAttributes<HTMLTableCaptionElement>;
 
-	let className: $$Props["class"] = undefined;
-	export { className as class };
+	interface Props {
+		class?: $$Props["class"];
+		children?: import('svelte').Snippet;
+		[key: string]: any
+	}
+
+	let { class: className = undefined, children, ...rest }: Props = $props();
+	
 </script>
 
 <caption
 	class={cn("mt-4 text-sm text-muted-foreground", className)}
-	{...$$restProps}
+	{...rest}
 >
-	<slot />
+	{@render children?.()}
 </caption>

@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import { setContext, getContext, onMount } from 'svelte';
 	import type { Hero, TurbotownStatus } from '@prisma/client';
 	import type { SvelteComponent } from 'svelte';
@@ -32,15 +34,21 @@
 
 	let account_id: number = $modalStore[0].meta.account_id;
 	let turbotownID: number = $modalStore[0].meta.turbotownID;
-	let statuses: TurbotownStatus[] = $modalStore[0].meta.statuses;
+	let statuses: TurbotownStatus[] = $state($modalStore[0].meta.statuses);
 	let seasonID: number = $modalStore[0].meta.seasonID
 
-	$: console.log('statuses: ', statuses);
-	$: console.log('account_id:', account_id);
+	run(() => {
+		console.log('statuses: ', statuses);
+	});
+	run(() => {
+		console.log('account_id:', account_id);
+	});
 
-	let randomHeroList: Array<Hero> = new Array<Hero>();
+	let randomHeroList: Array<Hero> = $state(new Array<Hero>());
 
-	$: console.log('random hero list: ', randomHeroList);
+	run(() => {
+		console.log('random hero list: ', randomHeroList);
+	});
 
 	const generateRandomIndex = (exclude: number[] = []) => {
 		let randomIndex = Math.floor(Math.random() * heroes.length);
@@ -114,8 +122,8 @@
 
 	//$: console.log('rhl: ', randomHeroList);
 	//set town store to first open slot
-	let openStore: any;
-	let openStoreSlot: number;
+	let openStore: any = $state();
+	let openStoreSlot: number = $state();
 	if (!$quest1Store.randomedHero) {
 		openStore = $quest1Store;
 		openStoreSlot = 1;
@@ -131,7 +139,7 @@
 	}
 	
 	//console.log('quest store: ', openStore);
-	let randomHeroSelect: Hero;
+	let randomHeroSelect: Hero = $state();
 	// Handle Form Submission
 	function onFormSubmit(inputHeroSelect: Hero): void {
 		randomHeroSelect = inputHeroSelect;
@@ -148,7 +156,9 @@
 		toastStore.trigger(t);
 	}
 
-	$: console.log(randomHeroSelect);
+	run(() => {
+		console.log(randomHeroSelect);
+	});
 	//console.log(randomHeroList);
 </script>
 
@@ -177,7 +187,7 @@
 							<i class={`d2mh hero-${hero.id} scale-[3] m-12`}></i>
 
 							<div class="flex items-center justify-center">
-								<button class="btn variant-filled-primary w-full" on:click={() => onFormSubmit(hero)}>
+								<button class="btn variant-filled-primary w-full" onclick={() => onFormSubmit(hero)}>
 									<div class="italic">Select</div></button
 								>
 							</div>

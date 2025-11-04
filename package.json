@@ -25,12 +25,12 @@
     "@skeletonlabs/skeleton": "2.5.1",
     "@skeletonlabs/tw-plugin": "0.2.4",
     "@sveltejs/adapter-vercel": "^4.0.3",
-    "@sveltejs/kit": "^2.0.6",
-    "@sveltejs/vite-plugin-svelte": "^3.0.0",
+    "@sveltejs/kit": "^2.5.27",
+    "@sveltejs/vite-plugin-svelte": "^4.0.0",
     "@tailwindcss/forms": "0.5.7",
     "@tailwindcss/typography": "0.5.10",
     "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/svelte": "^4.0.5",
+    "@testing-library/svelte": "^5.2.8",
     "@types/node": "^24.10.0",
     "@vitest/coverage-v8": "^4.0.7",
     "@vitest/ui": "^4.0.7",
@@ -56,7 +56,7 @@
     "tslib": "^2.4.1",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3",
-    "vite": "^5.0.0",
+    "vite": "^5.4.4",
     "vite-plugin-tailwind-purgecss": "0.2.0",
     "vitest": "^4.0.7",
     "vitest-dom": "^0.1.1",
@@ -79,16 +79,10 @@
     "dota2-css-hero-sprites": "^2.6.1",
     "lucia": "^2.7.7",
     "node-steam-openid": "^1.2.1",
-    "radix-icons-svelte": "^1.2.1",
-    "svelte-chartjs": "^3.1.2"
+    "radix-icons-svelte": "^1.2.1"
   },
   "msw": {
     "workerDirectory": "static"
-  },
-  "overrides": {
-    "svelte-chartjs": {
-      "svelte": ">=4.x"
-    }
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

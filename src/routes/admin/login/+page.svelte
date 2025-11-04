@@ -1,9 +1,17 @@
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import type { PageData } from "./$types";
 
-	export let data: PageData
+	interface Props {
+		data: PageData;
+	}
 
-	$: console.log("data: ", data)
+	let { data }: Props = $props();
+
+	run(() => {
+		console.log("data: ", data)
+	});
 </script>
 
 <div class="card container w-1/2 h-1/2 my-auto p-4">
