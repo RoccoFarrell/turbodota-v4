@@ -35,7 +35,7 @@
 
 	if (!data.seasonUser) {
 		console.error("No season user found for logged in user: ", data.user);
-		throw redirect(302, '/');
+		redirect(302, '/');
 	}
 
 	let isCheckingWins = $state(false);

@@ -5,7 +5,7 @@ import { error } from '@sveltejs/kit';
 export async function POST({ request, locals }) {
     const session = await locals.auth.validate();
     if (!session) {
-        throw error(401, 'Unauthorized');
+        error(401, 'Unauthorized');
     }
 
     const { userCardId } = await request.json();
@@ -20,6 +20,6 @@ export async function POST({ request, locals }) {
         return json({ success: true });
     } catch (e) {
         console.error('Error deleting card:', e);
-        throw error(500, 'Failed to delete card');
+        error(500, 'Failed to delete card');
     }
 } 
