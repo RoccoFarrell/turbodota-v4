@@ -10,3 +10,12 @@ Example structure:
 - `docs/architecture/` - for architecture documentation
 - etc.
 
+## Migration Tools Directive
+
+**CRITICAL**: If a migration tool needs to be run and fails (e.g., requires interactive terminal, TTY errors, etc.), DO NOT attempt to apply changes manually. Instead, stop and prompt the user to run the migration tool manually. This directive applies to all migration tools including but not limited to:
+- `npx sv migrate` (Svelte migration)
+- `npx svelte-migrate` (SvelteKit migration)
+- `npx skeleton migrate` (Skeleton migration)
+- Tailwind CSS migration tools
+- Any other automated migration scripts
+

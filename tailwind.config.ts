@@ -3,7 +3,8 @@ import { join } from 'path';
 import type { Config } from 'tailwindcss';
 import forms from '@tailwindcss/forms';
 import typography from '@tailwindcss/typography';
-import { skeleton } from '@skeletonlabs/tw-plugin';
+// Skeleton plugin removed - required before Tailwind v4 migration
+// import { skeleton } from '@skeletonlabs/tw-plugin';
 
 /** @type {import('tailwindcss').Config} */
 const config = {
@@ -77,17 +78,18 @@ const config = {
 	},
 	plugins: [
 		forms,
-		typography,
-		skeleton({
-			themes: {
-				preset: [
-					{
-						name: 'crimson',
-						enhancements: true
-					}
-				]
-			}
-		})
+		typography
+		// Skeleton plugin removed - required before Tailwind v4 migration
+		// skeleton({
+		// 	themes: {
+		// 		preset: [
+		// 			{
+		// 				name: 'crimson',
+		// 				enhancements: true
+		// 			}
+		// 		]
+		// 	}
+		// })
 	]
 };
 
