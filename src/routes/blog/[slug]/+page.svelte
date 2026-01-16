@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { formatDate } from '$lib/utils';
 
-	export let data;
+	let { data } = $props();
 </script>
 
 <!-- SEO -->
@@ -38,7 +38,7 @@
 				<!-- Tags -->
 				<div class="tags">
 					{#each data.meta.categories as category}
-						<span class="chip rounded-xl p-2 m-1 variant-filled-secondary">&num;{category}</span>
+						<span class="chip rounded-xl p-2 m-1 preset-filled-secondary-500">#{category}</span>
 					{/each}
 				</div>
 				<p class="text-tertiary-500 italic">Published on {formatDate(data.meta.date)}</p>
@@ -47,7 +47,7 @@
 			<div class="w-full border-b border-dashed border-primary-500 my-4"></div>
 			<!-- Post -->
 			<div class="prose dark:prose-invert mb-20">
-				<svelte:component this={data.content} />
+				<data.content />
 			</div>
 		</div>
 	</article>

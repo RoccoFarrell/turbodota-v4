@@ -1,20 +1,33 @@
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import Shop from '../_components/Shop.svelte';
 	import { enhance } from '$app/forms';
 
 	//skeleton
-	import { getToastStore, storeHighlightJs } from '@skeletonlabs/skeleton';
-	import type { ToastSettings, ToastStore } from '@skeletonlabs/skeleton';
-	const toastStore = getToastStore();
+	// ToastSettings type (not exported from Skeleton v3)
+	type ToastSettings = {
+		message: string;
+		background?: string;
+		timeout?: number;
+	};
+	import { getContext } from 'svelte';
+	const toastStore = getContext<{ trigger: (settings: ToastSettings) => void }>('toaster');
 
 	//page data
 	import type { PageData } from './$types';
-	export let data: PageData;
 
-	export let form;
+	interface Props {
+		data: PageData;
+		form: any;
+	}
+
+	let { data, form }: Props = $props();
 	//console.log(data);
 
-	$: console.log(form);
+	run(() => {
+		console.log(form);
+	});
 
 	function onFormReturn(form: any) {
 		if (form && form.success) {
@@ -23,7 +36,7 @@
 			if (form.action === 'use item') {
 				const t: ToastSettings = {
 					message: `Used ${form?.result?.action}`,
-					background: 'variant-filled-success'
+					background: 'preset-filled-success-500'
 				};
 
 				toastStore.trigger(t);
@@ -32,7 +45,7 @@
 			if (form.action === 'buy item') {
 				const t: ToastSettings = {
 					message: `Bought ${form?.result?.count} items`,
-					background: 'variant-filled-success'
+					background: 'preset-filled-success-500'
 				};
 
 				toastStore.trigger(t);
@@ -41,14 +54,16 @@
 		else if (form && !form.enoughGold) {
 			const t: ToastSettings = {
 					message: `Not enough gold for items`,
-					background: 'variant-filled-error'
+					background: 'preset-filled-error-500'
 				};
 
 				toastStore.trigger(t);
 		}
 	}
 
-	$: onFormReturn(form);
+	run(() => {
+		onFormReturn(form);
+	});
 
 </script>
 

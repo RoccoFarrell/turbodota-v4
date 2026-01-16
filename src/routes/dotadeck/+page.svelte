@@ -1,8 +1,10 @@
 <script lang="ts">
+	import { run, createBubbler, stopPropagation, handlers } from 'svelte/legacy';
+
+	const bubble = createBubbler();
 	import { browser } from '$app/environment';
 	import { onDestroy, onMount } from 'svelte';
 	import { heroPoolStore } from '$lib/stores/heroPoolStore';
-	import { getToastStore, getModalStore} from '@skeletonlabs/skeleton';
 	import type { Hero } from '@prisma/client';
 	import type { PageData } from './$types';
 	import { redirect } from '@sveltejs/kit';
@@ -21,20 +23,58 @@
 	import AutoCheckTooltip from './_components/AutoCheckTooltip.svelte';
 	import MatchHistory from '$lib/components/MatchHistory.svelte';
 
-	const toastStore = getToastStore();
-	const modalStore = getModalStore();
+	// Get toaster from context (Skeleton v3)
+	import { getContext } from 'svelte';
+	// ToastSettings type (not exported from Skeleton v3)
+	type ToastSettings = {
+		message: string;
+		background?: string;
+		timeout?: number;
+	};
+	const toastStore = getContext<any>('toaster');
+	
+	// Helper function to create toasts with Skeleton v3 API
+	function showToast(message: string, background?: string) {
+		if (toastStore && typeof toastStore.create === 'function') {
+			toastStore.create({
+				title: message,
+				description: '',
+				type: background?.includes('error') ? 'error' : 
+				       background?.includes('success') ? 'success' : 
+				       background?.includes('warning') ? 'warning' : 'info',
+				meta: { background }
+			});
+		} else {
+			console.error('ToastStore not available from context');
+		}
+	}
+	
+	// Import Modal component (Skeleton v3)
+	import { Modal } from '@skeletonlabs/skeleton-svelte';
+	
+	// Modal state (Skeleton v3)
+	let showRulesModal = $state(false);
+	let showLeaderboardModal = $state(false);
+	let showHistoryModal = $state(false);
+	let showMatchHistoryModal = $state(false);
+	let showStatUpdateModal = $state(false);
+	let statUpdateData: any = $state(null);
 
-	export let data: PageData;
+	interface Props {
+		data: PageData;
+	}
+
+	let { data = $bindable() }: Props = $props();
 
 	if (!data.seasonUser) {
 		console.error("No season user found for logged in user: ", data.user);
-		throw redirect(302, '/');
+		redirect(302, '/');
 	}
 
-	let isCheckingWins = false;
-	let autoCheckEnabled = browser ? 
+	let isCheckingWins = $state(false);
+	let autoCheckEnabled = $state(browser ? 
 		JSON.parse(sessionStorage.getItem('autoCheckEnabled') ?? 'true') : 
-		true;
+		true);
 	let visibilityHandler: () => Promise<void>;
 
 	// Setup visibility change handler in onMount
@@ -42,6 +82,11 @@
 		let checkTimeout: NodeJS.Timeout;
 		
 		visibilityHandler = async () => {
+			// Don't check if any modal is open
+			if (showRulesModal || showLeaderboardModal || showHistoryModal || showMatchHistoryModal || showStatUpdateModal) {
+				return;
+			}
+			
 			if (!isCheckingWins && autoCheckEnabled) {
 				console.log('Checking for wins...');
 				// Clear any pending timeout
@@ -112,7 +157,7 @@
 	}
 
 	// Hand management
-	let hand: (CardHero | null)[] = Array(data.seasonUser.handSize).fill(null);
+	let hand: (CardHero | null)[] = $state(Array(data.seasonUser.handSize).fill(null));
 	if (data.seasonUser.heroDraws) {
 		// Only use active (non-discarded) draws
 		const activeDraws = data.seasonUser.heroDraws.filter((draw) => !draw.matchResult);
@@ -135,26 +180,23 @@
 		});
 	}
 
-	$: console.log(hand);
+	run(() => {
+		console.log(hand);
+	});
 
-	let showingAnimation: boolean = false;
+	let showingAnimation: boolean = $state(false);
 	let showingStatUpdate: boolean = false;
 	let selectedHero: CardHero | null = null;
-	let currentHighlightId: number | null = null;
+	let currentHighlightId: number | null = $state(null);
 	let animationInterval: NodeJS.Timeout;
 	let activeSlot: number | null = null;
 	let updatedCardStats: { heroId: number; gold: number; xp: number } | null = null;
-	let showStatBoost = false;
-	let statBoostData: StatBoostData | null = null;
+	let showStatBoost = $state(false);
+	let statBoostData: StatBoostData | null = $state(null);
 	let recentMatches = data.matchTableData;
-	let statUpdateData: { 
-		heroId: number;
-		isWin: boolean;
-		oldStats: { xp: number; gold: number };
-		newStats: { xp: number; gold: number };
-	} | null = null;
-	let isDrawing: boolean = false;
-	$: discardsRemaining = data.seasonUser?.discardTokens ?? 0;
+	// statUpdateData is already declared above as $state(null)
+	let isDrawing: boolean = $state(false);
+	let discardsRemaining = $derived(data.seasonUser?.discardTokens ?? 0);
 
 	let lastNotificationTime = 0;
 	const NOTIFICATION_COOLDOWN = 10000; // 10 seconds in milliseconds
@@ -162,10 +204,7 @@
 	function showDiscardNotification() {
 		const now = Date.now();
 		if (now - lastNotificationTime >= NOTIFICATION_COOLDOWN) {
-			toastStore.trigger({
-				message: 'Play a match with one of your heroes to refresh your discard tokens!',
-				background: 'variant-filled-warning'
-			});
+			showToast('Play a match with one of your heroes to refresh your discard tokens!', 'preset-filled-warning-500');
 			lastNotificationTime = now;
 		}
 	}
@@ -280,10 +319,7 @@
 	}
 
 	function showError(message: string) {
-		toastStore.trigger({
-			message,
-			background: 'variant-filled-error'
-		});
+		showToast(message, 'preset-filled-error-500');
 	}
 
 	async function refreshCardHistories() {
@@ -294,7 +330,7 @@
 		}
 	}
 
-	let isDiscarding = false;
+	let isDiscarding = $state(false);
 
 	async function discardHero(slotIndex: number) {
 		if (discardsRemaining <= 0) {
@@ -374,10 +410,7 @@
 	async function checkForWins() {
 		console.log('Checking for wins...');
 		isCheckingWins = true;
-		toastStore.trigger({
-			message: 'Checking for wins...',
-			background: 'variant-filled-primary'
-		});
+		showToast('Checking for wins...', 'preset-filled-primary-500');
 		
 		try {
 			const response = await fetch('/api/matches/check', {
@@ -390,10 +423,7 @@
 			const result = await response.json();
 			console.log(result);
 			if (result.success && result.results) {
-				toastStore.trigger({
-					message: 'Check complete!',
-					background: 'variant-filled-success'
-				});
+				showToast('Check complete!', 'preset-filled-success-500');
 				
 				// Process wins
 				result.results.forEach(async (result: MatchCheckResult) => {
@@ -420,13 +450,7 @@
 							? { xp: 100, gold: 100 }  // Reset to base stats on win
 							: { xp: hero.xp + DOTADECK.LOSS_REWARD.XP, gold: hero.gold + DOTADECK.LOSS_REWARD.GOLD }
 					};
-					modalStore.trigger({
-						type: 'component',
-						component: {
-							ref: StatUpdateAnimation,
-							props: statUpdateData
-						}
-					});
+					showStatUpdateModal = true;
 
 					// Update hero stats and remove from hand
 					const updatedHeroes = $heroPoolStore.allHeroes.map((h) => {
@@ -457,64 +481,46 @@
 			}
 		} catch (error) {
 			console.error('Error checking wins:', error);
-			toastStore.trigger({
-				message: 'Failed to check for wins',
-				background: 'variant-filled-error'
-			});
+			showToast('Failed to check for wins', 'preset-filled-error-500');
 		} finally {
 			isCheckingWins = false;
 		}
 	}
 
+	let leaderboardPlayers: any[] = $state([]);
+	let historyData: any[] = $state([]);
+	let isLoadingLeaderboard = $state(false);
+
 	async function showLeaderboard() {
-		const response = await fetch('/api/dotadeck/leaderboard');
-		const leaderboardData = await response.json();
+		// Open modal immediately for better UX
+		showLeaderboardModal = true;
+		isLoadingLeaderboard = true;
 		
-		modalStore.trigger({
-			type: 'component',
-			component: {
-				ref: LeaderboardModal,
-				props: {
-					players: leaderboardData.success ? leaderboardData.players : []
-				}
-			}
-		});
+		try {
+			const response = await fetch('/api/dotadeck/leaderboard');
+			const leaderboardData = await response.json();
+			leaderboardPlayers = leaderboardData.success ? leaderboardData.players : [];
+		} catch (error) {
+			console.error('Failed to load leaderboard:', error);
+			leaderboardPlayers = [];
+		} finally {
+			isLoadingLeaderboard = false;
+		}
 	}
 
-	async function showRules() {
-		modalStore.trigger({
-			type: 'component',
-			component: {
-				ref: RulesModal
-			}
-		});
+	function showRules() {
+		showRulesModal = true;
 	}
 
 	async function showHistory() {
 		const response = await fetch('/api/dotadeck/history');
-		const historyData = await response.json();
-		
-		modalStore.trigger({
-			type: 'component',
-			component: {
-				ref: HistoryModal,
-				props: {
-					history: historyData.success ? historyData.history : []
-				}
-			}
-		});
+		const historyResponse = await response.json();
+		historyData = historyResponse.success ? historyResponse.history : [];
+		showHistoryModal = true;
 	}
 
-	async function showMatchHistory() {
-		modalStore.trigger({
-			type: 'component',
-			component: {
-				ref: MatchHistory,
-				props: {
-					matchTableData: recentMatches
-				}
-			}
-		});
+	function showMatchHistory() {
+		showMatchHistoryModal = true;
 	}
 
 	// Load card histories on mount
@@ -527,51 +533,53 @@
 	});
 
 	// Show rules modal when data is loaded and user hasn't seen rules
-	$: if (data.seasonUser && !data.seasonUser.hasSeenRules) {
-		showRules();
-		fetch('/api/seasonUser/updateRulesSeen', {
-			method: 'POST',
-			body: JSON.stringify({ seasonUserId: data.seasonUser.id })
-		});
-	}
+	run(() => {
+		if (data.seasonUser && !data.seasonUser.hasSeenRules) {
+			showRules();
+			fetch('/api/seasonUser/updateRulesSeen', {
+				method: 'POST',
+				body: JSON.stringify({ seasonUserId: data.seasonUser.id })
+			});
+		}
+	});
 
 	// Add state variables for tooltip
-	let showAutoCheckTooltip = false;
-	let tooltipX = 0;
-	let tooltipY = 0;
+	let showAutoCheckTooltip = $state(false);
+	let tooltipX = $state(0);
+	let tooltipY = $state(0);
 
-	let selectedHeroId: number | null = null;
+	let selectedHeroId: number | null = $state(null);
 </script>
 
 <div class="container mx-auto p-4 space-y-8">
-	<div class="card p-4 sticky top-0 z-10">
+	<div class="card bg-surface-100 dark:bg-surface-900 border border-surface-400 dark:border-surface-600 p-4 sticky top-0 z-10">
 		<div class="flex justify-between items-center">
 			<div class="flex gap-4">
 				<span class="text-yellow-400 font-bold">{(data.stats.totalGold)}g</span>
 				<span class="text-blue-400 font-bold">{(data.stats.totalXP)}xp</span>
 			</div>
 			<div class="flex gap-2">
-				<button class="btn btn-sm variant-filled-secondary" on:click={showLeaderboard}>
+				<button class="btn btn-sm preset-filled-secondary-500" onclick={showLeaderboard}>
 					<div class="flex items-center justify-center">
 					<i class="fi fi-rr-trophy-star mr-2"></i>
 					Leaderboard
 					</div>
 				</button>
-				<button class="btn btn-sm variant-filled-tertiary" on:click={showRules}>
+				<button class="btn btn-sm preset-filled-tertiary-500" onclick={showRules}>
 					<i class="fi fi-rr-book-bookmark mr-2"></i>
 					Rules
 				</button>
 				<div class="border-l border-surface-500 mx-2"></div>
-				<button class="btn btn-sm bg-amber-500 text-black" on:click={showHistory}>
+				<button class="btn btn-sm bg-amber-500 text-black" onclick={showHistory}>
 					<i class="fi fi-rr-time-past mr-2"></i>
 					Game History
 				</button>
-				<button class="btn btn-sm bg-purple-800 text-white" on:click={showMatchHistory}>
+				<button class="btn btn-sm bg-purple-800 text-white" onclick={showMatchHistory}>
 					<i class="fi fi-rr-chart-line-up mr-2"></i>
 					Recent Matches
 				</button>
 				<div class="border-l border-surface-500 mx-2"></div>
-				<button class="btn btn-sm variant-filled-primary" on:click={checkForWins} disabled={isCheckingWins}>
+				<button class="btn btn-sm preset-filled-primary-500" onclick={checkForWins} disabled={isCheckingWins}>
 					{#if isCheckingWins}
 						<i class="fi fi-rr-loading animate-spin mr-2"></i>
 						Checking Wins...
@@ -581,19 +589,19 @@
 					{/if}
 				</button>
 				<button 
-					class="btn btn-sm {autoCheckEnabled ? 'variant-filled-success' : 'variant-filled-surface'}" 
-					on:click={() => {
+					class="btn btn-sm {autoCheckEnabled ? 'preset-filled-success-500' : 'preset-filled-surface-500'}" 
+					onclick={() => {
 						autoCheckEnabled = !autoCheckEnabled;
 						if (browser) {
 							sessionStorage.setItem('autoCheckEnabled', JSON.stringify(autoCheckEnabled));
 						}
 					}}
-					on:mouseenter={(e) => {
+					onmouseenter={(e) => {
 						tooltipX = e.clientX;
 						tooltipY = e.clientY;
 						showAutoCheckTooltip = true;
 					}}
-					on:mouseleave={() => showAutoCheckTooltip = false}
+					onmouseleave={() => showAutoCheckTooltip = false}
 				>
 					<i class="fi {autoCheckEnabled ? 'fi-rr-refresh' : 'fi-rr-pause'} mr-2"></i>
 					Auto Check {autoCheckEnabled ? 'On' : 'Off'}
@@ -633,12 +641,12 @@
 								{selectedHeroId === hero?.id ? 'ring-4 ring-amber-500' : ''}"
 							role="button"
 							tabindex="0"
-							on:click={() => {
+							onclick={() => {
 								if (hero) {
 									selectedHeroId = selectedHeroId === hero.id ? null : hero.id;
 								}
 							}}
-							on:keypress={(e) => {
+							onkeypress={(e) => {
 								if (e.key === 'Enter' && hero) {
 									selectedHeroId = selectedHeroId === hero.id ? null : hero.id;
 								}
@@ -665,11 +673,10 @@
 								</div>
 								<div class="absolute bottom-2 w-full flex justify-center">
 									<button 
-										class="btn btn-sm variant-soft-error hover:variant-soft-error-hover" 
-										on:click={() => discardHero(i)}
-										on:click|stopPropagation
+										class="btn btn-sm preset-tonal-error hover:preset-tonal-error-hover" 
+										onclick={handlers(() => discardHero(i), stopPropagation(bubble('click')))}
 										disabled={discardsRemaining <= 0 || isDiscarding}
-										on:mouseenter={() => {
+										onmouseenter={() => {
 											if (discardsRemaining <= 0) showDiscardNotification();
 										}}
 									> 
@@ -684,8 +691,8 @@
 							{:else}
 								<div class="w-full h-full flex items-center justify-center">
 									<button 
-										class="btn variant-filled-primary" 
-										on:click={() => drawHero(i)}
+										class="btn preset-filled-primary-500" 
+										onclick={() => drawHero(i)}
 										disabled={isDrawing}
 									> 
 										Draw 
@@ -703,11 +710,107 @@
 </div>
 
 {#if showStatBoost && statBoostData}
-	<StatBoostModal data={statBoostData} />
+	<Modal 
+		open={showStatBoost} 
+		onOpenChange={(details) => {
+			showStatBoost = details.open;
+			if (!details.open) statBoostData = null;
+		}}
+		backdropBackground="bg-black/50"
+		contentBackground="bg-transparent"
+	>
+		{#snippet content()}
+			{#if statBoostData}
+				<StatBoostModal 
+					data={statBoostData} 
+					onClose={() => {
+						showStatBoost = false;
+						statBoostData = null;
+					}}
+				/>
+			{/if}
+		{/snippet}
+	</Modal>
 {/if}
 
 {#if showAutoCheckTooltip}
 	<AutoCheckTooltip x={tooltipX} y={tooltipY} />
+{/if}
+
+<!-- Skeleton v3 Modals -->
+{#if showRulesModal}
+	<Modal 
+		open={showRulesModal} 
+		onOpenChange={(details) => showRulesModal = details.open}
+		backdropBackground="bg-black/50"
+		contentBackground="bg-surface-900"
+	>
+		{#snippet content()}
+			<RulesModal />
+		{/snippet}
+	</Modal>
+{/if}
+
+{#if showLeaderboardModal}
+	<Modal 
+		open={showLeaderboardModal} 
+		onOpenChange={(details) => showLeaderboardModal = details.open}
+		backdropBackground="bg-black/50"
+		contentBackground="bg-surface-900"
+	>
+		{#snippet content()}
+			<LeaderboardModal 
+				players={leaderboardPlayers} 
+				isLoading={isLoadingLeaderboard}
+				onClose={() => showLeaderboardModal = false} 
+			/>
+		{/snippet}
+	</Modal>
+{/if}
+
+{#if showHistoryModal}
+	<Modal 
+		open={showHistoryModal} 
+		onOpenChange={(details) => showHistoryModal = details.open}
+		backdropBackground="bg-black/50"
+		contentBackground="bg-surface-900"
+	>
+		{#snippet content()}
+			<HistoryModal history={historyData} onClose={() => showHistoryModal = false} />
+		{/snippet}
+	</Modal>
+{/if}
+
+{#if showMatchHistoryModal}
+	<Modal 
+		open={showMatchHistoryModal} 
+		onOpenChange={(details) => showMatchHistoryModal = details.open}
+		backdropBackground="bg-black/50"
+		contentBackground="bg-surface-900"
+	>
+		{#snippet content()}
+			<MatchHistory matchTableData={recentMatches} />
+		{/snippet}
+	</Modal>
+{/if}
+
+{#if showStatUpdateModal && statUpdateData}
+	<Modal 
+		open={showStatUpdateModal} 
+		onOpenChange={(details) => showStatUpdateModal = details.open}
+		backdropBackground="bg-black/50"
+		contentBackground="bg-surface-900"
+	>
+		{#snippet content()}
+			<StatUpdateAnimation
+				heroId={statUpdateData.heroId}
+				isWin={statUpdateData.isWin}
+				oldStats={statUpdateData.oldStats}
+				newStats={statUpdateData.newStats}
+				onClose={() => showStatUpdateModal = false}
+			/>
+		{/snippet}
+	</Modal>
 {/if}
 
 <!-- {#if showingAnimation && selectedHero && activeSlot !== null}

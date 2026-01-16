@@ -3,12 +3,16 @@
 	import { fade } from 'svelte/transition';
 	import { quintOut } from 'svelte/easing';
 
-	export let heroes: any[] = [];
-	export let finalHero: any;
-	export let onComplete: () => void;
+	interface Props {
+		heroes?: any[];
+		finalHero: any;
+		onComplete: () => void;
+	}
 
-	let currentIndex = 0;
-	let isAnimating = true;
+	let { heroes = [], finalHero, onComplete }: Props = $props();
+
+	let currentIndex = $state(0);
+	let isAnimating = $state(true);
 	let interval: NodeJS.Timeout;
 	let speed = 100; // Starting speed in ms
 	let iterations = 0;
@@ -55,11 +59,11 @@
 				<div 
 					class="absolute inset-0 border-4 border-success-500 rounded-lg"
 					transition:fade={{ duration: 200 }}
-				/>
+				></div>
 			{:else if currentIndex === i}
 				<div 
 					class="absolute inset-0 border-4 border-primary-500 rounded-lg animate-pulse"
-				/>
+				></div>
 			{/if}
 		</div>
 	{/each}

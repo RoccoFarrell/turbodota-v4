@@ -6,7 +6,7 @@ import { findRandomDotaUser } from '$lib/helpers/randomDotaUser'
 export const load: PageServerLoad = async ({ locals }) => {
 	const session = await locals.auth.validate()
 	if (session) {
-		throw redirect(302, '/')
+		redirect(302, '/')
 	}
 
 	let randomDotaUser = await findRandomDotaUser()
@@ -28,6 +28,6 @@ export const actions: Actions = {
 			console.error(err)
 			return fail(400, { message: 'Could not login user.' })
 		}
-		throw redirect(302, '/')
+		redirect(302, '/')
 	}
 }

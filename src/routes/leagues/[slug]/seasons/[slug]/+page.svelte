@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import AddRandomsToSeason from './AddRandomsToSeason.svelte';
 
 	import { browser } from '$app/environment';
@@ -26,7 +28,7 @@
 	import * as Table from '$lib/components/ui/table';
 	import DataTableCheckbox from './data-table-checkbox.svelte';
 
-	export let data;
+	let { data } = $props();
 	if(browser){
 		console.log(`[/seasons/<ID>] data: `, data);
 	}
@@ -75,13 +77,13 @@
 
 	const { selectedDataIds } = pluginStates.select;
 
-	let formDataIds: any;
-	$: {
+	let formDataIds: any = $state();
+	run(() => {
 		formDataIds = Object.keys($selectedDataIds).map((dataId: any) => {
 			if ($selectedDataIds[dataId]) return data.allRandoms[dataId].id;
 		});
 		console.log('selectedDataIDs', $selectedDataIds);
-	}
+	});
 
 	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 	// @ts-ignore: Unreachable code error

@@ -7,22 +7,22 @@
 	import relativeTime from 'dayjs/plugin/relativeTime';
 	dayjs.extend(relativeTime);
 
-    //modal
-    import { getModalStore } from '@skeletonlabs/skeleton';
-	const modalStore = getModalStore();
+    interface Props {
+		onClose?: () => void;
+	}
 
+	let { onClose }: Props = $props();
+	
     let session: any = getContext('session')
 
-	let activeOptionID: number = 0;
+	let activeOptionID: number = $state(0);
 
 	const setActiveOption = (optionID: number) => {
 		activeOptionID = optionID;
 	};
 
-	let matchTimestamp: number = dayjs().unix();
-
-    import { getToastStore } from '@skeletonlabs/skeleton';
-    const toastStore = getToastStore();
+	let matchTimestamp: number = $state(dayjs().unix());
+    const toastStore = getContext('toaster');
 
     //export let seasonUserId: string;
 
@@ -42,14 +42,14 @@
                 window.location.reload();
                 toastStore.trigger({
                     message: 'Discards reset to 10',
-                    background: 'variant-filled-success'
+                    background: 'preset-filled-success-500'
                 });
             }
         } catch (error) {
             console.error('Error resetting discards:', error);
             toastStore.trigger({
                 message: 'Failed to reset discards',
-                background: 'variant-filled-error'
+                background: 'preset-filled-error-500'
             });
         }
     }
@@ -59,56 +59,58 @@
 	<div class="h-3/4 card p-8 top-10 mt-32">
 		<div class="flex justify-between border-b border-dashed border-primary-500 p-4">
 			<h1 class="h1 text-amber-500">Admin Tools</h1>
-			<button class="btn rounded-full variant-filled-primary" on:click={() => modalStore.close()}>X</button>
+			{#if onClose}
+				<button class="btn rounded-full preset-filled-primary-500" onclick={() => onClose?.()}>X</button>
+			{/if}
 		</div>
 
 		<div class="grid grid-cols-2 my-4 h-4/5">
 			<div class="w-full h-full flex flex-col justify-center space-y-4">
 				<button
-					class="btn variant-filled-secondary"
-					on:click={() => {
+					class="btn preset-filled-secondary-500"
+					onclick={() => {
 						setActiveOption(0);
 					}}
 				>
 					Add a fake match (heroID, userID, w/L, timestamp)
 				</button>
 				<button
-					class="btn variant-filled-secondary"
-					on:click={() => {
+					class="btn preset-filled-secondary-500"
+					onclick={() => {
 						setActiveOption(1);
 					}}
 				>
 					Delete a match by ID
 				</button>
 				<button
-					class="btn variant-filled-secondary"
-					on:click={() => {
+					class="btn preset-filled-secondary-500"
+					onclick={() => {
 						setActiveOption(2);
 					}}
 				>
 					Delete a quest by ID
 				</button>
 				<button
-					class="btn variant-filled-secondary"
-					on:click={() => {
+					class="btn preset-filled-secondary-500"
+					onclick={() => {
 						setActiveOption(3);
 					}}
 				>
 					Change gold
 				</button>
 				<button
-					class="btn variant-filled-secondary"
-					on:click={() => {
+					class="btn preset-filled-secondary-500"
+					onclick={() => {
 						setActiveOption(4);
 					}}
 				>
 					Change xp
 				</button>
 
-					<button class="btn variant-filled-error" on:click={resetStats}>
+					<button class="btn preset-filled-error-500" onclick={resetStats}>
 						Reset Stats
 					</button>
-					<button class="btn variant-filled-warning" on:click={resetDiscards}>
+					<button class="btn preset-filled-warning-500" onclick={resetDiscards}>
 						Reset Discards
 					</button>
 
@@ -153,7 +155,7 @@
 						</div>
 						<button
 							type="submit"
-							class="btn variant-filled-primary w-3/4 my-4"
+							class="btn preset-filled-primary-500 w-3/4 my-4"
 						>
 							Submit
 						</button>

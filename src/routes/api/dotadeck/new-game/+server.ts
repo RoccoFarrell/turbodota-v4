@@ -5,7 +5,7 @@ import { error } from '@sveltejs/kit';
 export async function POST({ locals }) {
     const session = await locals.auth.validate();
     if (!session) {
-        throw error(401, 'Unauthorized');
+        error(401, 'Unauthorized');
     }
 
     try {
@@ -37,6 +37,6 @@ export async function POST({ locals }) {
         return json({ success: true });
     } catch (e) {
         console.error('Error creating new game:', e);
-        throw error(500, 'Failed to create new game');
+        error(500, 'Failed to create new game');
     }
 } 

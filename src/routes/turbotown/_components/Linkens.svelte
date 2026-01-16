@@ -6,34 +6,50 @@
 	import { enhance } from '$app/forms';
 
 	//skeleton
-	import { getModalStore } from '@skeletonlabs/skeleton';
-
 	//skeleton
-	import { getToastStore, storeHighlightJs } from '@skeletonlabs/skeleton';
-	import type { ToastSettings, ToastStore } from '@skeletonlabs/skeleton';
+	// ToastSettings type (not exported from Skeleton v3)
+	type ToastSettings = {
+		message: string;
+		background?: string;
+		timeout?: number;
+	};
 
-	const toastStore = getToastStore();
-	const modalStore = getModalStore();
+	import { getContext } from 'svelte';
+	const toastStore = getContext<any>('toaster');
+	
+	// Helper function to create toasts with Skeleton v3 API
+	function showToast(message: string, background?: string) {
+		if (toastStore && typeof toastStore.create === 'function') {
+			toastStore.create({
+				title: message,
+				description: '',
+				type: background?.includes('error') ? 'error' : 
+				       background?.includes('success') ? 'success' : 
+				       background?.includes('warning') ? 'warning' : 'info',
+				meta: { background }
+			});
+		}
+	}
 
-	let account_id: number = $modalStore[0].meta.account_id;
-	let turbotownID: number = $modalStore[0].meta.turbotownID;
-	let allTurbotowns: any[] = $modalStore[0].meta.allTurbotowns;
-	let turbotownUsers: Array<any> = $modalStore[0].meta.turbotownUsers;
+	interface Props {
+		account_id: number;
+		allTurbotowns: any[];
+		turbotownID: number;
+		turbotownUsers: Array<any>;
+		onClose?: () => void;
+	}
 
-	let selectedUser: String;
-	let selectedTown = allTurbotowns.filter((town) => town.user.account_id === account_id);
-	let selectedTownString: String = townToString(selectedTown[0]);
+	let { account_id, allTurbotowns, turbotownID, turbotownUsers, onClose }: Props = $props();
+
+	let selectedUser: String = $state();
+	let selectedTown = $state(allTurbotowns.filter((town) => town.user.account_id === account_id));
+	let selectedTownString: String = $state(townToString(selectedTown[0]));
 
 	function onFormSubmit(inputSelectedTown: any): void {
-		if ($modalStore[0].response) $modalStore[0].response(inputSelectedTown);
-		modalStore.close();
+		// Close modal after form submission
+		onClose?.();
 
-		const t: ToastSettings = {
-			message: `Used Linken's Sphere`,
-			background: 'variant-filled-success'
-		};
-
-		toastStore.trigger(t);
+		showToast(`Used Linken's Sphere`, 'preset-filled-success-500');
 
 		console.log('submitted town', inputSelectedTown);
 	}
@@ -66,12 +82,12 @@
 				</div>
 				<h2 class="h2 text-center text-success-500">Select Town to Apply Linken's Sphere</h2>
 				<div class="h-full w-full grid grid-cols-3 mx-auto my-4 p-4 gap-4">
-					<select class="select" name="selectedUserID" bind:value={selectedUser} on:change={changeUserHandler}>
+					<select class="select" name="selectedUserID" bind:value={selectedUser} onchange={changeUserHandler}>
 						{#each turbotownUsers as townUser}
 							<option>{townUser.user.username}</option>
 						{/each}
 					</select>
-					<button class="btn variant-filled-primary w-full" on:click={() => onFormSubmit(selectedTown[0])}>
+					<button class="btn preset-filled-primary-500 w-full" onclick={() => onFormSubmit(selectedTown[0])}>
 						<div class="italic">Select</div></button
 					>
 				</div>

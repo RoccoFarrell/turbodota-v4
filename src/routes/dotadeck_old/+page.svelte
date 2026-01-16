@@ -2,7 +2,11 @@
     import type { PageData } from './$types';
     import HeroCard from '$lib/components/HeroCard.svelte';
     
-    export let data: PageData;
+    interface Props {
+        data: PageData;
+    }
+
+    let { data }: Props = $props();
 
     interface UserCard {
         id: string;
@@ -28,12 +32,12 @@
     type StatType = 'KILLS' | 'ASSISTS' | 'NET_WORTH' | 'LAST_HITS' | 'DENIES' | 
                     'DAMAGE' | 'HEALING' | 'BUILDING' | 'SUPPORT' | 'SCORE';
 
-    let currentHand: UserCard[] = data.userCards ?? [];
-    let selectedHandCards = new Set<string>();
+    let currentHand: UserCard[] = $state(data.userCards ?? []);
+    let selectedHandCards = $state(new Set<string>());
     let score = data.score ?? 0;
-    let gold = data.gold ?? 0;
+    let gold = $state(data.gold ?? 0);
     let currentRound = data.currentRound ?? null;
-    $: shopCards = data.shopCards ?? [];
+    let shopCards = $derived(data.shopCards ?? []);
 
     const colors = {
         STAT_MULTIPLIER: '#4A90E2',
@@ -41,9 +45,9 @@
         SCORE_MULTIPLIER: '#F5A623'
     } as const;
 
-    let isShopOpen = false;
+    let isShopOpen = $state(false);
     let isLeaderboardOpen = false;
-    let selectedCards = new Set<string>();
+    let selectedCards = $state(new Set<string>());
 
     // Create audio element for purchase sound
     let purchaseSound: HTMLAudioElement;
@@ -164,28 +168,28 @@
 
 <div class="game-container flex flex-col h-[calc(100vh-64px)] w-full bg-gray-950 relative">
     <!-- Game Nav -->
-    <div class="bg-gradient-to-r from-gray-900 to-gray-800 p-6 border-b border-gray-700/50 shadow-xl">
+    <div class="bg-linear-to-r from-gray-900 to-gray-800 p-6 border-b border-gray-700/50 shadow-xl">
         <div class="flex justify-between items-center">
             <div class="flex items-center gap-4">
-                <div class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 to-amber-500 
+                <div class="text-3xl font-bold bg-clip-text text-transparent bg-linear-to-r from-yellow-300 to-amber-500 
                             drop-shadow-[0_0_10px_rgba(251,191,36,0.3)]">
                     Score: {score}
                 </div>
-                <div class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 to-amber-500 
+                <div class="text-3xl font-bold bg-clip-text text-transparent bg-linear-to-r from-yellow-300 to-amber-500 
                             drop-shadow-[0_0_10px_rgba(251,191,36,0.3)]">
                     Gold: ${gold}
                 </div>
             </div>
             <div class="flex gap-6">
-                <button class="px-8 py-3 rounded-lg bg-gradient-to-br from-gray-700 to-gray-800 text-white 
+                <button class="px-8 py-3 rounded-lg bg-linear-to-br from-gray-700 to-gray-800 text-white 
                             transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_4px_20px_rgba(251,191,36,0.3)]
                             border border-gray-700/50"
-                        on:click={toggleShop}>
+                        onclick={toggleShop}>
                     Card Shop
                 </button>
                 <button class="px-6 py-2 rounded-lg bg-gray-700 text-white transition-all duration-200 
                              hover:-translate-y-1 hover:shadow-[0_2px_8px_rgba(255,215,0,0.2)]"
-                        on:click={toggleLeaderboard}>
+                        onclick={toggleLeaderboard}>
                     Leaderboard
                 </button>
                 <button class="px-6 py-2 rounded-lg bg-gray-700 text-white transition-all duration-200 
@@ -197,12 +201,12 @@
     </div>
 
     <!-- Game Content -->
-    <div class="flex-1 p-12 overflow-auto bg-gradient-to-b from-gray-900 to-gray-950">
-        <div class="bg-gradient-to-br from-[#2d5a44] to-[#1e3c2d] p-10 rounded-2xl 
+    <div class="flex-1 p-12 overflow-auto bg-linear-to-b from-gray-900 to-gray-950">
+        <div class="bg-linear-to-br from-[#2d5a44] to-[#1e3c2d] p-10 rounded-2xl 
                     shadow-[inset_0_0_30px_rgba(0,0,0,0.4)] border border-emerald-800/30">
             <h2 class="text-2xl font-bold text-emerald-100/90 mb-6 drop-shadow-lg">Current Hand</h2>
             <div class="relative flex justify-center min-h-[300px] border-2 border-emerald-700/30 rounded-xl p-8
-                        bg-gradient-to-b from-emerald-900/20 to-transparent backdrop-blur-sm overflow-x-auto">
+                        bg-linear-to-b from-emerald-900/20 to-transparent backdrop-blur-sm overflow-x-auto">
                 <div class="flex gap-6 min-w-fit px-4">
                     {#each currentHand.filter(uc => uc?.card) as userCard}
                         <HeroCard 
@@ -219,18 +223,18 @@
             </div>
             <div class="mt-6 flex justify-end gap-6">
                 <button
-                    class="px-8 py-3 rounded-lg bg-gradient-to-br from-red-600 to-red-700 text-white
+                    class="px-8 py-3 rounded-lg bg-linear-to-br from-red-600 to-red-700 text-white
                            shadow-[0_0_20px_rgba(220,38,38,0.3)] border border-red-500/30
                            transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_4px_25px_rgba(220,38,38,0.4)]"
                     disabled={selectedHandCards.size === 0}
-                    on:click={deleteSelectedCards}
+                    onclick={deleteSelectedCards}
                 >
                     Delete Selected ({selectedHandCards.size})
                 </button>
                 <button
                     class="px-6 py-2 rounded-lg bg-gray-600 text-white transition-all duration-200 
                            hover:-translate-y-1 hover:shadow-lg"
-                    on:click={clearHandSelection}
+                    onclick={clearHandSelection}
                 >
                     Clear Selection
                 </button>
@@ -240,7 +244,7 @@
 
     {#if isShopOpen}
         <div class="absolute top-[10%] left-[10%] right-[10%] bottom-[10%] 
-                    bg-gradient-to-br from-gray-900 to-gray-950 rounded-xl 
+                    bg-linear-to-br from-gray-900 to-gray-950 rounded-xl 
                     shadow-[0_0_50px_rgba(0,0,0,0.5)] border border-gray-800/50
                     backdrop-blur-sm flex flex-col">
             <div class="flex justify-between items-center p-8 pb-4">
@@ -256,7 +260,7 @@
                     {/if}
                 </div>
                 <button class="text-4xl bg-transparent border-none text-white cursor-pointer"
-                        on:click={toggleShop}>×</button>
+                        onclick={toggleShop}>×</button>
             </div>
             <div class="grid grid-cols-5 gap-2 justify-items-center p-8 pt-0 overflow-y-auto">
                 {#each shopCards as card}
@@ -277,14 +281,14 @@
                         const card = shopCards.find(c => c.id === id);
                         return card && gold >= card.cost;
                     })}
-                    on:click={purchaseSelectedCards}
+                    onclick={purchaseSelectedCards}
                 >
                     Purchase Selected ({selectedCards.size})
                 </button>
                 <button
                     class="px-6 py-2 rounded-lg bg-gray-600 text-white transition-all duration-200 
                            hover:-translate-y-1 hover:shadow-lg"
-                    on:click={clearSelection}
+                    onclick={clearSelection}
                 >
                     Clear Selection
                 </button>

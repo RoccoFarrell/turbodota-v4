@@ -6,13 +6,25 @@
 	import { enhance } from '$app/forms';
 
 	//skeleton
-	import { Table, tableMapperValues } from '@skeletonlabs/skeleton';
-	import type { TableSource } from '@skeletonlabs/skeleton';
-	import { Modal, getModalStore } from '@skeletonlabs/skeleton';
-	import type { ModalSettings, ModalComponent, ModalStore } from '@skeletonlabs/skeleton';
-	import type { ToastSettings, ToastStore } from '@skeletonlabs/skeleton';
-	import { getToastStore, storeHighlightJs } from '@skeletonlabs/skeleton';
-
+	// TableSource type (not exported from Skeleton v3)
+	type TableSource = {
+		head: string[];
+		body: any[][];
+		meta?: any[][];
+	};
+	
+	// Helper function to map table data values
+	function tableMapperValues(data: any[], keys: string[]): any[][] {
+		return data.map(item => keys.map(key => item[key]));
+	}
+	// ToastSettings type (not exported from Skeleton v3)
+	type ToastSettings = {
+		message: string;
+		background?: string;
+		timeout?: number;
+	};
+	// Import Modal component (Skeleton v3)
+	import { Modal } from '@skeletonlabs/skeleton-svelte';
 	//prisma
 	import type { Turbotown, TurbotownItem, TurbotownStatus } from '@prisma/client';
 
@@ -21,85 +33,44 @@
 	let quest1Store = $townStore.quests.quest1;
 	let quest2Store = $townStore.quests.quest2;
 	let quest3Store = $townStore.quests.quest3;
-	const toastStore = getToastStore();
+	const toastStore = getContext<any>('toaster');
+	
+	// Helper function to create toasts with Skeleton v3 API
+	function showToast(message: string, background?: string) {
+		if (toastStore && typeof toastStore.create === 'function') {
+			toastStore.create({
+				title: message,
+				description: '',
+				type: background?.includes('error') ? 'error' : 
+				       background?.includes('success') ? 'success' : 
+				       background?.includes('warning') ? 'warning' : 'info',
+				meta: { background }
+			});
+		} else {
+			console.error('ToastStore not available from context');
+		}
+	}
 
 	//components
 	import Observer from './Observer.svelte';
 	import Linkens from './Linkens.svelte';
 	import QuellingBlade from './QuellingBlade.svelte';
 
-	export let data: any;
+	interface Props {
+		data: any;
+	}
+
+	let { data }: Props = $props();
 	if (browser) {
 		console.log('data in inventory: ', data);
 	}
 
 	let items: TurbotownItem[] = data.town.turbotown.items;
 
-	const modalStore = getModalStore();
-
-	const observerModalComponent: ModalComponent = {
-		ref: Observer
-	};
-
-	const observerModal: ModalSettings = {
-		type: 'component',
-		component: observerModalComponent,
-		meta: {
-			account_id: data.session.user.account_id,
-			statuses: data.town.turbotown.statuses,
-			turbotownID: data.town.turbotown.id,
-			seasonID: data.league.seasonID
-		},
-		response: (r: any) => {
-		}
-	};
-
-	const quellingBladeModalComponent: ModalComponent = {
-		ref: QuellingBlade
-	};
-
-	const quellingBladeModal: ModalSettings = {
-		type: 'component',
-		component: quellingBladeModalComponent,
-		meta: {
-			account_id: data.session.user.account_id,
-			turbotownID: data.town.turbotown.id,
-			seasonID: data.league.seasonID,
-			quests: data.town.turbotown.quests
-		},
-		response: (r: any) => {
-		}
-	};
-
-	const linkensModalComponent: ModalComponent = {
-		ref: Linkens
-	};
-
-	// let allStatuses: TurbotownStatus[][] = [];
-
-	// data.league.currentSeason.turbotowns.forEach((turbotown: any, i: number) => {
-	// 	turbotown.statuses.forEach((status: any) => {
-	// 		if (allStatuses[i] === undefined) {
-	// 			allStatuses[i] = [];
-	// 		}
-	// 		allStatuses[i].push(status)
-	// 	});
-	// });
-
-	// console.log(allStatuses)
-
-	const linkensModal: ModalSettings = {
-		type: 'component',
-		component: linkensModalComponent,
-		meta: {
-			account_id: data.session.user.account_id,
-			allTurbotowns: data.league.currentSeason.turbotowns,
-			turbotownID: data.town.turbotown.id,
-			turbotownUsers: data.league.currentSeason.turbotowns
-		},
-		response: (r: any) => {
-		}
-	};
+	// Modal state (Skeleton v3)
+	let showObserverModal = $state(false);
+	let showLinkensModal = $state(false);
+	let showQuellingBladeModal = $state(false);
 
 	class InventoryItem {
 		id: number = -1;
@@ -143,26 +114,18 @@
 	const useClickHandler = (item: string) => {
 		if (item === 'Observer Ward') {
 			if ($quest1Store.randomedHero && $quest2Store.randomedHero && $quest3Store.randomedHero) {
-				const t: ToastSettings = {
-					message: `You already have 3 quest slots!`,
-					background: 'variant-filled-error'
-				};
-				toastStore.trigger(t);
+				showToast('You already have 3 quest slots!', 'preset-filled-error-500');
 			} else {
-				modalStore.trigger(observerModal);
+				showObserverModal = true;
 			}
 		} else if (item == "Linken's Sphere") {
-			modalStore.trigger(linkensModal);
+			showLinkensModal = true;
 		} else if (item == "Quelling Blade") {
 			if (!$quest1Store.randomedHero && !$quest2Store.randomedHero && !$quest3Store.randomedHero) {
-				const t: ToastSettings = {
-					message: `You have no quests to quell!`,
-					background: 'variant-filled-error'
-				};
-				toastStore.trigger(t);
+				showToast('You have no quests to quell!', 'preset-filled-error-500');
 			}
 			else {
-				modalStore.trigger(quellingBladeModal);
+				showQuellingBladeModal = true;
 			}
 			
 		} else {
@@ -179,7 +142,7 @@
 			</div> -->
 
 			<div class="w-3/4 mx-auto px-4 bg-surface-900">
-				<table class="table table-hover table-interactive mb-4 table-compact z-50 relative">
+				<table class="table  table-interactive mb-4 table-compact z-50 relative">
 					<thead>
 						<tr>
 							{#each tableSource.head as header, i}
@@ -206,8 +169,8 @@
 								<td style={'vertical-align: middle;'}>
 									<button
 										type="submit"
-										class="btn variant-filled-primary w-full max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:my-8 max-lg:mx-4 max-lg:max-w-[90%] md:max-w-[80%]"
-										on:click={() => useClickHandler(row[0])}
+										class="btn preset-filled-primary-500 w-full max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:my-8 max-lg:mx-4 max-lg:max-w-[90%] md:max-w-[80%]"
+										onclick={() => useClickHandler(row[0])}
 										>Use
 									</button>
 								</td>
@@ -218,6 +181,64 @@
 			</div>
 		</div>
 	</div>
-	<div class="z-30 bg-leather opacity-25 h-full w-full absolute top-16" />
-	<div class="z-20 bg-surface-900 h-full w-full absolute top-16" />
+	<div class="z-30 bg-leather opacity-25 h-full w-full absolute top-16"></div>
+	<div class="z-20 bg-surface-900 h-full w-full absolute top-16"></div>
 </div>
+
+<!-- Skeleton v3 Modals -->
+{#if showObserverModal}
+	<Modal 
+		open={showObserverModal} 
+		onOpenChange={(details) => showObserverModal = details.open}
+		backdropBackground="bg-black/50"
+		contentBackground="bg-surface-900"
+	>
+		{#snippet content()}
+			<Observer
+				account_id={data.session.user.account_id}
+				statuses={data.town.turbotown.statuses}
+				turbotownID={data.town.turbotown.id}
+				seasonID={data.league.seasonID}
+				onClose={() => showObserverModal = false}
+			/>
+		{/snippet}
+	</Modal>
+{/if}
+
+{#if showLinkensModal}
+	<Modal 
+		open={showLinkensModal} 
+		onOpenChange={(details) => showLinkensModal = details.open}
+		backdropBackground="bg-black/50"
+		contentBackground="bg-surface-900"
+	>
+		{#snippet content()}
+			<Linkens
+				account_id={data.session.user.account_id}
+				allTurbotowns={data.league.currentSeason.turbotowns}
+				turbotownID={data.town.turbotown.id}
+				turbotownUsers={data.league.currentSeason.turbotowns}
+				onClose={() => showLinkensModal = false}
+			/>
+		{/snippet}
+	</Modal>
+{/if}
+
+{#if showQuellingBladeModal}
+	<Modal 
+		open={showQuellingBladeModal} 
+		onOpenChange={(details) => showQuellingBladeModal = details.open}
+		backdropBackground="bg-black/50"
+		contentBackground="bg-surface-900"
+	>
+		{#snippet content()}
+			<QuellingBlade
+				account_id={data.session.user.account_id}
+				turbotownID={data.town.turbotown.id}
+				seasonID={data.league.seasonID}
+				quests={data.town.turbotown.quests}
+				onClose={() => showQuellingBladeModal = false}
+			/>
+		{/snippet}
+	</Modal>
+{/if}

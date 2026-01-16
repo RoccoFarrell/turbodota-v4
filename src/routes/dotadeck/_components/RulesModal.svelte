@@ -1,7 +1,5 @@
 <script lang="ts">
-    import { getModalStore } from '@skeletonlabs/skeleton';
-    import dotadeckLogo from '$lib/assets/dotadeck_logo.png';
-    const modalStore = getModalStore();
+        import dotadeckLogo from '$lib/assets/dotadeck_logo.png';
 </script>
 
 <div class="card p-8 w-[1000px] max-h-[80vh] overflow-y-auto">

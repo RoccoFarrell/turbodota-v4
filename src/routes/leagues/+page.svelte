@@ -10,9 +10,22 @@
 	export let data: PageData;
 
 	//skeleton
-	import { TabGroup, Tab, TabAnchor } from '@skeletonlabs/skeleton';
-	import { Table, tableMapperValues } from '@skeletonlabs/skeleton';
-	import type { TableSource } from '@skeletonlabs/skeleton';
+	import { Tabs } from '@skeletonlabs/skeleton-svelte';
+	
+	// Skeleton v3 Tabs API - Control and Panel are accessed via Tabs.Control and Tabs.Panel
+	// Using the components directly ensures proper styling
+	
+	// TableSource type (not exported from Skeleton v3)
+	type TableSource = {
+		head: string[];
+		body: any[][];
+		meta?: any[][];
+	};
+	
+	// Helper function to map table data values
+	function tableMapperValues(data: any[], keys: string[]): any[][] {
+		return data.map(item => keys.map(key => item[key]));
+	}
 
 	//images
 	import Lock from '$lib/assets/lock.png';
@@ -22,22 +35,26 @@
 	export let form;
 
 	//$: console.log(form);
-
-	import { getToastStore, storeHighlightJs } from '@skeletonlabs/skeleton';
-	import type { ToastSettings, ToastStore } from '@skeletonlabs/skeleton';
-	const toastStore = getToastStore();
+	import { getContext } from 'svelte';
+	const toastStore = getContext<{ trigger: (settings: ToastSettings) => void }>('toaster');
+	
+	// ToastSettings type (may not be exported from Skeleton v3)
+	type ToastSettings = {
+		message: string;
+		background?: string;
+	};
 
 	$: if (form?.missing) {
 		const t: ToastSettings = {
 			message: `Enter at least one valid Dota User ID`,
-			background: 'variant-filled-error'
+			background: 'preset-filled-error-500'
 		};
 
 		toastStore.trigger(t);
 	} else if (form?.success) {
 		const t: ToastSettings = {
 			message: `Record created!`,
-			background: 'variant-filled-success'
+			background: 'preset-filled-success-500'
 		};
 
 		toastStore.trigger(t);
@@ -67,7 +84,7 @@
 		//foot: ['Total', '', '<code class="code">5</code>']
 	};
 
-	let tabSet: number = 0;
+	// Note: Skeleton v3 Tabs manages state internally - no need for tabSet variable
 
 	let friendsString: string = '';
 
@@ -95,7 +112,7 @@
 
 			<div class="table-container">
 				<!-- Native Table Element -->
-				<table class="table table-hover">
+				<table class="table ">
 					<thead>
 						<tr>
 							{#each tableSource.head as header, i}
@@ -106,9 +123,7 @@
 					<tbody>
 						{#each tableSource.body as row, i}
 							<tr>
-								<a href={`/leagues/${row[1]}`}
-									><td class="font-bold text-amber-500 hover:underline hover:text-primary-600">{row[0]}</td></a
-								>
+								<td><a href={`/leagues/${row[1]}`} class="font-bold text-amber-500 hover:underline hover:text-primary-600">{row[0]}</a></td>
 								<td>{row[1]}</td>
 								<td>{row[2]}</td>
 								<td>{row[3]}</td>
@@ -175,95 +190,95 @@
 				<div>
 					<h4 class="h4 text-amber-500">Add friends</h4>
 
-					<TabGroup>
-						<Tab bind:group={tabSet} name="tab1" value={0}>
-							<svelte:fragment slot="lead"
-								><div class="flex w-full justify-around">
-									<i class="fi fi-rr-following"></i><span class="ml-2">Friends</span>
-								</div></svelte:fragment
-							>
-						</Tab>
-						<Tab bind:group={tabSet} name="tab2" value={1}
-							><svelte:fragment slot="lead"
-								><div class="flex w-full justify-around">
-									<i class="fi fi-rr-search-heart"></i><span class="ml-2">Search</span>
-								</div></svelte:fragment
-							></Tab
-						>
+					<Tabs defaultValue="friends">
+						{#snippet list()}
+							<Tabs.Control value="friends">
+								{#snippet lead()}
+									<i class="fi fi-rr-following"></i>
+								{/snippet}
+								Friends
+							</Tabs.Control>
+							<Tabs.Control value="search">
+								{#snippet lead()}
+									<i class="fi fi-rr-search-heart"></i>
+								{/snippet}
+								Search
+							</Tabs.Control>
+						{/snippet}
 
-						<!-- Tab Panels --->
-						<svelte:fragment slot="panel">
-							{#if tabSet === 0}
+						{#snippet content()}
+							<Tabs.Panel value="friends">
 								<div class="my-2 space-y-2">
 									<div class="text-secondary-500">Most played with friends</div>
 									<div class="flex w-full flex-wrap">
 										{#if data.common.commonCombined}
-                                        {#each data.common.commonCombined as friend}
-                                        <div
-                                            class="m-1 flex flex-col card card-hover xl:w-[calc(33%-1em)] md:w-[calc(50%-1em)] max-md:w-full h-full space-y-2 items-center"
-                                        >
-                                            <div class="grid grid-cols-4 w-full min-h-[50px]">
-                                                {#if friend.avatar_url}
-                                                    <div class="col-span-1 flex items-center w-full">
-                                                        <header class="rounded-l-full h-full">
-                                                            <img class="rounded-l-full h-full" src={friend.avatar_url} alt="friend" />
-                                                        </header>
-                                                    </div>
-                                                {:else}
-                                                    <div class="col-span-1 flex justify-center items-center w-full">
-                                                        <header class="flex items-center">
-                                                            <i class="scale-150 fi fi-rr-portrait"></i>
-                                                        </header>
-                                                    </div>
-                                                {/if}
+											{#each data.common.commonCombined as friend}
+												<div
+													class="m-1 flex flex-col card card-hover xl:w-[calc(33%-1em)] md:w-[calc(50%-1em)] max-md:w-full h-full space-y-2 items-center"
+												>
+													<div class="grid grid-cols-4 w-full min-h-[50px]">
+														{#if friend.avatar_url}
+															<div class="col-span-1 flex items-center w-full">
+																<header class="rounded-l-full h-full">
+																	<img class="rounded-l-full h-full" src={friend.avatar_url} alt="friend" />
+																</header>
+															</div>
+														{:else}
+															<div class="col-span-1 flex justify-center items-center w-full">
+																<header class="flex items-center">
+																	<i class="scale-150 fi fi-rr-portrait"></i>
+																</header>
+															</div>
+														{/if}
 
-                                                <div class="col-span-2">
-                                                    {#if friend.username}
-                                                        <section class="flex items-center h-full">
-                                                            <h5 class="h5 overflow-hidden text-ellipsis whitespace-nowrap">
-                                                                {friend.username}
-                                                            </h5>
-                                                        </section>
-                                                    {:else}
-                                                        <section class="flex items-center h-full">
-                                                            <h5 class="h5 overflow-hidden text-ellipsis whitespace-nowrap">{friend}</h5>
-                                                        </section>
-                                                    {/if}
-                                                </div>
-                                                <div
-                                                    class="variant-filled-success rounded-r-full flex items-center justify-center hover:bg-green-300 hover:cursor-pointer"
-                                                >
-                                                    <button
-                                                        class="p-2"
-                                                        disabled={friendsString.includes(
-                                                            friend.account_id ? friend.account_id : friend
-                                                        )}
-                                                        on:click={() =>
-                                                            handleAddCommonFriend(friend.account_id ? friend.account_id : friend)}
-                                                        ><i class="fi fi-br-add"></i></button
-                                                    >
-                                                </div>
-                                            </div>
-                                            <!-- <div class="flex justify-around space-x-2"></div> -->
-                                            <!-- <footer>
-                                                <button
-                                                    class="btn variant-ghost-secondary p-2"
-                                                    disabled={friendsString.includes(friend.account_id ? friend.account_id : friend)}
-                                                    on:click={() =>
-                                                        handleAddCommonFriend(friend.account_id ? friend.account_id : friend)}
-                                                    >Add to League</button
-                                                >
-                                            </footer> -->
-                                        </div>
-                                    {/each}
+														<div class="col-span-2">
+															{#if friend.username}
+																<section class="flex items-center h-full">
+																	<h5 class="h5 overflow-hidden text-ellipsis whitespace-nowrap">
+																		{friend.username}
+																	</h5>
+																</section>
+															{:else}
+																<section class="flex items-center h-full">
+																	<h5 class="h5 overflow-hidden text-ellipsis whitespace-nowrap">{friend}</h5>
+																</section>
+															{/if}
+														</div>
+														<div
+															class="preset-filled-success-500 rounded-r-full flex items-center justify-center hover:bg-green-300 hover:cursor-pointer"
+														>
+															<button
+																class="p-2"
+																disabled={friendsString.includes(
+																	friend.account_id ? friend.account_id : friend
+																)}
+																on:click={() =>
+																	handleAddCommonFriend(friend.account_id ? friend.account_id : friend)}
+															><i class="fi fi-br-add"></i></button
+															>
+														</div>
+													</div>
+													<!-- <div class="flex justify-around space-x-2"></div> -->
+													<!-- <footer>
+														<button
+															class="btn variant-ghost-secondary p-2"
+															disabled={friendsString.includes(friend.account_id ? friend.account_id : friend)}
+															on:click={() =>
+																handleAddCommonFriend(friend.account_id ? friend.account_id : friend)}
+															>Add to League</button
+														>
+													</footer> -->
+												</div>
+											{/each}
 										{/if}
 									</div>
 								</div>
-							{:else if tabSet === 1}
+							</Tabs.Panel>
+							<Tabs.Panel value="search">
 								<div class="w-full italic">Coming soon!</div>
-							{/if}
-						</svelte:fragment>
-					</TabGroup>
+							</Tabs.Panel>
+						{/snippet}
+					</Tabs>
 				</div>
 
 				<label class="label">
@@ -281,7 +296,7 @@
 
 				{#if form?.missing}
 					<!-- <p class="alert-message">Enter at least one valid Dota User ID.</p> -->
-					<aside class="alert variant-ghost-primary" transition:fade|local={{ duration: 200 }}>
+					<aside class="alert preset-tonal-primary border border-primary-500" transition:fade|local={{ duration: 200 }}>
 						<div class="alert-message">
 							<h4 class="h4 text-red-600">Enter at least one valid Dota User ID</h4>
 							<p>Total length of valid Dota User IDs was 0.</p>
@@ -290,7 +305,7 @@
 				{/if}
 
 				<div class="w-full flex justify-center">
-					<button type="submit" class="btn variant-filled-success w-1/2 mx-auto">Create League</button>
+					<button type="submit" class="btn preset-filled-success-500 w-1/2 mx-auto">Create League</button>
 				</div>
 			</form>
 		</div>

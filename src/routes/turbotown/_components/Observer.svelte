@@ -1,13 +1,18 @@
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import { setContext, getContext, onMount } from 'svelte';
 	import type { Hero, TurbotownStatus } from '@prisma/client';
 	import type { SvelteComponent } from 'svelte';
 	import { enhance } from '$app/forms';
 
 	//skeleton
-	import { ListBox, ListBoxItem, getModalStore } from '@skeletonlabs/skeleton';
-	import { getToastStore, storeHighlightJs } from '@skeletonlabs/skeleton';
-	import type { ToastSettings, ToastStore } from '@skeletonlabs/skeleton';
+	// ToastSettings type (not exported from Skeleton v3)
+	type ToastSettings = {
+		message: string;
+		background?: string;
+		timeout?: number;
+	};
 
 	//images
 	import Lock from '$lib/assets/lock.png';
@@ -20,27 +25,47 @@
 
 	console.log($quest1Store, $quest2Store, $quest3Store);
 
-	const toastStore = getToastStore();
+	const toastStore = getContext<any>('toaster');
+	
+	// Helper function to create toasts with Skeleton v3 API
+	function showToast(message: string, background?: string) {
+		if (toastStore && typeof toastStore.create === 'function') {
+			toastStore.create({
+				title: message,
+				description: '',
+				type: background?.includes('error') ? 'error' : 
+				       background?.includes('success') ? 'success' : 
+				       background?.includes('warning') ? 'warning' : 'info',
+				meta: { background }
+			});
+		}
+	}
 
-	const modalStore = getModalStore();
+	interface Props {
+		account_id: number;
+		statuses: TurbotownStatus[];
+		turbotownID: number;
+		seasonID: number;
+		onClose?: () => void;
+	}
 
+	let { account_id, statuses: initialStatuses, turbotownID, seasonID, onClose }: Props = $props();
+	
 	let heroes: Hero[] = getContext('heroes');
+	let statuses: TurbotownStatus[] = $state(initialStatuses);
 
-	//not working
-	//let account_id: number = getContext('account_id')
-	//let statuses: TurbotownStatus[] = getContext('townStatuses') || []
+	run(() => {
+		console.log('statuses: ', statuses);
+	});
+	run(() => {
+		console.log('account_id:', account_id);
+	});
 
-	let account_id: number = $modalStore[0].meta.account_id;
-	let turbotownID: number = $modalStore[0].meta.turbotownID;
-	let statuses: TurbotownStatus[] = $modalStore[0].meta.statuses;
-	let seasonID: number = $modalStore[0].meta.seasonID
+	let randomHeroList: Array<Hero> = $state(new Array<Hero>());
 
-	$: console.log('statuses: ', statuses);
-	$: console.log('account_id:', account_id);
-
-	let randomHeroList: Array<Hero> = new Array<Hero>();
-
-	$: console.log('random hero list: ', randomHeroList);
+	run(() => {
+		console.log('random hero list: ', randomHeroList);
+	});
 
 	const generateRandomIndex = (exclude: number[] = []) => {
 		let randomIndex = Math.floor(Math.random() * heroes.length);
@@ -96,26 +121,29 @@
 		Set status in component
 	*/
 	//console.log('observer status: ', observerStatus)
-	if (statuses.length > 0) {
-		let observerStatus = statuses.filter((status) => status.name === 'observer' && status.isActive === true)[0];
-		if (observerStatus) {
-			console.log('found an observer status');
-			JSON.parse(observerStatus.value).forEach((heroID: number) => {
-				randomHeroList.push(heroes.filter((hero) => hero.id === heroID)[0]);
-			});
+	$effect(() => {
+		if (statuses.length > 0) {
+			let observerStatus = statuses.filter((status) => status.name === 'observer' && status.isActive === true)[0];
+			if (observerStatus) {
+				console.log('found an observer status');
+				randomHeroList = [];
+				JSON.parse(observerStatus.value).forEach((heroID: number) => {
+					randomHeroList.push(heroes.filter((hero) => hero.id === heroID)[0]);
+				});
+			} else {
+				generate3Randoms();
+			}
 		} else {
 			generate3Randoms();
 		}
-	} else {
-		generate3Randoms();
-	}
+	});
 
 	//select a random
 
 	//$: console.log('rhl: ', randomHeroList);
 	//set town store to first open slot
-	let openStore: any;
-	let openStoreSlot: number;
+	let openStore: any = $state(null);
+	let openStoreSlot: number = $state(-1);
 	if (!$quest1Store.randomedHero) {
 		openStore = $quest1Store;
 		openStoreSlot = 1;
@@ -131,24 +159,21 @@
 	}
 	
 	//console.log('quest store: ', openStore);
-	let randomHeroSelect: Hero;
+	let randomHeroSelect: Hero | undefined = $state(undefined);
 	// Handle Form Submission
 	function onFormSubmit(inputHeroSelect: Hero): void {
 		randomHeroSelect = inputHeroSelect;
 		openStore.randomedHero = randomHeroSelect;
 
-		if ($modalStore[0].response) $modalStore[0].response(inputHeroSelect);
-		modalStore.close();
+		// Close modal after form submission
+		onClose?.();
 
-		const t: ToastSettings = {
-			message: `Used Observer`,
-			background: 'variant-filled-success'
-		};
-
-		toastStore.trigger(t);
+		showToast(`Used Observer`, 'preset-filled-success-500');
 	}
 
-	$: console.log(randomHeroSelect);
+	run(() => {
+		console.log(randomHeroSelect);
+	});
 	//console.log(randomHeroList);
 </script>
 
@@ -177,7 +202,7 @@
 							<i class={`d2mh hero-${hero.id} scale-[3] m-12`}></i>
 
 							<div class="flex items-center justify-center">
-								<button class="btn variant-filled-primary w-full" on:click={() => onFormSubmit(hero)}>
+								<button class="btn preset-filled-primary-500 w-full" onclick={() => onFormSubmit(hero)}>
 									<div class="italic">Select</div></button
 								>
 							</div>

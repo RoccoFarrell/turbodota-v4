@@ -6,10 +6,7 @@
 
 	import { calculateTownLeaderboard } from '$lib/helpers/leaderboardFromSeason';
 
-	//page data
-	export let turbotowns: any;
-	export let members: any;
-	export let randoms: any;
+	
 
 	let heroes = getContext('heroes')
 
@@ -17,9 +14,17 @@
 	//import { playersWeCareAbout } from '$lib/constants/playersWeCareAbout';
 
 	//skeleton
-	import { Table } from '@skeletonlabs/skeleton';
-	import { tableMapperValues } from '@skeletonlabs/skeleton';
-	import type { TableSource } from '@skeletonlabs/skeleton';
+	// TableSource type (not exported from Skeleton v3)
+	type TableSource = {
+		head: string[];
+		body: any[][];
+		meta?: any[][];
+	};
+	
+	// Helper function to map table data values
+	function tableMapperValues(data: any[], keys: string[]): any[][] {
+		return data.map(item => keys.map(key => item[key]));
+	}
 
 	//components
 	import History from '../../../../turbotown/quests/_components/History.svelte';
@@ -29,6 +34,14 @@
 
 	//assets
 	import Turboking from '$lib/assets/turboking.png';
+	interface Props {
+		//page data
+		turbotowns: any;
+		members: any;
+		randoms: any;
+	}
+
+	let { turbotowns, members, randoms }: Props = $props();
 
 	const sortMap: SortObj[] = [
 		{
@@ -143,7 +156,7 @@
         Handle row select
     */
 
-	$: selectedRow = -1;
+	let selectedRow = $derived(-1);
 	const rowSelected = (row: any, i: number) => {
 		console.log(`${i}: ${row}`);
 		if (selectedRow === i) selectedRow = -1;
@@ -193,7 +206,7 @@
 				{#key tableSource}
 					{#each tableSource.body as row, i_player}
 						<tr
-							on:click={() => rowSelected(row, i_player)}
+							onclick={() => rowSelected(row, i_player)}
 							transition:slide={{ delay: 250, duration: 300, easing: quintOut, axis: 'y' }}
 						>
 							{#each tableSource.head as cellText, i}
@@ -230,7 +243,7 @@
 						</tr>
 						{#if selectedRow === i_player}
 							<tr
-								on:click={() => rowSelected(row, i_player)}
+								onclick={() => rowSelected(row, i_player)}
 								transition:slide={{ delay: 100, duration: 300, easing: cubicOut }}
 								class="p-0"
 							>

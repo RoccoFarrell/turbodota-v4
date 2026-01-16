@@ -1,12 +1,16 @@
 <script lang="ts">
 	import type { Session } from 'lucia';
-	export let session: Session | null;
 
 	import { page } from '$app/stores';
 	import { dev } from '$app/environment';
 
 	import steam_logo from '$lib/assets/steam_logo.png';
 	import TurboTownDark from '$lib/assets/turbotown_dark_noText.png'
+	interface Props {
+		session: Session | null;
+	}
+
+	let { session }: Props = $props();
 
 	//console.log(session);
 
@@ -84,7 +88,7 @@
 	<ul class="w-full">
 		{#each routeList as route, i}
 			{#if route.sectionHeader}
-				<hr class="!border-t-4" />
+				<hr class="border-t-4!" />
 				{#if route.turbotown}
 					<img src={TurboTownDark} class="w-1/2 mx-auto" alt="turbotown header"/>
 				{/if}
@@ -93,8 +97,8 @@
 				class={'flex items-center justify-start rounded-full ' +
 					($page.url.pathname === route.path ? 'border border-secondary-500/60' : '')}
 			>
-				<a href={route.path} data-sveltekit-preload-data="tap" class="w-full">
-					<i class={route.iconClassAndColor} />
+				<a href={route.path} data-sveltekit-preload-data="tap" class="w-full flex items-center space-x-2">
+					<i class={route.iconClassAndColor}></i>
 					<p class={$page.url.pathname === route.path ? 'font-bold' : ''}>{route.label}</p></a
 				>
 			</li>
@@ -106,14 +110,14 @@
 				class={'flex items-center justify-start rounded-full ' +
 					($page.url.pathname === '/herostats' ? 'border border-secondary-500/60' : '')}
 			>
-				<a href="/herostats" data-sveltekit-preload-data="tap" class="w-full"
+				<a href="/herostats" data-sveltekit-preload-data="tap" class="w-full flex items-center space-x-2"
 					><i class="fi fi-br-chart-histogram dark:text-amber-400 text-amber-600"></i>
 					<p class={$page.url.pathname === '/herostats' ? 'font-bold' : ''}>Hero Stats</p></a
 				>
 			</li>
 		{/if}
 		{#if dev}
-			<hr class="!border-t-4" />
+			<hr class="border-t-4!" />
 			<li class="text-center text-orange-500">Dev Routes</li>
 			<li class="h-32 lg:h-4"></li>
 			<li
@@ -121,7 +125,7 @@
 					($page.url.pathname.includes('/admin/login') ? 'border border-secondary-500/60' : '')}
 			>
 				<a href="/admin/login" data-sveltekit-preload-data="tap" class="w-full flex items-center space-x-8">
-					<i class="fi fi-br-binary h-4 text-sky-500" />
+					<i class="fi fi-br-binary h-4 text-sky-500"></i>
 					<p class={$page.url.pathname === '/admin/login' ? 'font-bold' : ''}>Login</p></a
 				>
 			</li>
@@ -130,12 +134,12 @@
 					($page.url.pathname.includes('/admin/register') ? 'border border-secondary-500/60' : '')}
 			>
 				<a href="/admin/register" data-sveltekit-preload-data="tap" class="w-full flex items-center space-x-8">
-					<i class="fi fi-br-binary h-4 text-sky-500" />
+					<i class="fi fi-br-binary h-4 text-sky-500"></i>
 					<p class={$page.url.pathname === '/admin/register' ? 'font-bold' : ''}>Register</p></a
 				>
 			</li>
 		{/if}
-		<hr class="!border-t-4" />
+		<hr class="border-t-4!" />
 		<!-- Steam Login-->
 		{#if !session || !session.user}
 			<li>

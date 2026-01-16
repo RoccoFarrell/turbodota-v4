@@ -1,12 +1,33 @@
 <script lang="ts">
-	import { popup } from '@skeletonlabs/skeleton';
-	import type { PopupSettings } from '@skeletonlabs/skeleton';
+	import { run } from 'svelte/legacy';
+	import type { PopupSettings, Progress } from '@skeletonlabs/skeleton-svelte';
 	import { enhance } from '$app/forms';
-	import { Table, tableMapperValues } from '@skeletonlabs/skeleton';
-	import type { TableSource } from '@skeletonlabs/skeleton';
-	import { Modal, getModalStore } from '@skeletonlabs/skeleton';
-	import type { ModalSettings, ModalComponent, ModalStore } from '@skeletonlabs/skeleton';
-	import { ProgressBar } from '@skeletonlabs/skeleton';
+	import { getContext } from 'svelte';
+	// TableSource type (not exported from Skeleton v3)
+	type TableSource = {
+		head: string[];
+		body: any[][];
+		meta?: any[][];
+	};
+	
+	// Helper function to map table data values
+	function tableMapperValues(data: any[], keys: string[]): any[][] {
+		return data.map(item => keys.map(key => item[key]));
+	}
+	// ModalSettings type (not exported from Skeleton v3)
+	type ModalSettings = {
+		type?: string;
+		title?: string;
+		body?: string;
+		component?: any;
+		meta?: any;
+		response?: (r: any) => void;
+	};
+	type ModalComponent = {
+		ref: any;
+	};
+	type ModalStore = any;
+	import { } from '@skeletonlabs/skeleton-svelte';
 
 	//images
 	import shopkeeper from '$lib/assets/shopkeeper.png';
@@ -15,10 +36,14 @@
 	import type { Item } from '@prisma/client';
 	import DataTableCheckbox from '../../leagues/[slug]/seasons/[slug]/data-table-checkbox.svelte';
 
-	export let data: any;
-	export let form: any;
+	interface Props {
+		data: any;
+		form: any;
+	}
 
-	let items: Item[] = data.town.items;
+	let { data, form }: Props = $props();
+
+	let items: Item[] = $state(data.town.items);
 
 	items = items.sort((a: ShopItem, b: ShopItem) => {
 		if(a.name > b.name) return 1
@@ -30,20 +55,13 @@
 		else return 1
 	})
 
-	const modalStore = getModalStore();
-	const purchaseConfirmModal: ModalSettings = {
-		type: 'alert',
-		// Data
-		title: 'Purchase Confirmed',
-		body: 'Thank you for purchasing, come again!'
+	// ToastSettings type (not exported from Skeleton v3)
+	type ToastSettings = {
+		message: string;
+		background?: string;
+		timeout?: number;
 	};
-
-	const purchaseDeniedModal: ModalSettings = {
-		type: 'alert',
-		// Data
-		title: 'Purchase Failed',
-		body: 'Not enough gold for purchase!'
-	};
+	const toastStore = getContext<{ trigger: (settings: ToastSettings) => void }>('toaster');
 
 	class ShopItem {
 		id: number = -1;
@@ -60,7 +78,7 @@
 		totalCost: number = 0;
 	}
 
-	let userShoppingCart: ShoppingCart = new ShoppingCart();
+	let userShoppingCart: ShoppingCart = $state(new ShoppingCart());
 
 	const tableSource: TableSource = {
 		// A list of heading labels.
@@ -73,8 +91,7 @@
 		//foot:
 	};
 
-	let selectedDetailItem = new ShopItem();
-	$: console.log(selectedDetailItem);
+	let selectedDetailItem = $state(new ShopItem());
 
 	const modifyCart = (itemName: string, mode: string) => {
 		let item = items.filter((item: ShopItem) => item.name === itemName)[0];
@@ -102,7 +119,6 @@
 		selectedDetailItem = item;
 	};
 
-	$: clearCart(form);
 	const clearCart = (form: any) => {
 		if (form && form.success) {
 			(userShoppingCart.itemList = []), (userShoppingCart.totalCost = 0);
@@ -112,15 +128,27 @@
 	const purchaseClickHandler = () => {
 		if (data.town.turbotown.metrics[0].value >= userShoppingCart.totalCost) {
 			//user has enough gold for purchase
-			modalStore.trigger(purchaseConfirmModal);
+			toastStore.trigger({
+				message: 'Purchase Confirmed - Thank you for purchasing, come again!',
+				background: 'preset-filled-success-500'
+			});
 			userShoppingCart = new ShoppingCart();
 		} else {
-			modalStore.trigger(purchaseDeniedModal);
+			toastStore.trigger({
+				message: 'Purchase Failed - Not enough gold for purchase!',
+				background: 'preset-filled-error-500'
+			});
 		}
 	};
 
 	//$: console.log('user cart: ', userShoppingCart);
 	//$: console.log('table source: ', tableSource);
+	run(() => {
+		console.log(selectedDetailItem);
+	});
+	run(() => {
+		clearCart(form);
+	});
 </script>
 
 {#if data.town.turbotown}
@@ -180,7 +208,7 @@
 			/> -->
 
 					<div class="table-container">
-						<table class="table table-hover table-interactive table-compact">
+						<table class="table  table-interactive table-compact">
 							<thead>
 								<tr>
 									{#each tableSource.head as header, i}
@@ -191,9 +219,9 @@
 							<tbody>
 								{#each tableSource.body as row, i}
 									<tr
-										on:click={() => rowFocusHandler(row[0])}
-										on:mouseover={() => rowFocusHandler(row[0])}
-										on:focus={() => {}}
+										onclick={() => rowFocusHandler(row[0])}
+										onmouseover={() => rowFocusHandler(row[0])}
+										onfocus={() => {}}
 										class="relative"
 										tabindex={i}
 									>
@@ -221,15 +249,15 @@
 										<td class="align-middle text-center">{row[2]}</td>
 										<td class="">
 											<div class="h-full flex items-center justify-center">
-												<button class="btn-icon" on:click={() => modifyCart(row[0], 'remove')}>
-													<i class="fi fi-sr-square-minus" /></button
+												<button class="btn-icon" onclick={() => modifyCart(row[0], 'remove')}>
+													<i class="fi fi-sr-square-minus"></i></button
 												>
 												<p>{userShoppingCart.itemList.filter((item) => item.name === row[0]).length}</p>
 												<!-- <button class="btn-icon" on:click={() => quantityPlusClickHandler(tableSource, i)}>
 												<i class="fi fi-sr-square-plus" />
 											</button> -->
-												<button class="btn-icon" on:click={() => modifyCart(row[0], 'add')}>
-													<i class="fi fi-sr-square-plus" />
+												<button class="btn-icon" onclick={() => modifyCart(row[0], 'add')}>
+													<i class="fi fi-sr-square-plus"></i>
 												</button>
 											</div>
 										</td>
@@ -256,7 +284,7 @@
 							<button
 								type="submit"
 								disabled={userShoppingCart.itemList.length === 0}
-								class="btn variant-filled-primary w-full max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:my-8 max-lg:mx-4 max-lg:max-w-[90%] md:max-w-[80%]"
+								class="btn preset-filled-primary-500 w-full max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:my-8 max-lg:mx-4 max-lg:max-w-[90%] md:max-w-[80%]"
 							>
 								Purchase
 							</button>

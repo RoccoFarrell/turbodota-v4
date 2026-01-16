@@ -1,44 +1,78 @@
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import { setContext, getContext, onMount } from 'svelte';
 	import type { Hero, TurbotownQuest } from '@prisma/client';
 	import type { SvelteComponent } from 'svelte';
 	import { enhance } from '$app/forms';
 
 	//skeleton
-	import { ListBox, ListBoxItem, getModalStore } from '@skeletonlabs/skeleton';
-
 	//skeleton
-	import { getToastStore, storeHighlightJs } from '@skeletonlabs/skeleton';
-	import type { ToastSettings, ToastStore } from '@skeletonlabs/skeleton';
+	// ToastSettings type (not exported from Skeleton v3)
+	type ToastSettings = {
+		message: string;
+		background?: string;
+		timeout?: number;
+	};
 
 	//stores
-	const toastStore = getToastStore();
-	const modalStore = getModalStore();
+	const toastStore = getContext<any>('toaster');
+	
+	// Helper function to create toasts with Skeleton v3 API
+	function showToast(message: string, background?: string) {
+		if (toastStore && typeof toastStore.create === 'function') {
+			toastStore.create({
+				title: message,
+				description: '',
+				type: background?.includes('error') ? 'error' : 
+				       background?.includes('success') ? 'success' : 
+				       background?.includes('warning') ? 'warning' : 'info',
+				meta: { background }
+			});
+		}
+	}
 
+	interface Props {
+		account_id: number;
+		turbotownID: number;
+		seasonID: number;
+		quests: TurbotownQuest[];
+		onClose?: () => void;
+	}
 
+	let { account_id, turbotownID, seasonID, quests, onClose }: Props = $props();
 	let heroes: Hero[] = getContext('heroes');
 
-	let account_id: number = $modalStore[0].meta.account_id;
-	let turbotownID: number = $modalStore[0].meta.turbotownID;
-	let seasonID: number = $modalStore[0].meta.seasonID;
-    let quests: TurbotownQuest[] = $modalStore[0].meta.quests;
+	run(() => {
+		console.log('LOGGGINGGGGG');
+	});
+	run(() => {
+		console.log('heroes: ', heroes);
+	});
+	run(() => {
+		console.log('account_id:', account_id);
+	});
+	run(() => {
+		console.log('turbotownID: ', turbotownID);
+	});
+	run(() => {
+		console.log('seasonID: ', seasonID);
+	});
+    run(() => {
+		console.log('quests: ', quests);
+	});
 
-	$: console.log('LOGGGINGGGGG');
-	$: console.log('heroes: ', heroes);
-	$: console.log('account_id:', account_id);
-	$: console.log('turbotownID: ', turbotownID);
-	$: console.log('seasonID: ', seasonID);
-    $: console.log('quests: ', quests);
-
-	let currentQuestList: Array<any> = new Array<any>();
-	$: console.log('CURRENT QUEST list: ', currentQuestList);
+	let currentQuestList: Array<any> = $state(new Array<any>());
+	run(() => {
+		console.log('CURRENT QUEST list: ', currentQuestList);
+	});
 
 	currentQuestList = quests.filter(quest => quest.active).map(quest => quest)
     let temp2 = heroes.filter(hero => hero.id == currentQuestList[0].random.randomedHero)
     console.log("temp2", temp2[0].localized_name)
 
-    let inputQuestID: number
-    let inputrandomID : number
+    let inputQuestID: number = $state()
+    let inputrandomID : number = $state()
 
 	function onFormSubmit(selectedQuestID: any, randomID: any): void {
         inputQuestID = selectedQuestID
@@ -46,15 +80,10 @@
         console.log("inputQuestID", inputQuestID)
         console.log("inputrandomID", inputrandomID)
 
-		if ($modalStore[0].response) $modalStore[0].response(inputQuestID); //WHAT IS THIS, not using inputrandomID?
-		modalStore.close();
+		// Close modal after form submission
+		onClose?.();
 
-		const t: ToastSettings = {
-			message: `Used Quelling Blade`,
-			background: 'variant-filled-success'
-		};
-
-		toastStore.trigger(t);
+		showToast(`Used Quelling Blade`, 'preset-filled-success-500');
 	}
 </script>
 
@@ -82,7 +111,7 @@
 							</h2>
                             <i class={`d2mh hero-${heroes.filter(hero => hero.id == quest.random.randomedHero)[0].id} scale-[3] m-12`}></i>
 							<div class="flex items-center justify-center">
-								<button class="btn variant-filled-primary w-full" on:click={() => onFormSubmit(quest.id, quest.randomID)}>
+								<button class="btn preset-filled-primary-500 w-full" onclick={() => onFormSubmit(quest.id, quest.randomID)}>
 									<div class="italic">Select</div></button
 								>
 							</div>

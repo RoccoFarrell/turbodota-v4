@@ -3,15 +3,19 @@
     import { cardHistoryStore } from '$lib/stores/cardHistoryStore';
     import { heroPoolStore } from '$lib/stores/heroPoolStore';
 
-    export let selectedHeroId: number | null = null;
-    
-    $: history = selectedHeroId ? 
-        $cardHistoryStore[selectedHeroId] || [] : 
-        [];
+    interface Props {
+        selectedHeroId?: number | null;
+    }
 
-    $: selectedHeroName = selectedHeroId ? 
+    let { selectedHeroId = null }: Props = $props();
+    
+    let history = $derived(selectedHeroId ? 
+        $cardHistoryStore[selectedHeroId] || [] : 
+        []);
+
+    let selectedHeroName = $derived(selectedHeroId ? 
         $heroPoolStore.allHeroes.find(h => h.id === selectedHeroId)?.localized_name : 
-        null;
+        null);
 </script>
 
 <div class="w-full bg-surface-800/50 rounded-lg border border-surface-700/50 p-4">
@@ -26,7 +30,7 @@
         </div>
         {#if selectedHeroId && history.length > 0}
             <div class="grid grid-cols-2 gap-4">
-                <div class="card p-2 variant-ghost-surface">
+                <div class="card p-2 preset-tonal-surface border border-surface-500">
                     <div class="text-center">
                         <div class="text-sm text-surface-300">Total Modifications</div>
                         <div class="flex justify-center gap-2 mt-1">
@@ -35,7 +39,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="card p-2 variant-ghost-surface">
+                <div class="card p-2 preset-tonal-surface border border-surface-500">
                     <div class="text-center">
                         <div class="text-sm text-surface-300">Quest Wins</div>
                         <div class="flex justify-center gap-2 mt-1">

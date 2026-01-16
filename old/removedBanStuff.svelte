@@ -1,3 +1,6 @@
+<script lang="ts">
+	import { randomStore } from '$lib/stores/randomStore';
+</script>
 			<!-- Hero ban grid -->
 			<div class="w-full flex flex-col items-center sm:h-fit relative max-md:max-w-sm">
 				{#if randomFound}
@@ -29,7 +32,7 @@
 				<!-- Desktop Hero Grid -->
 				<div
 					id="desktopHeroGrid"
-					class={`z-0 flex flex-wrap max-w-[95%] p-4 max-md:hidden xs:visible justify-center overflow-y-auto w-full max-h-[50rem] ${
+					class={`z-0 flex flex-wrap max-w-[95%] p-4 max-md:hidden xs:visible justify-center overflow-y-auto w-full max-h-200 ${
 						showHeroGrid ? 'visible border border-dashed border-red-500' : 'border-double border-t-4 border-amber-500'
 					}`}
 				>
@@ -80,7 +83,7 @@
 						{#if $randomStore.bannedHeroes.length > 0}
 							<div>
 								{#each $randomStore.bannedHeroes as bannedHero}
-									<span class="badge variant-filled-secondary">{bannedHero?.localized_name}</span>
+									<span class="badge preset-filled-secondary-500">{bannedHero?.localized_name}</span>
 								{/each}
 							</div>
 							<button class="btn bg-red-500 w-1/2 my-4" on:click={() => setBanList()}>Clear</button>
@@ -188,7 +191,7 @@
 					<button
 						on:click={generateRandomHero}
 						disabled={randomFound}
-						class="z-50 btn variant-filled-primary w-full my-4 max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:my-8 max-lg:mx-4 max-lg:max-w-[90%] md:max-w-[80%]"
+						class="z-50 btn preset-filled-primary-500 w-full my-4 max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:my-8 max-lg:mx-4 max-lg:max-w-[90%] md:max-w-[80%]"
 						>Random me</button
 					>
 				{/if}

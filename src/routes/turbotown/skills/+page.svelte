@@ -1,10 +1,22 @@
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
 
 	//types
 	import type { PageData } from './$types';
-	import type { ModalSettings } from '@skeletonlabs/skeleton';
+	// ModalSettings type (not exported from Skeleton v3)
+	type ModalSettings = {
+		type?: string;
+		title?: string;
+		body?: string;
+		component?: any;
+		meta?: any;
+		response?: (r: any) => void;
+	};
+	// Progress component import
+	import { Progress } from '@skeletonlabs/skeleton-svelte';
 
 	//day js
 	import dayjs from 'dayjs';
@@ -12,12 +24,29 @@
 	dayjs.extend(LocalizedFormat);
 
 	//skeleton
-	import { getModalStore } from '@skeletonlabs/skeleton';
-	const modalStore = getModalStore();
-
-	import { getToastStore, storeHighlightJs } from '@skeletonlabs/skeleton';
-	import type { ToastSettings, ToastStore } from '@skeletonlabs/skeleton';
-	const toastStore = getToastStore();
+	// ToastSettings type (not exported from Skeleton v3)
+	type ToastSettings = {
+		message: string;
+		background?: string;
+		timeout?: number;
+	};
+	import { getContext } from 'svelte';
+	const toastStore = getContext<any>('toaster');
+	const showHeroGridModal = getContext<() => void>('showHeroGridModal');
+	
+	// Helper function to create toasts with Skeleton v3 API
+	function showToast(message: string, background?: string) {
+		if (toastStore && typeof toastStore.create === 'function') {
+			toastStore.create({
+				title: message,
+				description: '',
+				type: background?.includes('error') ? 'error' : 
+				       background?.includes('success') ? 'success' : 
+				       background?.includes('warning') ? 'warning' : 'info',
+				meta: { background }
+			});
+		}
+	}
 
 	//images
 	import town_logo_light from '$lib/assets/turbotown_light.png';
@@ -25,25 +54,35 @@
 	import TournamentLight from '$lib/assets/tournament_light.png';
 
 	//components
-	import { Avatar, ProgressBar } from '@skeletonlabs/skeleton';
+	import { Avatar } from '@skeletonlabs/skeleton-svelte';
 
-	//data
-	export let data: PageData;
-	export let form;
+	
+	interface Props {
+		//data
+		data: PageData;
+		form: any;
+	}
 
-	$: training = false;
-	$: progressVal = 0;
-	$: skillCount = 0;
+	let { data, form }: Props = $props();
+
+	let training = $state(false);
+	
+	let progressVal = $state(0);
+	
+	let skillCount = $state(0);
+	
 
 	onMount(() => {
 		if (data.skills.count) skillCount = parseInt(data.skills.count);
 	});
 
-	$: if (browser) {
-		if (skillCount % 5 === 0) {
-			localStorage.setItem('skillCount', skillCount.toString());
+	run(() => {
+		if (browser) {
+			if (skillCount % 5 === 0) {
+				localStorage.setItem('skillCount', skillCount.toString());
+			}
 		}
-	}
+	});
 
 	//calc leaderboard info for seasons panel
 	let randomSeasonStats = {
@@ -76,29 +115,22 @@
 		}
 	}
 
-	//modal
-	const modal: ModalSettings = {
-		type: 'component',
-		component: 'heroGrid'
-	};
-	//modalStore.trigger(modal);
 
-	$: console.log(form)
-	$: if (form?.missing) {
-		const t: ToastSettings = {
-			message: `Enter at least one valid Dota User ID`,
-			background: 'variant-filled-error'
-		};
+	run(() => {
+		console.log(form)
+	});
+	run(() => {
+		if (form?.missing) {
+			const t: ToastSettings = {
+				message: `Enter at least one valid Dota User ID`,
+				background: 'preset-filled-error-500'
+			};
 
-		toastStore.trigger(t);
-	} else if (form?.success) {
-		const t: ToastSettings = {
-			message: `League created!`,
-			background: 'variant-filled-success'
-		};
-
-		toastStore.trigger(t);
-	}
+			showToast(`Enter at least one valid Dota User ID`, 'preset-filled-error-500');
+		} else if (form?.success) {
+			showToast(`League created!`, 'preset-filled-success-500');
+		}
+	});
 </script>
 
 <div class="container">
@@ -109,7 +141,7 @@
 	<!-- <button
 		class="btn variant-filled"
 		on:click={() => {
-			modalStore.trigger(modal);
+			showHeroGridModal?.();
 		}}>Modal</button
 	> -->
 	<div class="flex flex-col space-y-4 justify-center items-center">
@@ -127,8 +159,8 @@
 					{skillCount}
 				</p>
 			</div>
-			<ProgressBar value={progressVal} class="text-primary-500 fill-primary-500" transition="transition-width" />
-			<button class="btn variant-filled w-1/4 mx-auto" on:click={() => trainSkill()}>Train!</button>
+			<Progress value={progressVal} />
+			<button class="btn preset-filled w-1/4 mx-auto" onclick={() => trainSkill()}>Train!</button>
 		</div>
 	</div>
 </div>

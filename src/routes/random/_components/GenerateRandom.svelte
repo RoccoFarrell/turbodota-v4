@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import { fade, fly, slide } from 'svelte/transition';
 	import { quintOut } from 'svelte/easing';
 	import { flip } from 'svelte/animate';
@@ -15,17 +17,22 @@
 
 	//page data
 	import type { PageData } from '../$types';
-	export let data: PageData;
 
 	//stores
 	//import { randomStore } from '$lib/stores/randomStore';
 	import { townStore } from '$lib/stores/townStore';
 
-	//component props
-	export let session: Session | null = null;
-	export let questSlot: number = 1
+	
+	interface Props {
+		data: PageData;
+		//component props
+		session?: Session | null;
+		questSlot?: number;
+	}
 
-	let randomStore = $townStore.quests.quest1;
+	let { data, session = $bindable(null), questSlot = 1 }: Props = $props();
+
+	let randomStore = $state($townStore.quests.quest1);
 	console.log('questSlot', questSlot)
 	if(questSlot === 1) randomStore = $townStore.quests.quest1
 	else if(questSlot === 2) randomStore = $townStore.quests.quest2
@@ -43,9 +50,9 @@
 
 	// $: console.log('store data: ', $townStore);
 
-	let generatedRandomHero: Hero | null = null;
+	let generatedRandomHero: Hero | null = $state(null);
 
-	let randomFound = false;
+	let randomFound = $state(false);
 
 	/* 
 		End Calculations
@@ -105,12 +112,14 @@
 		}
 	};
 
-	let newerStratzMatches: any[] = [];
+	let newerStratzMatches: any[] = $state([]);
 	//$: console.log(newerStratzMatches);
-	let stratzTimeout: boolean = false;
+	let stratzTimeout: boolean = $state(false);
 	let stratzTimeoutValue: number = 30;
-	let stratzTimeoutCountdown: number = 0;
-	$: stratzTimeoutCountdown;
+	let stratzTimeoutCountdown: number = $state(0);
+	run(() => {
+		stratzTimeoutCountdown;
+	});
 	//$: console.log(stratzTimeout);
 
 	const checkForRandomComplete = async () => {
@@ -152,7 +161,7 @@
 		return newerStratzMatches;
 	};
 
-	let stratzLoading: any = false;
+	let stratzLoading: any = $state(false);
 </script>
 
 {#if generatedRandomHero}
@@ -185,7 +194,7 @@
 
 		{#await stratzLoading}
 			<div class="flex items-center justify-center h-full">
-				<button class="btn variant-filled-success w-full">
+				<button class="btn preset-filled-success-500 w-full">
 					<i class="fi fi-br-refresh h-fit animate-spin"></i>
 					<div class="placeholder animate-pulse"></div>
 				</button>
@@ -228,9 +237,9 @@
 		{#if data.session && data.session.user}
 			<div class="flex items-center justify-center">
 				<button
-					class="btn variant-filled-success w-full"
+					class="btn preset-filled-success-500 w-full"
 					disabled={stratzTimeout}
-					on:click={() => {
+					onclick={() => {
 						stratzLoading = checkForRandomComplete();
 					}}
 				>
@@ -252,9 +261,9 @@
 		</div> -->
 		<div class="w-full">
 			<button
-				on:click={generateRandomHero}
+				onclick={generateRandomHero}
 				disabled={randomFound}
-				class="z-50 btn variant-filled-primary w-full my-4 max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:my-8 max-lg:mx-4 max-lg:max-w-[90%] md:max-w-[80%]"
+				class="z-50 btn preset-filled-primary-500 w-full my-4 max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:my-8 max-lg:mx-4 max-lg:max-w-[90%] md:max-w-[80%]"
 				>Random me</button
 			>
 		</div>

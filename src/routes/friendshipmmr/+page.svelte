@@ -7,36 +7,37 @@
 	import { onMount } from 'svelte';
 	//import { playersWeCareAbout } from '$lib/constants/playersWeCareAbout.ts';
 	import type { FriendshipMMR } from '@prisma/client';
-	import { Line } from 'svelte-chartjs';
+	// TODO: Re-enable chart after migrating to Svelte 5 compatible chart library
+	// import { Line } from 'svelte-chartjs';
 
-	import {
-		Chart as ChartJS,
-		Title,
-		Tooltip,
-		Legend,
-		LineElement,
-		LinearScale,
-		PointElement,
-		CategoryScale,
-		TimeScale,
-		Decimation
-	} from 'chart.js';
+	// import {
+	// 	Chart as ChartJS,
+	// 	Title,
+	// 	Tooltip,
+	// 	Legend,
+	// 	LineElement,
+	// 	LinearScale,
+	// 	PointElement,
+	// 	CategoryScale,
+	// 	TimeScale,
+	// 	Decimation
+	// } from 'chart.js';
 
-	import 'chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm';
+	// import 'chartjs-adapter-dayjs-4/dist/chartjs-adapter-dayjs-4.esm';
 
-	ChartJS.register(
-		Title,
-		Tooltip,
-		Legend,
-		LineElement,
-		LinearScale,
-		PointElement,
-		CategoryScale,
-		TimeScale,
-		Decimation
-	);
+	// ChartJS.register(
+	// 	Title,
+	// 	Tooltip,
+	// 	Legend,
+	// 	LineElement,
+	// 	LinearScale,
+	// 	PointElement,
+	// 	CategoryScale,
+	// 	TimeScale,
+	// 	Decimation
+	// );
 
-	export let data;
+	let { data } = $props();
 	console.log(data);
 
 	/* 
@@ -179,7 +180,16 @@
 <div class="flex flex-col">
 	<div class="grid grid-cols-1 m-10 max-w-[calc(100%-80px)]">
 		<div>
-			<Line data={chartLineData} width={1200} height={1080} options={chartOptions} />
+			<!-- TODO: Re-enable chart after migrating to Svelte 5 compatible chart library -->
+			<!-- Chart temporarily disabled - svelte-chartjs is incompatible with Svelte 5 -->
+			<div class="p-8 bg-surface-500/10 rounded-lg border border-surface-500">
+				<p class="text-lg font-semibold mb-2">MMR Chart Temporarily Disabled</p>
+				<p class="text-sm text-surface-500">
+					The chart is temporarily disabled while we migrate to a Svelte 5 compatible charting library.
+					Chart data is still being processed and will be displayed once the migration is complete.
+				</p>
+			</div>
+			<!-- <Line data={chartLineData} width={1200} height={1080} options={chartOptions} /> -->
 		</div>
 	</div>
 </div>

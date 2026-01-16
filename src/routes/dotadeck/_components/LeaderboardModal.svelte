@@ -1,8 +1,10 @@
 <script lang="ts">
-    import { getModalStore } from '@skeletonlabs/skeleton';
-    const modalStore = getModalStore();
+        interface CloseProps {
+            onClose?: () => void;
+        }
 
-    export let players: {
+    interface Props {
+        players?: {
         user: {
             username: string;
             avatar_url: string | null;
@@ -24,18 +26,27 @@
             xp: number;
             gold: number;
         }[];
-    }[] = [];
+    }[];
+    isLoading?: boolean;
+    }
+
+    let { players = [], isLoading = false, onClose }: Props & CloseProps = $props();
+    
+    // Create sorted copy to avoid mutating state in template
+    const sortedPlayers = $derived([...players].sort((a, b) => b.stats.xp - a.stats.xp));
 </script>
 
 <div class="card p-4 w-full max-w-3/4">
     <header class="flex justify-between items-center mb-4">
         <h2 class="h2 text-primary-500">Leaderboard</h2>
-        <button class="btn btn-sm variant-filled-surface" on:click={() => modalStore.close()}>✕</button>
+        <button class="btn btn-sm preset-filled-surface-500" onclick={() => onClose?.()}>✕</button>
     </header>
 
     <div class="table-container">
-        {#if players.length > 0}
-            <table class="table table-hover">
+        {#if isLoading}
+            <p class="text-center p-4">Loading leaderboard data...</p>
+        {:else if players.length > 0}
+            <table class="table ">
                 <thead>
                     <tr>
                         <th>Rank</th>
@@ -50,7 +61,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {#each players.sort((a, b) => b.stats.xp - a.stats.xp) as player, i}
+                    {#each sortedPlayers as player, i}
                         <tr>
                             <td>{i + 1}</td>
                             <td class="flex items-center gap-2">

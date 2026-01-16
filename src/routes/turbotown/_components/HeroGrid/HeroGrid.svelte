@@ -1,11 +1,31 @@
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import { setContext, getContext } from 'svelte';
 	import type { Hero, Session, UserPrefs } from '@prisma/client';
 
 	//skeleton
-	import { getToastStore, storeHighlightJs } from '@skeletonlabs/skeleton';
-	import type { ToastSettings, ToastStore } from '@skeletonlabs/skeleton';
-	const toastStore = getToastStore();
+	// ToastSettings type (not exported from Skeleton v3)
+	type ToastSettings = {
+		message: string;
+		background?: string;
+		timeout?: number;
+	};
+	const toastStore = getContext<any>('toaster');
+	
+	// Helper function to create toasts with Skeleton v3 API
+	function showToast(message: string, background?: string) {
+		if (toastStore && typeof toastStore.create === 'function') {
+			toastStore.create({
+				title: message,
+				description: '',
+				type: background?.includes('error') ? 'error' : 
+				       background?.includes('success') ? 'success' : 
+				       background?.includes('warning') ? 'warning' : 'info',
+				meta: { background }
+			});
+		}
+	}
 
 	//constants
 	import { heroRoles } from '$lib/constants/heroRoles';
@@ -18,17 +38,31 @@
 	type BanStore = ReturnType<typeof createRandomStore>
 	import { banStore } from '$lib/stores/banStore'
 
-	export let randomFound = false;
-	export let session: Session | null = null;
-	export let heroes: Hero[] = [];
-	//export let parent: any;
-	export let freeBans: number = 3;
+	
+	interface Props {
+		randomFound?: boolean;
+		session?: Session | null;
+		heroes?: Hero[];
+		//export let parent: any;
+		freeBans?: number;
+		onClose?: () => void;
+	}
+
+	let {
+		randomFound = false,
+		session = $bindable(null),
+		heroes = $bindable([]),
+		freeBans = 3,
+		onClose
+	}: Props = $props();
 	
 	if (heroes.length === 0) heroes = getContext('heroes');
 
 
 	console.log('banStore: ', $banStore)
-	$: console.log('banStore changed: ', $banStore)
+	run(() => {
+		console.log('banStore changed: ', $banStore)
+	});
 
 	/* Get session from context */
 	if (!session) session = getContext('session');
@@ -36,7 +70,8 @@
 	// if (!preferences || preferences.length === 0) preferences = getContext('userPreferences');
 	// console.log('[herogrid] preferences: ', preferences);
 
-	$: showHeroGrid = true;
+	let showHeroGrid = $state(true);
+	
 
 	const handleRoleSelect = (role: string) => {
 		//console.log(role);
@@ -123,24 +158,21 @@
 			let prefsResponse = await response.json();
 			//console.log(prefsResponse);
 			if (prefsResponse.status === 'success') {
-				const t: ToastSettings = {
-					message: `Bans saved!`,
-					background: 'variant-filled-success'
-				};
-				toastStore.trigger(t);
+				showToast(`Bans saved!`, 'preset-filled-success-500');
 			}
 		} else {
-			const t: ToastSettings = {
-				message: `Need either 0 or 3 bans selected to save!`,
-				background: 'variant-filled-warning'
-			};
-			toastStore.trigger(t);
+			showToast(`Need either 0 or 3 bans selected to save!`, 'preset-filled-warning-500');
 		}
 	};
 </script>
 
-<div class="card w-screen flex flex-col justify-center items-center p-4">
-	<h2 class="h2 text-primary-500 my-4">Ban Heroes</h2>
+<div class="card w-full max-w-4xl flex flex-col justify-center items-center p-4">
+	<div class="flex justify-between items-center w-full mb-4">
+		<h2 class="h2 text-primary-500">Ban Heroes</h2>
+		{#if onClose}
+			<button class="btn btn-sm preset-filled-surface-500" onclick={() => onClose?.()}>✕</button>
+		{/if}
+	</div>
 	<div class="md:grid md:grid-cols-2 max-md:flex max-md:flex-col">
 		<!-- Hero ban grid -->
 		<div class="w-full flex flex-col items-center sm:h-fit relative max-md:max-w-sm">
@@ -163,7 +195,7 @@
 			>
 				<button
 					class="w-full"
-					on:click={() => {
+					onclick={() => {
 						showHeroGrid = !showHeroGrid;
 					}}
 				>
@@ -173,7 +205,7 @@
 			<!-- Desktop Hero Grid -->
 			<div
 				id="desktopHeroGrid"
-				class={`z-0 flex flex-wrap max-w-[95%] p-4 max-md:hidden xs:visible justify-center overflow-y-auto w-full max-h-[50rem] ${
+				class={`z-0 flex flex-wrap max-w-[95%] p-4 max-md:hidden xs:visible justify-center overflow-y-auto w-full max-h-200 ${
 					showHeroGrid ? 'visible border border-dashed border-red-500' : 'border-double border-t-4 border-amber-500'
 				}`}
 			>
@@ -182,10 +214,10 @@
 						<div class="object-contain m-1 relative">
 							{#if $banStore.bannedHeroes.indexOf(hero) !== -1}
 								<div class="w-full h-full bg-red-600 rounded-xl z-10 absolute bg-opacity-70">
-									<button on:click={() => banStore.banHero(hero)} class="w-full h-full"></button>
+									<button onclick={() => banStore.banHero(hero)} class="w-full h-full"></button>
 								</div>
 							{/if}
-							<button on:click={() => banStore.banHero(hero)}><i class={`z-0 d2mh hero-${hero.id}`}></i></button>
+							<button onclick={() => banStore.banHero(hero)}><i class={`z-0 d2mh hero-${hero.id}`}></i></button>
 						</div>
 					{/each}
 				{/if}
@@ -202,10 +234,10 @@
 						<div class={`object-contain m-3 relative`}>
 							{#if $banStore.bannedHeroes.indexOf(hero) !== -1}
 								<div class="w-full h-full bg-red-600 rounded-xl z-10 absolute bg-opacity-70">
-									<button on:click={() => banStore.banHero(hero)} class="w-full h-full"></button>
+									<button onclick={() => banStore.banHero(hero)} class="w-full h-full"></button>
 								</div>
 							{/if}
-							<button on:click={() => banStore.banHero(hero)}
+							<button onclick={() => banStore.banHero(hero)}
 								><i class={`z-0 d2mh hero-${hero.id} scale-125`}></i></button
 							>
 						</div>
@@ -220,7 +252,7 @@
 					{#if $banStore.bannedHeroes.length > 0}
 						<div>
 							{#each $banStore.bannedHeroes as bannedHero}
-								<span class="badge variant-filled-secondary">{bannedHero?.localized_name}</span>
+								<span class="badge preset-filled-secondary-500">{bannedHero?.localized_name}</span>
 							{/each}
 						</div>
 					{:else}
@@ -231,12 +263,12 @@
 					<button
 						class={'btn dark:bg-purple-800/50 bg-purple-500/50 w-1/3'}
 						disabled={!session}
-						on:click={() => saveBanList()}>{!session ? 'Log In to save 3 Free Bans' : 'Save Bans to account'}</button
+						onclick={() => saveBanList()}>{!session ? 'Log In to save 3 Free Bans' : 'Save Bans to account'}</button
 					>
 					<button
 						class="btn bg-red-500 w-1/3"
 						disabled={$banStore.bannedHeroes.length === 0}
-						on:click={() => setBanList()}>Clear</button
+						onclick={() => setBanList()}>Clear</button
 					>
 				</div>
 			</div>
@@ -267,7 +299,7 @@
 
 				<div class="mx-8 md:my-4 my-2">
 					<!-- <h3 class="h3">Auto Bans</h3> -->
-					<button class="btn dark:bg-amber-800 bg-amber-500 w-1/2 my-4" on:click={() => setBanList('garbage')}
+					<button class="btn dark:bg-amber-800 bg-amber-500 w-1/2 my-4" onclick={() => setBanList('garbage')}
 						>Garbage</button
 					>
 				</div>
@@ -288,7 +320,7 @@
 								<input
 									class="checkbox"
 									type="checkbox"
-									on:click={() => handleRoleSelect(role)}
+									onclick={() => handleRoleSelect(role)}
 									checked={$banStore.selectedRoles.includes(role)}
 								/>
 								<p>{role}</p>

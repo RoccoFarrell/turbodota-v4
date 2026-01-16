@@ -1,6 +1,5 @@
 <script lang="ts">
 	import type { Hero } from '@prisma/client';
-	import { getModalStore, getToastStore } from '@skeletonlabs/skeleton';
 	import { heroPoolStore } from '$lib/stores/heroPoolStore';
 	import { fade } from 'svelte/transition';
 	import CardHistoryTooltip from './CardHistoryTooltip.svelte';
@@ -19,15 +18,16 @@
 	let showRaisedXP = false;
 	let showRaisedGold = false;
 
-	const toastStore = getToastStore();
+	import { getContext } from 'svelte';
+	const toastStore = getContext<any>('toaster');
 	const dispatch = createEventDispatcher<{
 		selectHero: { heroId: number };
 	}>();
 
 	type SortType = 'alpha' | 'xp' | 'gold';
-	let currentSort: SortType = 'alpha';
+	let currentSort: SortType = $state('alpha');
 
-	$: filteredHeroes = $heroPoolStore.allHeroes
+	let filteredHeroes = $derived($heroPoolStore.allHeroes
 		.sort((a, b) => {
 			switch (currentSort) {
 				case 'alpha':
@@ -44,21 +44,26 @@
 			...hero,
 			isFiltered: (!showRaisedXP || (hero.xp ?? 100) > 100) && (!showRaisedGold || (hero.gold ?? 100) > 100),
 			isDrawn: hero.isHeld
-		})) as FilteredGameHero[];
+		})) as FilteredGameHero[]);
 
-	export let isAnimating: boolean = false;
-	export let currentHighlightId: number | null = null;
-	export let selectedHeroId: number | null = null;
+	interface Props {
+		isAnimating?: boolean;
+		currentHighlightId?: number | null;
+		selectedHeroId?: number | null;
+		onClose?: () => void;
+	}
 
-	$: heroes = $heroPoolStore.allHeroes;
+	let { isAnimating = false, currentHighlightId = null, selectedHeroId = $bindable(null), onClose }: Props = $props();
 
-	$: isHeroDisabled = (heroId: number) => {
+	let heroes = $derived($heroPoolStore.allHeroes);
+
+	let isHeroDisabled = $derived((heroId: number) => {
 		return $heroPoolStore.allHeroes.find((h) => h.id === heroId)?.isHeld ?? false;
-	};
+	});
 
-	let hoveredHeroId: number | null = null;
-	let mouseX = 0;
-	let mouseY = 0;
+	let hoveredHeroId: number | null = $state(null);
+	let mouseX = $state(0);
+	let mouseY = $state(0);
 
 	async function refreshHeroPool() {
 		try {
@@ -68,14 +73,14 @@
 				heroPoolStore.setAllHeroes(result.heroes);
 				toastStore.trigger({
 					message: 'Hero pool refreshed',
-					background: 'variant-filled-success'
+					background: 'preset-filled-success-500'
 				});
 			}
 		} catch (error) {
 			console.error('Error refreshing hero pool:', error);
 			toastStore.trigger({
 				message: 'Failed to refresh hero pool',
-				background: 'variant-filled-error'
+				background: 'preset-filled-error-500'
 			});
 		}
 	}
@@ -84,6 +89,9 @@
 <div class="p-4 w-full max-h-[80vh] overflow-auto">
 	<div class="flex justify-between items-center mb-4">
 		<h2 class="text-lg font-bold text-primary-500">Deck View</h2>
+		{#if onClose}
+			<button class="btn btn-sm preset-filled-surface-500" onclick={() => onClose?.()}>✕</button>
+		{/if}
 		<div class="flex gap-4">
 
 			<div class="flex flex-col gap-2">
@@ -91,20 +99,20 @@
 				<div class="flex gap-2 justify-center align-middle">
 					<span class="text-xs text-white-500 flex items-center">Sort:</span>
 					<button
-						class="btn btn-sm {currentSort === 'alpha' ? 'variant-filled-surface' : 'variant-soft-surface'}"
-						on:click={() => currentSort = 'alpha'}
+						class="btn btn-sm {currentSort === 'alpha' ? 'preset-filled-surface-500' : 'preset-tonal-surface'}"
+						onclick={() => currentSort = 'alpha'}
 					>
 						<i class="fi fi-rr-text-alt text-xs">Alphabetical</i>
 					</button>
 					<button
-						class="btn btn-sm {currentSort === 'xp' ? 'variant-filled-primary' : 'variant-soft-primary'}"
-						on:click={() => currentSort = 'xp'}
+						class="btn btn-sm {currentSort === 'xp' ? 'preset-filled-primary-500' : 'preset-tonal-primary'}"
+						onclick={() => currentSort = 'xp'}
 					>
 						<span class="text-xs">XP</span>
 					</button>
 					<button
-						class="btn btn-sm {currentSort === 'gold' ? 'variant-filled-warning' : 'variant-soft-warning'}"
-						on:click={() => currentSort = 'gold'}
+						class="btn btn-sm {currentSort === 'gold' ? 'preset-filled-warning-500' : 'preset-tonal-warning'}"
+						onclick={() => currentSort = 'gold'}
 					>
 						<span class="text-xs">Gold</span>
 					</button>
@@ -113,7 +121,7 @@
 			<div class="divider-vertical h-8"></div>
 			<button 
 			class="btn btn-sm bg-green-500 text-slate-900" 
-			on:click={refreshHeroPool}
+			onclick={refreshHeroPool}
 		>
 			<i class="fi fi-rr-refresh mr-2"></i>
 			Refresh
@@ -143,19 +151,19 @@
 					${isHeroDisabled(hero.id) ? 'opacity-10' : ''}`}
 				role="button"
 				tabindex="0"
-				on:mouseenter={(e) => {
+				onmouseenter={(e) => {
 					hoveredHeroId = hero.id;
 					mouseX = e.clientX;
 					mouseY = e.clientY;
 				}}
-				on:mouseleave={() => (hoveredHeroId = null)}
-				on:click={() => {
+				onmouseleave={() => (hoveredHeroId = null)}
+				onclick={() => {
 					selectedHeroId = selectedHeroId === hero.id ? null : hero.id;
 					if (selectedHeroId !== null) {
 						dispatch('selectHero', { heroId: selectedHeroId });
 					}
 				}}
-				on:keypress={(e) => {
+				onkeypress={(e) => {
 					if (e.key === 'Enter') {
 						selectedHeroId = selectedHeroId === hero.id ? null : hero.id;
 						if (selectedHeroId !== null) {
@@ -185,19 +193,19 @@
 				{#if currentHighlightId === hero.id && isAnimating}
 					<div class="absolute inset-0 border-4 border-[#39FF14] rounded-lg animate-pulse shadow-[0_0_10px_#39FF14]" 
 						transition:fade={{ duration: 100 }}
-					/>
+					></div>
 				{:else if currentHighlightId === hero.id && !isAnimating}
 					<div
 						class="absolute -inset-12 flex items-center justify-center pointer-events-none"
 						in:fade={{ duration: 300, delay: 200 }}
 					>
 						<div class="w-[calc(100%+4rem)] h-[calc(100%+4rem)] border-4 border-amber-400/80 rounded-xl
-							bg-gradient-to-r from-amber-400/5 via-amber-400/10 to-amber-400/5
+							bg-linear-to-r from-amber-400/5 via-amber-400/10 to-amber-400/5
 							shadow-[0_0_60px_30px_#FFD700,0_0_100px_60px_#FFD700/50] 
 							after:absolute after:inset-0 after:rounded-xl
 							after:shadow-[inset_0_0_40px_#FFD700] 
 							after:animate-pulse after:animate-duration-[2s]"
-						/>
+						></div>
 					</div>
 				{/if}
 			</div>

@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import { fade, fly, slide } from 'svelte/transition';
 	import { quintOut } from 'svelte/easing';
 	import { flip } from 'svelte/animate';
@@ -14,19 +16,51 @@
 
 	//page data
 	import type { PageData } from './$types';
-	export let data: PageData;
+
+	//props - must be declared before use in Svelte 5
+	interface Props {
+		data: PageData;
+		form: any;
+	}
+
+	let { data, form }: Props = $props();
 
 	//helpers
 	import winOrLoss from '$lib/helpers/winOrLoss';
 
 	//skeleton
-	import { getToastStore, storeHighlightJs } from '@skeletonlabs/skeleton';
-	import type { ToastSettings, ToastStore } from '@skeletonlabs/skeleton';
-	const toastStore = getToastStore();
-
-	import { getModalStore } from '@skeletonlabs/skeleton';
-	import type { ModalSettings } from '@skeletonlabs/skeleton';
-	const modalStore = getModalStore();
+	// ToastSettings type (not exported from Skeleton v3)
+	type ToastSettings = {
+		message: string;
+		background?: string;
+		timeout?: number;
+	};
+	// ModalSettings type (not exported from Skeleton v3)
+	type ModalSettings = {
+		type?: string;
+		title?: string;
+		body?: string;
+		component?: any;
+		meta?: any;
+		response?: (r: any) => void;
+	};
+	import { getContext } from 'svelte';
+	const toastStore = getContext<any>('toaster');
+	const showHeroGridModal = getContext<() => void>('showHeroGridModal');
+	
+	// Helper function to create toasts with Skeleton v3 API
+	function showToast(message: string, background?: string) {
+		if (toastStore && typeof toastStore.create === 'function') {
+			toastStore.create({
+				title: message,
+				description: '',
+				type: background?.includes('error') ? 'error' : 
+				       background?.includes('success') ? 'success' : 
+				       background?.includes('warning') ? 'warning' : 'info',
+				meta: { background }
+			});
+		}
+	}
 
 	//components
 	import History from './_components/History.svelte';
@@ -61,9 +95,6 @@
 		heroPoolStore.setAllHeroes(data.heroDescriptions.allHeroes);
 	}
 
-	//$: console.log('data changed: ', data);
-
-	$: onQuestComplete(data.quests);
 
 	//set ban list
 	const checkForBanList = () => {
@@ -93,13 +124,12 @@
 	};
 
 	let animationSlots: number[] = [-1];
-	let animateSlot1: boolean = false;
-	let animateSlot2: boolean = false;
-	let animateSlot3: boolean = false;
-	$: animateSlot1, animateSlot2, animateSlot3;
+	let animateSlot1: boolean = $state(false);
+	let animateSlot2: boolean = $state(false);
+	let animateSlot3: boolean = $state(false);
 
 	// Subscribe to hero pool changes
-	let availableHeroCount: number;
+	let availableHeroCount: number = $state();
 	heroPoolStore.subscribe(state => {
 		availableHeroCount = state.availableHeroes.length;
 	});
@@ -161,14 +191,14 @@
 	});
 
 	//calc random lifetime stats on load
-	let randomLifetimeStats = {
+	let randomLifetimeStats = $state({
 		wins: 0,
 		losses: 0,
 		totalGoldWon: 0,
 		totalLostGoldModifier: 0
-	};
+	});
 
-	let completedRandoms: Random[] = [];
+	let completedRandoms: Random[] = $state([]);
 	if (data.random.randoms) {
 		completedRandoms = data.random.randoms.filter((random) => !random.active && random.status !== 'skipped');
 		if (completedRandoms.length > 0) {
@@ -221,26 +251,16 @@
 
 	const t: ToastSettings = {
 		message: `Max bans of ${$quest1Store.maxBans} reached!`,
-		background: 'variant-filled-warning'
+		background: 'preset-filled-warning-500'
 	};
 
-	let banLimitErrorVisible: boolean = false;
-	$: if (banLimitErrorVisible === true)
-		setTimeout(() => {
-			banLimitErrorVisible = false;
-		}, 5000);
+	let banLimitErrorVisible: boolean = $state(false);
 
-	$: {
-		//quest1Store.updateCalculations();
-		if (banLimitErrorVisible) toastStore.trigger(t);
-	}
 
 	const modal: ModalSettings = {
 		type: 'component',
 		component: 'heroGrid'
 	};
-
-	export let form;
 
 	function onFormSuccess(form: any) {
 		if (form && form.success) {
@@ -249,7 +269,7 @@
 			if (form.action === 'use item') {
 				const t: ToastSettings = {
 					message: `Used ${form?.result?.action}`,
-					background: 'variant-filled-success'
+					background: 'preset-filled-success-500'
 				};
 
 				toastStore.trigger(t);
@@ -258,7 +278,7 @@
 			if (form.action === 'buy item') {
 				const t: ToastSettings = {
 					message: `Bought ${form?.result?.count} items`,
-					background: 'variant-filled-success'
+					background: 'preset-filled-success-500'
 				};
 
 				toastStore.trigger(t);
@@ -266,7 +286,27 @@
 		}
 	}
 
-	$: onFormSuccess(form);
+	//$: console.log('data changed: ', data);
+
+	run(() => {
+		onQuestComplete(data.quests);
+	});
+	run(() => {
+		animateSlot1, animateSlot2, animateSlot3;
+	});
+	run(() => {
+		if (banLimitErrorVisible === true)
+			setTimeout(() => {
+				banLimitErrorVisible = false;
+			}, 5000);
+	});
+	run(() => {
+		//quest1Store.updateCalculations();
+		if (banLimitErrorVisible) toastStore.trigger(t);
+	});
+	run(() => {
+		onFormSuccess(form);
+	});
 </script>
 
 <div class="container h-full mx-auto w-full max-sm:mb-20">
@@ -376,8 +416,8 @@
 					<div class="flex flex-col justify-center items-center h-fit w-full">
 						<button
 							class="btn p-1 w-1/3 bg-primary-500/70"
-							on:click={() => {
-								modalStore.trigger(modal);
+							onclick={() => {
+								showHeroGridModal?.();
 							}}>Ban Heroes</button
 						>
 					</div>

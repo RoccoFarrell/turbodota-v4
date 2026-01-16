@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import { fade, fly, slide } from 'svelte/transition';
 	import { quintOut } from 'svelte/easing';
 	import { flip } from 'svelte/animate';
@@ -14,19 +16,43 @@
 
 	//page data
 	import type { PageData } from './$types';
-	export let data: PageData;
 
 	//helpers
 	import winOrLoss from '$lib/helpers/winOrLoss';
 
 	//skeleton
-	import { getToastStore, storeHighlightJs } from '@skeletonlabs/skeleton';
-	import type { ToastSettings, ToastStore } from '@skeletonlabs/skeleton';
-	const toastStore = getToastStore();
-
-	import { getModalStore } from '@skeletonlabs/skeleton';
-	import type { ModalSettings } from '@skeletonlabs/skeleton';
-	const modalStore = getModalStore();
+	// ToastSettings type (not exported from Skeleton v3)
+	type ToastSettings = {
+		message: string;
+		background?: string;
+		timeout?: number;
+	};
+	// ModalSettings type (not exported from Skeleton v3)
+	type ModalSettings = {
+		type?: string;
+		title?: string;
+		body?: string;
+		component?: any;
+		meta?: any;
+		response?: (r: any) => void;
+	};
+	import { getContext } from 'svelte';
+	const toastStore = getContext<any>('toaster');
+	const showHeroGridModal = getContext<() => void>('showHeroGridModal');
+	
+	// Helper function to create toasts with Skeleton v3 API
+	function showToast(message: string, background?: string) {
+		if (toastStore && typeof toastStore.create === 'function') {
+			toastStore.create({
+				title: message,
+				description: '',
+				type: background?.includes('error') ? 'error' : 
+				       background?.includes('success') ? 'success' : 
+				       background?.includes('warning') ? 'warning' : 'info',
+				meta: { background }
+			});
+		}
+	}
 
 	//components
 	import History from '../turbotown/quests/_components/History.svelte';
@@ -46,6 +72,11 @@
 	import SeasonLogo from '$lib/assets/seasonLogo.png';
 	import TournamentLight from '$lib/assets/tournament_light.png';
 	import WantedPoster from '$lib/assets/wantedPoster.png';
+	interface Props {
+		data: PageData;
+	}
+
+	let { data }: Props = $props();
 
 	if (browser) {
 		console.log('data: ', data);
@@ -56,11 +87,13 @@
 	let quest1Store = $townStore.quests.quest1;
 	let quest2Store = $townStore.quests.quest2;
 	let quest3Store = $townStore.quests.quest3;
-	$: if(browser && $quest1Store){
-		console.log('town store quest 1 store: ', $quest1Store);
-		console.log('town store quest 2 store: ', $quest2Store);
-		console.log('town store quest 3 store: ', $quest3Store);
-	}
+	run(() => {
+		if(browser && $quest1Store){
+			console.log('town store quest 1 store: ', $quest1Store);
+			console.log('town store quest 2 store: ', $quest2Store);
+			console.log('town store quest 3 store: ', $quest3Store);
+		}
+	});
 
 	//loop through quests and set stores
 	let quest1 = data.quests.filter((quest: TurbotownQuest) => quest.questSlot === 1)
@@ -166,12 +199,12 @@
 	});
 
 	//calc random lifetime stats on load
-	let randomLifetimeStats = {
+	let randomLifetimeStats = $state({
 		wins: 0,
 		losses: 0,
 		totalGoldWon: 0,
 		totalLostGoldModifier: 0
-	};
+	});
 
 	let completedRandoms: Random[] = data.randoms.filter((random) => !random.active);
 	if (completedRandoms.length > 0) {
@@ -184,9 +217,9 @@
 	}
 
 	//calc leaderboard info for seasons panel
-	let randomSeasonStats = {
+	let randomSeasonStats = $state({
 		userPlace: -1
-	};
+	});
 	if (data.session && data.session.user) {
 		randomSeasonStats = {
 			userPlace:
@@ -310,19 +343,21 @@
 
 	const t: ToastSettings = {
 		message: `Max bans of ${$randomStore.maxBans} reached!`,
-		background: 'variant-filled-warning'
+		background: 'preset-filled-warning-500'
 	};
 
-	let banLimitErrorVisible: boolean = false;
-	$: if (banLimitErrorVisible === true)
-		setTimeout(() => {
-			banLimitErrorVisible = false;
-		}, 5000);
+	let banLimitErrorVisible: boolean = $state(false);
+	run(() => {
+		if (banLimitErrorVisible === true)
+			setTimeout(() => {
+				banLimitErrorVisible = false;
+			}, 5000);
+	});
 
-	$: {
+	run(() => {
 		randomStore.updateCalculations();
 		if (banLimitErrorVisible) toastStore.trigger(t);
-	}
+	});
 
 	const modal: ModalSettings = {
 		type: 'component',
@@ -400,7 +435,7 @@
 							</div>
 						</div>
 						<div class="flex justify-center items-center">
-							<a href="/random/leaderboard"><button class="btn variant-ghost-primary">Leaderboard</button></a>
+							<a href="/random/leaderboard"><button class="btn preset-tonal-primary border border-primary-500">Leaderboard</button></a>
 						</div>
 					</div>
 				</div>
@@ -424,13 +459,13 @@
 		<!-- Action buttons for quest board -->
 		<div class="w-full m-4">
 			<button
-				class="btn variant-filled"
-				on:click={() => {
-					modalStore.trigger(modal);
+				class="btn preset-filled"
+				onclick={() => {
+					showHeroGridModal?.();
 				}}>Ban Heroes</button
 			>
 
-			<button class="btn variant-filled">Test</button>
+			<button class="btn preset-filled">Test</button>
 		</div>
 
 		<!-- Quest Board -->

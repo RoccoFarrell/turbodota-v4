@@ -14,12 +14,29 @@
 	export let data: PageData;
 
 	//components //skeleton
-	import { TabGroup, Tab, TabAnchor } from '@skeletonlabs/skeleton';
-	import { getToastStore, storeHighlightJs } from '@skeletonlabs/skeleton';
-	import type { ToastSettings, ToastStore } from '@skeletonlabs/skeleton';
+	import { Tabs } from '@skeletonlabs/skeleton-svelte';
 	import RangeCalendar from '$lib/components/ui/range-calendar/range-calendar.svelte';
-	import { Table, tableMapperValues } from '@skeletonlabs/skeleton';
-	import type { TableSource } from '@skeletonlabs/skeleton';
+	
+	// Skeleton v3 Tabs API - Control and Panel are accessed via Tabs.Control and Tabs.Panel
+	// Using the components directly ensures proper styling
+	
+	// ToastSettings type (may not be exported from Skeleton v3)
+	type ToastSettings = {
+		message: string;
+		background?: string;
+	};
+	
+	// TableSource type (not exported from Skeleton v3)
+	type TableSource = {
+		head: string[];
+		body: any[][];
+		meta?: any[][];
+	};
+	
+	// Helper function to map table data values
+	function tableMapperValues(data: any[], keys: string[]): any[][] {
+		return data.map(item => keys.map(key => item[key]));
+	}
 
 	//images
 	import Lock from '$lib/assets/lock.png';
@@ -59,7 +76,7 @@
 	$: if (form?.success) {
 		const t: ToastSettings = {
 			message: `Season created!`,
-			background: 'variant-filled-success'
+			background: 'preset-filled-success-500'
 		};
 		toastStore.trigger(t);
 	}
@@ -111,27 +128,27 @@
 		//foot: ['Total', '', '<code class="code">5</code>']
 	};
 
-	const toastStore = getToastStore();
+	import { getContext } from 'svelte';
+	const toastStore = getContext<{ trigger: (settings: ToastSettings) => void }>('toaster');
 
 	$: if (form?.missing) {
 		const t: ToastSettings = {
 			message: `Enter at least one valid Dota User ID`,
-			background: 'variant-filled-error'
+			background: 'preset-filled-error-500'
 		};
 
 		toastStore.trigger(t);
 	} else if (form?.success) {
 		const t: ToastSettings = {
 			message: `Season created!`,
-			background: 'variant-filled-success'
+			background: 'preset-filled-success-500'
 		};
 
 		toastStore.trigger(t);
 		// Invalidate the current page data to trigger a refresh
 		invalidate('app:leagues');
 	}
-	let tabSetOuter: number = 1;
-	let tabSetInner: number = 0;
+	// Note: Skeleton v3 Tabs manages state internally - no need for tabSet variables
 
 	let friendsString: string = '';
 
@@ -189,14 +206,14 @@
 
 				const t: ToastSettings = {
 					message: `Season status updated`,
-					background: 'variant-filled-success'
+					background: 'preset-filled-success-500'
 				};
 				toastStore.trigger(t);
 			}
 		} catch (error) {
 			const t: ToastSettings = {
 				message: `Failed to update season status`,
-				background: 'variant-filled-error'
+				background: 'preset-filled-error-500'
 			};
 			toastStore.trigger(t);
 		}
@@ -224,13 +241,13 @@
 
 			const t: ToastSettings = {
 				message: 'Season deleted successfully',
-				background: 'variant-filled-success'
+				background: 'preset-filled-success-500'
 			};
 			toastStore.trigger(t);
 		} else {
 			const t: ToastSettings = {
 				message: 'Failed to delete season',
-				background: 'variant-filled-error'
+				background: 'preset-filled-error-500'
 			};
 			toastStore.trigger(t);
 		}
@@ -287,7 +304,7 @@
 
 			<div class="table-container">
 				<!-- Native Table Element -->
-				<table class="table table-hover">
+				<table class="table ">
 					<thead>
 						<tr>
 							{#each tableSource.head as header, i}
@@ -298,9 +315,7 @@
 					<tbody>
 						{#each tableSource.body as row, i}
 							<tr>
-								<a href={`/leagues/${selectedLeague.id}/seasons/${row[1]}`}
-									><td class="font-bold text-purple-500 hover:underline hover:text-primary-600">{row[0]}</td></a
-								>
+								<td><a href={`/leagues/${selectedLeague.id}/seasons/${row[1]}`} class="font-bold text-purple-500 hover:underline hover:text-primary-600">{row[0]}</a></td>
 								<td>{row[1]}</td>
 								<td class="text-amber-500">{row[2]}</td>
 								<td>{row[3]}</td>
@@ -309,9 +324,9 @@
 								<td>
 									{#if row[6]}
 										<div class="flex items-center gap-2">
-											<span class="chip variant-filled-success">Active</span>
+											<span class="chip preset-filled-success-500">Active</span>
 											<button
-												class="btn btn-sm variant-soft-warning"
+												class="btn btn-sm preset-tonal-warning"
 												on:click={() => handleSeasonStatusUpdate(parseInt(row[1]), false)}
 											>
 												Deactivate
@@ -319,9 +334,9 @@
 										</div>
 									{:else}
 										<div class="flex items-center gap-2">
-											<span class="chip variant-filled-surface">Inactive</span>
+											<span class="chip preset-filled-surface-500">Inactive</span>
 											<button
-												class="btn btn-sm variant-soft-success"
+												class="btn btn-sm preset-tonal-success"
 												on:click={() => handleSeasonStatusUpdate(parseInt(row[1]), true)}
 											>
 												Activate
@@ -332,7 +347,7 @@
 								<td>
 									<div class="flex gap-2">
 										<button
-											class="btn variant-filled-error"
+											class="btn preset-filled-error-500"
 											on:click={() => handleDeleteSeason({ id: parseInt(row[1]), name: row[0] })}
 										>
 											<i class="fi fi-bs-trash"></i>
@@ -358,22 +373,30 @@
 		{/if}
 	</div>
 	<div class="w-full">
-		<TabGroup justify="justify-center">
-			<Tab bind:group={tabSetOuter} name="tab1" value={0}>
-				<svelte:fragment slot="lead"><i class="fi fi-rr-users-alt"></i></svelte:fragment>
-				<span>Members</span>
-			</Tab>
-			<Tab bind:group={tabSetOuter} name="tab2" value={1}
-				><svelte:fragment slot="lead"><i class="fi fi-rr-calendar-star"></i></svelte:fragment>
-				<span>Seasons</span></Tab
-			>
-			<Tab bind:group={tabSetOuter} name="tab3" value={2}
-				><svelte:fragment slot="lead"><i class="fi fi-rr-users-alt"></i></svelte:fragment>
-				<span>History</span></Tab
-			>
-			<!-- Tab Panels --->
-			<svelte:fragment slot="panel">
-				{#if tabSetOuter === 0}
+		<Tabs listJustify="justify-center" defaultValue="seasons">
+			{#snippet list()}
+				<Tabs.Control value="members">
+					{#snippet lead()}
+						<i class="fi fi-rr-users-alt"></i>
+					{/snippet}
+					Members
+				</Tabs.Control>
+				<Tabs.Control value="seasons">
+					{#snippet lead()}
+						<i class="fi fi-rr-calendar-star"></i>
+					{/snippet}
+					Seasons
+				</Tabs.Control>
+				<Tabs.Control value="history">
+					{#snippet lead()}
+						<i class="fi fi-rr-users-alt"></i>
+					{/snippet}
+					History
+				</Tabs.Control>
+			{/snippet}
+
+			{#snippet content()}
+				<Tabs.Panel value="members">
 					<div class="space-y-4 card flex flex-col max-w-screen relative">
 						{#if !data.session || !data.session.user.roles || !data.session.user.roles.includes('dev')}
 							<div class="z-50 absolute w-full h-full bg-slate-900/90 flex items-center justify-center rounded-xl">
@@ -389,36 +412,34 @@
 								<div>
 									<h4 class="h4 text-purple-500">Manage League Members</h4>
 
-									<TabGroup>
-										<Tab bind:group={tabSetInner} name="tab1" value={0}>
-											<svelte:fragment slot="lead"
-												><div class="flex w-full justify-around">
-													<i class="fi fi-rr-following"></i><span class="ml-2">Members</span>
-												</div></svelte:fragment
-											>
-										</Tab>
-										<Tab bind:group={tabSetInner} name="tab2" value={1}>
-											<svelte:fragment slot="lead"
-												><div class="flex w-full justify-around">
-													<i class="fi fi-br-user-add"></i><span class="ml-2">Add Friends</span>
-												</div></svelte:fragment
-											>
-										</Tab>
-										<Tab bind:group={tabSetInner} name="tab2" value={2}
-											><svelte:fragment slot="lead"
-												><div class="flex w-full justify-around">
-													<i class="fi fi-rr-search-heart"></i><span class="ml-2">Search for Friends</span>
-												</div></svelte:fragment
-											></Tab
-										>
+									<Tabs defaultValue="members">
+										{#snippet list()}
+											<Tabs.Control value="members">
+												{#snippet lead()}
+													<i class="fi fi-rr-following"></i>
+												{/snippet}
+												Members
+											</Tabs.Control>
+											<Tabs.Control value="add-friends">
+												{#snippet lead()}
+													<i class="fi fi-br-user-add"></i>
+												{/snippet}
+												Add Friends
+											</Tabs.Control>
+											<Tabs.Control value="search-friends">
+												{#snippet lead()}
+													<i class="fi fi-rr-search-heart"></i>
+												{/snippet}
+												Search for Friends
+											</Tabs.Control>
+										{/snippet}
 
-										<!-- Tab Panels --->
-										<svelte:fragment slot="panel">
-											{#if tabSetInner === 0}
+										{#snippet content()}
+											<Tabs.Panel value="members">
 												<div class="flex w-full flex-wrap">
 													<div class="table-container">
 														<!-- Native Table Element -->
-														<table class="table table-hover">
+														<table class="table ">
 															<thead>
 																<tr>
 																	<th>Position</th>
@@ -433,7 +454,7 @@
 																		<td>{dayjs(friend.newestMatch).format('MM/DD/YYYY')}</td>
 																		<td>
 																			<button
-																				class="btn-icon btn-icon-sm variant-filled-warning hover:translate-y-1 hover:bg-amber-500"
+																				class="btn-icon btn-icon-sm preset-filled-warning-500 hover:translate-y-1 hover:bg-amber-500"
 																				on:click={(e) => {
 																					e.preventDefault();
 																					handleRemoveFromLeague(friend);
@@ -454,8 +475,8 @@
 														</table>
 													</div>
 												</div>
-											{/if}
-											{#if tabSetInner === 1}
+											</Tabs.Panel>
+											<Tabs.Panel value="add-friends">
 												<div class="flex flex-col space-y-4">
 													<div class="text-secondary-500">Most played with friends</div>
 													<div class="flex w-full flex-wrap">
@@ -493,7 +514,7 @@
 																			{/if}
 																		</div>
 																		<div
-																			class="variant-filled-success rounded-r-full flex items-center justify-center hover:bg-green-300 hover:cursor-pointer"
+																			class="preset-filled-success-500 rounded-r-full flex items-center justify-center hover:bg-green-300 hover:cursor-pointer"
 																		>
 																			<button
 																				class="p-2"
@@ -530,12 +551,12 @@
 															required
 															placeholder="100001, 20002, 30003, 40004, etc..."
 															bind:value={friendsString}
-														/>
+														></textarea>
 													</label>
 
 													{#if form?.missing}
 														<!-- <p class="alert-message">Enter at least one valid Dota User ID.</p> -->
-														<aside class="alert variant-ghost-primary" transition:fade|local={{ duration: 200 }}>
+														<aside class="alert preset-tonal-primary border border-primary-500" transition:fade|local={{ duration: 200 }}>
 															<div class="alert-message">
 																<h4 class="h4 text-red-600">Enter at least one valid Dota User ID</h4>
 																<p>Total length of valid Dota User IDs was 0.</p>
@@ -543,20 +564,22 @@
 														</aside>
 													{/if}
 												</div>
-											{:else if tabSetInner === 2}
+											</Tabs.Panel>
+											<Tabs.Panel value="search-friends">
 												<div class="w-full italic text-center text-xl text-primary-500">Coming soon!</div>
-											{/if}
-										</svelte:fragment>
-									</TabGroup>
+											</Tabs.Panel>
+										{/snippet}
+									</Tabs>
 								</div>
 
 								<div class="w-full flex justify-center">
-									<button type="submit" class="btn variant-filled-success w-1/2 mx-auto">Update Members</button>
+									<button type="submit" class="btn preset-filled-success-500 w-1/2 mx-auto">Update Members</button>
 								</div>
 							</form>
 						</div>
 					</div>
-				{:else if tabSetOuter === 1}
+				</Tabs.Panel>
+				<Tabs.Panel value="seasons">
 					<div class="space-y-4 card flex flex-col max-w-screen relative">
 						{#if !data.session.user.roles || !data.session.user.roles.includes('dev')}
 							<div class="z-50 absolute w-full h-full bg-slate-900/90 flex items-center justify-center rounded-xl">
@@ -693,17 +716,18 @@
 								</div>
 
 								<div class="w-full flex justify-center">
-									<button type="submit" class="btn variant-filled-success w-1/2 mx-auto"
+									<button type="submit" class="btn preset-filled-success-500 w-1/2 mx-auto"
 										><i class="fi fi-rr-magic-wand mx-2"></i> Create Season</button
 									>
 								</div>
 							</form>
 						</div>
 					</div>
-				{:else if tabSetOuter === 2}
+				</Tabs.Panel>
+				<Tabs.Panel value="history">
 					(tab panel 3 contents)
-				{/if}
-			</svelte:fragment>
-		</TabGroup>
+				</Tabs.Panel>
+			{/snippet}
+		</Tabs>
 	</div>
 </section>

@@ -1,13 +1,30 @@
 <script lang="ts">
+    import { createBubbler } from 'svelte/legacy';
+
+    const bubble = createBubbler();
     import type { HeroCard as HeroCardType } from '$lib/types';
 
-    export let card: HeroCardType;
-    export let selected = false;
-    export let disabled = false;
-    export let showStats = false;
-    export let timesPlayed = 0;
-    export let totalScore = 0;
-    export let ringColor = 'red';
+    interface Props {
+        card: HeroCardType;
+        selected?: boolean;
+        disabled?: boolean;
+        showStats?: boolean;
+        timesPlayed?: number;
+        totalScore?: number;
+        ringColor?: string;
+        [key: string]: any
+    }
+
+    let {
+        card,
+        selected = false,
+        disabled = false,
+        showStats = false,
+        timesPlayed = 0,
+        totalScore = 0,
+        ringColor = 'red',
+        ...rest
+    }: Props = $props();
 
     const colors = {
         STAT_MULTIPLIER: '#4A90E2',
@@ -57,8 +74,8 @@
     class:hover:scale-110={!selected}
     class:hover:z-50={!selected}
     class:hover:-translate-y-4={!selected}
-    on:click
-    {...$$restProps}>
+    onclick={bubble('click')}
+    {...rest}>
     <div class="absolute -top-2 -right-2 w-8 h-8 bg-white rounded-full 
                 flex items-center justify-center shadow-lg z-10
                 ring-2 ring-amber-500">
@@ -67,7 +84,7 @@
         </span>
     </div>
     <div class="card-container w-full max-w-[140px]">
-        <div class="relative w-[140px] aspect-[3/4] rounded-lg overflow-hidden"
+        <div class="relative w-[140px] aspect-3/4 rounded-lg overflow-hidden"
              style="background-image: url('data:image/svg+xml;utf8,{encodeURIComponent(generateCardPattern(card))}')">
             <div class="absolute inset-0 flex items-center justify-center">
                 <div class="text-2xl font-bold" style="color: {colors[card.effectType]}">

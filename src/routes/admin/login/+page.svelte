@@ -1,9 +1,17 @@
 <script lang="ts">
+	import { run } from 'svelte/legacy';
+
 	import type { PageData } from "./$types";
 
-	export let data: PageData
+	interface Props {
+		data: PageData;
+	}
 
-	$: console.log("data: ", data)
+	let { data }: Props = $props();
+
+	run(() => {
+		console.log("data: ", data)
+	});
 </script>
 
 <div class="card container w-1/2 h-1/2 my-auto p-4">
@@ -17,7 +25,7 @@
 		<label for="password">Password</label>
 		<input class="input" type="password" id="password" name="password" required />
 
-		<button class="btn variant-filled w-1/2 my-4" type="submit">Login</button>
+		<button class="btn preset-filled w-1/2 my-4" type="submit">Login</button>
 	</form>
 	<p>Don't have an account? <a href="/admin/register" class="text-blue-600 dark:text-blue-500 hover:underline">Register</a></p>
 </div>
