@@ -14,9 +14,8 @@
 	import { clickOutside } from '$lib/helpers/clickOutside.ts';
 
 	//skeleton
-	import { ProgressBar } from '@skeletonlabs/skeleton';
-	import { popup } from '@skeletonlabs/skeleton';
-	import type { PopupSettings } from '@skeletonlabs/skeleton';
+	import { Progress } from '@skeletonlabs/skeleton-svelte';
+	import type { PopupSettings } from '@skeletonlabs/skeleton-svelte';
 
 	//components
 	import Inventory from './_components/Inventory.svelte';
@@ -327,7 +326,7 @@
 											{/if}
 										</div>
 									</div>
-									<div class="h-full flex justify-center [&>*]:pointer-events-none" use:popup={popupHover}>
+									<div class="h-full flex justify-center *:pointer-events-none" use:popup={popupHover}>
 										<div class="w-full my-auto">
 											<p class="text-xs italic text-tertiary-500 text-center">Random Variability %</p>
 											{#if data.quests?.quests.length > 0}
@@ -338,9 +337,9 @@
 												<p class="text-center font-slate-700">n/a</p>
 											{/if}
 										</div>
-										<div class="card p-4 variant-filled-secondary" data-popup="popupHover">
+										<div class="card p-4 preset-filled-secondary-500" data-popup="popupHover">
 											<p class="italic font-tertiary-500">Unique Randomed Heroes / Total Quests</p>
-											<div class="arrow variant-filled-secondary"></div>
+											<div class="arrow preset-filled-secondary-500"></div>
 										</div>
 									</div>
 								</div>
@@ -351,7 +350,7 @@
 									href={`/leagues/${data.league.leagueID}/seasons/${data.league.seasonID}`}
 									target="_blank"
 								>
-									<button class="btn variant-ghost-primary w-full h-min">Season Leaderboard</button>
+									<button class="btn preset-tonal-primary border border-primary-500 w-full h-min">Season Leaderboard</button>
 								</a>
 							</div>
 						</div>
@@ -385,7 +384,7 @@
 									</p>
 								</div>
 
-								<ProgressBar label="Progress Bar" value={50} max={100} />
+								<Progress label="Progress Bar" value={50} max={100} />
 							</div>
 						{/key}
 					</div>
@@ -406,7 +405,7 @@
 					class="fixed bottom-0 left-[256px] w-[calc(100vw-256px)] h-16 z-0"
 				>
 					<div
-						class="w-full h-full rounded-t-3xl bg-yellow-950 hover:bg-yellow-900 border border-yellow-800 bg-gradient-to-b to-transparent from-yellow-950"
+						class="w-full h-full rounded-t-3xl bg-yellow-950 hover:bg-yellow-900 border border-yellow-800 bg-linear-to-b to-transparent from-yellow-950"
 					>
 						<button onclick={collapse} class="w-full h-full flex items-center justify-center space-x-4">
 							<i class="fi fi-rs-backpack text-3xl"></i>
@@ -425,7 +424,7 @@
 					onclick_outside={onBlur}
 				>
 					<div
-						class="w-full h-16 rounded-t-3xl bg-yellow-950 hover:bg-yellow-900 border-yellow-800 border-t border-l border-r bg-gradient-to-b to-transparent from-yellow-950"
+						class="w-full h-16 rounded-t-3xl bg-yellow-950 hover:bg-yellow-900 border-yellow-800 border-t border-l border-r bg-linear-to-b to-transparent from-yellow-950"
 					>
 						<button onclick={collapse} class="w-full h-full flex items-center justify-center space-x-8"
 							><i class="fi fi-br-angle-small-down text-3xl"></i>Close Inventory</button

@@ -13,7 +13,7 @@
 		<div class="w-3/4 mx-auto flex flex-col justify-center items-center space-y-4">
 			<h1 class="h1 text-center text-tertiary-300 italic">Login to start your Turbotown!</h1>
 
-			<button class="w-1/2 btn variant-ghost-success">
+			<button class="w-1/2 btn preset-tonal-success border border-success-500">
 				<a class="" href="/api/auth/steam" data-sveltekit-preload-data="tap">
 					<div class="flex items-center justify-around space-x-4">
 						<span><img class="w-6 ml-1.5" alt="steamlogo" src={SteamLogo} /></span>

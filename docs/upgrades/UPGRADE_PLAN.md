@@ -1,9 +1,34 @@
 # Dependency Upgrade Plan: TurboDota v4
 
+## 🎯 Current Status Summary
+
+**Last Updated**: 2025-01-XX
+
+### ✅ Completed Phases
+- **Phase 1**: Pre-Upgrade Preparation ✅
+- **Phase 2**: Non-Breaking Updates ✅
+- **Phase 3**: Svelte 5 Migration ✅ (v5.43.3)
+- **Phase 4**: SvelteKit v2 Migration ✅ (v2.48.4)
+- **Phase 5**: Tailwind CSS v4 Migration ✅ **COMPLETE** (v4.1.16, config cleaned up, plugins updated)
+- **Phase 6**: Skeleton v2 → v3 Migration ✅ (v3.2.2 installed)
+
+### 🔄 Current Phase
+**Phase 5.3**: Testing and verification (build/dev server testing)
+
+### 📋 Next Steps
+1. ✅ Clean up `tailwind.config.ts` - **COMPLETE**
+2. ✅ Update `@tailwindcss/forms` and `@tailwindcss/typography` - **COMPLETE**
+3. Test build and dev server to verify styles work correctly
+4. Phase 7: Skeleton v3 → v4 Migration (if needed)
+5. Final testing and cleanup
+
+---
+
 ## Overview
 This document outlines the plan to upgrade all dependencies to their latest stable versions, with special focus on:
-- **Svelte 5** (currently on Svelte 4.2.7)
-- **Tailwind CSS v4** (currently on v3.3.5)
+- **Svelte 5** ✅ (upgraded to 5.43.3)
+- **Tailwind CSS v4** ⚠️ (upgraded to 4.1.16, config cleanup needed)
+- **Skeleton UI v3** ✅ (upgraded to 3.2.2)
 - Latest stable versions of all core libraries
 
 ---
@@ -11,17 +36,18 @@ This document outlines the plan to upgrade all dependencies to their latest stab
 ## Current State Analysis
 
 ### Core Framework Dependencies
-- `svelte`: ^4.2.7 → **5.x** (major upgrade)
-- `@sveltejs/kit`: ^2.0.6 → **2.x** (check latest)
-- `@sveltejs/vite-plugin-svelte`: ^3.0.0 → **latest**
-- `@sveltejs/adapter-vercel`: ^4.0.3 → **latest**
+- `svelte`: ~~^4.2.7~~ → **5.43.3** ✅ **COMPLETE**
+- `@sveltejs/kit`: ~~^2.0.6~~ → **2.48.4** ✅ **COMPLETE**
+- `@sveltejs/vite-plugin-svelte`: ~~^3.0.0~~ → **4.0.0** ✅ **COMPLETE**
+- `@sveltejs/adapter-vercel`: **4.0.3** ✅ (current)
 
 ### UI Framework
-- `@skeletonlabs/skeleton`: 2.5.1 → **⚠️ NEEDS VERIFICATION** (Svelte 5 compatibility unknown)
-- `@skeletonlabs/tw-plugin`: 0.2.4 → **⚠️ NEEDS VERIFICATION**
-- `tailwindcss`: 3.3.5 → **4.x** (major upgrade - breaking changes)
-- `@tailwindcss/forms`: 0.5.7 → **latest**
-- `@tailwindcss/typography`: 0.5.10 → **latest**
+- `@skeletonlabs/skeleton`: ~~2.5.1~~ → **3.2.2** ✅ **COMPLETE**
+- `@skeletonlabs/tw-plugin`: ~~0.2.4~~ → **REMOVED** ✅ (not needed for v3)
+- `tailwindcss`: ~~3.3.5~~ → **4.1.16** ✅ **COMPLETE**
+- `@tailwindcss/forms`: 0.5.7 → **latest** (needs v4 update)
+- `@tailwindcss/typography`: 0.5.10 → **latest** (needs v4 update)
+- `@tailwindcss/vite`: **4.1.16** ✅ **INSTALLED**
 
 ### Testing & Development
 - `vitest`: ^1.1.3 → **latest**
@@ -306,117 +332,62 @@ npx svelte-migrate@latest sveltekit-2
 
 ---
 
-### Phase 5: Tailwind CSS Update (Estimated: 1-2 days)
-**Goal**: Update Tailwind to Tailwind v4 (required for Skeleton v3)
+### Phase 5: Tailwind CSS v4 Migration (Estimated: 1-2 days)
+**Goal**: Complete Tailwind v4 migration and cleanup
 
-**NOTE**: According to the [Skeleton v3 migration guide](https://v3.skeleton.dev/docs/get-started/migrate-from-v2), Skeleton v3 requires Tailwind v4. **Manual steps are required BEFORE running Tailwind's automated migration.**
+**Status**: ✅ **COMPLETE** - Tailwind v4.1.16 installed, config cleaned up, plugins updated to latest versions
 
-#### 5.1 Manual Pre-Migration Steps (REQUIRED)
-**⚠️ These steps MUST be completed before running Tailwind v4's migration script:**
+#### 5.1 Completed Steps ✅
+- [x] Tailwind v4.1.16 installed ✅
+- [x] @tailwindcss/vite 4.1.16 installed and configured ✅
+- [x] Skeleton plugin removed from `tailwind.config.ts` ✅
+- [x] `app.css` exists and uses Tailwind v4 syntax (`@import 'tailwindcss'`) ✅
+- [x] PostCSS config removed (using Vite plugin) ✅
+- [x] Vite plugin configured in `vite.config.ts` ✅
 
-1. **Remove the Skeleton plugin from `tailwind.config.ts`**:
-   - Remove `import { skeleton } from '@skeletonlabs/tw-plugin';`
-   - Remove `skeleton({ ... })` from the `plugins` array
-   - Keep `forms` and `typography` plugins for now
+#### 5.2 Completed Config Cleanup ✅
+- [x] Simplified `tailwind.config.ts` to essential items only ✅
+  - Kept content paths for file scanning
+  - Kept plugin configuration (forms, typography)
+  - Kept theme extensions (container, backgroundImage, borderRadius, colors)
+  - Colors reference CSS variables (CSS-first approach)
+- [x] Added `@config` directive in `app.css` to reference config file ✅
+- [x] Updated `@tailwindcss/forms` to latest (0.5.11) ✅
+- [x] Updated `@tailwindcss/typography` to latest (0.5.19) ✅
+- [x] Removed `safelist` (not supported in v4 config, use `@source` in CSS if needed) ✅
+- [x] Fixed `darkMode` config (changed from array to string) ✅
 
-2. **Rename `app.pcss` to `app.css`**:
-   ```bash
-   # On Windows PowerShell:
-   Rename-Item src\app.pcss src\app.css
-   
-   # On Unix/Mac:
-   mv src/app.pcss src/app.css
-   ```
-   - Update import in `+layout.svelte` from `'../app.pcss'` to `'../app.css'`
-   - Note: This is temporary - Skeleton migration may handle this, but needed for Tailwind migration
+**Note**: The config file is kept for:
+- Content paths (required for file scanning)
+- Plugin configuration (forms, typography work with v4)
+- Theme extensions that reference CSS variables (hybrid approach)
 
-3. **Remove `purgecss` Vite plugin from `vite.config.ts`**:
-   - Remove `import { purgeCss } from 'vite-plugin-tailwind-purgecss';`
-   - Remove `purgeCss({ ... })` from the plugins array
-   - If you have safelist entries, note them down - you'll need them later
-
-#### 5.2 Run Tailwind v4 Migration
-- [ ] Review [Tailwind CSS v4 documentation](https://tailwindcss.com/docs/v4-alpha)
-- [ ] Understand CSS-first configuration approach
-- [ ] Review plugin migration guide
-- [ ] Run Tailwind's automated migration:
-```bash
-npm install -D tailwindcss@next # or @latest when stable
-# Follow Tailwind's migration guide for the migration script
-```
-
-#### 5.3 Post-Migration Tasks
-- [ ] Convert `tailwind.config.ts` to CSS `@config` syntax (or remove config file entirely)
-- [ ] Update theme configuration in CSS file using Tailwind v4's new approach
-- [ ] Re-add `@tailwindcss/forms` and `@tailwindcss/typography` plugins using v4 syntax
-- [ ] Handle safelist entries that were in purgecss plugin (using Tailwind v4 methods)
-
-#### 5.4 Migrate to Tailwind Vite Plugin
-According to Skeleton v3 migration guide, you should migrate from PostCSS to the Vite plugin:
-
-1. **Delete PostCSS config**:
-   ```bash
-   # Delete postcss.config.mjs (or postcss.config.cjs)
-   ```
-
-2. **Uninstall PostCSS packages**:
-   ```bash
-   npm uninstall postcss @tailwindcss/postcss
-   ```
-
-3. **Install Tailwind Vite plugin**:
-   ```bash
-   npm install @tailwindcss/vite
-   ```
-
-4. **Update `vite.config.ts`**:
-   - Import: `import tailwindcss from '@tailwindcss/vite'`
-   - Add `tailwindcss()` plugin ABOVE `sveltekit()` in plugins array:
-   ```typescript
-   plugins: [
-     tailwindcss(),
-     sveltekit()
-   ]
-   ```
-
-#### 5.5 Test Tailwind Styles
-- [ ] Build application
-- [ ] Verify all styles render correctly
+#### 5.3 Test Tailwind Styles
+- [ ] Build application (blocked by Prisma file lock on Windows - known issue)
+- [ ] Run dev server and verify styles render correctly
 - [ ] Check dark mode functionality
-- [ ] Test Skeleton UI theme integration (before Skeleton upgrade)
-- [ ] Verify safelist classes (like `d2mh-*` patterns) still work
+- [ ] Test Skeleton UI theme integration
+- [ ] Verify custom background images work (bg-questBoard, bg-questBoardPoster, etc.)
+- [ ] Test container utilities with custom breakpoints
 
 ---
 
 ### Phase 6: Skeleton v2 → v3 Migration (Estimated: 1-2 days)
 **Goal**: Migrate Skeleton UI to v3 (requires Svelte 5, SvelteKit v2, latest Tailwind)
 
-#### 6.1 Prepare for Migration
-```bash
-# Create temporary app.css if project uses app.pcss
-Copy-Item src\app.pcss src\app.css
-```
+**Status**: ✅ **COMPLETE** - Skeleton v3.2.2 is already installed
 
-#### 6.2 Run Skeleton v3 Migration
-```bash
-npx skeleton migrate skeleton-3
-```
-- [ ] Answer prompts for folders using Skeleton (likely: `src`)
-- [ ] Review all migration changes
-- [ ] Merge changes from `app.css` back to `app.pcss` if needed
-- [ ] Delete temporary `app.css` if created
+#### 6.1 Completed Steps ✅
+- [x] Skeleton v3.2.2 installed ✅
+- [x] `@skeletonlabs/skeleton-svelte` v1.5.3 installed ✅
+- [x] Skeleton v3 imports in `app.css` (`@import "@skeletonlabs/skeleton"`) ✅
+- [x] Theme configuration updated for v3 ✅
 
-#### 6.3 Manual Migration Tasks
-- [ ] Review Skeleton v3 breaking changes
-- [ ] Update component props if needed
-- [ ] Migrate utility classes if needed
-- [ ] Update theme configuration
-
-#### 6.4 Test After Skeleton v3 Migration
-- [ ] Run `npm run build` - ensure build succeeds
-- [ ] Run `npm run dev` - verify dev server works
-- [ ] Test all Skeleton UI components
-- [ ] Verify themes work correctly
+#### 6.2 Verification Tasks
+- [ ] Verify all Skeleton components work correctly
+- [ ] Test theme switching (crimson theme)
+- [ ] Check for any deprecated component usage
+- [ ] Verify no console errors related to Skeleton
 
 ---
 

@@ -14,9 +14,17 @@
 	//import { playersWeCareAbout } from '$lib/constants/playersWeCareAbout';
 
 	//skeleton
-	import { Table } from '@skeletonlabs/skeleton';
-	import { tableMapperValues } from '@skeletonlabs/skeleton';
-	import type { TableSource } from '@skeletonlabs/skeleton';
+	// TableSource type (not exported from Skeleton v3)
+	type TableSource = {
+		head: string[];
+		body: any[][];
+		meta?: any[][];
+	};
+	
+	// Helper function to map table data values
+	function tableMapperValues(data: any[], keys: string[]): any[][] {
+		return data.map(item => keys.map(key => item[key]));
+	}
 
 	//components
 	import History from '../../../../turbotown/quests/_components/History.svelte';

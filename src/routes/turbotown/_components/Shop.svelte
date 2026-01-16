@@ -1,14 +1,33 @@
 <script lang="ts">
 	import { run } from 'svelte/legacy';
-
-	import { popup } from '@skeletonlabs/skeleton';
-	import type { PopupSettings } from '@skeletonlabs/skeleton';
+	import type { PopupSettings, Progress } from '@skeletonlabs/skeleton-svelte';
 	import { enhance } from '$app/forms';
-	import { Table, tableMapperValues } from '@skeletonlabs/skeleton';
-	import type { TableSource } from '@skeletonlabs/skeleton';
-	import { Modal, getModalStore } from '@skeletonlabs/skeleton';
-	import type { ModalSettings, ModalComponent, ModalStore } from '@skeletonlabs/skeleton';
-	import { ProgressBar } from '@skeletonlabs/skeleton';
+	import { getContext } from 'svelte';
+	// TableSource type (not exported from Skeleton v3)
+	type TableSource = {
+		head: string[];
+		body: any[][];
+		meta?: any[][];
+	};
+	
+	// Helper function to map table data values
+	function tableMapperValues(data: any[], keys: string[]): any[][] {
+		return data.map(item => keys.map(key => item[key]));
+	}
+	// ModalSettings type (not exported from Skeleton v3)
+	type ModalSettings = {
+		type?: string;
+		title?: string;
+		body?: string;
+		component?: any;
+		meta?: any;
+		response?: (r: any) => void;
+	};
+	type ModalComponent = {
+		ref: any;
+	};
+	type ModalStore = any;
+	import { } from '@skeletonlabs/skeleton-svelte';
 
 	//images
 	import shopkeeper from '$lib/assets/shopkeeper.png';
@@ -36,20 +55,13 @@
 		else return 1
 	})
 
-	const modalStore = getModalStore();
-	const purchaseConfirmModal: ModalSettings = {
-		type: 'alert',
-		// Data
-		title: 'Purchase Confirmed',
-		body: 'Thank you for purchasing, come again!'
+	// ToastSettings type (not exported from Skeleton v3)
+	type ToastSettings = {
+		message: string;
+		background?: string;
+		timeout?: number;
 	};
-
-	const purchaseDeniedModal: ModalSettings = {
-		type: 'alert',
-		// Data
-		title: 'Purchase Failed',
-		body: 'Not enough gold for purchase!'
-	};
+	const toastStore = getContext<{ trigger: (settings: ToastSettings) => void }>('toaster');
 
 	class ShopItem {
 		id: number = -1;
@@ -116,10 +128,16 @@
 	const purchaseClickHandler = () => {
 		if (data.town.turbotown.metrics[0].value >= userShoppingCart.totalCost) {
 			//user has enough gold for purchase
-			modalStore.trigger(purchaseConfirmModal);
+			toastStore.trigger({
+				message: 'Purchase Confirmed - Thank you for purchasing, come again!',
+				background: 'preset-filled-success-500'
+			});
 			userShoppingCart = new ShoppingCart();
 		} else {
-			modalStore.trigger(purchaseDeniedModal);
+			toastStore.trigger({
+				message: 'Purchase Failed - Not enough gold for purchase!',
+				background: 'preset-filled-error-500'
+			});
 		}
 	};
 
@@ -190,7 +208,7 @@
 			/> -->
 
 					<div class="table-container">
-						<table class="table table-hover table-interactive table-compact">
+						<table class="table  table-interactive table-compact">
 							<thead>
 								<tr>
 									{#each tableSource.head as header, i}
@@ -266,7 +284,7 @@
 							<button
 								type="submit"
 								disabled={userShoppingCart.itemList.length === 0}
-								class="btn variant-filled-primary w-full max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:my-8 max-lg:mx-4 max-lg:max-w-[90%] md:max-w-[80%]"
+								class="btn preset-filled-primary-500 w-full max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:my-8 max-lg:mx-4 max-lg:max-w-[90%] md:max-w-[80%]"
 							>
 								Purchase
 							</button>

@@ -1,30 +1,34 @@
 <script lang="ts">
 	import { run } from 'svelte/legacy';
-
-	import { getToastStore, storeHighlightJs } from '@skeletonlabs/skeleton';
-	import type { ToastSettings, ToastStore } from '@skeletonlabs/skeleton';
-	const toastStore = getToastStore();
+	// ToastSettings type (not exported from Skeleton v3)
+	type ToastSettings = {
+		message: string;
+		background?: string;
+		timeout?: number;
+	};
+	import { getContext } from 'svelte';
+	const toastStore = getContext<{ trigger: (settings: ToastSettings) => void }>('toaster');
 
 	let { form } = $props();
 	run(() => {
 		if (form?.missing) {
 			const t: ToastSettings = {
 				message: `Enter at least one valid Dota User ID`,
-				background: 'variant-filled-error'
+				background: 'preset-filled-error-500'
 			};
 
 			toastStore.trigger(t);
 		} else if (form?.success) {
 			const t: ToastSettings = {
 				message: `League created!`,
-				background: 'variant-filled-success'
+				background: 'preset-filled-success-500'
 			};
 
 			toastStore.trigger(t);
 		} else if(form?.message){
 			const t: ToastSettings = {
 				message: `${form?.message}`,
-				background: 'variant-filled-warning'
+				background: 'preset-filled-warning-500'
 			};
 
 			toastStore.trigger(t);
@@ -48,7 +52,7 @@
 	<label for="password">Password</label>
 	<input class="input" type="password" id="password" name="password" required />
 
-	<button class="btn variant-filled w-1/2 my-4" type="submit">Register</button>
+	<button class="btn preset-filled w-1/2 my-4" type="submit">Register</button>
 </form>
 <p>Already have an account? <a href="/admin/login" class="text-blue-600 dark:text-blue-500 hover:underline">Login</a></p>
 </div>

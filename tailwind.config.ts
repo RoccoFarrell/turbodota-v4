@@ -1,29 +1,47 @@
-import { fontFamily } from 'tailwindcss/defaultTheme';
 import { join } from 'path';
 import type { Config } from 'tailwindcss';
 import forms from '@tailwindcss/forms';
 import typography from '@tailwindcss/typography';
-// Skeleton plugin removed - required before Tailwind v4 migration
-// import { skeleton } from '@skeletonlabs/tw-plugin';
 
-/** @type {import('tailwindcss').Config} */
-const config = {
-	darkMode: ['class'],
+/**
+ * Tailwind v4 Configuration
+ * 
+ * This config file is kept for:
+ * - Content paths (file scanning)
+ * - Plugin configuration (forms, typography)
+ * - Custom theme extensions (container, backgroundImage, borderRadius)
+ * 
+ * Colors use CSS variables defined in app.css
+ * This file is referenced via @config directive in app.css
+ */
+const config: Config = {
+	darkMode: 'class',
 	content: [
 		'./src/**/*.{html,js,svelte,ts}',
 		join(require.resolve('@skeletonlabs/skeleton'), '../**/*.{html,js,svelte,ts}')
 	],
-	safelist: ['dark'],
 	theme: {
-		container: {
-			center: true,
-			padding: '2rem',
-			screens: {
-				'2xl': '1500px',
-				'3xl': '1700px'
-			}
-		},
 		extend: {
+			container: {
+				center: true,
+				padding: '2rem',
+				screens: {
+					'2xl': '1500px',
+					'3xl': '1700px'
+				}
+			},
+			backgroundImage: {
+				'wantedPoster': "url('$lib/assets/wantedPoster.png')",
+				'blankPoster': "url('$lib/assets/blankPoster.png')",
+				'questBoard': "url('$lib/assets/questBoard.png')",
+				'questBoardPoster': "url('$lib/assets/questBoardPoster2.png')",
+				'leather': "url('$lib/assets/leather.png')"
+			},
+			borderRadius: {
+				lg: 'var(--radius)',
+				md: 'calc(var(--radius) - 2px)',
+				sm: 'calc(var(--radius) - 4px)'
+			},
 			colors: {
 				border: 'hsl(var(--border) / <alpha-value>)',
 				input: 'hsl(var(--input) / <alpha-value>)',
@@ -58,38 +76,12 @@ const config = {
 					DEFAULT: 'hsl(var(--card) / <alpha-value>)',
 					foreground: 'hsl(var(--card-foreground) / <alpha-value>)'
 				}
-			},
-			borderRadius: {
-				lg: 'var(--radius)',
-				md: 'calc(var(--radius) - 2px)',
-				sm: 'calc(var(--radius) - 4px)'
-			},
-			fontFamily: {
-				sans: [...fontFamily.sans]
-			},
-			backgroundImage: {
-				'wantedPoster': "url('$lib/assets/wantedPoster.png')",
-				'blankPoster': "url('$lib/assets/blankPoster.png')",
-				'questBoard': "url('$lib/assets/questBoard.png')",
-				'questBoardPoster': "url('$lib/assets/questBoardPoster2.png')",
-				'leather': "url('$lib/assets/leather.png')"
 			}
 		}
 	},
 	plugins: [
 		forms,
 		typography
-		// Skeleton plugin removed - required before Tailwind v4 migration
-		// skeleton({
-		// 	themes: {
-		// 		preset: [
-		// 			{
-		// 				name: 'crimson',
-		// 				enhancements: true
-		// 			}
-		// 		]
-		// 	}
-		// })
 	]
 };
 

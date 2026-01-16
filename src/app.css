@@ -1,6 +1,11 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+
+/* Reference legacy config file for content paths and plugins */
+@config '../tailwind.config.ts';
+
+@import "@skeletonlabs/skeleton";
+@import "@skeletonlabs/skeleton/optional/presets";
+@import "@skeletonlabs/skeleton/themes/crimson";
 
 @layer base {
 	:root {
@@ -70,10 +75,11 @@
 
 @layer base {
 	* {
-		@apply border-border;
+		border-color: hsl(var(--border));
 	}
 	body {
-		@apply bg-background text-foreground;
+		background-color: hsl(var(--background));
+		color: hsl(var(--foreground));
 	}
 }
 
@@ -95,10 +101,29 @@ body {
 	font-display: swap;
 }
 
-:root [data-theme='crimson'] {
-	--theme-font-family-base: 'K2D', sans-serif;
-	--theme-font-family-heading: 'K2D', sans-serif;
-	/* ... */
+/* Skeleton v3 font configuration - override theme font variables */
+[data-theme='crimson'] {
+	--base-font-family: 'K2D', sans-serif;
+	--heading-font-family: 'K2D', sans-serif;
+}
+
+/* Shadow color support for Tailwind v4 shadow-primary-500 utility */
+@layer utilities {
+	.shadow-primary-500 {
+		--tw-shadow-color: var(--color-primary-500);
+	}
+}
+
+/* Skeleton v2 list-nav utility class - manually added for compatibility */
+.list-nav a,
+.list-nav button {
+	display: flex;
+	align-items: center;
+	padding: 0.5rem 1rem;
+	outline: 2px solid transparent;
+	outline-offset: 2px;
+	cursor: pointer;
+	border-radius: var(--theme-rounded-base);
 }
 
 .vibrating {
@@ -207,12 +232,15 @@ body {
 
 }
 
+/* Skeleton utility classes - will be available again after Skeleton v3 migration */
 .prose :is(h1) {
-  @apply h1;
+  /* @apply h1; */
+  /* Skeleton h1 utility - temporarily disabled for Tailwind v4 migration */
 }
 
 .prose :is(h2) {
-  @apply h1;
+  /* @apply h1; */
+  /* Skeleton h1 utility - temporarily disabled for Tailwind v4 migration */
 }
 
 .stamp{

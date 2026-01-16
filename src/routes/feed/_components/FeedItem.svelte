@@ -10,7 +10,7 @@
 	//images
 
 	//components
-	import { Avatar } from '@skeletonlabs/skeleton';
+	import { Avatar } from '@skeletonlabs/skeleton-svelte';
 	interface Props {
 		action: any;
 		items: any;

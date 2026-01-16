@@ -23,7 +23,7 @@
 			<!-- <div class="w-full h-3/4 border border-red-500"></div> -->
 		</div>
 
-		<div class="h-full z-10 absolute top-0 bg-gradient-to-b from-surface-900/50 to-surface-900/100 w-full"></div>
+		<div class="h-full z-10 absolute top-0 bg-linear-to-b from-surface-900/50 to-surface-900/100 w-full"></div>
 		<img src={Landscape} class="z-0 w-full" alt="the battle rages in the valley below" />
 	</div>
 
@@ -151,11 +151,11 @@ Launch each season with unique functionality to change the TurboTown Strategy. {
 			stroke-width 1s,
 			stroke-dashoffset 1s,
 			stroke-dasharray 1s;
-		stroke: theme(colors.amber.500);
+		stroke: #f59e0b; /* amber-500 */
 	}
 
 	.shape:hover {
-		fill: theme(colors.amber.500/.1);
+		fill: rgba(245, 158, 11, 0.1); /* amber-500/10 */
 		stroke-width: 2px;
 		stroke-dashoffset: 0;
 		stroke-dasharray: 760;

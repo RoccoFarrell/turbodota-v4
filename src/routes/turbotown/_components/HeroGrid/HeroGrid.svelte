@@ -5,9 +5,27 @@
 	import type { Hero, Session, UserPrefs } from '@prisma/client';
 
 	//skeleton
-	import { getToastStore, storeHighlightJs } from '@skeletonlabs/skeleton';
-	import type { ToastSettings, ToastStore } from '@skeletonlabs/skeleton';
-	const toastStore = getToastStore();
+	// ToastSettings type (not exported from Skeleton v3)
+	type ToastSettings = {
+		message: string;
+		background?: string;
+		timeout?: number;
+	};
+	const toastStore = getContext<any>('toaster');
+	
+	// Helper function to create toasts with Skeleton v3 API
+	function showToast(message: string, background?: string) {
+		if (toastStore && typeof toastStore.create === 'function') {
+			toastStore.create({
+				title: message,
+				description: '',
+				type: background?.includes('error') ? 'error' : 
+				       background?.includes('success') ? 'success' : 
+				       background?.includes('warning') ? 'warning' : 'info',
+				meta: { background }
+			});
+		}
+	}
 
 	//constants
 	import { heroRoles } from '$lib/constants/heroRoles';
@@ -27,13 +45,15 @@
 		heroes?: Hero[];
 		//export let parent: any;
 		freeBans?: number;
+		onClose?: () => void;
 	}
 
 	let {
 		randomFound = false,
 		session = $bindable(null),
 		heroes = $bindable([]),
-		freeBans = 3
+		freeBans = 3,
+		onClose
 	}: Props = $props();
 	
 	if (heroes.length === 0) heroes = getContext('heroes');
@@ -138,24 +158,21 @@
 			let prefsResponse = await response.json();
 			//console.log(prefsResponse);
 			if (prefsResponse.status === 'success') {
-				const t: ToastSettings = {
-					message: `Bans saved!`,
-					background: 'variant-filled-success'
-				};
-				toastStore.trigger(t);
+				showToast(`Bans saved!`, 'preset-filled-success-500');
 			}
 		} else {
-			const t: ToastSettings = {
-				message: `Need either 0 or 3 bans selected to save!`,
-				background: 'variant-filled-warning'
-			};
-			toastStore.trigger(t);
+			showToast(`Need either 0 or 3 bans selected to save!`, 'preset-filled-warning-500');
 		}
 	};
 </script>
 
-<div class="card w-screen flex flex-col justify-center items-center p-4">
-	<h2 class="h2 text-primary-500 my-4">Ban Heroes</h2>
+<div class="card w-full max-w-4xl flex flex-col justify-center items-center p-4">
+	<div class="flex justify-between items-center w-full mb-4">
+		<h2 class="h2 text-primary-500">Ban Heroes</h2>
+		{#if onClose}
+			<button class="btn btn-sm preset-filled-surface-500" onclick={() => onClose?.()}>✕</button>
+		{/if}
+	</div>
 	<div class="md:grid md:grid-cols-2 max-md:flex max-md:flex-col">
 		<!-- Hero ban grid -->
 		<div class="w-full flex flex-col items-center sm:h-fit relative max-md:max-w-sm">
@@ -188,7 +205,7 @@
 			<!-- Desktop Hero Grid -->
 			<div
 				id="desktopHeroGrid"
-				class={`z-0 flex flex-wrap max-w-[95%] p-4 max-md:hidden xs:visible justify-center overflow-y-auto w-full max-h-[50rem] ${
+				class={`z-0 flex flex-wrap max-w-[95%] p-4 max-md:hidden xs:visible justify-center overflow-y-auto w-full max-h-200 ${
 					showHeroGrid ? 'visible border border-dashed border-red-500' : 'border-double border-t-4 border-amber-500'
 				}`}
 			>
@@ -235,7 +252,7 @@
 					{#if $banStore.bannedHeroes.length > 0}
 						<div>
 							{#each $banStore.bannedHeroes as bannedHero}
-								<span class="badge variant-filled-secondary">{bannedHero?.localized_name}</span>
+								<span class="badge preset-filled-secondary-500">{bannedHero?.localized_name}</span>
 							{/each}
 						</div>
 					{:else}

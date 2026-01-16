@@ -8,7 +8,15 @@
 
 	//types
 	import type { PageData } from './$types';
-	import type { ModalSettings } from '@skeletonlabs/skeleton';
+	// ModalSettings type (not exported from Skeleton v3)
+	type ModalSettings = {
+		type?: string;
+		title?: string;
+		body?: string;
+		component?: any;
+		meta?: any;
+		response?: (r: any) => void;
+	};
 
 	//day js
 	import dayjs from 'dayjs';
@@ -16,12 +24,29 @@
 	dayjs.extend(LocalizedFormat);
 
 	//skeleton
-	import { getModalStore } from '@skeletonlabs/skeleton';
-	const modalStore = getModalStore();
-
-	import { getToastStore, storeHighlightJs } from '@skeletonlabs/skeleton';
-	import type { ToastSettings, ToastStore } from '@skeletonlabs/skeleton';
-	const toastStore = getToastStore();
+	// ToastSettings type (not exported from Skeleton v3)
+	type ToastSettings = {
+		message: string;
+		background?: string;
+		timeout?: number;
+	};
+	import { getContext } from 'svelte';
+	const toastStore = getContext<any>('toaster');
+	const showHeroGridModal = getContext<() => void>('showHeroGridModal');
+	
+	// Helper function to create toasts with Skeleton v3 API
+	function showToast(message: string, background?: string) {
+		if (toastStore && typeof toastStore.create === 'function') {
+			toastStore.create({
+				title: message,
+				description: '',
+				type: background?.includes('error') ? 'error' : 
+				       background?.includes('success') ? 'success' : 
+				       background?.includes('warning') ? 'warning' : 'info',
+				meta: { background }
+			});
+		}
+	}
 
 	//images
 	import town_logo_light from '$lib/assets/turbotown_light.png';
@@ -29,7 +54,7 @@
 	import TournamentLight from '$lib/assets/tournament_light.png';
 
 	//components
-	import { Avatar, ProgressBar } from '@skeletonlabs/skeleton';
+	import { Avatar } from '@skeletonlabs/skeleton-svelte';
 	import SeasonLeaderboard from '../leagues/[slug]/seasons/[slug]/SeasonLeaderboard.svelte';
 	import TurbotownIntro from '$lib/components/TurbotownIntro.svelte';
 
@@ -80,12 +105,6 @@
 		}
 	}
 
-	//modal
-	const modal: ModalSettings = {
-		type: 'component',
-		component: 'heroGrid'
-	};
-	//modalStore.trigger(modal);
 
 	run(() => {
 		console.log(form)
@@ -94,17 +113,12 @@
 		if (form?.missing) {
 			const t: ToastSettings = {
 				message: `Enter at least one valid Dota User ID`,
-				background: 'variant-filled-error'
+				background: 'preset-filled-error-500'
 			};
 
-			toastStore.trigger(t);
+			showToast(`Enter at least one valid Dota User ID`, 'preset-filled-error-500');
 		} else if (form?.success) {
-			const t: ToastSettings = {
-				message: `League created!`,
-				background: 'variant-filled-success'
-			};
-
-			toastStore.trigger(t);
+			showToast(`League created!`, 'preset-filled-success-500');
 		}
 	});
 </script>

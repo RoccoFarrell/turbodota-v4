@@ -5,9 +5,14 @@
 	import { enhance } from '$app/forms';
 
 	//skeleton
-	import { getToastStore, storeHighlightJs } from '@skeletonlabs/skeleton';
-	import type { ToastSettings, ToastStore } from '@skeletonlabs/skeleton';
-	const toastStore = getToastStore();
+	// ToastSettings type (not exported from Skeleton v3)
+	type ToastSettings = {
+		message: string;
+		background?: string;
+		timeout?: number;
+	};
+	import { getContext } from 'svelte';
+	const toastStore = getContext<{ trigger: (settings: ToastSettings) => void }>('toaster');
 
 	//page data
 	import type { PageData } from './$types';
@@ -31,7 +36,7 @@
 			if (form.action === 'use item') {
 				const t: ToastSettings = {
 					message: `Used ${form?.result?.action}`,
-					background: 'variant-filled-success'
+					background: 'preset-filled-success-500'
 				};
 
 				toastStore.trigger(t);
@@ -40,7 +45,7 @@
 			if (form.action === 'buy item') {
 				const t: ToastSettings = {
 					message: `Bought ${form?.result?.count} items`,
-					background: 'variant-filled-success'
+					background: 'preset-filled-success-500'
 				};
 
 				toastStore.trigger(t);
@@ -49,7 +54,7 @@
 		else if (form && !form.enoughGold) {
 			const t: ToastSettings = {
 					message: `Not enough gold for items`,
-					background: 'variant-filled-error'
+					background: 'preset-filled-error-500'
 				};
 
 				toastStore.trigger(t);

@@ -32,7 +32,7 @@
 	{month}
 	class={cn(
 		buttonVariants({ variant: "ghost" }),
-		"h-8 w-8 p-0 font-normal data-[selected]:opacity-100",
+		"h-8 w-8 p-0 font-normal data-selected:opacity-100",
 		// Today
 		"[&[data-today]:not([data-selected])]:bg-accent [&[data-today]:not([data-selected])]:text-accent-foreground",
 		// Selection Start
@@ -40,11 +40,11 @@
 		// Selection End
 		"data-[selection-end]:bg-primary data-[selection-end]:text-primary-foreground data-[selection-end]:hover:bg-primary data-[selection-end]:hover:text-primary-foreground data-[selection-end]:focus:bg-primary data-[selection-end]:focus:text-primary-foreground",
 		// Outside months
-		"data-[outside-month]:text-muted-foreground data-[outside-month]:opacity-50 [&[data-outside-month][data-selected]]:bg-accent/50 [&[data-outside-month][data-selected]]:text-muted-foreground [&[data-outside-month][data-selected]]:opacity-30 data-[outside-month]:pointer-events-none",
+		"data-[outside-month]:text-muted-foreground data-outside-month:opacity-50 [&[data-outside-month][data-selected]]:bg-accent/50 [&[data-outside-month][data-selected]]:text-muted-foreground [&[data-outside-month][data-selected]]:opacity-30 data-outside-month:pointer-events-none",
 		// Disabled
-		"data-[disabled]:text-muted-foreground data-[disabled]:opacity-50",
+		"data-[disabled]:text-muted-foreground data-disabled:opacity-50",
 		// Unavailable
-		"data-[unavailable]:line-through data-[unavailable]:text-destructive-foreground",
+		"data-unavailable:line-through data-[unavailable]:text-destructive-foreground",
 		className
 	)}
 	{...rest}

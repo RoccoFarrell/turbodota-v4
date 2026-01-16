@@ -86,7 +86,7 @@
 <div class="flex flex-col w-full space-y-4 my-4">
 			<h2 class="h2">Add Randoms</h2>
 			<form method="POST" class="space-y-8" action="?/updateSeasonRandoms" use:enhance>
-				<button class="btn variant-filled-primary" type="submit">Update Randoms in Season</button>
+				<button class="btn preset-filled-primary-500" type="submit">Update Randoms in Season</button>
 				
 				<label class="label w-1/4">
 					<span>League ID</span>

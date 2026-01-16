@@ -1,5 +1,10 @@
 <script lang="ts">
-	import type { TableSource } from '@skeletonlabs/skeleton';
+	// TableSource type (not exported from Skeleton v3)
+	type TableSource = {
+		head: string[];
+		body: any[][];
+		meta?: any[][];
+	};
 
 	//helpers
 	import { calculateKdaClasses, calculateWinPercentageClasses } from '$lib/helpers/tableColors';

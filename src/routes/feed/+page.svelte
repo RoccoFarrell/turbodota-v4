@@ -9,7 +9,7 @@
 
 	//prisma
 	import type { Hero, Season, Turbotown, User, TurbotownQuest, TurbotownAction } from '@prisma/client';
-	import { Avatar, CodeBlock } from '@skeletonlabs/skeleton';
+	import { Avatar } from '@skeletonlabs/skeleton-svelte';
 
 	//components
 	import FeedItem from './_components/FeedItem.svelte';

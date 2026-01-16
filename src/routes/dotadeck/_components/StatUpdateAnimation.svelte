@@ -2,7 +2,6 @@
 
     import { fade } from 'svelte/transition';
     import { quintOut } from 'svelte/easing';
-    import { getModalStore } from '@skeletonlabs/skeleton';
     import Confetti from 'svelte-confetti';
     import { DOTADECK } from '$lib/constants/dotadeck';
     interface Props {
@@ -10,21 +9,31 @@
         isWin: boolean;
         oldStats: { gold: number; xp: number };
         newStats: { gold: number; xp: number };
+        onClose?: () => void;
     }
 
     let {
         heroId,
         isWin,
         oldStats,
-        newStats
+        newStats,
+        onClose
     }: Props = $props();
 
-    const modalStore = getModalStore();
-
-    // Close modal after animation
-    setTimeout(() => {
-        modalStore.close();
-    }, 5000);
+    // Modal close handled by parent via onOpenChange
+    // Auto-close after animation (parent will handle via prop)
+    let autoCloseTimeout: ReturnType<typeof setTimeout>;
+    
+    $effect(() => {
+        autoCloseTimeout = setTimeout(() => {
+            // Auto-close after animation
+            onClose?.();
+        }, 5000);
+        
+        return () => {
+            if (autoCloseTimeout) clearTimeout(autoCloseTimeout);
+        };
+    });
 </script>
 
 <div 

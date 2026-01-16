@@ -17,8 +17,7 @@
 	dayjs.extend(LocalizedFormat);
 
 	//skeleton
-	import { popup } from '@skeletonlabs/skeleton';
-	import type { PopupSettings } from '@skeletonlabs/skeleton';
+	import type { PopupSettings } from '@skeletonlabs/skeleton-svelte';
 	const popupClick: PopupSettings = {
 		event: 'click',
 		target: 'popupClick',
@@ -36,10 +35,13 @@
 	import { townStore } from '$lib/stores/townStore';
 	import { banStore } from '$lib/stores/banStore';
 	import { load } from '../../../blog/+page';
-
-	import { getToastStore, storeHighlightJs } from '@skeletonlabs/skeleton';
-	import type { ToastSettings, ToastStore } from '@skeletonlabs/skeleton';
-	const toastStore = getToastStore();
+	// ToastSettings type (not exported from Skeleton v3)
+	type ToastSettings = {
+		message: string;
+		background?: string;
+		timeout?: number;
+	};
+	const toastStore = getContext<{ trigger: (settings: ToastSettings) => void }>('toaster');
 
 	
 	interface Props {
@@ -138,7 +140,7 @@
 			} else {
 				const t: ToastSettings = {
 					message: `Trying to cheat ;) ? Refresh the page.`,
-					background: 'variant-filled-warning'
+					background: 'preset-filled-warning-500'
 				};
 
 				toastStore.trigger(t);
@@ -265,7 +267,7 @@
 			<button
 				onclick={generateRandomHero}
 				disabled={randomFound}
-				class="z-50 btn variant-filled-primary w-full my-4 max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:my-8 max-lg:mx-4 max-lg:max-w-[90%] md:max-w-[80%]"
+				class="z-50 btn preset-filled-primary-500 w-full my-4 max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:my-8 max-lg:mx-4 max-lg:max-w-[90%] md:max-w-[80%]"
 				in:fade={{ delay: 0, duration: 1000, easing: quintIn }}
 			>
 				<div class="flex items-center space-x-2">
@@ -281,7 +283,7 @@
 	<div class="w-fit mx-auto p-4 border border-dashed border-fuchsia-300 my-4 space-y-4 card">
 		{#await stratzLoading}
 			<div class="flex items-center justify-center h-full">
-				<button class="btn variant-filled-success w-full">
+				<button class="btn preset-filled-success-500 w-full">
 					<i class="fi fi-br-refresh h-fit animate-spin"></i>
 					<div class="placeholder animate-pulse"></div>
 				</button>
@@ -321,7 +323,7 @@
 					{#if data.session && data.session.user}
 						<div class="flex items-center justify-center">
 							<button
-								class="btn variant-filled-success w-full"
+								class="btn preset-filled-success-500 w-full"
 								disabled={stratzTimeout}
 								onclick={() => {
 									stratzLoading = checkForRandomComplete();

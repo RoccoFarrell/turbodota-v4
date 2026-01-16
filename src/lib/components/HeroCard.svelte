@@ -84,7 +84,7 @@
         </span>
     </div>
     <div class="card-container w-full max-w-[140px]">
-        <div class="relative w-[140px] aspect-[3/4] rounded-lg overflow-hidden"
+        <div class="relative w-[140px] aspect-3/4 rounded-lg overflow-hidden"
              style="background-image: url('data:image/svg+xml;utf8,{encodeURIComponent(generateCardPattern(card))}')">
             <div class="absolute inset-0 flex items-center justify-center">
                 <div class="text-2xl font-bold" style="color: {colors[card.effectType]}">

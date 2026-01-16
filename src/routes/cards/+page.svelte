@@ -118,13 +118,13 @@
 
     <div class="my-8">
         <div class="bg-[#35654d] rounded-lg p-12 shadow-[inset_0_0_20px_rgba(0,0,0,0.3)] border-[2.5rem] border-[#5c3a21]
-                    before:content-[''] before:absolute before:inset-[-2rem] before:border-4 before:border-[#8b5e34] before:rounded-lg before:pointer-events-none
-                    after:content-[''] after:absolute after:inset-[-2.5rem] after:border-2 after:border-[#3c2611] after:rounded-xl after:pointer-events-none">
+                    before:content-[''] before:absolute before:-inset-8 before:border-4 before:border-[#8b5e34] before:rounded-lg before:pointer-events-none
+                    after:content-[''] after:absolute after:-inset-10 after:border-2 after:border-[#3c2611] after:rounded-xl after:pointer-events-none">
             <div class="flex justify-center gap-6">
                 {#each cards as card}
                     <button 
                         type="button"
-                        class="w-40 flex-shrink-0 cursor-grab active:cursor-grabbing rounded-lg p-2 bg-transparent border-none
+                        class="w-40 shrink-0 cursor-grab active:cursor-grabbing rounded-lg p-2 bg-transparent border-none
                                transition-all duration-200 hover:-translate-y-2 hover:shadow-[0_0_20px_rgba(255,215,0,0.6)]
                                {selectedCards.has(card.id) ? 'shadow-[0_0_20px_rgba(0,0,255,0.5)] -translate-y-1 relative' : ''}"
                         class:selected={selectedCards.has(card.id)}

@@ -88,7 +88,7 @@
 	<ul class="w-full">
 		{#each routeList as route, i}
 			{#if route.sectionHeader}
-				<hr class="!border-t-4" />
+				<hr class="border-t-4!" />
 				{#if route.turbotown}
 					<img src={TurboTownDark} class="w-1/2 mx-auto" alt="turbotown header"/>
 				{/if}
@@ -97,7 +97,7 @@
 				class={'flex items-center justify-start rounded-full ' +
 					($page.url.pathname === route.path ? 'border border-secondary-500/60' : '')}
 			>
-				<a href={route.path} data-sveltekit-preload-data="tap" class="w-full">
+				<a href={route.path} data-sveltekit-preload-data="tap" class="w-full flex items-center space-x-2">
 					<i class={route.iconClassAndColor}></i>
 					<p class={$page.url.pathname === route.path ? 'font-bold' : ''}>{route.label}</p></a
 				>
@@ -110,14 +110,14 @@
 				class={'flex items-center justify-start rounded-full ' +
 					($page.url.pathname === '/herostats' ? 'border border-secondary-500/60' : '')}
 			>
-				<a href="/herostats" data-sveltekit-preload-data="tap" class="w-full"
+				<a href="/herostats" data-sveltekit-preload-data="tap" class="w-full flex items-center space-x-2"
 					><i class="fi fi-br-chart-histogram dark:text-amber-400 text-amber-600"></i>
 					<p class={$page.url.pathname === '/herostats' ? 'font-bold' : ''}>Hero Stats</p></a
 				>
 			</li>
 		{/if}
 		{#if dev}
-			<hr class="!border-t-4" />
+			<hr class="border-t-4!" />
 			<li class="text-center text-orange-500">Dev Routes</li>
 			<li class="h-32 lg:h-4"></li>
 			<li
@@ -139,7 +139,7 @@
 				>
 			</li>
 		{/if}
-		<hr class="!border-t-4" />
+		<hr class="border-t-4!" />
 		<!-- Steam Login-->
 		{#if !session || !session.user}
 			<li>

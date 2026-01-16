@@ -21,13 +21,38 @@
 	import winOrLoss from '$lib/helpers/winOrLoss';
 
 	//skeleton
-	import { getToastStore, storeHighlightJs } from '@skeletonlabs/skeleton';
-	import type { ToastSettings, ToastStore } from '@skeletonlabs/skeleton';
-	const toastStore = getToastStore();
-
-	import { getModalStore } from '@skeletonlabs/skeleton';
-	import type { ModalSettings } from '@skeletonlabs/skeleton';
-	const modalStore = getModalStore();
+	// ToastSettings type (not exported from Skeleton v3)
+	type ToastSettings = {
+		message: string;
+		background?: string;
+		timeout?: number;
+	};
+	// ModalSettings type (not exported from Skeleton v3)
+	type ModalSettings = {
+		type?: string;
+		title?: string;
+		body?: string;
+		component?: any;
+		meta?: any;
+		response?: (r: any) => void;
+	};
+	import { getContext } from 'svelte';
+	const toastStore = getContext<any>('toaster');
+	const showHeroGridModal = getContext<() => void>('showHeroGridModal');
+	
+	// Helper function to create toasts with Skeleton v3 API
+	function showToast(message: string, background?: string) {
+		if (toastStore && typeof toastStore.create === 'function') {
+			toastStore.create({
+				title: message,
+				description: '',
+				type: background?.includes('error') ? 'error' : 
+				       background?.includes('success') ? 'success' : 
+				       background?.includes('warning') ? 'warning' : 'info',
+				meta: { background }
+			});
+		}
+	}
 
 	//components
 	import History from '../turbotown/quests/_components/History.svelte';
@@ -318,7 +343,7 @@
 
 	const t: ToastSettings = {
 		message: `Max bans of ${$randomStore.maxBans} reached!`,
-		background: 'variant-filled-warning'
+		background: 'preset-filled-warning-500'
 	};
 
 	let banLimitErrorVisible: boolean = $state(false);
@@ -410,7 +435,7 @@
 							</div>
 						</div>
 						<div class="flex justify-center items-center">
-							<a href="/random/leaderboard"><button class="btn variant-ghost-primary">Leaderboard</button></a>
+							<a href="/random/leaderboard"><button class="btn preset-tonal-primary border border-primary-500">Leaderboard</button></a>
 						</div>
 					</div>
 				</div>
@@ -434,13 +459,13 @@
 		<!-- Action buttons for quest board -->
 		<div class="w-full m-4">
 			<button
-				class="btn variant-filled"
+				class="btn preset-filled"
 				onclick={() => {
-					modalStore.trigger(modal);
+					showHeroGridModal?.();
 				}}>Ban Heroes</button
 			>
 
-			<button class="btn variant-filled">Test</button>
+			<button class="btn preset-filled">Test</button>
 		</div>
 
 		<!-- Quest Board -->

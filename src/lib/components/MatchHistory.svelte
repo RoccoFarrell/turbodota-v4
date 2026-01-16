@@ -1,8 +1,11 @@
 <script lang="ts">
 
-	import { Table } from '@skeletonlabs/skeleton';
-	import { tableMapperValues } from '@skeletonlabs/skeleton';
-	import type { TableSource } from '@skeletonlabs/skeleton';
+			// TableSource type (not exported from Skeleton v3)
+			type TableSource = {
+				head: string[];
+				body: any[][];
+				meta?: any[][];
+			};
 
 	import { calculateKdaClasses } from '$lib/helpers/tableColors';
 	let { matchTableData } = $props();
@@ -31,7 +34,7 @@
 	<div class="h-full">
 		<div class="table-container">
 			<!-- Native Table Element -->
-			<table class="table table-hover table-compact">
+			<table class="table  table-compact">
 				<thead>
 					<tr>
 						{#each tableMatch.head as header}

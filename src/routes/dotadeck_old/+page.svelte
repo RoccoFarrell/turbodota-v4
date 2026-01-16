@@ -168,20 +168,20 @@
 
 <div class="game-container flex flex-col h-[calc(100vh-64px)] w-full bg-gray-950 relative">
     <!-- Game Nav -->
-    <div class="bg-gradient-to-r from-gray-900 to-gray-800 p-6 border-b border-gray-700/50 shadow-xl">
+    <div class="bg-linear-to-r from-gray-900 to-gray-800 p-6 border-b border-gray-700/50 shadow-xl">
         <div class="flex justify-between items-center">
             <div class="flex items-center gap-4">
-                <div class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 to-amber-500 
+                <div class="text-3xl font-bold bg-clip-text text-transparent bg-linear-to-r from-yellow-300 to-amber-500 
                             drop-shadow-[0_0_10px_rgba(251,191,36,0.3)]">
                     Score: {score}
                 </div>
-                <div class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-yellow-300 to-amber-500 
+                <div class="text-3xl font-bold bg-clip-text text-transparent bg-linear-to-r from-yellow-300 to-amber-500 
                             drop-shadow-[0_0_10px_rgba(251,191,36,0.3)]">
                     Gold: ${gold}
                 </div>
             </div>
             <div class="flex gap-6">
-                <button class="px-8 py-3 rounded-lg bg-gradient-to-br from-gray-700 to-gray-800 text-white 
+                <button class="px-8 py-3 rounded-lg bg-linear-to-br from-gray-700 to-gray-800 text-white 
                             transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_4px_20px_rgba(251,191,36,0.3)]
                             border border-gray-700/50"
                         onclick={toggleShop}>
@@ -201,12 +201,12 @@
     </div>
 
     <!-- Game Content -->
-    <div class="flex-1 p-12 overflow-auto bg-gradient-to-b from-gray-900 to-gray-950">
-        <div class="bg-gradient-to-br from-[#2d5a44] to-[#1e3c2d] p-10 rounded-2xl 
+    <div class="flex-1 p-12 overflow-auto bg-linear-to-b from-gray-900 to-gray-950">
+        <div class="bg-linear-to-br from-[#2d5a44] to-[#1e3c2d] p-10 rounded-2xl 
                     shadow-[inset_0_0_30px_rgba(0,0,0,0.4)] border border-emerald-800/30">
             <h2 class="text-2xl font-bold text-emerald-100/90 mb-6 drop-shadow-lg">Current Hand</h2>
             <div class="relative flex justify-center min-h-[300px] border-2 border-emerald-700/30 rounded-xl p-8
-                        bg-gradient-to-b from-emerald-900/20 to-transparent backdrop-blur-sm overflow-x-auto">
+                        bg-linear-to-b from-emerald-900/20 to-transparent backdrop-blur-sm overflow-x-auto">
                 <div class="flex gap-6 min-w-fit px-4">
                     {#each currentHand.filter(uc => uc?.card) as userCard}
                         <HeroCard 
@@ -223,7 +223,7 @@
             </div>
             <div class="mt-6 flex justify-end gap-6">
                 <button
-                    class="px-8 py-3 rounded-lg bg-gradient-to-br from-red-600 to-red-700 text-white
+                    class="px-8 py-3 rounded-lg bg-linear-to-br from-red-600 to-red-700 text-white
                            shadow-[0_0_20px_rgba(220,38,38,0.3)] border border-red-500/30
                            transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_4px_25px_rgba(220,38,38,0.4)]"
                     disabled={selectedHandCards.size === 0}
@@ -244,7 +244,7 @@
 
     {#if isShopOpen}
         <div class="absolute top-[10%] left-[10%] right-[10%] bottom-[10%] 
-                    bg-gradient-to-br from-gray-900 to-gray-950 rounded-xl 
+                    bg-linear-to-br from-gray-900 to-gray-950 rounded-xl 
                     shadow-[0_0_50px_rgba(0,0,0,0.5)] border border-gray-800/50
                     backdrop-blur-sm flex flex-col">
             <div class="flex justify-between items-center p-8 pb-4">

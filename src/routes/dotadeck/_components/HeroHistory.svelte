@@ -30,7 +30,7 @@
         </div>
         {#if selectedHeroId && history.length > 0}
             <div class="grid grid-cols-2 gap-4">
-                <div class="card p-2 variant-ghost-surface">
+                <div class="card p-2 preset-tonal-surface border border-surface-500">
                     <div class="text-center">
                         <div class="text-sm text-surface-300">Total Modifications</div>
                         <div class="flex justify-center gap-2 mt-1">
@@ -39,7 +39,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="card p-2 variant-ghost-surface">
+                <div class="card p-2 preset-tonal-surface border border-surface-500">
                     <div class="text-center">
                         <div class="text-sm text-surface-300">Quest Wins</div>
                         <div class="flex justify-center gap-2 mt-1">

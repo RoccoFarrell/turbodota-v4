@@ -12,20 +12,15 @@
 
 	//skeleton
 	import {
-		AppShell,
 		AppBar,
-		LightSwitch,
-		initializeStores,
-		Drawer,
-		getDrawerStore,
-		Modal,
-		Toast
-	} from '@skeletonlabs/skeleton';
-	import type { ModalComponent } from '@skeletonlabs/skeleton';
-	import { getModalStore } from '@skeletonlabs/skeleton';
-	import type { ModalSettings } from '@skeletonlabs/skeleton';
-	//must be called in root layout, one time
-	initializeStores();
+		Toaster,
+		createToaster,
+		Modal
+	} from '@skeletonlabs/skeleton-svelte';
+
+	// Create shared toaster instance for child components
+	const toaster = createToaster();
+	setContext('toaster', toaster);
 
 	//types
 	import type { PageData } from './$types';
@@ -63,8 +58,6 @@
 
 	// Floating UI for Popups
 	import { computePosition, autoUpdate, flip, shift, offset, arrow } from '@floating-ui/dom';
-	import { storePopup } from '@skeletonlabs/skeleton';
-	storePopup.set({ computePosition, autoUpdate, flip, shift, offset, arrow });
 
 	//analytics
 	import { inject } from '@vercel/analytics';
@@ -167,45 +160,41 @@
 	//console.log('[root layout] setting banStore', $banStore);
 	setContext('banStore', banStore);
 
-	//modal
-	const modalStore = getModalStore();
-
-	const modalRegistry: Record<string, ModalComponent> = {
-		// Set a unique modal ID, then pass the component reference
-		heroGrid: { ref: HeroGrid },
-		adminTools: { ref: AdminTools },
-		deckView: { ref: DeckView }
-		// ...
-	};
+	// Modal state (Skeleton v3)
+	let showHeroGridModal = $state(false);
+	let showAdminToolsModal = $state(false);
+	let showDeckViewModal = $state(false);
+	
+	// Set modal triggers in context for child components
+	setContext('showHeroGridModal', () => { showHeroGridModal = true; });
+	setContext('showAdminToolsModal', () => { showAdminToolsModal = true; });
+	setContext('showDeckViewModal', () => { showDeckViewModal = true; });
 
 	//drawer
-
-	const drawerStore = getDrawerStore();
-
+	// TODO: Skeleton v3 Drawer API is different - needs migration
+	// const drawerStore = getDrawerStore();
 	function drawerOpen(): void {
-		drawerStore.open({});
+		// drawerStore.open({});
+		console.warn('Drawer not yet implemented in Skeleton v3');
 	}
 
 	beforeNavigate(() => {
-		drawerStore.close();
+		// drawerStore.close();
 	});
 
 	// popup
-	import { popup } from '@skeletonlabs/skeleton';
-	import type { PopupSettings } from '@skeletonlabs/skeleton';
-	run(() => {
-		console.log(storePopup);
-	});
-	const adminPopupClick: PopupSettings = {
-		event: 'click',
-		target: 'adminTools',
-		placement: 'right'
-	};
+	// TODO: Skeleton v3 API changes - PopupSettings may not exist
+	// import type { PopupSettings } from '@skeletonlabs/skeleton-svelte';
+	// const adminPopupClick: PopupSettings = {
+	// 	event: 'click',
+	// 	target: 'adminTools',
+	// 	placement: 'right'
+	// };
 
-	const modal: ModalSettings = {
-		type: 'component',
-		component: 'adminTools'
-	};
+	// const modal: ModalSettings = {
+	// 	type: 'component',
+	// 	component: 'adminTools'
+	// };
 </script>
 
 <svelte:head>
@@ -243,151 +232,156 @@
 {#await isReady}
 	<div>Registering service worker {isReady}</div>
 {:then}
-	<Toast />
-	<Modal components={modalRegistry} />
-
-	<Drawer><Navigation {session} /></Drawer>
-	<AppShell slotSidebarLeft="bg-surface-500/10 w-0 lg:w-64">
-		{#snippet header()}
+	{#if browser}
+		<Toaster toaster={toaster} />
+	{/if}
+	
+	<!-- Basic layout structure (AppShell doesn't exist in Skeleton v3) -->
+	<div class="flex flex-col h-screen bg-surface-900">
+		<!-- Render Header -->
+		{@render header()}
+		
+		<div class="flex flex-auto w-full h-full overflow-hidden">
+			<!-- Sidebar -->
+			<aside class="bg-surface-500/10 hidden lg:block overflow-y-auto w-0 lg:w-64 shrink-0">
+				{@render sidebarLeft()}
+			</aside>
 			
-				<!-- App Bar -->
+			<!-- Main Content -->
+			<div class="flex w-full" id="pageRoute">
+				{#if ($navigating && !$navigating?.to?.url.pathname.includes('herostats')) || navigatingTest}
+					<div class="m-8 w-full"><Loading /></div>
+				{:else}
+					{@render children?.()}
+				{/if}
+			</div>
+		</div>
+	</div>
 
-				<AppBar shadow="shadow-md">
-					{#snippet lead()}
-							
-							<!-- Hamburger Button-->
-							<div class="flex items-center">
-								<button class="lg:hidden btn btn-sm mr-4" onclick={drawerOpen}>
-									<span>
-										<svg viewBox="0 0 100 80" class="fill-token w-4 h-4">
-											<rect width="100" height="20" />
-											<rect y="30" width="100" height="20" />
-											<rect y="60" width="100" height="20" />
-										</svg>
-									</span>
-								</button>
-								<img src={turbo_logo} class="w-14" alt="site logo" />
-								<strong class="text-sm lg:text-xl uppercase ml-4 text-center">Turbodota v4</strong>
-								{#if dev}
-									<div class="mx-8 flex flex-col">
-										<!-- <p>{`isReady: ${JSON.stringify(isReady)}`}</p> -->
-										<p>{`env: ${process.env.NODE_ENV}`}</p>
+	<!-- Snippet Definitions -->
+	{#snippet header()}
+		<!-- App Bar -->
+		<AppBar classes="shadow-lg shadow-surface-950" background="bg-surface-900">
+				{#snippet lead()}
+					<!-- Hamburger Button-->
+					<div class="flex items-center">
+						<button class="lg:hidden btn btn-sm mr-4" onclick={drawerOpen}>
+							<span>
+								<svg viewBox="0 0 100 80" class="fill-token w-4 h-4">
+									<rect width="100" height="20" />
+									<rect y="30" width="100" height="20" />
+									<rect y="60" width="100" height="20" />
+								</svg>
+							</span>
+						</button>
+						<img src={turbo_logo} class="w-14" alt="site logo" />
+						<strong class="text-sm lg:text-xl uppercase ml-4 text-center">Turbodota v4</strong>
+						{#if dev}
+							<div class="mx-8 flex flex-col">
+								<p>{`env: ${process.env.NODE_ENV}`}</p>
+							</div>
+							<!-- TODO: Modal needs to be migrated to Skeleton v3 API -->
+						{/if}
+					</div>
+				{/snippet}
+
+				{#snippet trail()}
+					<div class="flex justify-around space-x-8 items-center mr-8">
+						{#key data.session}
+							<div class={"h-full m-auto grid grid-cols-2"}>
+								{#if data.session && !$page.url.pathname.includes('herostats')}
+									<div class="flex justify-center items-center">
+										<a href="/feed" class="h-10 w-10">
+											<div class="relative inline-block mt-2">
+												<span class="vibrating badge-icon bg-primary-500 absolute -top-2 right-0 z-50"
+													><p class="inline text-amber-500 font-bold"></p></span
+												>
+												<button class="hover:bg-amber-500/50 rounded-full w-10 h-10">
+													<i class="fi fi-rr-bell text-xl h-10 w-10"></i>
+												</button>
+											</div>
+										</a>
 									</div>
-									<!-- <button 
-									class="btn variant-ghost-warning" 
-									use:popup={adminPopupClick}>
-									Admin tools
-								</button> -->
-									<button
-										class="btn variant-ghost-warning"
-										onclick={() => {
-									modalStore.trigger(modal);
-								}}>Admin Tools</button
-									>
-									<div class="z-50 card p-4 variant-filled-primary" data-popup="adminTools">
-										<p>Click Content</p>
-										<div class="arrow variant-filled-primary"></div>
+									<div class="m-auto h-full text-center">
+										Welcome <p class="font-bold text-red-400">{`${data.session.user.username}`}</p>
 									</div>
 								{/if}
 							</div>
-						
-							{/snippet}
-
-					{#snippet trail()}
-							
-							<div class="flex justify-around space-x-8 items-center mr-8">
-								{#key data.session}
-									<div class={"h-full m-auto grid grid-cols-2"}>
-										{#if data.session && !$page.url.pathname.includes('herostats')}
-												<div class="flex justify-center items-center">
-													<a href="/feed" class="h-10 w-10">
-														<div class="relative inline-block mt-2">
-															<span class="vibrating badge-icon bg-primary-500 absolute -top-2 -right-0 z-50"
-																><p class="inline text-amber-500 font-bold"></p></span
-															>
-															<button class="hover:bg-amber-500/50 rounded-full w-10 h-10">
-																<i class="fi fi-rr-bell text-xl h-10 w-10"></i>
-															</button>
-														</div>
-													</a>
-												</div>
-											<div class="m-auto h-full text-center">
-												Welcome <p class="font-bold text-red-400">{`${data.session.user.username}`}</p>
-											</div>
-										{/if}
-									</div>
-								{/key}
-								<!-- <form method="POST">
-								<div class="flex flex-col lg:flex-row lg:space-x-2">	
-									<a class="btn btn-sm variant-ghost-surface" href="/">Home</a>
-									{#if !data.session || !data.session.user}
-										<a class="btn btn-sm variant-ghost-surface" href="/register">Register</a>
-			
-										<a class="btn btn-sm variant-ghost-surface" href="/login" role="button"
-											>Login
-											<img class="w-8 ml-1.5" alt="steamlogo" src={steam_logo} />
-										</a>
-									{:else}
-										<button class="btn btn-sm variant-ghost-surface" formaction="/logout" type="submit"
-											>Logout</button
-										>
-									{/if}
-								</div>
-							</form> -->
-								<!-- <LightSwitch /> -->
-							</div>
-						
-							{/snippet}
-				</AppBar>
-			
-			{/snippet}
-
-		{#snippet sidebarLeft()}
-			
-				<!-- Insert the list: -->
-				<div class="border-r border-primary-500/30 h-full flex flex-col justify-between">
-					<Navigation {session} />
-					<div class="flex flex-col items-center w-full justify-center bottom-0 relative">
-						<div class="p-2 flex flex-col justify-center items-center">
-							<a href={`/blog/${constant_patchLink}`}>
-								<p class="text-xs italic text-tertiary-500">Patch: {constant_townVersion}</p>
-							</a>
-							<a href="https://twitter.com/nosaltstudios" target="_blank" class="hover:text-blue-900">
-								<p class="text-sm font-bold italic text-slate-300 dark:text-surface-400 hover:text-blue-900">
-									No Salt Studios 2024
-								</p>
-							</a>
-
-							<p class="text-sm italic text-slate-300 dark:text-surface-400 text-center">
-								Dota 2 is a trademark of Valve Corporation
-							</p>
-						</div>
-						{#if openDotaDown}
-							<div class="h-16 w-[90%] bg-warning-500 p-2 flex flex-col justify-center items-center rounded-xl m-2">
-								<p class="font-bold text-lg text-primary-500 vibrating">WARNING</p>
-								<p class="font-bold text-red-500">Open Dota Down</p>
-							</div>
-						{/if}
+						{/key}
 					</div>
+				{/snippet}
+		</AppBar>
+	{/snippet}
+
+	{#snippet sidebarLeft()}
+		<!-- Insert the list: -->
+		<div class="border-r border-primary-500/30 h-full flex flex-col justify-between w-full" id="sidebarLeft">
+			<Navigation {session} />
+			<div class="flex flex-col items-center w-full justify-center bottom-0 relative">
+				<div class="p-2 flex flex-col justify-center items-center">
+					<a href={`/blog/${constant_patchLink}`}>
+						<p class="text-xs italic text-tertiary-500">Patch: {constant_townVersion}</p>
+					</a>
+					<a href="https://twitter.com/nosaltstudios" target="_blank" class="hover:text-blue-900">
+						<p class="text-sm font-bold italic text-slate-300 dark:text-surface-400 hover:text-blue-900">
+							© No Salt Studios 2026
+						</p>
+					</a>
+
+					<p class="text-sm italic text-slate-300 dark:text-surface-400 text-center">
+						Dota 2 is a trademark of Valve Corporation
+					</p>
 				</div>
-
-				<!-- --- -->
-			
-			{/snippet}
-
-		<!-- <svelte:fragment slot="pageFooter">
-				<div class="flex w-full justify-center m-auto p-2">
-					<p class="text-md text-slate-300 dark:text-surface-400">No Salt Studios 2024 | Dota 2 is a trademark of Valve Corporation</p>
-				</div>
-		</svelte:fragment> -->
-
-		<!-- Page Route Content -->
-		<div class="flex w-full" id="pageRoute">
-			{#if ($navigating && !$navigating?.to?.url.pathname.includes('herostats')) || navigatingTest}
-				<div class="m-8 w-full"><Loading /></div>
-			{:else}
-				{@render children?.()}
-			{/if}
+				{#if openDotaDown}
+					<div class="h-16 w-[90%] bg-warning-500 p-2 flex flex-col justify-center items-center rounded-xl m-2">
+						<p class="font-bold text-lg text-primary-500 vibrating">WARNING</p>
+						<p class="font-bold text-red-500">Open Dota Down</p>
+					</div>
+				{/if}
+			</div>
 		</div>
-	</AppShell>
+	{/snippet}
 {/await}
+
+<!-- Skeleton v3 Modals -->
+{#if showHeroGridModal}
+	<Modal 
+		open={showHeroGridModal} 
+		onOpenChange={(details) => showHeroGridModal = details.open}
+		backdropBackground="bg-black/50"
+		contentBackground="bg-surface-900"
+	>
+		{#snippet content()}
+			<HeroGrid 
+				heroes={heroes}
+				onClose={() => showHeroGridModal = false}
+			/>
+		{/snippet}
+	</Modal>
+{/if}
+
+{#if showAdminToolsModal}
+	<Modal 
+		open={showAdminToolsModal} 
+		onOpenChange={(details) => showAdminToolsModal = details.open}
+		backdropBackground="bg-black/50"
+		contentBackground="bg-surface-900"
+	>
+		{#snippet content()}
+			<AdminTools onClose={() => showAdminToolsModal = false} />
+		{/snippet}
+	</Modal>
+{/if}
+
+{#if showDeckViewModal}
+	<Modal 
+		open={showDeckViewModal} 
+		onOpenChange={(details) => showDeckViewModal = details.open}
+		backdropBackground="bg-black/50"
+		contentBackground="bg-surface-900"
+	>
+		{#snippet content()}
+			<DeckView onClose={() => showDeckViewModal = false} />
+		{/snippet}
+	</Modal>
+{/if}

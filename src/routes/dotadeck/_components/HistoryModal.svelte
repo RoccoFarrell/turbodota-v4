@@ -1,6 +1,7 @@
 <script lang="ts">
-    import { getModalStore } from '@skeletonlabs/skeleton';
-    const modalStore = getModalStore();
+        interface CloseProps {
+            onClose?: () => void;
+        }
 
     interface HistoryEvent {
         card: {
@@ -26,7 +27,7 @@
         history: HistoryEvent[];
     }
 
-    let { history }: Props = $props();
+    let { history, onClose }: Props & CloseProps = $props();
 
     const actionLabels = {
         DRAWN: 'drew',
@@ -40,12 +41,12 @@
 <div class="card p-4 w-full max-w-3xl">
     <header class="flex justify-between items-center mb-4">
         <h2 class="h2 text-primary-500">League History</h2>
-        <button class="btn btn-sm variant-filled-surface" onclick={() => modalStore.close()}>✕</button>
+        <button class="btn btn-sm preset-filled-surface-500" onclick={() => onClose?.()}>✕</button>
     </header>
 
     <div class="space-y-2 max-h-[60vh] overflow-y-auto">
         {#each history as event}
-            <div class="card p-2 variant-ghost-surface">
+            <div class="card p-2 preset-tonal-surface border border-surface-500">
                 <div class="flex items-center gap-2">
                     <i class={`d2mh hero-${event.card.hero.id}`} title={event.card.hero.localized_name}></i>
                     <span class="text-surface-200">

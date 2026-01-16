@@ -25,7 +25,7 @@
 		<label for="password">Password</label>
 		<input class="input" type="password" id="password" name="password" required />
 
-		<button class="btn variant-filled w-1/2 my-4" type="submit">Login</button>
+		<button class="btn preset-filled w-1/2 my-4" type="submit">Login</button>
 	</form>
 	<p>Don't have an account? <a href="/admin/register" class="text-blue-600 dark:text-blue-500 hover:underline">Register</a></p>
 </div>

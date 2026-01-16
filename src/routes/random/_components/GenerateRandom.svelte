@@ -194,7 +194,7 @@
 
 		{#await stratzLoading}
 			<div class="flex items-center justify-center h-full">
-				<button class="btn variant-filled-success w-full">
+				<button class="btn preset-filled-success-500 w-full">
 					<i class="fi fi-br-refresh h-fit animate-spin"></i>
 					<div class="placeholder animate-pulse"></div>
 				</button>
@@ -237,7 +237,7 @@
 		{#if data.session && data.session.user}
 			<div class="flex items-center justify-center">
 				<button
-					class="btn variant-filled-success w-full"
+					class="btn preset-filled-success-500 w-full"
 					disabled={stratzTimeout}
 					onclick={() => {
 						stratzLoading = checkForRandomComplete();
@@ -263,7 +263,7 @@
 			<button
 				onclick={generateRandomHero}
 				disabled={randomFound}
-				class="z-50 btn variant-filled-primary w-full my-4 max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:my-8 max-lg:mx-4 max-lg:max-w-[90%] md:max-w-[80%]"
+				class="z-50 btn preset-filled-primary-500 w-full my-4 max-lg:fixed max-lg:bottom-0 max-lg:left-0 max-lg:my-8 max-lg:mx-4 max-lg:max-w-[90%] md:max-w-[80%]"
 				>Random me</button
 			>
 		</div>

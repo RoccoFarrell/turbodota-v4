@@ -29,13 +29,38 @@
 	import winOrLoss from '$lib/helpers/winOrLoss';
 
 	//skeleton
-	import { getToastStore, storeHighlightJs } from '@skeletonlabs/skeleton';
-	import type { ToastSettings, ToastStore } from '@skeletonlabs/skeleton';
-	const toastStore = getToastStore();
-
-	import { getModalStore } from '@skeletonlabs/skeleton';
-	import type { ModalSettings } from '@skeletonlabs/skeleton';
-	const modalStore = getModalStore();
+	// ToastSettings type (not exported from Skeleton v3)
+	type ToastSettings = {
+		message: string;
+		background?: string;
+		timeout?: number;
+	};
+	// ModalSettings type (not exported from Skeleton v3)
+	type ModalSettings = {
+		type?: string;
+		title?: string;
+		body?: string;
+		component?: any;
+		meta?: any;
+		response?: (r: any) => void;
+	};
+	import { getContext } from 'svelte';
+	const toastStore = getContext<any>('toaster');
+	const showHeroGridModal = getContext<() => void>('showHeroGridModal');
+	
+	// Helper function to create toasts with Skeleton v3 API
+	function showToast(message: string, background?: string) {
+		if (toastStore && typeof toastStore.create === 'function') {
+			toastStore.create({
+				title: message,
+				description: '',
+				type: background?.includes('error') ? 'error' : 
+				       background?.includes('success') ? 'success' : 
+				       background?.includes('warning') ? 'warning' : 'info',
+				meta: { background }
+			});
+		}
+	}
 
 	//components
 	import History from './_components/History.svelte';
@@ -226,7 +251,7 @@
 
 	const t: ToastSettings = {
 		message: `Max bans of ${$quest1Store.maxBans} reached!`,
-		background: 'variant-filled-warning'
+		background: 'preset-filled-warning-500'
 	};
 
 	let banLimitErrorVisible: boolean = $state(false);
@@ -244,7 +269,7 @@
 			if (form.action === 'use item') {
 				const t: ToastSettings = {
 					message: `Used ${form?.result?.action}`,
-					background: 'variant-filled-success'
+					background: 'preset-filled-success-500'
 				};
 
 				toastStore.trigger(t);
@@ -253,7 +278,7 @@
 			if (form.action === 'buy item') {
 				const t: ToastSettings = {
 					message: `Bought ${form?.result?.count} items`,
-					background: 'variant-filled-success'
+					background: 'preset-filled-success-500'
 				};
 
 				toastStore.trigger(t);
@@ -392,7 +417,7 @@
 						<button
 							class="btn p-1 w-1/3 bg-primary-500/70"
 							onclick={() => {
-								modalStore.trigger(modal);
+								showHeroGridModal?.();
 							}}>Ban Heroes</button
 						>
 					</div>
