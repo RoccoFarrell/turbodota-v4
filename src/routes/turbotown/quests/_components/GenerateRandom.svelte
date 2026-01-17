@@ -17,8 +17,8 @@
 	dayjs.extend(LocalizedFormat);
 
 	//skeleton
-	import type { PopupSettings } from '@skeletonlabs/skeleton-svelte';
-	const popupClick: PopupSettings = {
+	// PopupSettings removed in Skeleton v4 - using plain object
+	const popupClick = {
 		event: 'click',
 		target: 'popupClick',
 		placement: 'bottom'

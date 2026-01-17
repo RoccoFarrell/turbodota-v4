@@ -24,7 +24,7 @@
 		timeout?: number;
 	};
 	// Import Modal component (Skeleton v3)
-	import { Modal } from '@skeletonlabs/skeleton-svelte';
+	import { Dialog } from '@skeletonlabs/skeleton-svelte';
 	//prisma
 	import type { Turbotown, TurbotownItem, TurbotownStatus } from '@prisma/client';
 
@@ -35,16 +35,12 @@
 	let quest3Store = $townStore.quests.quest3;
 	const toastStore = getContext<any>('toaster');
 	
-	// Helper function to create toasts with Skeleton v3 API
+	// Helper function to create toasts with Skeleton v4 API
 	function showToast(message: string, background?: string) {
-		if (toastStore && typeof toastStore.create === 'function') {
-			toastStore.create({
-				title: message,
-				description: '',
-				type: background?.includes('error') ? 'error' : 
-				       background?.includes('success') ? 'success' : 
-				       background?.includes('warning') ? 'warning' : 'info',
-				meta: { background }
+		if (toastStore && typeof toastStore.trigger === 'function') {
+			toastStore.trigger({
+				message: message,
+				background: background
 			});
 		} else {
 			console.error('ToastStore not available from context');
@@ -187,11 +183,9 @@
 
 <!-- Skeleton v3 Modals -->
 {#if showObserverModal}
-	<Modal 
+	<Dialog 
 		open={showObserverModal} 
 		onOpenChange={(details) => showObserverModal = details.open}
-		backdropBackground="bg-black/50"
-		contentBackground="bg-surface-900"
 	>
 		{#snippet content()}
 			<Observer
@@ -202,15 +196,13 @@
 				onClose={() => showObserverModal = false}
 			/>
 		{/snippet}
-	</Modal>
+	</Dialog>
 {/if}
 
 {#if showLinkensModal}
-	<Modal 
+	<Dialog 
 		open={showLinkensModal} 
 		onOpenChange={(details) => showLinkensModal = details.open}
-		backdropBackground="bg-black/50"
-		contentBackground="bg-surface-900"
 	>
 		{#snippet content()}
 			<Linkens
@@ -221,15 +213,13 @@
 				onClose={() => showLinkensModal = false}
 			/>
 		{/snippet}
-	</Modal>
+	</Dialog>
 {/if}
 
 {#if showQuellingBladeModal}
-	<Modal 
+	<Dialog 
 		open={showQuellingBladeModal} 
 		onOpenChange={(details) => showQuellingBladeModal = details.open}
-		backdropBackground="bg-black/50"
-		contentBackground="bg-surface-900"
 	>
 		{#snippet content()}
 			<QuellingBlade
@@ -240,5 +230,5 @@
 				onClose={() => showQuellingBladeModal = false}
 			/>
 		{/snippet}
-	</Modal>
+	</Dialog>
 {/if}

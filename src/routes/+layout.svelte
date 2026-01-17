@@ -13,9 +13,9 @@
 	//skeleton
 	import {
 		AppBar,
-		Toaster,
+		Toast,
 		createToaster,
-		Modal
+		Dialog
 	} from '@skeletonlabs/skeleton-svelte';
 
 	// Create shared toaster instance for child components
@@ -233,7 +233,7 @@
 	<div>Registering service worker {isReady}</div>
 {:then}
 	{#if browser}
-		<Toaster toaster={toaster} />
+		<Toast.Group toaster={toaster} />
 	{/if}
 	
 	<!-- Basic layout structure (AppShell doesn't exist in Skeleton v3) -->
@@ -248,7 +248,7 @@
 			</aside>
 			
 			<!-- Main Content -->
-			<div class="flex w-full" id="pageRoute">
+			<div class="flex w-full overflow-y-auto" id="pageRoute">
 				{#if ($navigating && !$navigating?.to?.url.pathname.includes('herostats')) || navigatingTest}
 					<div class="m-8 w-full"><Loading /></div>
 				{:else}
@@ -261,11 +261,12 @@
 	<!-- Snippet Definitions -->
 	{#snippet header()}
 		<!-- App Bar -->
-		<AppBar classes="shadow-lg shadow-surface-950" background="bg-surface-900">
-				{#snippet lead()}
+		<AppBar class="shadow-lg shadow-surface-950 bg-surface-900 border-b-1 border-surface-500">
+			<AppBar.Toolbar class="grid grid-cols-[auto_1fr_auto] items-center p-2">
+				<AppBar.Lead>
 					<!-- Hamburger Button-->
 					<div class="flex items-center">
-						<button class="lg:hidden btn btn-sm mr-4" onclick={drawerOpen}>
+						<button class="lg:hidden btn btn-sm mr-4" onclick={drawerOpen} aria-label="Open menu">
 							<span>
 								<svg viewBox="0 0 100 80" class="fill-token w-4 h-4">
 									<rect width="100" height="20" />
@@ -276,16 +277,20 @@
 						</button>
 						<img src={turbo_logo} class="w-14" alt="site logo" />
 						<strong class="text-sm lg:text-xl uppercase ml-4 text-center">Turbodota v4</strong>
-						{#if dev}
+						
+					</div>
+				</AppBar.Lead>
+
+				<AppBar.Headline>
+					{#if dev}
 							<div class="mx-8 flex flex-col">
 								<p>{`env: ${process.env.NODE_ENV}`}</p>
 							</div>
-							<!-- TODO: Modal needs to be migrated to Skeleton v3 API -->
 						{/if}
-					</div>
-				{/snippet}
+					<!-- Empty headline - takes up middle space -->
+				</AppBar.Headline>
 
-				{#snippet trail()}
+				<AppBar.Trail>
 					<div class="flex justify-around space-x-8 items-center mr-8">
 						{#key data.session}
 							<div class={"h-full m-auto grid grid-cols-2"}>
@@ -296,7 +301,7 @@
 												<span class="vibrating badge-icon bg-primary-500 absolute -top-2 right-0 z-50"
 													><p class="inline text-amber-500 font-bold"></p></span
 												>
-												<button class="hover:bg-amber-500/50 rounded-full w-10 h-10">
+												<button class="hover:bg-amber-500/50 rounded-full w-10 h-10" aria-label="Notifications">
 													<i class="fi fi-rr-bell text-xl h-10 w-10"></i>
 												</button>
 											</div>
@@ -309,13 +314,14 @@
 							</div>
 						{/key}
 					</div>
-				{/snippet}
+				</AppBar.Trail>
+			</AppBar.Toolbar>
 		</AppBar>
 	{/snippet}
 
 	{#snippet sidebarLeft()}
 		<!-- Insert the list: -->
-		<div class="border-r border-primary-500/30 h-full flex flex-col justify-between w-full" id="sidebarLeft">
+		<div class="border-r-1 border-surface-500 h-full flex flex-col justify-between w-full" id="sidebarLeft">
 			<Navigation {session} />
 			<div class="flex flex-col items-center w-full justify-center bottom-0 relative">
 				<div class="p-2 flex flex-col justify-center items-center">
@@ -345,43 +351,31 @@
 
 <!-- Skeleton v3 Modals -->
 {#if showHeroGridModal}
-	<Modal 
+	<Dialog 
 		open={showHeroGridModal} 
 		onOpenChange={(details) => showHeroGridModal = details.open}
-		backdropBackground="bg-black/50"
-		contentBackground="bg-surface-900"
 	>
-		{#snippet content()}
-			<HeroGrid 
-				heroes={heroes}
-				onClose={() => showHeroGridModal = false}
-			/>
-		{/snippet}
-	</Modal>
+		<HeroGrid 
+			heroes={heroes}
+			onClose={() => showHeroGridModal = false}
+		/>
+	</Dialog>
 {/if}
 
 {#if showAdminToolsModal}
-	<Modal 
+	<Dialog 
 		open={showAdminToolsModal} 
 		onOpenChange={(details) => showAdminToolsModal = details.open}
-		backdropBackground="bg-black/50"
-		contentBackground="bg-surface-900"
 	>
-		{#snippet content()}
-			<AdminTools onClose={() => showAdminToolsModal = false} />
-		{/snippet}
-	</Modal>
+		<AdminTools onClose={() => showAdminToolsModal = false} />
+	</Dialog>
 {/if}
 
 {#if showDeckViewModal}
-	<Modal 
+	<Dialog 
 		open={showDeckViewModal} 
 		onOpenChange={(details) => showDeckViewModal = details.open}
-		backdropBackground="bg-black/50"
-		contentBackground="bg-surface-900"
 	>
-		{#snippet content()}
-			<DeckView onClose={() => showDeckViewModal = false} />
-		{/snippet}
-	</Modal>
+		<DeckView onClose={() => showDeckViewModal = false} />
+	</Dialog>
 {/if}

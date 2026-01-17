@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { run } from 'svelte/legacy';
-	import type { PopupSettings, Progress } from '@skeletonlabs/skeleton-svelte';
+	// PopupSettings removed in Skeleton v4
 	import { enhance } from '$app/forms';
 	import { getContext } from 'svelte';
 	// TableSource type (not exported from Skeleton v3)

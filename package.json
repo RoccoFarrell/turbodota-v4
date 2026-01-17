@@ -22,8 +22,8 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.56.1",
-    "@skeletonlabs/skeleton": "^3.2.2",
-    "@skeletonlabs/skeleton-svelte": "^1.5.3",
+    "@skeletonlabs/skeleton": "^4.0.0",
+    "@skeletonlabs/skeleton-svelte": "^4.0.0",
     "@sveltejs/adapter-vercel": "^4.0.3",
     "@sveltejs/kit": "^2.5.27",
     "@sveltejs/vite-plugin-svelte": "^4.0.0",
@@ -77,7 +77,7 @@
     "chartjs-adapter-dayjs-4": "^1.0.4",
     "clsx": "^2.1.1",
     "dayjs": "^1.11.19",
-    "dota2-css-hero-sprites": "^2.6.1",
+    "dota2-css-hero-sprites": "^2.6.2",
     "lucia": "^2.7.7",
     "node-steam-openid": "^1.2.1",
     "radix-icons-svelte": "^1.2.1"

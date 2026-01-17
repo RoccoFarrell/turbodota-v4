@@ -23,9 +23,9 @@
 	import AutoCheckTooltip from './_components/AutoCheckTooltip.svelte';
 	import MatchHistory from '$lib/components/MatchHistory.svelte';
 
-	// Get toaster from context (Skeleton v3)
+	// Get toaster from context (Skeleton v4)
 	import { getContext } from 'svelte';
-	// ToastSettings type (not exported from Skeleton v3)
+	// ToastSettings type for Skeleton v4
 	type ToastSettings = {
 		message: string;
 		background?: string;
@@ -33,16 +33,12 @@
 	};
 	const toastStore = getContext<any>('toaster');
 	
-	// Helper function to create toasts with Skeleton v3 API
+	// Helper function to create toasts with Skeleton v4 API
 	function showToast(message: string, background?: string) {
-		if (toastStore && typeof toastStore.create === 'function') {
-			toastStore.create({
-				title: message,
-				description: '',
-				type: background?.includes('error') ? 'error' : 
-				       background?.includes('success') ? 'success' : 
-				       background?.includes('warning') ? 'warning' : 'info',
-				meta: { background }
+		if (toastStore && typeof toastStore.trigger === 'function') {
+			toastStore.trigger({
+				message: message,
+				background: background
 			});
 		} else {
 			console.error('ToastStore not available from context');
@@ -50,7 +46,7 @@
 	}
 	
 	// Import Modal component (Skeleton v3)
-	import { Modal } from '@skeletonlabs/skeleton-svelte';
+	import { Dialog } from '@skeletonlabs/skeleton-svelte';
 	
 	// Modal state (Skeleton v3)
 	let showRulesModal = $state(false);
@@ -710,27 +706,23 @@
 </div>
 
 {#if showStatBoost && statBoostData}
-	<Modal 
+	<Dialog 
 		open={showStatBoost} 
 		onOpenChange={(details) => {
 			showStatBoost = details.open;
 			if (!details.open) statBoostData = null;
 		}}
-		backdropBackground="bg-black/50"
-		contentBackground="bg-transparent"
 	>
-		{#snippet content()}
-			{#if statBoostData}
-				<StatBoostModal 
-					data={statBoostData} 
-					onClose={() => {
-						showStatBoost = false;
-						statBoostData = null;
-					}}
-				/>
-			{/if}
-		{/snippet}
-	</Modal>
+		{#if statBoostData}
+			<StatBoostModal 
+				data={statBoostData} 
+				onClose={() => {
+					showStatBoost = false;
+					statBoostData = null;
+				}}
+			/>
+		{/if}
+	</Dialog>
 {/if}
 
 {#if showAutoCheckTooltip}
@@ -739,78 +731,58 @@
 
 <!-- Skeleton v3 Modals -->
 {#if showRulesModal}
-	<Modal 
+	<Dialog 
 		open={showRulesModal} 
 		onOpenChange={(details) => showRulesModal = details.open}
-		backdropBackground="bg-black/50"
-		contentBackground="bg-surface-900"
 	>
-		{#snippet content()}
-			<RulesModal />
-		{/snippet}
-	</Modal>
+		<RulesModal />
+	</Dialog>
 {/if}
 
 {#if showLeaderboardModal}
-	<Modal 
+	<Dialog 
 		open={showLeaderboardModal} 
 		onOpenChange={(details) => showLeaderboardModal = details.open}
-		backdropBackground="bg-black/50"
-		contentBackground="bg-surface-900"
 	>
-		{#snippet content()}
-			<LeaderboardModal 
-				players={leaderboardPlayers} 
-				isLoading={isLoadingLeaderboard}
-				onClose={() => showLeaderboardModal = false} 
-			/>
-		{/snippet}
-	</Modal>
+		<LeaderboardModal 
+			players={leaderboardPlayers} 
+			isLoading={isLoadingLeaderboard}
+			onClose={() => showLeaderboardModal = false} 
+		/>
+	</Dialog>
 {/if}
 
 {#if showHistoryModal}
-	<Modal 
+	<Dialog 
 		open={showHistoryModal} 
 		onOpenChange={(details) => showHistoryModal = details.open}
-		backdropBackground="bg-black/50"
-		contentBackground="bg-surface-900"
 	>
-		{#snippet content()}
-			<HistoryModal history={historyData} onClose={() => showHistoryModal = false} />
-		{/snippet}
-	</Modal>
+		<HistoryModal history={historyData} onClose={() => showHistoryModal = false} />
+	</Dialog>
 {/if}
 
 {#if showMatchHistoryModal}
-	<Modal 
+	<Dialog 
 		open={showMatchHistoryModal} 
 		onOpenChange={(details) => showMatchHistoryModal = details.open}
-		backdropBackground="bg-black/50"
-		contentBackground="bg-surface-900"
 	>
-		{#snippet content()}
-			<MatchHistory matchTableData={recentMatches} />
-		{/snippet}
-	</Modal>
+		<MatchHistory matchTableData={recentMatches} />
+	</Dialog>
 {/if}
 
 {#if showStatUpdateModal && statUpdateData}
-	<Modal 
+	<Dialog 
 		open={showStatUpdateModal} 
 		onOpenChange={(details) => showStatUpdateModal = details.open}
-		backdropBackground="bg-black/50"
-		contentBackground="bg-surface-900"
 	>
-		{#snippet content()}
-			<StatUpdateAnimation
-				heroId={statUpdateData.heroId}
-				isWin={statUpdateData.isWin}
-				oldStats={statUpdateData.oldStats}
-				newStats={statUpdateData.newStats}
-				onClose={() => showStatUpdateModal = false}
-			/>
-		{/snippet}
-	</Modal>
+		<StatUpdateAnimation
+			heroId={statUpdateData.heroId}
+			isWin={statUpdateData.isWin}
+			oldStats={statUpdateData.oldStats}
+			newStats={statUpdateData.newStats}
+			onClose={() => showStatUpdateModal = false}
+		/>
+	</Dialog>
 {/if}
 
 <!-- {#if showingAnimation && selectedHero && activeSlot !== null}

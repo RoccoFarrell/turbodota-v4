@@ -7,11 +7,7 @@
 	import type { Hero } from '@prisma/client';
 
 	//components
-	import { Tabs, ProgressRing } from '@skeletonlabs/skeleton-svelte';
-	
-	// Skeleton v3 Tabs API - Control and Panel are accessed via Tabs.Control and Tabs.Panel
-	const TabsControl = Tabs.Control;
-	const TabsPanel = Tabs.Panel;
+	import { Tabs, Progress } from '@skeletonlabs/skeleton-svelte';
 	
 	// TableSource type (might need to be defined locally if not exported)
 	type TableSource = {
@@ -388,7 +384,6 @@
 		</div>
 
 		<Tabs 
-			listJustify="justify-center"
 			defaultValue="heroes"
 			onValueChange={(details) => {
 				if (details.value === 'heroes') {
@@ -401,28 +396,23 @@
 				}
 			}}
 		>
-			{#snippet list()}
-				<TabsControl value="heroes">
-					{#snippet lead()}
-						<div class="flex justify-center ml-2">
-							<div class="d2mh axe"></div>
-						</div>
-					{/snippet}
+			<Tabs.List class="justify-center">
+				<Tabs.Trigger value="heroes">
+					<div class="flex justify-center ml-2">
+						<div class="d2mh axe"></div>
+					</div>
 					<span>Heroes</span>
-				</TabsControl>
-				<TabsControl value="players">
-					{#snippet lead()}
-						<div class="flex justify-center ml-2">
-							<img src={Knight} class="w-8" alt="Knight icon" />
-						</div>
-					{/snippet}
+				</Tabs.Trigger>
+				<Tabs.Trigger value="players">
+					<div class="flex justify-center ml-2">
+						<img src={Knight} class="w-8" alt="Knight icon" />
+					</div>
 					<span>Players</span>
-				</TabsControl>
-			{/snippet}
+				</Tabs.Trigger>
+			</Tabs.List>
 
-			{#snippet content()}
-				<!-- Heroes Tab Panel -->
-				<TabsPanel value="heroes">
+			<!-- Heroes Tab Panel -->
+			<Tabs.Content value="heroes">
 					<div class="flex flex-col justify-center">
 						{#await generateMatchStatsArr()}
 							<div class="m-8 w-full">
@@ -516,10 +506,10 @@
 							{error.message}
 						{/await}
 					</div>
-				</TabsPanel>
+			</Tabs.Content>
 
-				<!-- Players Tab Panel -->
-				<TabsPanel value="players">
+			<!-- Players Tab Panel -->
+			<Tabs.Content value="players">
 					<div class="flex flex-col justify-center">
 						{#await generateMatchStatsArr()}
 							<div class="m-8 w-full">
@@ -599,8 +589,7 @@
 							{error.message}
 						{/await}
 					</div>
-				</TabsPanel>
-			{/snippet}
+			</Tabs.Content>
 		</Tabs>
 	</div>
 </div>

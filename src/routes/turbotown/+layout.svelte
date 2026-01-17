@@ -15,7 +15,7 @@
 
 	//skeleton
 	import { Progress } from '@skeletonlabs/skeleton-svelte';
-	import type { PopupSettings } from '@skeletonlabs/skeleton-svelte';
+	// PopupSettings removed in Skeleton v4
 
 	//components
 	import Inventory from './_components/Inventory.svelte';
@@ -228,7 +228,8 @@
 		//end set stores
 	}
 
-	const popupHover: PopupSettings = {
+	// PopupSettings removed in Skeleton v4 - using plain object
+	const popupHover = {
 		event: 'hover',
 		target: 'popupHover',
 		placement: 'bottom'

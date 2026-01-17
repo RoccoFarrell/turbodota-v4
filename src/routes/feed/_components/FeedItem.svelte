@@ -52,7 +52,10 @@
 			</div>
 			<div class="mr-2">
 				{#if action?.user?.avatar_url}
-					<Avatar src={getHighDefSteamAvatar(action.user.avatar_url)} width="w-12" rounded="rounded-xl" />
+					<Avatar width="w-12" rounded="rounded-xl">
+						<Avatar.Image src={getHighDefSteamAvatar(action.user.avatar_url)} />
+						<Avatar.Fallback>{action.user.username?.charAt(0).toUpperCase() || 'U'}</Avatar.Fallback>
+					</Avatar>
 				{:else}
 					<i class="text-5xl fi fi-rr-mode-portrait"></i>
 				{/if}

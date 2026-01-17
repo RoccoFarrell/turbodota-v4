@@ -18,16 +18,12 @@
 	//stores
 	const toastStore = getContext<any>('toaster');
 	
-	// Helper function to create toasts with Skeleton v3 API
+	// Helper function to create toasts with Skeleton v4 API
 	function showToast(message: string, background?: string) {
-		if (toastStore && typeof toastStore.create === 'function') {
-			toastStore.create({
-				title: message,
-				description: '',
-				type: background?.includes('error') ? 'error' : 
-				       background?.includes('success') ? 'success' : 
-				       background?.includes('warning') ? 'warning' : 'info',
-				meta: { background }
+		if (toastStore && typeof toastStore.trigger === 'function') {
+			toastStore.trigger({
+				message: message,
+				background: background
 			});
 		}
 	}

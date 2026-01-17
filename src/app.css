@@ -4,7 +4,6 @@
 @config '../tailwind.config.ts';
 
 @import "@skeletonlabs/skeleton";
-@import "@skeletonlabs/skeleton/optional/presets";
 @import "@skeletonlabs/skeleton/themes/crimson";
 
 @layer base {
