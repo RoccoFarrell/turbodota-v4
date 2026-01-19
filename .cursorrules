@@ -19,3 +19,63 @@ Example structure:
 - Tailwind CSS migration tools
 - Any other automated migration scripts
 
+## Card Battler Development Rules
+
+When working on the card battler feature (following `docs/card-battler/DEVELOPMENT_ROADMAP.md`):
+
+### Library Usage
+- **ALWAYS** prefer existing libraries in `package.json` over installing new ones
+- Check available libraries before adding dependencies:
+  - SvelteKit features for backend (`@sveltejs/kit`)
+  - Skeleton UI components (`@skeletonlabs/skeleton`, `@skeletonlabs/skeleton-svelte`)
+  - Tailwind CSS utilities (`tailwindcss`, `tailwind-merge`, `tailwind-variants`)
+  - Prisma for database (`@prisma/client`, `prisma`)
+  - Vitest for testing (`vitest`, `@vitest/ui`)
+  - Bits UI components (`bits-ui`)
+  - Other existing dependencies as appropriate
+
+### Progress Tracking
+- **MUST** maintain `docs/card-battler/PROGRESS.md` documenting:
+  - Completed milestones with checkboxes
+  - Test results for each milestone
+  - Any blockers or issues encountered
+  - Date completed and verification status
+- Update progress immediately after completing and testing each milestone
+
+### Documentation Updates
+- **ALWAYS** update relevant markdown docs in `docs/card-battler/` after code changes:
+  - `DEVELOPMENT_ROADMAP.md` - Mark completed milestones
+  - `PROGRESS.md` - Document completion status
+  - `README.md` - Update if architecture changes
+  - `BATTLE_MECHANICS.md` - Update if mechanics change
+  - `HERO_SPECIFICS.md` - Update if hero data changes
+  - Other relevant docs as needed
+
+### Backend Development
+- Use **SvelteKit** for all backend functionality:
+  - API routes: `src/routes/api/battler/**/+server.ts`
+  - Server load functions: `+page.server.ts` or `+layout.server.ts`
+  - Server hooks: `src/hooks.server.ts`
+  - Form actions: Use SvelteKit form actions
+  - Database access: Use Prisma client in server-side code only
+  - Reference: https://kit.svelte.dev/docs
+
+### Frontend Development
+- Use **Tailwind CSS** for styling:
+  - Utility-first approach
+  - Use existing Tailwind config and variants
+  - Leverage `tailwind-merge` for conditional classes
+- Use **Skeleton UI** components and features:
+  - Prefer Skeleton components over custom implementations
+  - Use Skeleton theme system for colors and styling
+  - Reference: https://www.skeleton.dev/docs/svelte/get-started/introduction
+  - Available components: Buttons, Cards, Forms, Dialogs, Menus, etc.
+
+### Development Workflow
+1. Review milestone dependencies in `DEVELOPMENT_ROADMAP.md`
+2. Implement milestone following the roadmap structure
+3. Write tests as specified in the milestone
+4. Run tests and verify functionality
+5. Update `PROGRESS.md` with completion status
+6. Update relevant documentation files
+7. Mark milestone as complete in `DEVELOPMENT_ROADMAP.md`
