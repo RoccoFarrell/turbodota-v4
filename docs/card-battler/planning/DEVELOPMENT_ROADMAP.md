@@ -2,6 +2,8 @@
 
 This document breaks down the card battler feature into small, testable, reusable components that can be built incrementally. Each component is designed to work independently and be testable before moving to the next.
 
+**Progress Tracking**: See [PROGRESS.md](./PROGRESS.md) for milestone completion status.
+
 ## Development Philosophy
 
 ### Core Principles

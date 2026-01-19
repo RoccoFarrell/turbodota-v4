@@ -975,10 +975,11 @@ Each hero has **4 different card versions** (one per rarity) with different effe
 4. ✅ Create testing strategy (see TESTING_STRATEGY.md)
 5. ✅ Create development roadmap (see DEVELOPMENT_ROADMAP.md)
 6. ✅ Resolve critical design questions (see PRE_DEVELOPMENT_QUESTIONS.md)
-7. **Reset Prisma migration system** (before Phase 0)
-8. Create database migration
-9. Build MVP following incremental roadmap
-10. Playtest and iterate
+7. ✅ **Phase 0: Foundation & Setup** - COMPLETE (see [phase-0/PHASE_0_COMPLETE.md](./phase-0/PHASE_0_COMPLETE.md))
+8. **Phase 1.1**: Add enums and types to Prisma schema
+9. Create database migration for card battler models
+10. Build MVP following incremental roadmap
+11. Playtest and iterate
 
 ## Development Approach
 
