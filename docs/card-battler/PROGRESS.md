@@ -114,6 +114,8 @@ This document tracks the completion status of all milestones in the development 
 - [ ] Create Prisma schema for all models
 - [ ] Define relationships and constraints
 - [ ] Use JSONB for PostgreSQL (effects, battle state)
+- [ ] Add `BattlerUserStats` model for lifetime statistics
+- [ ] Add `BattlerCardStats` model for card usage statistics
 - [ ] Create migration file
 - [ ] Run migration on test database
 
@@ -136,6 +138,10 @@ This document tracks the completion status of all milestones in the development 
 - BattlerTurn
 - ClaimedMatch
 - ForgeOperation
+- BattlerUserStats (lifetime statistics)
+- BattlerCardStats (card usage statistics)
+- BattlerUserStats (lifetime statistics)
+- BattlerCardStats (card usage statistics)
 
 ---
 
@@ -244,6 +250,15 @@ This document tracks the completion status of all milestones in the development 
 - [ ] `checkBattleEnd(battleState)` - Check win/loss
 - [ ] Full state persistence after each action
 - [ ] Deterministic battle calculations
+- [ ] Track card usage and damage for statistics
+
+### Milestone 3.6: Statistics Tracking
+- [ ] `updateUserStats(userId, battleResult)` - Update lifetime stats
+- [ ] `updateCardStats(userId, cardId, damage, block, kill)` - Update card usage stats
+- [ ] `getUserStats(userId)` - Get aggregated lifetime stats
+- [ ] `getCardStats(userId, cardId)` - Get card usage stats
+- [ ] Aggregate stats from encounters and runs
+- [ ] Calculate win rates and averages
 
 **Status**: Not Started  
 **Date Completed**: TBD  
@@ -374,6 +389,7 @@ This document tracks the completion status of all milestones in the development 
 - [ ] `POST /api/battler/runs/[runId]/complete` - Complete encounter
 - [ ] Full state persistence after each action
 - [ ] Resume capability for abandoned runs
+- [ ] Update lifetime stats after each battle action
 
 **Status**: Not Started  
 **Date Completed**: TBD  
@@ -386,6 +402,24 @@ This document tracks the completion status of all milestones in the development 
 - `src/routes/api/battler/runs/[runId]/+server.ts`
 - `src/routes/api/battler/runs/[runId]/play-card/+server.ts`
 - `src/routes/api/battler/runs/[runId]/end-turn/+server.ts`
+
+---
+
+### Milestone 4.7: Statistics API
+- [ ] `GET /api/battler/stats` - Get user lifetime statistics
+- [ ] `GET /api/battler/stats/cards` - Get card usage statistics
+- [ ] Aggregate stats from all runs/encounters
+- [ ] Calculate win rate, averages, etc.
+
+**Status**: Not Started  
+**Date Completed**: TBD  
+**Test Results**: TBD  
+**Blockers/Issues**: None  
+**Verification**: TBD
+
+**Files**:
+- `src/routes/api/battler/stats/+server.ts`
+- `src/routes/api/battler/stats/cards/+server.ts`
 
 ---
 

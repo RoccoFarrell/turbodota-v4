@@ -59,6 +59,7 @@ model BattlerCard {
   
   // Relations
   userCards     UserBattlerCard[]
+  cardStats     BattlerCardStats[]  // Usage statistics
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   
@@ -299,6 +300,75 @@ enum ForgeOperationType {
   FORGE      // 3 lower → 1 higher
   DISMANTLE  // 1 higher → 3 lower
 }
+
+// Lifetime Battle Statistics (aggregated across all runs)
+model BattlerUserStats {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  
+  // Battle Statistics
+  totalRuns       Int      @default(0)
+  totalBattlesWon Int      @default(0)
+  totalBattlesLost Int     @default(0)
+  totalBattlesFled Int     @default(0)
+  totalEnemiesKilled Int   @default(0)
+  
+  // Damage Statistics
+  totalDamageDealt Int     @default(0)
+  totalDamageTaken Int     @default(0)
+  totalBlockGained Int     @default(0)
+  
+  // Card Usage Statistics
+  totalCardsPlayed Int     @default(0)
+  totalEnergySpent Int     @default(0)
+  
+  // Run Statistics
+  runsCompleted   Int      @default(0)  // Runs that reached floor 10
+  runsAbandoned   Int      @default(0)
+  runsDefeated    Int      @default(0)
+  highestFloorReached Int  @default(0)
+  
+  // Win Rate
+  winRate         Float?   // Calculated: battlesWon / (battlesWon + battlesLost)
+  
+  // Relations
+  user            User     @relation(fields: [userId], references: [id])
+  cardStats       BattlerCardStats[]
+  
+  lastUpdated     DateTime @updatedAt
+  createdAt       DateTime @default(now())
+  
+  @@index([userId])
+}
+
+// Card Usage Statistics (damage dealt per card)
+model BattlerCardStats {
+  id              String   @id @default(cuid())
+  userId          String
+  cardId          String   // References BattlerCard
+  
+  // Usage Statistics
+  timesPlayed     Int      @default(0)
+  totalDamageDealt Int     @default(0)
+  totalBlockGained Int     @default(0)
+  totalKills      Int      @default(0)  // Enemies killed by this card
+  
+  // Average Statistics
+  avgDamagePerPlay Float?  // Calculated: totalDamageDealt / timesPlayed
+  avgBlockPerPlay  Float?  // Calculated: totalBlockGained / timesPlayed
+  
+  // Relations
+  user            User     @relation(fields: [userId], references: [id])
+  userStats      BattlerUserStats @relation(fields: [userId], references: [userId])
+  card           BattlerCard @relation(fields: [cardId], references: [id])
+  
+  lastUpdated     DateTime @updatedAt
+  createdAt       DateTime @default(now())
+  
+  @@unique([userId, cardId]) // One stat record per user per card
+  @@index([userId])
+  @@index([cardId])
+}
 ```
 
 ### Updates to Existing Models
@@ -310,6 +380,9 @@ model User {
   battlerDecks     BattlerDeck[]
   battlerRuns      BattlerRun[]
   claimedMatches   ClaimedMatch[]
+  forgeOperations  ForgeOperation[]
+  battlerStats     BattlerUserStats?
+  battlerCardStats BattlerCardStats[]
 }
 ```
 
@@ -472,6 +545,10 @@ async function calculateCopiesAwarded(matchStats: PlayersMatchDetail, heroId: nu
   6. Update encounter state
   7. **Persist full battle state to database** (for resume capability)
   8. Update `BattlerRun.battleState` JSONB field
+  9. **Update lifetime stats** (BattlerUserStats and BattlerCardStats)
+     - Increment card usage counts
+     - Add damage/block to card stats
+     - Track kills per card
 - **Response**: Updated encounter state, turn result
 - **Auth**: Required
 - **Note**: Battle state is fully persisted after each action to allow users to leave and resume
@@ -483,8 +560,24 @@ async function calculateCopiesAwarded(matchStats: PlayersMatchDetail, heroId: nu
 
 #### `POST /api/battler/runs/[runId]/abandon`
 - **Purpose**: Abandon current run
+- **Logic**:
+  1. Mark run as ABANDONED
+  2. Update lifetime stats (increment runsAbandoned)
 - **Response**: Success
 - **Auth**: Required
+
+#### `GET /api/battler/stats`
+- **Purpose**: Get user's lifetime battle statistics
+- **Response**: `BattlerUserStats` with aggregated stats
+- **Auth**: Required (own stats only)
+
+#### `GET /api/battler/stats/cards`
+- **Purpose**: Get card usage statistics (damage per card)
+- **Response**: Array of `BattlerCardStats` sorted by usage/damage
+- **Query Params**: 
+  - `sortBy`: 'damage' | 'usage' | 'kills' (default: 'damage')
+  - `limit`: number (default: 50)
+- **Auth**: Required (own stats only)
 
 ---
 
@@ -505,9 +598,10 @@ async function calculateCopiesAwarded(matchStats: PlayersMatchDetail, heroId: nu
 ### Page 1: Main Hub (`/battler`)
 
 **Layout:**
-- Header: User stats (total cards, runs completed, win rate)
+- Header: User stats (total cards, runs completed, win rate, lifetime battle stats)
 - "Claim Cards" button (checks for new wins)
 - Active run section (if any)
+- Quick stats: Total battles won, enemies killed, damage dealt
 - Deck selection (quick start with active deck)
 - Recent runs list
 
@@ -603,6 +697,13 @@ async function calculateCopiesAwarded(matchStats: PlayersMatchDetail, heroId: nu
 **Layout:**
 - List of past runs
 - Filters: Status, Date range
+- Lifetime statistics section:
+  - Total battles won/lost/fled
+  - Total enemies killed
+  - Total damage dealt/taken
+  - Win rate
+  - Highest floor reached
+  - Card usage statistics (top cards by damage, usage, kills)
 - Run details: Floor reached, cards used, enemies defeated
 - Replay option (view turn-by-turn log)
 

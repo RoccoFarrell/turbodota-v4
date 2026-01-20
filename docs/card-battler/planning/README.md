@@ -21,6 +21,7 @@ This folder contains all planning documents created before development began.
 - **[DECISIONS_SUMMARY.md](./DECISIONS_SUMMARY.md)** - Quick reference summary of all major design decisions
 - **[DETERMINISTIC_BATTLES.md](./DETERMINISTIC_BATTLES.md)** - Strategies for making battles deterministic
 - **[CONCURRENT_BATTLE_ACTIONS.md](./CONCURRENT_BATTLE_ACTIONS.md)** - Scenarios and solutions for concurrent battle actions
+- **[LIFETIME_STATS.md](./LIFETIME_STATS.md)** - Lifetime statistics tracking system
 
 ## Quick Reference
 

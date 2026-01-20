@@ -659,7 +659,7 @@ test('POST /api/battler/forge forges cards', async () => {
 ---
 
 ### Milestone 4.6: Battle API
-**Dependencies**: 3.4, 3.5
+**Dependencies**: 3.4, 3.5, 3.6
 
 **Components**:
 - [ ] `POST /api/battler/runs` - Start new run
@@ -667,6 +667,7 @@ test('POST /api/battler/forge forges cards', async () => {
 - [ ] `POST /api/battler/runs/[runId]/play-card` - Play card
 - [ ] `POST /api/battler/runs/[runId]/end-turn` - End turn
 - [ ] `POST /api/battler/runs/[runId]/complete` - Complete encounter
+- [ ] Update lifetime stats after each battle action
 
 **Files**:
 - `src/routes/api/battler/runs/+server.ts`
@@ -675,6 +676,48 @@ test('POST /api/battler/forge forges cards', async () => {
 - `src/routes/api/battler/runs/[runId]/end-turn/+server.ts`
 
 **Deliverable**: Battle API
+
+---
+
+### Milestone 4.7: Statistics API
+**Dependencies**: 3.6
+
+**Components**:
+- [ ] `GET /api/battler/stats` - Get user lifetime statistics
+- [ ] `GET /api/battler/stats/cards` - Get card usage statistics
+- [ ] Aggregate stats from all runs/encounters
+- [ ] Calculate win rate, averages, etc.
+- [ ] Support sorting and filtering
+
+**Files**:
+- `src/routes/api/battler/stats/+server.ts`
+- `src/routes/api/battler/stats/cards/+server.ts`
+
+**Testing**:
+```typescript
+test('GET /api/battler/stats returns user stats', async () => {
+  const response = await fetch('/api/battler/stats', {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+  const stats = await response.json();
+  
+  expect(stats.totalBattlesWon).toBeDefined();
+  expect(stats.totalEnemiesKilled).toBeDefined();
+  expect(stats.winRate).toBeDefined();
+});
+
+test('GET /api/battler/stats/cards returns top cards', async () => {
+  const response = await fetch('/api/battler/stats/cards?sortBy=damage&limit=10', {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+  const cards = await response.json();
+  
+  expect(Array.isArray(cards)).toBe(true);
+  expect(cards.length).toBeLessThanOrEqual(10);
+});
+```
+
+**Deliverable**: Statistics API
 
 ---
 

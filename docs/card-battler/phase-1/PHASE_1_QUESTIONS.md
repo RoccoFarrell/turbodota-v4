@@ -5,6 +5,8 @@ This document tracks any open questions or clarifications needed before beginnin
 **Status**: Pre-Development  
 **Last Updated**: 2025-01-18
 
+**Note**: Lifetime statistics tracking has been added to the schema. See PLANNING.md for `BattlerUserStats` and `BattlerCardStats` models.
+
 ---
 
 ## Questions & Clarifications

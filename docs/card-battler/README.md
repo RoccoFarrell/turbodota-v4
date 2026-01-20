@@ -17,6 +17,7 @@ All planning documents are in the **[planning/](./planning/)** folder:
 - **[DECISIONS_SUMMARY.md](./planning/DECISIONS_SUMMARY.md)** - Quick reference for all design decisions
 - **[DETERMINISTIC_BATTLES.md](./planning/DETERMINISTIC_BATTLES.md)** - Strategies for deterministic battles
 - **[CONCURRENT_BATTLE_ACTIONS.md](./planning/CONCURRENT_BATTLE_ACTIONS.md)** - Concurrent action scenarios
+- **[LIFETIME_STATS.md](./planning/LIFETIME_STATS.md)** - Lifetime statistics tracking system
 
 ### Development Phase Documents
 - **[PROGRESS.md](./PROGRESS.md)** - Milestone tracking (updated throughout all phases)
