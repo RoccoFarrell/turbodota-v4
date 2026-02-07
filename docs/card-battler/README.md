@@ -18,6 +18,7 @@ All planning documents are in the **[planning/](./planning/)** folder:
 - **[DETERMINISTIC_BATTLES.md](./planning/DETERMINISTIC_BATTLES.md)** - Strategies for deterministic battles
 - **[CONCURRENT_BATTLE_ACTIONS.md](./planning/CONCURRENT_BATTLE_ACTIONS.md)** - Concurrent action scenarios
 - **[LIFETIME_STATS.md](./planning/LIFETIME_STATS.md)** - Lifetime statistics tracking system
+- **[IDLE_INCREMENTAL_BRAINSTORM.md](./planning/IDLE_INCREMENTAL_BRAINSTORM.md)** - Idle/incremental mechanics brainstorm
 
 ### Development Phase Documents
 - **[PROGRESS.md](./PROGRESS.md)** - Milestone tracking (updated throughout all phases)
