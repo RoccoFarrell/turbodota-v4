@@ -23,12 +23,15 @@ A **separate** game concept from the card-battler: an incremental/idle-style gam
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | Code layout, data models, timer engine, API surface |
 | [DEVELOPMENT_ROADMAP.md](./DEVELOPMENT_ROADMAP.md) | Phased implementation plan; short, testable chunks |
 | [OPEN_QUESTIONS.md](./OPEN_QUESTIONS.md) | Resolved decisions and open questions |
-| [phase-0/](./phase-0/) | Phase 0 decisions: [PHASE_0_PENDING.md](./phase-0/PHASE_0_PENDING.md); completion: [PHASE_0_COMPLETE.md](./phase-0/PHASE_0_COMPLETE.md) |
+| [phase-0/](./phase-0/) | Phase 0: [PHASE_0_PENDING.md](./phase-0/PHASE_0_PENDING.md), [PHASE_0_COMPLETE.md](./phase-0/PHASE_0_COMPLETE.md) |
+| [phase-1/](./phase-1/) | Phase 1 completion: [PHASE_1_COMPLETE.md](./phase-1/PHASE_1_COMPLETE.md) |
+| [phase-2/](./phase-2/) | Phase 2.1: [PHASE_2_1_COMPLETE.md](./phase-2/PHASE_2_1_COMPLETE.md) |
 
 ## Implementation status
 
-- **Phase 0 (Foundation & Setup)**: ✅ Complete. See [DEVELOPMENT_ROADMAP.md](./DEVELOPMENT_ROADMAP.md#phase-0-foundation--setup--) and [phase-0/PHASE_0_COMPLETE.md](./phase-0/PHASE_0_COMPLETE.md).
-- **Phase 1+**: Not started.
+- **Phase 0 (Foundation & Setup)**: ✅ Complete. See [phase-0/PHASE_0_COMPLETE.md](./phase-0/PHASE_0_COMPLETE.md).
+- **Phase 1 (Constants & Stat Formulas)**: ✅ Complete. See [phase-1/PHASE_1_COMPLETE.md](./phase-1/PHASE_1_COMPLETE.md).
+- **Phase 2 (Battle Engine)**: 2.1 ✅ (battle state initializer); 2.2 not started.
 
 Code lives under `src/lib/incremental/`, `src/routes/incremental/`, and `src/routes/api/incremental/`.
 

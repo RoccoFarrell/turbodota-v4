@@ -82,10 +82,13 @@ Hero roster and full list can be expanded using the same **active = timer, passi
 
 ## Data Shape for an Ability
 
+**Note**: Abilities are **spells and specials only**. Every entity (hero or enemy) has an **intrinsic auto-attack** (attack interval + damage on HeroDef/EnemyDef); the basic attack is not an ability and has no ability id. Abilities add timers (actives) or triggered effects (passives) on top of that.
+
 - **id**: Unique ability id.  
 - **type**: `active` | `passive`.  
 - **trigger**: For active = “timer (spell interval)”; for passive = “on_damage_taken” | “on_attack” | “on_spell_hit” | etc.  
 - **effect**: Reference to effect (damage, heal, debuff, return damage, etc.) and formula (base + spell power, or % of attack damage).  
-- **target**: Self, single enemy, all enemies, lowest HP ally, attacker (for reflect), etc.
+- **target**: Self, single enemy, all enemies, lowest HP ally, attacker (for reflect), etc.  
+- **damageType** (optional): For damaging abilities, one of **physical** (reduced by target armor), **magical** (reduced by target magic resist), or **pure** (bypasses resistances). Omit for heals/utility. Auto-attack is always physical and is not an ability.
 
 This supports both the battle engine (when to fire, what to apply) and the UI (show one timer per active spell for the focused hero).

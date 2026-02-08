@@ -77,20 +77,20 @@ Phase 11+: Shops, Training, PvP, background (depends on 7–10)
 
 ---
 
-## Phase 1: Constants & Stat Formulas
+## Phase 1: Constants & Stat Formulas ✅ Complete
 
 **Goal**: Reference data (heroes, abilities, enemies, encounters) and stat formulas; no engine yet.
 
-### Milestone 1.1: Hero, ability, and enemy definitions (minimal set)
+### Milestone 1.1: Hero, ability, and enemy definitions (minimal set) ✅
 **Dependencies**: 0.2
 
 **Tasks**:
-- [ ] Implement `abilities.ts`: at least 3 abilities (e.g. Bristleback passive return damage, Lina Laguna Blade active, one simple enemy attack).
-- [ ] Implement `heroes.ts`: Incremental game stats (base attack interval, damage, spell interval, ability id) keyed by **`Hero.id`** (Int) from existing `Hero` table. At least 3 heroes (e.g. Bristleback, Lina, Dazzle)—use their `Hero.id` from Prisma/DB.
-- [ ] Implement `encounters.ts`: enemy definitions for 2–3 unit types (e.g. Large Wolf, Small Wolf) with HP, attack interval, damage; one encounter “Wolf Pack” (1 large + 2 small).
-- [ ] Export lookup helpers: `getHeroDef(id)`, `getAbilityDef(id)`, `getEncounterDef(id)`.
+- [x] Implement `abilities.ts`: at least 3 abilities (e.g. Bristleback passive return damage, Lina Laguna Blade active, Dazzle Shadow Wave). Auto-attack is intrinsic (HeroDef/EnemyDef attack interval + damage), not an ability.
+- [x] Implement `heroes.ts`: Incremental game stats (base attack interval, damage, spell interval, ability id) keyed by **`Hero.id`** (Int) from existing `Hero` table. At least 3 heroes (e.g. Bristleback, Lina, Dazzle)—use their `Hero.id` from Prisma/DB.
+- [x] Implement `encounters.ts`: enemy definitions for 2–3 unit types (e.g. Large Wolf, Small Wolf) with HP, attack interval, damage; one encounter “Wolf Pack” (1 large + 2 small).
+- [x] Export lookup helpers: `getHeroDef(id)`, `getAbilityDef(id)`, `getEncounterDef(id)`.
 
-**Files**: `src/lib/incremental/constants/heroes.ts`, `abilities.ts`, `encounters.ts` (or single `constants/index.ts`).
+**Files**: `src/lib/incremental/constants/heroes.ts`, `abilities.ts`, `encounters.ts`, `constants/index.ts`.
 
 **Testing**:
 - `getHeroDef(heroId)` (heroId = `Hero.id`) returns that hero’s incremental stats (spell interval, Laguna Blade ability id, etc.); hero identity/name from `Hero` table.
@@ -100,15 +100,15 @@ Phase 11+: Shops, Training, PvP, background (depends on 7–10)
 
 ---
 
-### Milestone 1.2: Stat formulas
+### Milestone 1.2: Stat formulas ✅
 **Dependencies**: 0.2
 
 **Tasks**:
-- [ ] `attackInterval(baseInterval, attackSpeed)` – e.g. `base / (1 + AS)` with optional cap.
-- [ ] `spellInterval(baseInterval, spellHaste)` – same idea for spells.
-- [ ] `attackDamage(baseDamage, modifiers)` – flat damage for now; optional crit/armor later.
-- [ ] `spellDamage(baseDamage, spellPower)` – for active spells.
-- [ ] `nonFocusTargetPenalty(damage, isTargetEnemyFocus)` – return reduced damage (or multiplier) when attacking non-focus enemy.
+- [x] `attackInterval(baseInterval, attackSpeed)` – e.g. `base / (1 + AS)` with optional cap.
+- [x] `spellInterval(baseInterval, spellHaste)` – same idea for spells.
+- [x] `attackDamage(baseDamage, modifiers)` – flat damage for now; optional crit/armor later.
+- [x] `spellDamage(baseDamage, spellPower)` – for active spells.
+- [x] `nonFocusTargetPenalty(damage, isTargetEnemyFocus)` – return reduced damage (or multiplier) when attacking non-focus enemy.
 
 **Files**: `src/lib/incremental/stats/formulas.ts`
 
@@ -124,12 +124,12 @@ Phase 11+: Shops, Training, PvP, background (depends on 7–10)
 
 **Goal**: Create battle state from lineup + encounter; advance only focused hero’s timers; focus change resets timers and enforces 2s cooldown; 10s auto-rotation.
 
-### Milestone 2.1: Battle state initializer
+### Milestone 2.1: Battle state initializer ✅
 **Dependencies**: 0.2, 1.1
 
 **Tasks**:
-- [ ] `createBattleState(lineupHeroIds, encounterId, options?)`: build `BattleState` with player side (hero instances from hero defs: max HP, current HP, attack/spell timer 0), enemy side (from encounter), focusedHeroIndex 0, targetIndex 0 (e.g. first enemy), lastFocusChangeAt 0, elapsedTime 0, result null.
-- [ ] Hero instances include hero id, current/max HP, attackTimer, spellTimer (and ability id for resolution later).
+- [x] `createBattleState(lineupHeroIds, encounterId, options?)`: build `BattleState` with player side (hero instances from hero defs: max HP, current HP, attack/spell timer 0), enemy side (from encounter), focusedHeroIndex 0, targetIndex 0 (e.g. first enemy), lastFocusChangeAt 0, elapsedTime 0, result null.
+- [x] Hero instances include hero id, current/max HP, attackTimer, spellTimer (and ability id for resolution later).
 
 **Files**: `src/lib/incremental/engine/battle-state.ts`
 
@@ -141,13 +141,13 @@ Phase 11+: Shops, Training, PvP, background (depends on 7–10)
 
 ---
 
-### Milestone 2.2: Timer advance and focus rules
+### Milestone 2.2: Timer advance and focus rules ✅
 **Dependencies**: 2.1, 1.2
 
 **Tasks**:
-- [ ] `advanceTimers(state, deltaTime)`: advance **only** `state.player[state.focusedHeroIndex]` attack and spell timers by deltaTime; advance all enemy timers by deltaTime. Do not modify other player heroes’ timers.
-- [ ] `applyFocusChange(state, newFocusedHeroIndex)`: if `newFocusedHeroIndex !== state.focusedHeroIndex` and cooldown elapsed (now - lastFocusChangeAt >= 2s): set state.focusedHeroIndex = newFocusedHeroIndex; **reset** previous focused hero’s attackTimer and spellTimer to 0; set new hero’s timers to 0; set lastFocusChangeAt = now. If cooldown not elapsed, return state unchanged (or return error/flag).
-- [ ] `applyAutoRotation(state, now)`: if (now - lastFocusChangeAt >= 10s), rotate focus to next hero (cycle), reset previous hero’s timers to 0, update lastFocusChangeAt. Call this from the tick loop when no manual focus change.
+- [x] `advanceTimers(state, deltaTime)`: advance **only** `state.player[state.focusedHeroIndex]` attack and spell timers by deltaTime; advance all enemy timers by deltaTime. Do not modify other player heroes’ timers.
+- [x] `applyFocusChange(state, newFocusedHeroIndex)`: if `newFocusedHeroIndex !== state.focusedHeroIndex` and cooldown elapsed (now - lastFocusChangeAt >= 2s): set state.focusedHeroIndex = newFocusedHeroIndex; **reset** previous focused hero’s attackTimer and spellTimer to 0; set new hero’s timers to 0; set lastFocusChangeAt = now. If cooldown not elapsed, return state unchanged (or return error/flag).
+- [x] `applyAutoRotation(state, now)`: if (now - lastFocusChangeAt >= 10s), rotate focus to next hero (cycle), reset previous hero’s timers to 0, update lastFocusChangeAt. Call this from the tick loop when no manual focus change.
 
 **Files**: `src/lib/incremental/engine/timers.ts`
 
@@ -473,7 +473,7 @@ Phase 11+: Shops, Training, PvP, background (depends on 7–10)
 | Phase | Focus | Test in isolation | Integrates with |
 |-------|--------|-------------------|------------------|
 | 0 ✅ | Setup, types | Placeholder test, type shape | All |
-| 1 | Constants, formulas | Unit tests | Engine |
+| 1 ✅ | Constants, formulas | Unit tests | Engine |
 | 2 | State, timers | Unit + small integration | Resolution |
 | 3 | Resolution, loop | Simulation (full battle) | API |
 | 4 | Prisma, map | DB + map tests | Run flow |

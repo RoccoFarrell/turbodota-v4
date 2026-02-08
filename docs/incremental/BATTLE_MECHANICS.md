@@ -7,9 +7,9 @@ How battles run: **timer model**, **focus (tap) mechanic**, **action resolution*
 ## Battle Setup
 
 - **Player side**: Lineup of 1–5 heroes (roster). Each hero has:
-  - Current HP (and max), optional armor/resist.
-  - Auto-attack timer (interval, time until next attack).
-  - Spell timer(s) if the hero has active spell(s).
+  - Current HP (and max), **base armor**, **base magic resistance** (for damage reduction).
+  - Auto-attack timer (interval, time until next attack). Auto-attacks deal **physical** damage.
+  - Spell timer(s) if the hero has active spell(s). Spells have a **damage type** (physical, magical, or pure) per ability.
 - **Enemy side**: Either:
   - **PvE**: 1–N enemies (e.g. 1 large wolf + 2 small wolves), each with HP and the **same timer model** as heroes (attack interval, optional spell interval); they can have spells, and **bosses** can be as complex as a hero; or
   - **PvP**: 1–5 enemy heroes (same structure as player heroes); the opponent has their own focused hero and shared target, controlled in real time (battle pauses if either player leaves).
@@ -43,18 +43,28 @@ When the battle **starts**, the player must have one hero **focused** (default: 
 
 ---
 
+## Damage Types
+
+- **Physical**: Reduced by target's **armor** (e.g. damage × 100 / (100 + armor)). All **auto-attacks** are physical.
+- **Magical**: Reduced by target's **magic resistance** (0–1; e.g. damage × (1 - magicResist)). Many spells are magical.
+- **Pure**: Bypasses armor and magic resist; full damage. Some spells are pure.
+
+Every hero and enemy has **base armor** and **base magic resistance**. The engine applies the correct reduction when resolving damage based on the damage type (auto-attack = physical; spells declare their type per ability).
+
+---
+
 ## Action Resolution
 
 ### Auto-attack
 
 - **Trigger**: Focused hero’s auto-attack timer reaches interval.
-- **Effect**: Deal `attackDamage` (after modifiers) to **current target** (see Targeting).
+- **Effect**: Deal **physical** `attackDamage` (after modifiers) to **current target** (see Targeting). Target's **armor** reduces the damage.
 - **Then**: Reset auto-attack timer for that hero.
 
 ### Spell (active)
 
 - **Trigger**: Focused hero’s spell timer reaches interval.
-- **Effect**: Apply spell effect (damage, heal, debuff, etc.) according to [SPELLS_AND_ABILITIES.md](./SPELLS_AND_ABILITIES.md). Spell power and modifiers apply.
+- **Effect**: Apply spell effect (damage, heal, debuff, etc.) according to [SPELLS_AND_ABILITIES.md](./SPELLS_AND_ABILITIES.md). Spell power and modifiers apply. Damaging spells have a **damage type** (physical, magical, or pure); target's armor or magic resist reduces physical/magical, pure bypasses.
 - **Then**: Reset spell timer for that hero.
 
 ### Passive abilities

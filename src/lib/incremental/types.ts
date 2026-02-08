@@ -30,36 +30,51 @@ export type BattleResult = 'win' | 'lose' | null;
 
 export type RunStatus = 'active' | 'won' | 'dead';
 
+/** Damage type: physical (reduced by armor), magical (reduced by magic resist), pure (no reduction). */
+export const DamageType = {
+	PHYSICAL: 'physical',
+	MAGICAL: 'magical',
+	PURE: 'pure'
+} as const;
+export type DamageType = (typeof DamageType)[keyof typeof DamageType];
+
 // ---------------------------------------------------------------------------
 // Reference data (definitions)
 // ---------------------------------------------------------------------------
 
-/** Hero definition keyed by Hero.id. Base intervals, damage, ability ids. */
+/** Hero definition keyed by Hero.id. Base intervals, damage, defensive stats, ability ids. */
 export interface HeroDef {
 	heroId: number; // Hero.id from Prisma
 	primaryAttribute: PrimaryAttribute;
 	baseAttackInterval: number; // seconds
 	baseAttackDamage: number;
+	baseMaxHp: number;
+	baseArmor: number; // reduces physical damage
+	baseMagicResist: number; // 0–1 (e.g. 0.25 = 25%); reduces magical damage
 	baseSpellInterval: number | null; // seconds; null if passive-only
 	abilityIds: string[]; // length 1 now, up to 3 later
 }
 
-/** Ability definition: active (timer) or passive (on-event). */
+/** Ability definition: active (timer) or passive (on-event). Spells can deal physical, magical, or pure damage. */
 export interface AbilityDef {
 	id: string;
 	type: 'active' | 'passive';
 	trigger: string; // e.g. 'timer' | 'on_damage_taken' | 'on_attack'
 	effect?: string; // reference to effect / formula
 	target?: string; // 'self' | 'single_enemy' | 'attacker' | etc.
+	/** Damage type for damaging abilities. Omit for heals/utility. Auto-attack is always physical. */
+	damageType?: DamageType;
 }
 
-/** Enemy unit definition (HP, attack interval, damage). */
+/** Enemy unit definition (HP, attack interval, damage, defensive stats). */
 export interface EnemyDef {
 	id: string;
 	name: string;
 	hp: number;
 	attackInterval: number; // seconds
-	damage: number;
+	damage: number; // physical (auto-attack is always physical)
+	baseArmor: number;
+	baseMagicResist: number; // 0–1
 	spellInterval?: number | null; // optional spell timer
 }
 

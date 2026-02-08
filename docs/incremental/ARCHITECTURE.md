@@ -122,10 +122,12 @@ We use **Option A**: lineup stores hero ids; training is per (userId, heroId). U
 ### Reference data (no per-user state)
 
 - **Hero**: Use the existing **`Hero`** table in `prisma/schema.prisma` (`id`, `name`, `localized_name`, `primary_attr`, etc.) for hero identity. All lineup and training references use **`Hero.id`** (integer).
-- **Incremental hero stats** (game-only): Base attack interval, base attack damage, base spell interval (or null), ability id(s). **Spell slots**: one per hero at start; design for up to 3. Stored in code (e.g. `lib/incremental/constants/heroes.ts`) keyed by `Hero.id`, or in a small table that references `Hero.id`, so we don’t add columns to the shared `Hero` table.
-- **Ability definition**: id, type (active | passive), trigger, effect (formula + target). Code or DB.
+- **Incremental hero stats** (game-only): Base attack interval, base attack damage, **base armor**, **base magic resistance**, base spell interval (or null), ability id(s). **Spell slots**: one per hero at start; design for up to 3. Stored in code (e.g. `lib/incremental/constants/heroes.ts`) keyed by `Hero.id`, or in a small table that references `Hero.id`, so we don’t add columns to the shared `Hero` table.
+- **Damage types**: **Physical** (reduced by armor), **magical** (reduced by magic resist), **pure** (bypasses resistances). All **auto-attacks** are physical. **Spells** can be physical, magical, or pure (per ability definition). Each hero and enemy has base armor and base magic resist (0–1) for incoming damage.
+- **Auto-attack**: Intrinsic to every entity (hero or enemy). Defined by attack interval + damage on HeroDef/EnemyDef; no ability id; always **physical** damage. In battle, each entity has an **attack timer** that advances; when it reaches the interval, the engine resolves the basic attack (then applies target’s armor). **Abilities** are separate (spell timers or passives) and have an optional **damage type**.
+- **Ability definition**: id, type (active | passive), trigger, effect (formula + target), optional **damageType** (physical | magical | pure). Spells and specials only; not used for basic attack. Code or DB.
 - **Encounter definition**: id, list of (enemy def id, count or instance config). Code or DB.
-- **Enemy definition**: id, name, HP, attack pattern (e.g. interval + damage), optional spell. Code or DB.
+- **Enemy definition**: id, name, HP, attack pattern (e.g. interval + damage), **base armor**, **base magic resist**, optional spell. Same model as heroes: intrinsic auto-attack (physical) + optional ability(ies). Code or DB.
 
 ---
 
@@ -134,8 +136,8 @@ We use **Option A**: lineup stores hero ids; training is per (userId, heroId). U
 - **Input**: Current battle state, `deltaTime` (seconds since last tick), `focusedHeroIndex`.  
 - **Process**:  
   1. Advance **only** the focused hero’s `attackTimer` and `spellTimer` by `deltaTime`. When focus **changes**, reset the **newly unfocused** hero’s timers to 0; the **newly focused** hero’s timers start from 0. Enforce **2s cooldown** on focus switch (ignore focus-change requests within 2s of last change). If no focus change for 10s, apply **auto-rotation** (switch focus to next hero; reset previous hero’s timers to 0).  
-  2. If `attackTimer >= attackInterval`: resolve **auto-attack first** (apply damage to **shared target**; apply **penalty** if target is not the enemy’s focus hero), reset `attackTimer`.  
-  3. If `spellTimer >= spellInterval`: resolve **spell** (apply effect to target per ability), reset `spellTimer`.  
+  2. If `attackTimer >= attackInterval`: resolve **auto-attack first** (physical damage; apply **armor** reduction on target; apply **non-focus penalty** if target is not the enemy’s focus hero), reset `attackTimer`.  
+  3. If `spellTimer >= spellInterval`: resolve **spell** (apply effect per ability; use ability’s **damage type** and target’s armor/magic resist for damage reduction; pure bypasses), reset `spellTimer`.  
   4. Advance **enemy** timers by `deltaTime`; for each enemy that reaches its interval, resolve enemy action (same timer model as heroes; bosses can have multiple abilities).  
   5. Apply **passives** when conditions fire (e.g. on damage taken → Bristleback reflect).  
   6. Check death (remove dead units); check win/loss (all enemies dead / all player heroes dead).  

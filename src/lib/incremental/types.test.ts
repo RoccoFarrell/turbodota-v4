@@ -8,7 +8,9 @@ import type {
 } from './types';
 import { PrimaryAttribute as PA, NodeType as NT } from './types';
 
+/** Type shapes and const values for battle/run types. */
 describe('incremental types', () => {
+	/** BattleState, HeroInstance, EnemyInstance: required fields and default shape (focus 0, result null, timers 0). */
 	it('builds a minimal BattleState and asserts shape', () => {
 		const hero: HeroInstance = {
 			heroId: 1,
@@ -49,6 +51,7 @@ describe('incremental types', () => {
 		expect(state.enemy[0].enemyDefId).toBe('large_wolf');
 	});
 
+	/** PrimaryAttribute and NodeType const objects export expected string values. */
 	it('PrimaryAttribute and NodeType have expected values', () => {
 		expect(PA.STR).toBe('str');
 		expect(PA.UNIVERSAL).toBe('universal');
@@ -56,6 +59,7 @@ describe('incremental types', () => {
 		expect(NT.BASE).toBe('base');
 	});
 
+	/** MapNode and RunState: nodeType, nextNodeIds, status, currentNodeId. */
 	it('builds minimal MapNode and RunState', () => {
 		const node: MapNode = {
 			id: 'node_1',

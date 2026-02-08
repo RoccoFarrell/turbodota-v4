@@ -37,7 +37,7 @@ This creates a clear **trade-off**: Agility = more attacks per minute; Intellige
   - Can be hero-specific (e.g. PA crit) or from items.
 
 - **Physical / armor**  
-  - If we model armor: damage reduction or flat reduction. Affects both dealing and taking physical damage.
+  - **Armor** reduces **physical** damage taken. Each hero and enemy has **base armor**. Formula (e.g. damage × 100 / (100 + armor)) so more armor = less physical damage. Auto-attacks are always physical.
 
 ### Spell Stats
 
@@ -52,11 +52,12 @@ This creates a clear **trade-off**: Agility = more attacks per minute; Intellige
 - **Spell modifiers**  
   - Duration, radius, extra effects (slow, burn, stun). Can be hero-specific or from items.
 
-### Defensive / Utility (Optional)
+### Defensive / Utility
 
-- **Health**, **armor**, **magic resistance**, **block**  
-  - For survivability; Strength and tanks benefit most.  
-  - Can be simplified to “effective HP” for the first version.
+- **Health**, **armor**, **magic resistance**  
+  - Every hero and enemy has **base armor** and **base magic resistance** (0–1, e.g. 0.25 = 25%).  
+  - **Physical** damage is reduced by armor. **Magical** damage is reduced by magic resist (e.g. damage × (1 - magicResist)). **Pure** damage bypasses both.  
+  - Auto-attacks are always physical. Spells declare a **damage type** (physical, magical, or pure) per ability. Strength and tanks typically have higher base armor.
 
 - **Healing received**, **debuff duration**  
   - For support heroes (e.g. Dazzle).
@@ -95,11 +96,13 @@ Each playable hero is defined at least by:
 - **Hero id** (align with Dota 2 / card-battler hero list).
 - **Primary attribute**: STR / AGI / INT / UNIVERSAL.
 - **Base attack interval** (seconds).
-- **Base attack damage** (or min/max).
+- **Base attack damage** (or min/max). Auto-attack is always **physical**.
+- **Base armor**: Reduces physical damage taken.
+- **Base magic resistance**: 0–1 (e.g. 0.25 = 25%); reduces magical damage taken.
 - **Base spell interval** (seconds), if the hero has an active spell; else N/A or “passive”.
-- **Spell/ability definition**: Reference to ability id(s). Start with **one spell per hero**; design is flexible to support **up to 3** spells per hero later. See SPELLS_AND_ABILITIES for active vs passive.
+- **Spell/ability definition**: Reference to ability id(s). Each damaging ability has a **damage type** (physical, magical, or pure). Start with **one spell per hero**; design is flexible to support **up to 3** spells per hero later. See SPELLS_AND_ABILITIES for active vs passive.
 
-From these we can derive **effective** interval and damage using current stats (AS, AD, spell haste, spell power) in the battle engine.
+From these we can derive **effective** interval and damage using current stats (AS, AD, spell haste, spell power) in the battle engine; damage is then reduced by the target's armor or magic resist (or bypassed for pure).
 
 ---
 
