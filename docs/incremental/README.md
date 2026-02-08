@@ -23,7 +23,14 @@ A **separate** game concept from the card-battler: an incremental/idle-style gam
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | Code layout, data models, timer engine, API surface |
 | [DEVELOPMENT_ROADMAP.md](./DEVELOPMENT_ROADMAP.md) | Phased implementation plan; short, testable chunks |
 | [OPEN_QUESTIONS.md](./OPEN_QUESTIONS.md) | Resolved decisions and open questions |
-| [phase-0/](./phase-0/) | Phase 0 pending items: [PHASE_0_PENDING.md](./phase-0/PHASE_0_PENDING.md) |
+| [phase-0/](./phase-0/) | Phase 0 decisions: [PHASE_0_PENDING.md](./phase-0/PHASE_0_PENDING.md); completion: [PHASE_0_COMPLETE.md](./phase-0/PHASE_0_COMPLETE.md) |
+
+## Implementation status
+
+- **Phase 0 (Foundation & Setup)**: ✅ Complete. See [DEVELOPMENT_ROADMAP.md](./DEVELOPMENT_ROADMAP.md#phase-0-foundation--setup--) and [phase-0/PHASE_0_COMPLETE.md](./phase-0/PHASE_0_COMPLETE.md).
+- **Phase 1+**: Not started.
+
+Code lives under `src/lib/incremental/`, `src/routes/incremental/`, and `src/routes/api/incremental/`.
 
 ## Quick Start
 
@@ -31,5 +38,3 @@ A **separate** game concept from the card-battler: an incremental/idle-style gam
 2. **How heroes behave in battle**: [BATTLE_MECHANICS.md](./BATTLE_MECHANICS.md) + [SPELLS_AND_ABILITIES.md](./SPELLS_AND_ABILITIES.md)  
 3. **What to build in code**: [ARCHITECTURE.md](./ARCHITECTURE.md)  
 4. **How to implement in chunks**: [DEVELOPMENT_ROADMAP.md](./DEVELOPMENT_ROADMAP.md)
-
-No code changes exist yet; this folder is planning-only.

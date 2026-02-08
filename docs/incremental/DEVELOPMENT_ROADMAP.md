@@ -37,20 +37,20 @@ Phase 11+: Shops, Training, PvP, background (depends on 7–10)
 
 ---
 
-## Phase 0: Foundation & Setup
+## Phase 0: Foundation & Setup ✅ Complete
 
 **Goal**: Folder structure, test setup, and shared types with no game logic.
 
-**Before starting**: See [phase-0/PHASE_0_PENDING.md](./phase-0/PHASE_0_PENDING.md) for questions and items to clarify.
+**Before starting**: See [phase-0/PHASE_0_PENDING.md](./phase-0/PHASE_0_PENDING.md) for questions and items to clarify. **Decisions recorded.** See [phase-0/PHASE_0_COMPLETE.md](./phase-0/PHASE_0_COMPLETE.md) for implementation summary.
 
-### Milestone 0.1: Folder structure and test config
+### Milestone 0.1: Folder structure and test config ✅
 **Dependencies**: None
 
 **Tasks**:
-- [ ] Create `src/lib/incremental/` (types, constants, engine, stats).
-- [ ] Create `src/routes/incremental/` and `src/routes/api/incremental/` placeholders (empty or minimal).
-- [ ] Add Vitest (or existing test runner) config to run tests under `src/lib/incremental/**/*.test.ts`.
-- [ ] Ensure incremental code is isolated (no imports from card-battler; can share auth/Prisma later).
+- [x] Create `src/lib/incremental/` (types, constants, engine, stats).
+- [x] Create `src/routes/incremental/` and `src/routes/api/incremental/` placeholders (empty or minimal).
+- [x] Add Vitest (or existing test runner) config to run tests under `src/lib/incremental/**/*.test.ts`.
+- [x] Ensure incremental code is isolated (no imports from card-battler; can share auth/Prisma later).
 
 **Deliverable**: Empty module layout; `npm run test` can run incremental tests.
 
@@ -58,14 +58,14 @@ Phase 11+: Shops, Training, PvP, background (depends on 7–10)
 
 ---
 
-### Milestone 0.2: Core types (no constants yet)
+### Milestone 0.2: Core types (no constants yet) ✅
 **Dependencies**: 0.1
 
 **Tasks**:
-- [ ] Define enums: `PrimaryAttribute` (STR, AGI, INT, UNIVERSAL), `NodeType` (combat, elite, boss, shop, event, rest, base), `BattleResult` (null, win, lose).
-- [ ] Define types: `HeroDef`, `AbilityDef`, `EnemyDef`, `EncounterDef` (reference data shapes from ARCHITECTURE and SPELLS_AND_ABILITIES).
-- [ ] Define runtime types: `HeroInstance`, `EnemyInstance`, `BattleState` (player side, enemy side, focusedHeroIndex, targetIndex, lastFocusChangeAt, elapsedTime, result).
-- [ ] Export from `src/lib/incremental/types.ts`.
+- [x] Define enums: `PrimaryAttribute` (STR, AGI, INT, UNIVERSAL), `NodeType` (combat, elite, boss, shop, event, rest, base), `BattleResult` (null, win, lose).
+- [x] Define types: `HeroDef`, `AbilityDef`, `EnemyDef`, `EncounterDef` (reference data shapes from ARCHITECTURE and SPELLS_AND_ABILITIES).
+- [x] Define runtime types: `HeroInstance`, `EnemyInstance`, `BattleState` (player side, enemy side, focusedHeroIndex, targetIndex, lastFocusChangeAt, elapsedTime, result).
+- [x] Export from `src/lib/incremental/types.ts`.
 
 **Files**: `src/lib/incremental/types.ts`
 
@@ -472,7 +472,7 @@ Phase 11+: Shops, Training, PvP, background (depends on 7–10)
 
 | Phase | Focus | Test in isolation | Integrates with |
 |-------|--------|-------------------|------------------|
-| 0 | Setup, types | Placeholder test, type shape | All |
+| 0 ✅ | Setup, types | Placeholder test, type shape | All |
 | 1 | Constants, formulas | Unit tests | Engine |
 | 2 | State, timers | Unit + small integration | Resolution |
 | 3 | Resolution, loop | Simulation (full battle) | API |
