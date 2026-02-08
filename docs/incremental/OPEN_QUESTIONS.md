@@ -50,6 +50,11 @@ The game has a **passive incremental** layer alongside active play: players **un
 
 - **Deep connection to Dota 2**: Players receive a **large boost** for heroes they **win on** in Dota 2. The **forge concept** (from card-battler) is borrowed to strengthen integration with real Dota 2 wins/losses.
 
+### Roster model (Option A) and hero ids
+
+- **Option A** is used: lineup stores **hero ids** (ordered 1–5); training is per **(userId, heroId)**. User A’s Lina ≠ User B’s Lina because training is per user. No “hero instance” entity; one training state per hero per user.
+- **Hero ids are integers** matching the existing **`Hero`** table in `prisma/schema.prisma` (`Hero.id`). Lineups, training, and battle state all use `Hero.id` so we can join with that table for names, `primary_attr`, and reuse across the app. Incremental-specific game stats (base intervals, abilities) live in code or a small table keyed by `Hero.id`.
+
 ### Stats and scaling
 
 - **Both** base stats and incremental sources:
@@ -87,6 +92,8 @@ The game has a **passive incremental** layer alongside active play: players **un
 12. **Spell slots?** → One per hero at start; flexible for up to 3.
 13. **Determinism?** → Some RNG OK; must be able to simulate battle start to finish.
 14. **Offline/background?** → PvE continues (auto-rotation); PvP pauses if either player leaves.
+15. **Roster / hero instances?** → **Option A**: lineup = `heroIds[]` (ordered); training per (userId, heroId). User A’s Lina ≠ User B’s Lina via training.
+16. **Hero id format?** → **Integer** (`Hero.id`) from existing `Hero` table in `prisma/schema.prisma`; use everywhere so we can join with that table.
 
 ---
 

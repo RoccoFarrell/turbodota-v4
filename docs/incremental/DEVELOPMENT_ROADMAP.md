@@ -41,6 +41,8 @@ Phase 11+: Shops, Training, PvP, background (depends on 7–10)
 
 **Goal**: Folder structure, test setup, and shared types with no game logic.
 
+**Before starting**: See [phase-0/PHASE_0_PENDING.md](./phase-0/PHASE_0_PENDING.md) for questions and items to clarify.
+
 ### Milestone 0.1: Folder structure and test config
 **Dependencies**: None
 
@@ -84,14 +86,14 @@ Phase 11+: Shops, Training, PvP, background (depends on 7–10)
 
 **Tasks**:
 - [ ] Implement `abilities.ts`: at least 3 abilities (e.g. Bristleback passive return damage, Lina Laguna Blade active, one simple enemy attack).
-- [ ] Implement `heroes.ts`: 3 hero definitions (e.g. Bristleback, Lina, Dazzle) with correct attribute, base attack interval, base attack damage, base spell interval, ability id. Use hero ids aligned with existing Dota constants if present.
+- [ ] Implement `heroes.ts`: Incremental game stats (base attack interval, damage, spell interval, ability id) keyed by **`Hero.id`** (Int) from existing `Hero` table. At least 3 heroes (e.g. Bristleback, Lina, Dazzle)—use their `Hero.id` from Prisma/DB.
 - [ ] Implement `encounters.ts`: enemy definitions for 2–3 unit types (e.g. Large Wolf, Small Wolf) with HP, attack interval, damage; one encounter “Wolf Pack” (1 large + 2 small).
 - [ ] Export lookup helpers: `getHeroDef(id)`, `getAbilityDef(id)`, `getEncounterDef(id)`.
 
 **Files**: `src/lib/incremental/constants/heroes.ts`, `abilities.ts`, `encounters.ts` (or single `constants/index.ts`).
 
 **Testing**:
-- `getHeroDef('lina')` returns Lina with spell interval and Laguna Blade ability id.
+- `getHeroDef(heroId)` (heroId = `Hero.id`) returns that hero’s incremental stats (spell interval, Laguna Blade ability id, etc.); hero identity/name from `Hero` table.
 - `getEncounterDef('wolf_pack')` returns 3 enemies (1 large, 2 small) with intervals and damage.
 
 **Deliverable**: Minimal reference data to drive the battle engine and API hero list.
@@ -210,7 +212,7 @@ Phase 11+: Shops, Training, PvP, background (depends on 7–10)
 **Dependencies**: 0.2 (types only; no engine)
 
 **Tasks**:
-- [ ] Add `IncrementalLineup`: id, userId, name, heroIds (JSON array or relation), createdAt, updatedAt.
+- [ ] Add `IncrementalLineup`: id, userId, name, **heroIds** (ordered array of **Int** = `Hero.id` from existing `Hero` table; Option A per ARCHITECTURE), createdAt, updatedAt.
 - [ ] Add `IncrementalRun`: id, userId, lineupId, status (active | won | dead), currentNodeId, startedAt, finishedAt; optional seed.
 - [ ] Add `IncrementalMapNode`: id, runId, nodeType (enum), encounterId (nullable), nextNodeIds (JSON), floor/act (optional). Or embed map as JSON on run for v1.
 - [ ] Run migration; ensure existing auth (User) can own lineups and runs.
@@ -271,7 +273,7 @@ Phase 11+: Shops, Training, PvP, background (depends on 7–10)
 
 **Tasks**:
 - [ ] `GET /api/incremental/lineups` – list current user’s lineups (from Prisma).
-- [ ] `POST /api/incremental/lineups` – body `{ name, heroIds }`; create lineup (validate 1–5 hero ids).
+- [ ] `POST /api/incremental/lineups` – body `{ name, heroIds }` (heroIds = array of `Hero.id` Int); create lineup (validate 1–5, ids exist in `Hero` table).
 - [ ] `GET /api/incremental/lineups/[id]` – get lineup by id (auth: own only).
 - [ ] `PATCH /api/incremental/lineups/[id]` – update name or heroIds.
 - [ ] `DELETE /api/incremental/lineups/[id]` – delete lineup.
@@ -420,9 +422,9 @@ Phase 11+: Shops, Training, PvP, background (depends on 7–10)
 
 **Tasks**:
 - [ ] Define how Dota 2 wins map to hero unlock/boost (reuse or mirror card-battler forge/claim if applicable). Persist “unlocked heroes” and optionally “hero progress” per user.
-- [ ] Training: per-hero, per-stat (e.g. health, attack damage, spell damage) progress; persist (e.g. IncrementalHeroTraining table). Training can be “queued” and advance over time or on login (design choice).
-- [ ] When building battle state, merge hero def + trained stats (formulas take trained bonuses).
-- [ ] Lineup builder: only show unlocked heroes; show training progress in UI.
+- [ ] Training: per **(userId, heroId)** where heroId = `Hero.id` (Option A); persist (e.g. IncrementalHeroTraining table). Training can be “queued” and advance over time or on login (design choice).
+- [ ] When building battle state, resolve each lineup slot: heroId → Hero + incremental stats + that user’s training for that heroId.
+- [ ] Lineup builder: only show unlocked heroes (from `Hero` table); show training progress per hero in UI.
 
 **Files**: Prisma models for unlock/training; run/battle state uses trained stats; API for training queue and progress; UI for training.
 

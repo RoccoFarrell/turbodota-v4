@@ -23,6 +23,7 @@ A **separate** game concept from the card-battler: an incremental/idle-style gam
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | Code layout, data models, timer engine, API surface |
 | [DEVELOPMENT_ROADMAP.md](./DEVELOPMENT_ROADMAP.md) | Phased implementation plan; short, testable chunks |
 | [OPEN_QUESTIONS.md](./OPEN_QUESTIONS.md) | Resolved decisions and open questions |
+| [phase-0/](./phase-0/) | Phase 0 pending items: [PHASE_0_PENDING.md](./phase-0/PHASE_0_PENDING.md) |
 
 ## Quick Start
 

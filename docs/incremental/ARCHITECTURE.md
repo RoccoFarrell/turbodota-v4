@@ -85,8 +85,18 @@ These map to **Prisma models** or **JSON in DB**; exact schema is for implementa
 - **User**: Existing auth user (no change).
 - **Hero unlock / Training**: Heroes are **unlocked** and boosted by **Dota 2 wins** (and forge-style integration). **Training** is a passive incremental layer: per-hero stat growth (e.g. Axe health, Void auto-attack, CM spell damage). Persist training progress (e.g. `IncrementalHeroTraining` or similar) so lineup strength reflects both base stats and trained stats.
 - **IncrementalLineup** (or `Lineup`):  
-  - `id`, `userId`, `name`, `heroIds[]` (ordered, **1–5 flexible**; some events may use a single hero), `createdAt`, `updatedAt`.  
-  - One “active” lineup per user for runs, or allow multiple named lineups.
+  - `id`, `userId`, `name`, **heroIds** (ordered array of **hero ids**, 1–5; see “Roster and hero ids” below), `createdAt`, `updatedAt`.  
+  - One “active” lineup per user for runs, or allow multiple named lineups.  
+  - **Hero ids** are **integers** matching the existing **`Hero`** table in `prisma/schema.prisma` (`Hero.id`), so we can join with that table for name, `localized_name`, `primary_attr`, etc., and reuse it across the app.
+
+#### Roster and hero ids (Option A – decided)
+
+We use **Option A**: lineup stores hero ids; training is per (userId, heroId). User A’s Lina and User B’s Lina are different because each user has their own training row per hero.
+
+- **Lineup**: `heroIds: number[]` (ordered 1–5). Each value is a **`Hero.id`** from the existing Prisma `Hero` table.  
+- **Training**: Stored per **(userId, heroId)** where `heroId` is `Hero.id`. “User A’s Lina” = hero from `Hero` table + User A’s training for that hero id.  
+- **Battle**: When building battle state, resolve each lineup slot: look up hero by id (from `Hero` + incremental game stats), then apply that user’s training for that heroId → effective stats.  
+- **Hero reference**: Use the existing **`Hero`** model (`id`, `name`, `localized_name`, `primary_attr`, etc.) for identity and display. Incremental-specific data (base attack interval, base damage, spell interval, ability ids) lives in code constants or a small table keyed by `heroId` (referencing `Hero.id`), so we don’t duplicate hero identity.
 
 ### Run and map
 
@@ -100,7 +110,7 @@ These map to **Prisma models** or **JSON in DB**; exact schema is for implementa
 ### Battle (in-memory or persisted)
 
 - **BattleState**:  
-  - **Player side**: List of hero instances (hero id, current HP, max HP, attack timer, spell timer, buffs). **Timers reset to 0** when a hero is unfocused (progress discarded on switch).  
+  - **Player side**: List of hero instances (hero id = `Hero.id`, current HP, max HP, attack timer, spell timer, buffs). **Timers reset to 0** when a hero is unfocused (progress discarded on switch).  
   - **Enemy side**: List of enemy instances (enemy def id, current HP, attack timer, optional spell timer)—same timer model as heroes; bosses can be as complex as a hero.  
   - **Focus**: `focusedHeroIndex` (which of the player’s heroes is currently active; only this hero’s timers advance). **Focus switch cooldown**: `lastFocusChangeAt` (or equivalent)—player cannot switch focus again for **2 seconds**. **Auto-rotation**: if no player input, advance focus every 10s.  
   - **Target**: `targetIndex` (or equivalent) for the **shared target** on the enemy side. Each team has one active (focus) hero and one shared target; **penalty** when attacking a non-focus enemy.  
@@ -111,7 +121,8 @@ These map to **Prisma models** or **JSON in DB**; exact schema is for implementa
 
 ### Reference data (no per-user state)
 
-- **Hero definition**: id, name, primary attribute, base attack interval, base attack damage, base spell interval (or null), ability id(s). **Spell slots**: one per hero at start; design for up to 3. Stored in code or DB (e.g. `IncrementalHero` table or JSON in constants).
+- **Hero**: Use the existing **`Hero`** table in `prisma/schema.prisma` (`id`, `name`, `localized_name`, `primary_attr`, etc.) for hero identity. All lineup and training references use **`Hero.id`** (integer).
+- **Incremental hero stats** (game-only): Base attack interval, base attack damage, base spell interval (or null), ability id(s). **Spell slots**: one per hero at start; design for up to 3. Stored in code (e.g. `lib/incremental/constants/heroes.ts`) keyed by `Hero.id`, or in a small table that references `Hero.id`, so we don’t add columns to the shared `Hero` table.
 - **Ability definition**: id, type (active | passive), trigger, effect (formula + target). Code or DB.
 - **Encounter definition**: id, list of (enemy def id, count or instance config). Code or DB.
 - **Enemy definition**: id, name, HP, attack pattern (e.g. interval + damage), optional spell. Code or DB.
@@ -138,7 +149,7 @@ These map to **Prisma models** or **JSON in DB**; exact schema is for implementa
 | Method | Path (conceptual) | Purpose |
 |--------|-------------------|--------|
 | GET    | `/api/incremental/lineups` | List current user’s lineups |
-| POST   | `/api/incremental/lineups` | Create lineup (body: name, heroIds[]) |
+| POST   | `/api/incremental/lineups` | Create lineup (body: name, heroIds[] where each is `Hero.id` Int) |
 | GET    | `/api/incremental/lineups/[id]` | Get lineup |
 | PATCH  | `/api/incremental/lineups/[id]` | Update lineup (e.g. hero order, name) |
 | DELETE | `/api/incremental/lineups/[id]` | Delete lineup |
@@ -158,7 +169,7 @@ PvP endpoints (e.g. queue, match, result) can be added later and follow the same
 
 - **Auth**: Use existing session/auth in SvelteKit (`hooks.server.ts`, user in `locals`). Protect all `/api/incremental/*` and `/incremental/*` routes by user.  
 - **Prisma**: Add new models to `prisma/schema.prisma` for lineups, runs, and optionally battle snapshot; run migrations when implementing.  
-- **Hero id**: Align with existing Dota hero id or name (e.g. from `dotadeck` or constants) so hero assets and names can be reused.  
+- **Hero id**: Use **integer** `Hero.id` from the existing `Hero` table in `prisma/schema.prisma` everywhere (lineups, training, battle state). Hero assets and names come from that table.  
 - **No coupling to card-battler**: No shared tables or battle logic; only thematic alignment (hero names, abilities). Separate docs and feature flags so the incremental game can be developed and shipped independently.
 
 ---
@@ -179,6 +190,6 @@ PvP endpoints (e.g. queue, match, result) can be added later and follow the same
 | **Data** | Lineup (hero ids), Run (map state, currentNode), BattleState (hero/enemy instances, focus, timers); reference data for heroes, abilities, encounters. |
 | **Engine** | Timer advance for focused hero only; **timers reset** on focus switch; **2s cooldown** on focus switch; 10s auto-rotation; shared target + non-focus penalty; resolution order (attack → spell → enemies → passives); full simulation support; PvE continues in background, PvP pauses if either player leaves. |
 | **API** | Lineups CRUD; run start/advance; battle get/update (focus + tick). |
-| **Integration** | Same auth and Prisma; hero ids aligned with Dota; feature separate from card-battler. |
+| **Integration** | Same auth and Prisma; hero ids = `Hero.id` from existing `Hero` table; feature separate from card-battler. |
 
 Implement when ready; this doc is the blueprint.
