@@ -164,15 +164,15 @@ Phase 11+: Shops, Training, PvP, background (depends on 7–10)
 
 **Goal**: Resolve auto-attack, spell, enemy actions, passives; apply damage and death; run full tick loop; support full battle simulation.
 
-### Milestone 3.1: Action resolution
+### Milestone 3.1: Action resolution ✅
 **Dependencies**: 2.1, 2.2, 1.1, 1.2
 
 **Tasks**:
-- [ ] `resolveAutoAttack(state, heroIndex)`: compute damage from hero def + formulas (attackDamage); apply **non-focus penalty** if state.targetIndex !== enemy’s focus index; subtract from enemy at state.targetIndex; if enemy has “on damage taken” passive (e.g. Bristleback), apply return damage to attacker (which may be enemy targeting player hero—clarify: for player hero attacking enemy, return damage is N/A; for enemy attacking player, player hero’s passive can reflect). Apply death (remove or mark dead).
-- [ ] `resolveSpell(state, heroIndex)`: if focused hero has active spell at interval, apply spell effect (e.g. Laguna Blade = big magic damage to target); use spellDamage formula; apply death.
-- [ ] `resolveEnemyActions(state, deltaTime)`: for each enemy, if attack (or spell) timer >= interval, resolve enemy attack (target player: e.g. front hero or shared target); apply player passive (e.g. Bristleback return damage) when player hero takes damage; reset enemy timer; apply death.
-- [ ] Order within tick: **player auto-attack → player spell → enemy actions**; passives fire when their trigger (e.g. damage taken) occurs during resolution.
-- [ ] After any resolution step: if all enemies dead → state.result = 'win'; if all player heroes dead → state.result = 'lose'.
+- [x] `resolveAutoAttack(state, heroIndex)`: compute damage from hero def + formulas (attackDamage); apply **non-focus penalty** if state.targetIndex !== enemy’s focus index; subtract from enemy at state.targetIndex; if enemy has “on damage taken” passive (e.g. Bristleback), apply return damage to attacker (which may be enemy targeting player hero—clarify: for player hero attacking enemy, return damage is N/A; for enemy attacking player, player hero’s passive can reflect). Apply death (remove or mark dead).
+- [x] `resolveSpell(state, heroIndex)`: if focused hero has active spell at interval, apply spell effect (e.g. Laguna Blade = big magic damage to target); use spellDamage formula; apply death.
+- [x] `resolveEnemyActions(state, deltaTime)`: for each enemy, if attack (or spell) timer >= interval, resolve enemy attack (target player: e.g. front hero or shared target); apply player passive (e.g. Bristleback return damage) when player hero takes damage; reset enemy timer; apply death.
+- [x] Order within tick: **player auto-attack → player spell → enemy actions**; passives fire when their trigger (e.g. damage taken) occurs during resolution.
+- [x] After any resolution step: if all enemies dead → state.result = 'win'; if all player heroes dead → state.result = 'lose'.
 
 **Files**: `src/lib/incremental/engine/resolution.ts`
 
@@ -186,12 +186,12 @@ Phase 11+: Shops, Training, PvP, background (depends on 7–10)
 
 ---
 
-### Milestone 3.2: Battle loop (tick)
+### Milestone 3.2: Battle loop (tick) ✅
 **Dependencies**: 2.2, 3.1
 
 **Tasks**:
-- [ ] `tick(state, deltaTime, options?)`: (1) Apply optional focus change from options (if provided and cooldown OK). (2) Apply auto-rotation if 10s since lastFocusChangeAt. (3) Advance timers (advanceTimers). (4) If focused hero attack timer >= interval, resolve auto-attack then reset timer. (5) If focused hero spell timer >= interval, resolve spell then reset timer. (6) Resolve enemy actions (advance enemy timers already done; for each that reached interval, resolve and reset). (7) If state.result set, return. Return new state (immutable or mutated clone).
-- [ ] Support `options: { focusChange?: number, targetChange?: number }` for tests and API.
+- [x] `tick(state, deltaTime, options?)`: (1) Apply optional focus change from options (if provided and cooldown OK). (2) Apply auto-rotation if 10s since lastFocusChangeAt. (3) Advance timers (advanceTimers). (4) If focused hero attack timer >= interval, resolve auto-attack then reset timer. (5) If focused hero spell timer >= interval, resolve spell then reset timer. (6) Resolve enemy actions (advance enemy timers already done; for each that reached interval, resolve and reset). (7) If state.result set, return. Return new state (immutable or mutated clone).
+- [x] Support `options: { focusChange?: number, targetChange?: number }` for tests and API.
 
 **Files**: `src/lib/incremental/engine/battle-loop.ts`
 
@@ -208,14 +208,14 @@ Phase 11+: Shops, Training, PvP, background (depends on 7–10)
 
 **Goal**: Persist lineups, runs, and map state; no battle state persistence required for initial PvE (battle can be in-memory per request).
 
-### Milestone 4.1: Prisma schema and migrations
+### Milestone 4.1: Prisma schema and migrations ✅
 **Dependencies**: 0.2 (types only; no engine)
 
 **Tasks**:
-- [ ] Add `IncrementalLineup`: id, userId, name, **heroIds** (ordered array of **Int** = `Hero.id` from existing `Hero` table; Option A per ARCHITECTURE), createdAt, updatedAt.
-- [ ] Add `IncrementalRun`: id, userId, lineupId, status (active | won | dead), currentNodeId, startedAt, finishedAt; optional seed.
-- [ ] Add `IncrementalMapNode`: id, runId, nodeType (enum), encounterId (nullable), nextNodeIds (JSON), floor/act (optional). Or embed map as JSON on run for v1.
-- [ ] Run migration; ensure existing auth (User) can own lineups and runs.
+- [x] Add `IncrementalLineup`: id, userId, name, **heroIds** (ordered array of **Int** = `Hero.id` from existing `Hero` table; Option A per ARCHITECTURE), createdAt, updatedAt.
+- [x] Add `IncrementalRun`: id, userId, lineupId, status (active | won | dead), currentNodeId, startedAt, finishedAt; optional seed.
+- [x] Add `IncrementalMapNode`: id, runId, nodeType (enum), encounterId (nullable), nextNodeIds (JSON), floor/act (optional). Or embed map as JSON on run for v1.
+- [x] Run migration; ensure existing auth (User) can own lineups and runs.
 
 **Files**: `prisma/schema.prisma`, migration.
 
@@ -226,13 +226,13 @@ Phase 11+: Shops, Training, PvP, background (depends on 7–10)
 
 ---
 
-### Milestone 4.2: Map graph and run initialization
+### Milestone 4.2: Map graph and run initialization ✅
 **Dependencies**: 4.1
 
 **Tasks**:
-- [ ] Define a minimal **map graph** (e.g. 3 combat nodes → 1 elite → 1 boss; or linear). Node type, encounterId for combat/elite/boss, nextNodeIds.
-- [ ] `createRunMap(runId, seed?)`: generate or assign map nodes to run (write to DB or return in-memory graph for run).
-- [ ] `getRunState(runId)`: return run + current node + next node choices (for API).
+- [x] Define a minimal **map graph** (e.g. 3 combat nodes → 1 elite → 1 boss; or linear). Node type, encounterId for combat/elite/boss, nextNodeIds.
+- [x] `createRunMap(runId, seed?)`: generate or assign map nodes to run (write to DB or return in-memory graph for run).
+- [x] `getRunState(runId)`: return run + current node + next node choices (for API).
 
 **Files**: `src/lib/incremental/map/graph.ts` (or under engine/), plus run service that uses Prisma.
 

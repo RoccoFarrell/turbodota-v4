@@ -8,9 +8,7 @@ generator client {
 // }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
 }
 
 // user models
@@ -37,6 +35,8 @@ model User {
   Turbotown     Turbotown[]
   userCards     UserCard[]
   dotaDeckGames DotaDeckGame[]
+  incrementalLineups IncrementalLineup[]
+  incrementalRuns    IncrementalRun[]
 }
 
 model UserPrefs {
@@ -580,4 +580,72 @@ model HeroDraw {
   cardId       String?
   seasonUser   SeasonUser @relation(fields: [seasonUserId], references: [id])
   card         Card?      @relation(fields: [cardId], references: [id])
+}
+
+// ---------------------------------------------------------------------------
+// Incremental game (lineup battler PvE)
+// ---------------------------------------------------------------------------
+
+enum IncrementalRunStatus {
+  ACTIVE
+  WON
+  DEAD
+}
+
+enum IncrementalNodeType {
+  COMBAT
+  ELITE
+  BOSS
+  SHOP
+  EVENT
+  REST
+  BASE
+}
+
+model IncrementalLineup {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  heroIds   Int[]    // ordered array of Hero.id
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  runs IncrementalRun[]
+
+  @@index([userId])
+}
+
+model IncrementalRun {
+  id             String               @id @default(cuid())
+  userId          String
+  lineupId        String
+  status          IncrementalRunStatus @default(ACTIVE)
+  currentNodeId   String               // id of current IncrementalMapNode
+  startedAt       DateTime             @default(now())
+  finishedAt      DateTime?
+  seed            String?              // optional for reproducible maps
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+
+  user   User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lineup IncrementalLineup    @relation(fields: [lineupId], references: [id], onDelete: Cascade)
+  nodes  IncrementalMapNode[]
+
+  @@index([userId])
+  @@index([lineupId])
+}
+
+model IncrementalMapNode {
+  id          String              @id @default(cuid())
+  runId       String
+  nodeType    IncrementalNodeType
+  encounterId String?              // set for combat / elite / boss
+  nextNodeIds String[]            // ids of reachable nodes (stored as text array or JSON in PG)
+  floor       Int?
+  act         Int?
+
+  run IncrementalRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+
+  @@index([runId])
 }

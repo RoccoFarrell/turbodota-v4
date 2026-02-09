@@ -1,3 +1,6 @@
+-- CreateSchema
+CREATE SCHEMA IF NOT EXISTS "public";
+
 -- CreateEnum
 CREATE TYPE "StatType" AS ENUM ('KILLS', 'ASSISTS', 'NET_WORTH', 'LAST_HITS', 'DENIES', 'DAMAGE', 'HEALING', 'BUILDING', 'SUPPORT', 'SCORE');
 
@@ -15,6 +18,12 @@ CREATE TYPE "CardAction" AS ENUM ('DRAWN', 'DISCARDED', 'QUEST_WIN', 'QUEST_LOSS
 
 -- CreateEnum
 CREATE TYPE "ModType" AS ENUM ('ADD', 'SUBTRACT', 'RESET', 'MODIFY');
+
+-- CreateEnum
+CREATE TYPE "IncrementalRunStatus" AS ENUM ('ACTIVE', 'WON', 'DEAD');
+
+-- CreateEnum
+CREATE TYPE "IncrementalNodeType" AS ENUM ('COMBAT', 'ELITE', 'BOSS', 'SHOP', 'EVENT', 'REST', 'BASE');
 
 -- CreateTable
 CREATE TABLE "User" (
@@ -490,21 +499,68 @@ CREATE TABLE "HeroDraw" (
 );
 
 -- CreateTable
+CREATE TABLE "IncrementalLineup" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "heroIds" INTEGER[],
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "IncrementalLineup_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "IncrementalRun" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "lineupId" TEXT NOT NULL,
+    "status" "IncrementalRunStatus" NOT NULL DEFAULT 'ACTIVE',
+    "currentNodeId" TEXT NOT NULL,
+    "startedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "finishedAt" TIMESTAMP(3),
+    "seed" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "IncrementalRun_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "IncrementalMapNode" (
+    "id" TEXT NOT NULL,
+    "runId" TEXT NOT NULL,
+    "nodeType" "IncrementalNodeType" NOT NULL,
+    "encounterId" TEXT,
+    "nextNodeIds" TEXT[],
+    "floor" INTEGER,
+    "act" INTEGER,
+
+    CONSTRAINT "IncrementalMapNode_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "_DotaUserToLeague" (
     "A" INTEGER NOT NULL,
-    "B" INTEGER NOT NULL
+    "B" INTEGER NOT NULL,
+
+    CONSTRAINT "_DotaUserToLeague_AB_pkey" PRIMARY KEY ("A","B")
 );
 
 -- CreateTable
 CREATE TABLE "_DotaUserToSeason" (
     "A" INTEGER NOT NULL,
-    "B" INTEGER NOT NULL
+    "B" INTEGER NOT NULL,
+
+    CONSTRAINT "_DotaUserToSeason_AB_pkey" PRIMARY KEY ("A","B")
 );
 
 -- CreateTable
 CREATE TABLE "_RandomToSeason" (
     "A" INTEGER NOT NULL,
-    "B" INTEGER NOT NULL
+    "B" INTEGER NOT NULL,
+
+    CONSTRAINT "_RandomToSeason_AB_pkey" PRIMARY KEY ("A","B")
 );
 
 -- CreateIndex
@@ -601,19 +657,22 @@ CREATE INDEX "Card_heroId_idx" ON "Card"("heroId");
 CREATE UNIQUE INDEX "Deck_seasonId_name_key" ON "Deck"("seasonId", "name");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "_DotaUserToLeague_AB_unique" ON "_DotaUserToLeague"("A", "B");
+CREATE INDEX "IncrementalLineup_userId_idx" ON "IncrementalLineup"("userId");
+
+-- CreateIndex
+CREATE INDEX "IncrementalRun_userId_idx" ON "IncrementalRun"("userId");
+
+-- CreateIndex
+CREATE INDEX "IncrementalRun_lineupId_idx" ON "IncrementalRun"("lineupId");
+
+-- CreateIndex
+CREATE INDEX "IncrementalMapNode_runId_idx" ON "IncrementalMapNode"("runId");
 
 -- CreateIndex
 CREATE INDEX "_DotaUserToLeague_B_index" ON "_DotaUserToLeague"("B");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "_DotaUserToSeason_AB_unique" ON "_DotaUserToSeason"("A", "B");
-
--- CreateIndex
 CREATE INDEX "_DotaUserToSeason_B_index" ON "_DotaUserToSeason"("B");
-
--- CreateIndex
-CREATE UNIQUE INDEX "_RandomToSeason_AB_unique" ON "_RandomToSeason"("A", "B");
 
 -- CreateIndex
 CREATE INDEX "_RandomToSeason_B_index" ON "_RandomToSeason"("B");
@@ -736,6 +795,18 @@ ALTER TABLE "HeroDraw" ADD CONSTRAINT "HeroDraw_seasonUserId_fkey" FOREIGN KEY (
 ALTER TABLE "HeroDraw" ADD CONSTRAINT "HeroDraw_cardId_fkey" FOREIGN KEY ("cardId") REFERENCES "Card"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "IncrementalLineup" ADD CONSTRAINT "IncrementalLineup_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "IncrementalRun" ADD CONSTRAINT "IncrementalRun_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "IncrementalRun" ADD CONSTRAINT "IncrementalRun_lineupId_fkey" FOREIGN KEY ("lineupId") REFERENCES "IncrementalLineup"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "IncrementalMapNode" ADD CONSTRAINT "IncrementalMapNode_runId_fkey" FOREIGN KEY ("runId") REFERENCES "IncrementalRun"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "_DotaUserToLeague" ADD CONSTRAINT "_DotaUserToLeague_A_fkey" FOREIGN KEY ("A") REFERENCES "DotaUser"("account_id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -752,4 +823,3 @@ ALTER TABLE "_RandomToSeason" ADD CONSTRAINT "_RandomToSeason_A_fkey" FOREIGN KE
 
 -- AddForeignKey
 ALTER TABLE "_RandomToSeason" ADD CONSTRAINT "_RandomToSeason_B_fkey" FOREIGN KEY ("B") REFERENCES "Season"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-

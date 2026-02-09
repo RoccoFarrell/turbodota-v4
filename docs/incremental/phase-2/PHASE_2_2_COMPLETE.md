@@ -25,4 +25,4 @@
 
 ## Next
 
-**Phase 3 – Milestone 3.1**: Action resolution – `resolveAutoAttack`, `resolveSpell`, `resolveEnemyActions`, then tick loop. See [DEVELOPMENT_ROADMAP.md](../DEVELOPMENT_ROADMAP.md#phase-3-battle-engine--resolution--loop).
+**Phase 3** is complete (see [phase-3/PHASE_3_COMPLETE.md](../phase-3/PHASE_3_COMPLETE.md)). Next: **Phase 4** – Data layer.

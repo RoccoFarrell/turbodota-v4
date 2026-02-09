@@ -64,6 +64,10 @@ export interface AbilityDef {
 	target?: string; // 'self' | 'single_enemy' | 'attacker' | etc.
 	/** Damage type for damaging abilities. Omit for heals/utility. Auto-attack is always physical. */
 	damageType?: DamageType;
+	/** Base damage for active damaging spells (e.g. Laguna Blade). */
+	baseDamage?: number;
+	/** For passives like return damage: fraction of damage taken reflected to attacker (e.g. 0.2 = 20%). */
+	returnDamageRatio?: number;
 }
 
 /** Enemy unit definition (HP, attack interval, damage, defensive stats). */

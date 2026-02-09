@@ -10,7 +10,7 @@ import {
 	applyPureDamage,
 	applyDamageByType
 } from './formulas';
-import { DamageType } from '../types';
+import { DamageType as DamageTypeConst } from '../types';
 
 /** Stat formulas: intervals, damage, non-focus penalty, damage type reduction. */
 describe('incremental formulas', () => {
@@ -93,9 +93,9 @@ describe('incremental formulas', () => {
 		/** applyDamageByType routes to physical/magical/pure and applies correct reduction. */
 		it('applyDamageByType dispatches by type', () => {
 			const target = { armor: 100, magicResist: 0.5 };
-			expect(applyDamageByType(100, DamageType.PHYSICAL, target)).toBe(50);
-			expect(applyDamageByType(100, DamageType.MAGICAL, target)).toBe(50);
-			expect(applyDamageByType(100, DamageType.PURE, target)).toBe(100);
+			expect(applyDamageByType(100, DamageTypeConst.PHYSICAL, target)).toBe(50);
+			expect(applyDamageByType(100, DamageTypeConst.MAGICAL, target)).toBe(50);
+			expect(applyDamageByType(100, DamageTypeConst.PURE, target)).toBe(100);
 		});
 	});
 });

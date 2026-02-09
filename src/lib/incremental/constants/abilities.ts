@@ -12,7 +12,8 @@ const abilities: AbilityDef[] = [
 		trigger: 'on_damage_taken',
 		effect: 'return_damage',
 		target: 'attacker',
-		damageType: 'physical'
+		damageType: 'physical',
+		returnDamageRatio: 0.2
 	},
 	{
 		id: 'laguna_blade',
@@ -20,7 +21,8 @@ const abilities: AbilityDef[] = [
 		trigger: 'timer',
 		effect: 'magic_damage',
 		target: 'single_enemy',
-		damageType: 'magical'
+		damageType: 'magical',
+		baseDamage: 100
 	},
 	{
 		id: 'shadow_wave',
