@@ -10,6 +10,19 @@ Example structure:
 - `docs/architecture/` - for architecture documentation
 - etc.
 
+## Prisma / Database migrations
+
+**ANY TIME** we change the database (add/remove/alter models, fields, enums, or indexes in `prisma/schema.prisma`):
+
+1. **Create a migration** – Do not only edit `schema.prisma`. Create a proper migration so history stays in sync:
+   - Run: `npx prisma migrate dev --name <descriptive_name>` (e.g. `add_user_preferences`, `phase7_run_rewards`).
+   - This creates a new folder under `prisma/migrations/<timestamp>_<name>/` with `migration.sql` and records it in the migration history.
+2. **Do not** use only `prisma db push` for schema changes that should be tracked (push does not create migration files and can desync history).
+3. **Do not** manually edit or delete existing migration files that have already been applied; that will desync production.
+4. If the user is baselining or resetting migration history, follow the steps in `prisma/BASELINE_INSTRUCTIONS.md` and do not run migrations that would drop or reset the production database without explicit user confirmation.
+
+This keeps migration history in sync and avoids "relation does not exist" or "migration failed" when deploying.
+
 ## Migration Tools Directive
 
 **CRITICAL**: If a migration tool needs to be run and fails (e.g., requires interactive terminal, TTY errors, etc.), DO NOT attempt to apply changes manually. Instead, stop and prompt the user to run the migration tool manually. This directive applies to all migration tools including but not limited to:

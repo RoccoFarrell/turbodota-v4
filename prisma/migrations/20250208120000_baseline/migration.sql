@@ -520,6 +520,9 @@ CREATE TABLE "IncrementalRun" (
     "startedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "finishedAt" TIMESTAMP(3),
     "seed" TEXT,
+    "gold" INTEGER NOT NULL DEFAULT 0,
+    "heroHp" JSONB,
+    "xpByHeroId" JSONB,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
