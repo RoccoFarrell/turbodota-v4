@@ -3,6 +3,7 @@ import prisma from '$lib/server/prisma';
 import type { PageServerLoad } from './$types';
 import type { Actions } from './$types';
 import { fail, redirect, json, error } from '@sveltejs/kit';
+import { MATCH_CUTOFF_START_TIME } from '$lib/constants/matches';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const session = await locals.auth.validate();
@@ -40,10 +41,11 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	const heroDescriptions = await prisma.hero.findMany();
 
-	// Get recent matches
+	// Get recent matches (site-wide cutoff: no matches before 2026-01-01)
 	const recentMatches = await prisma.match.findMany({
 		where: {
-			account_id: session.user.account_id
+			account_id: session.user.account_id,
+			start_time: { gte: MATCH_CUTOFF_START_TIME }
 		},
 		orderBy: {
 			start_time: 'desc'

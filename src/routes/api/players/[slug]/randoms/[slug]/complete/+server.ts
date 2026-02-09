@@ -3,6 +3,7 @@ import { auth } from '$lib/server/lucia';
 import prisma from '$lib/server/prisma';
 import winOrLoss from '$lib/helpers/winOrLoss';
 import dayjs from 'dayjs';
+import { MATCH_CUTOFF_START_TIME } from '$lib/constants/matches';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unreachable code error
@@ -38,7 +39,8 @@ export const POST: RequestHandler = async ({ request, params, url, locals, fetch
 					{ hero_id: random.randomedHero },
 					{
 						start_time: {
-							gt: dayjs(random.date).subtract(5, 'minute').unix()
+							gte: MATCH_CUTOFF_START_TIME,
+							gt: BigInt(dayjs(random.date).subtract(5, 'minute').unix())
 						}
 					}
 				]

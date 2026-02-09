@@ -1,20 +1,16 @@
 import { PrismaClient } from '@prisma/client';
-//import { env } from '$env/dynamic/private';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { env } from '$env/dynamic/private';
 
-// if (env.NODE_ENV === "development") {
-// 	options = {
-//         log: ['query', 'info', 'warn', 'error']
-//     }
-// }
-
-// const prisma = new PrismaClient(options)
-// prisma.$on('query', (e) => {
-//     console.log(e)
-// })
-
-const prisma = new PrismaClient({
-	//log: [{ level: 'query', emit: 'event' }, 'info', 'warn', 'error']
-});
+// Prisma 7 with engine type "client" requires a driver adapter for PostgreSQL.
+const connectionString = env.DIRECT_URL || env.DATABASE_URL || '';
+if (!connectionString) {
+	throw new Error(
+		'Prisma: set DIRECT_URL or DATABASE_URL in your environment (e.g. .env)'
+	);
+}
+const adapter = new PrismaPg({ connectionString });
+const prisma = new PrismaClient({ adapter });
 
 // prisma.$on('query', (e) => {
 // 	console.log(e);

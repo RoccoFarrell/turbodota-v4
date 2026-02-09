@@ -4,6 +4,7 @@
 @config '../tailwind.config.ts';
 
 @import "@skeletonlabs/skeleton";
+@import "@skeletonlabs/skeleton-svelte";
 @import "@skeletonlabs/skeleton/themes/crimson";
 
 @layer base {
@@ -111,6 +112,13 @@ body {
 	.shadow-primary-500 {
 		--tw-shadow-color: var(--color-primary-500);
 	}
+}
+
+/* Tab indicator: use primary color for selected underline (Zag/Skeleton tabs)
+ * https://zagjs.com/components/svelte/tabs - indicator has data-part="indicator", data-orientation
+ */
+[data-scope='tabs'][data-part='indicator'] {
+	background: var(--color-primary-500);
 }
 
 /* Skeleton v2 list-nav utility class - manually added for compatibility */

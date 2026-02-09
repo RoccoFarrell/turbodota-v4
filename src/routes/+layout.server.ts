@@ -75,8 +75,7 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 			include: {
 				members: {
 					include: {
-						user: true,
-						_count: true
+						user: true
 					}
 				},
 				seasons: {

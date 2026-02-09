@@ -1,230 +1,81 @@
+/**
+ * Seeds the dev database with one user (Rocco) and "Dev Test League".
+ * Order matters: DotaUser → User → Key (Lucia Steam) → League.
+ * The Key is required so Steam login (auth.useKey('steam', steamid)) works.
+ */
+import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
-import { EffectType, StatType } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
 
-const prisma = new PrismaClient();
+const connectionString = process.env.DIRECT_URL || process.env.DATABASE_URL || '';
+if (!connectionString) {
+	throw new Error('Prisma seed: set DIRECT_URL or DATABASE_URL in .env');
+}
+const adapter = new PrismaPg({ connectionString });
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
-	const cards = [
-		{
-			name: "Kill Kill Kill",
-			cost: 3,
-			baseFormula: "x3",
-			effectType: EffectType.STAT_MULTIPLIER,
-			statType: StatType.KILLS,
-			description: "Multiplies kill stat multiplier by 3",
-			imageUrl: "/cards/default.png",
-			isActive: true,
-			requiresTarget: false,
-			isDurationBased: false,
-			isStackable: false
-		},
-		{
-			name: "Touch, Don't Kill",
-			cost: 3,
-			baseFormula: "x3",
-			effectType: EffectType.STAT_MULTIPLIER,
-			statType: StatType.ASSISTS,
-			description: "Multiplies assist stat multiplier by 3",
-			imageUrl: "/cards/default.png",
-			isActive: true,
-			requiresTarget: false,
-			isDurationBased: false,
-			isStackable: false
-		},
-		{
-			name: "Line Goes Up",
-			cost: 3,
-			baseFormula: "x3",
-			effectType: EffectType.STAT_MULTIPLIER,
-			statType: StatType.NET_WORTH,
-			description: "Multiplies net worth stat multiplier by 3",
-			imageUrl: "/cards/default.png",
-			isActive: true,
-			requiresTarget: false,
-			isDurationBased: false,
-			isStackable: false
-		},
-		{
-			name: "Stop Taking My Last Hits",
-			cost: 3,
-			baseFormula: "x3",
-			effectType: EffectType.STAT_MULTIPLIER,
-			statType: StatType.LAST_HITS,
-			description: "Multiplies last hit stat multiplier by 3",
-			imageUrl: "/cards/default.png",
-			isActive: true,
-			requiresTarget: false,
-			isDurationBased: false,
-			isStackable: false
-		},
-		{
-			name: "Denied",
-			cost: 3,
-			baseFormula: "x3",
-			effectType: EffectType.STAT_MULTIPLIER,
-			statType: StatType.DENIES,
-			description: "Multiplies denies stat multiplier by 3",
-			imageUrl: "/cards/default.png",
-			isActive: true,
-			requiresTarget: false,
-			isDurationBased: false,
-			isStackable: false
-		},
-		{
-			name: "Zeus Spammer",
-			cost: 3,
-			baseFormula: "x3",
-			effectType: EffectType.STAT_MULTIPLIER,
-			statType: StatType.DAMAGE,
-			description: "Multiplies damage stat multiplier by 3",
-			imageUrl: "/cards/default.png",
-			isActive: true,
-			requiresTarget: false,
-			isDurationBased: false,
-			isStackable: false
-		},
-		{
-			name: "I Need Healing",
-			cost: 3,
-			baseFormula: "x3",
-			effectType: EffectType.STAT_MULTIPLIER,
-			statType: StatType.HEALING,
-			description: "Multiplies healing stat multiplier by 3",
-			imageUrl: "/cards/default.png",
-			isActive: true,
-			requiresTarget: false,
-			isDurationBased: false,
-			isStackable: false
-		},
-		{
-			name: "Ben AFK Splitpush",
-			cost: 3,
-			baseFormula: "x3",
-			effectType: EffectType.STAT_MULTIPLIER,
-			statType: StatType.BUILDING,
-			description: "Multiplies building stat multiplier by 3",
-			imageUrl: "/cards/default.png",
-			isActive: true,
-			requiresTarget: false,
-			isDurationBased: false,
-			isStackable: false
-		},
-		{
-			name: "4/10",
-			cost: 4,
-			baseFormula: "+1",
-			effectType: EffectType.STAT_ADDER,
-			statType: StatType.SUPPORT,
-			description: "Adds 1 to the support multiplier",
-			imageUrl: "/cards/default.png",
-			isActive: true,
-			requiresTarget: false,
-			isDurationBased: false,
-			isStackable: false
-		},
-		{
-			name: "Just End",
-			cost: 5,
-			baseFormula: "x3 - (.1 * 20-gamelength(minutes))",
-			effectType: EffectType.SCORE_MULTIPLIER,
-			statType: StatType.SCORE,
-			description: "3X mult if game is under 20 minutes, -.1X mult for every minute over, minimum of x1",
-			imageUrl: "/cards/default.png",
-			isActive: true,
-			requiresTarget: false,
-			isDurationBased: false,
-			isStackable: false
-		},
-		{
-			name: "All I Do Is Win",
-			cost: 5,
-			baseFormula: "x2 + (.1 * # of wins)",
-			effectType: EffectType.SCORE_MULTIPLIER,
-			statType: StatType.SCORE,
-			description: "Adds 0.1 to base 2x score per win while having the card active",
-			imageUrl: "/cards/default.png",
-			isActive: true,
-			requiresTarget: false,
-			isDurationBased: false,
-			isStackable: true
-		},
-		{
-			name: "Playstreak",
-			cost: 3,
-			baseFormula: "x3 + (.2 * days played in a row)",
-			effectType: EffectType.SCORE_MULTIPLIER,
-			statType: StatType.SCORE,
-			description: "Multiplies score by 3 + 0.2* days with a game played in a row",
-			imageUrl: "/cards/default.png",
-			isActive: true,
-			requiresTarget: false,
-			isDurationBased: false,
-			isStackable: true
-		},
-		{
-			name: "Get A Life",
-			cost: 4,
-			baseFormula: "x3 + (.5 every 5 games played solo)",
-			effectType: EffectType.SCORE_MULTIPLIER,
-			statType: StatType.SCORE,
-			description: "Multiplies score by 3 + 0.5* every 5 games played solo",
-			imageUrl: "/cards/default.png",
-			isActive: true,
-			requiresTarget: false,
-			isDurationBased: false,
-			isStackable: true
-		},
-		{
-			name: "Party Time",
-			cost: 4,
-			baseFormula: "x1 + (.1 per game per teammate in your stack)",
-			effectType: EffectType.SCORE_MULTIPLIER,
-			statType: StatType.SCORE,
-			description: "Add .1 to multiplier for every game and every teammate in your stack",
-			imageUrl: "/cards/default.png",
-			isActive: true,
-			requiresTarget: false,
-			isDurationBased: false,
-			isStackable: true
-		},
-		{
-			name: "Dota is Dead",
-			cost: 3,
-			baseFormula: "x3 + (.1 per day you don't play a game of dota)",
-			effectType: EffectType.SCORE_MULTIPLIER,
-			statType: StatType.SCORE,
-			description: "Add .1 to multiplier every day you don't queue a game of dota",
-			imageUrl: "/cards/default.png",
-			isActive: true,
-			requiresTarget: false,
-			isDurationBased: false,
-			isStackable: true
-		},
-		{
-			name: "The Duel",
-			cost: 5,
-			baseFormula: "+2x mult per stat (1 round)",
-			effectType: EffectType.SCORE_MULTIPLIER,
-			statType: StatType.SCORE,
-			description: "+2x mult for this round per stat you beat a chosen duel member",
-			imageUrl: "/cards/default.png",
-			isActive: true,
-			requiresTarget: true,
-			isDurationBased: true,
-			isStackable: false
-		}
-	];
+	const now = new Date('2024-01-16T03:10:25.957Z');
 
-	for (const card of cards) {
-		console.log(`Upserting card: ${card.name}`);
-		await prisma.heroCard.upsert({
-			where: { name: card.name },
-			update: card,
-			create: card,
+	// 1. DotaUser (required for User and League members)
+	await prisma.dotaUser.upsert({
+		where: { account_id: 65110965 },
+		create: {
+			account_id: 65110965,
+			createdDate: now,
+			lastUpdated: now
+		},
+		update: {}
+	});
+
+	// 2. User (Lucia auth user; id = steam_id string for Steam login)
+	await prisma.user.upsert({
+		where: { account_id: 65110965 },
+		create: {
+			id: '76561198025376693',
+			name: 'Rocco',
+			username: 'The Dog Petter',
+			account_id: 65110965,
+			steam_id: BigInt('76561198025376693'),
+			profile_url: 'https://steamcommunity.com/profiles/76561198025376693/',
+			avatar_url:
+				'https://avatars.steamstatic.com/6f8292e77e9ae4384e0028668c7b7b0049bd1ee5.jpg',
+			roles: 'dev',
+			createdDate: now,
+			lastUpdated: now
+		},
+		update: {}
+	});
+
+	// 3. Lucia Key for Steam (required for auth.useKey('steam', steamid); id = "providerId:providerUserId")
+	await prisma.key.upsert({
+		where: { id: 'steam:76561198025376693' },
+		create: {
+			id: 'steam:76561198025376693',
+			user_id: '76561198025376693',
+			hashed_password: null
+		},
+		update: {}
+	});
+
+	// 4. Dev Test League (creator = this user, member = their DotaUser)
+	const existing = await prisma.league.findFirst({ where: { name: 'Dev Test League' } });
+	if (existing) {
+		await prisma.league.update({
+			where: { id: existing.id },
+			data: { lastUpdated: new Date(), members: { set: [{ account_id: 65110965 }] } }
+		});
+	} else {
+		await prisma.league.create({
+			data: {
+				name: 'Dev Test League',
+				creatorID: 65110965,
+				createdDate: now,
+				lastUpdated: now,
+				members: { connect: [{ account_id: 65110965 }] }
+			}
 		});
 	}
-
-	console.log('Seed completed successfully');
 }
 
 main()

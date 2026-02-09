@@ -11,15 +11,9 @@
 	import { browser } from '$app/environment';
 
 	//skeleton
-	import {
-		AppBar,
-		Toast,
-		createToaster,
-		Dialog
-	} from '@skeletonlabs/skeleton-svelte';
+	import { AppBar, Toast, Dialog } from '@skeletonlabs/skeleton-svelte';
+	import { toaster } from '$lib/toaster';
 
-	// Create shared toaster instance for child components
-	const toaster = createToaster();
 	setContext('toaster', toaster);
 
 	//types
@@ -233,7 +227,19 @@
 	<div>Registering service worker {isReady}</div>
 {:then}
 	{#if browser}
-		<Toast.Group toaster={toaster} />
+		<Toast.Group toaster={toaster}>
+			{#snippet children(toast)}
+				<Toast toast={toast}>
+					<Toast.Message>
+						<Toast.Title>{toast.title}</Toast.Title>
+						{#if toast.description}
+							<Toast.Description>{toast.description}</Toast.Description>
+						{/if}
+					</Toast.Message>
+					<Toast.CloseTrigger />
+				</Toast>
+			{/snippet}
+		</Toast.Group>
 	{/if}
 	
 	<!-- Basic layout structure (AppShell doesn't exist in Skeleton v3) -->

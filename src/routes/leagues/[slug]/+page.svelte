@@ -1,91 +1,57 @@
 <script lang="ts">
-	import { setContext } from 'svelte';
 	import { enhance } from '$app/forms';
-	import { invalidate } from '$app/navigation';
-	import Trophy_light from '$lib/assets/trophy_light.png';
+	import { invalidate, invalidateAll } from '$app/navigation';
 	import { fade } from 'svelte/transition';
-	import type { User, League } from '@prisma/client';
 	import { Prisma } from '@prisma/client';
-
+	import { toaster } from '$lib/toaster';
 	import dayjs from 'dayjs';
+	import { today, getLocalTimeZone } from '@internationalized/date';
 
-	//page data
 	import type { PageData } from './$types';
-	export let data: PageData;
-
-	//components //skeleton
 	import { Tabs } from '@skeletonlabs/skeleton-svelte';
 	import RangeCalendar from '$lib/components/ui/range-calendar/range-calendar.svelte';
-	
-	// Skeleton v3 Tabs API - Control and Panel are accessed via Tabs.Control and Tabs.Panel
-	// Using the components directly ensures proper styling
-	
-	// ToastSettings type (may not be exported from Skeleton v3)
-	type ToastSettings = {
-		message: string;
-		background?: string;
-	};
-	
-	// TableSource type (not exported from Skeleton v3)
+	import Lock from '$lib/assets/lock.png';
+
+	let { data, form }: { data: PageData; form: any } = $props();
+
+	// Skeleton Toast: use shared toaster from $lib/toaster (same instance as Toast.Group)
+	function showToast(message: string, background?: string) {
+		const opts = { title: message };
+		if (background?.includes('success')) toaster.success(opts);
+		else if (background?.includes('error')) toaster.error(opts);
+		else if (background?.includes('warning')) toaster.warning(opts);
+		else toaster.info(opts);
+	}
 	type TableSource = {
 		head: string[];
 		body: any[][];
 		meta?: any[][];
 	};
-	
-	// Helper function to map table data values
-	function tableMapperValues(data: any[], keys: string[]): any[][] {
-		return data.map(item => keys.map(key => item[key]));
+	const tableKeys = ['name', 'id', 'type', 'startDate', 'endDate', 'membersCount', 'active'] as const;
+	function tableMapperValues(arr: any[], keys: string[]): any[][] {
+		return arr.map((item) => keys.map((key) => item[key]));
 	}
-
-	//images
-	import Lock from '$lib/assets/lock.png';
-
-	$: console.log(data);
-
-	export let form;
-
-	$: console.log(form);
-
-	//set active league
-	//setContext('selectedLeague', data.selectedLeague)
-
-	/* 
-		Get active seasons
-	*/
 
 	type LeagueWithSeasonsAndMembers = Prisma.LeagueGetPayload<{
 		include: {
-			members: {
-				include: {
-					user: true;
-				};
-			};
+			members: { include: { user: true } };
 			creator: true;
-			seasons: {
-				include: {
-					members: true;
-				};
-			};
+			seasons: { include: { members: true } };
 		};
 	}>;
+	type LeagueMemberRow = LeagueWithSeasonsAndMembers['members'][number] & {
+		display_name?: string | null;
+		avatar_url?: string | null;
+	};
 
-	let selectedLeague: LeagueWithSeasonsAndMembers = data.selectedLeague;
+	let selectedLeague = $derived(data.selectedLeague) as LeagueWithSeasonsAndMembers | null;
 
-	// Update season table data when form indicates success
-	$: if (form?.success) {
-		const t: ToastSettings = {
-			message: `Season created!`,
-			background: 'preset-filled-success-500'
-		};
-		toastStore.trigger(t);
-	}
+	let seasonTableData = $state<{ id: number; name: string; type: string; startDate: string; endDate: string; membersCount: number; active: boolean }[]>([]);
 
-	// Watch for data changes and update table
-	$: {
-		// Only update if we have valid data
-		if (data.selectedLeague?.seasons) {
-			seasonTableData = selectedLeague.seasons.map((season: any) => ({
+	$effect(() => {
+		const league = data.selectedLeague as LeagueWithSeasonsAndMembers | undefined;
+		if (league?.seasons) {
+			seasonTableData = league.seasons.map((season: any) => ({
 				id: season.id,
 				name: season.name,
 				type: season.type,
@@ -94,89 +60,49 @@
 				membersCount: season.members.length,
 				active: season.active
 			}));
-			
-			// Update table source
-			tableSource.body = tableMapperValues(seasonTableData, ['name', 'id', 'type', 'startDate', 'endDate', 'membersCount', 'active']);
-			tableSource.meta = tableSource.body;
 		}
-	}
-
-	// Watch selectedLeague for changes
-	$: selectedLeague = data.selectedLeague;
-
-	let seasonTableData = selectedLeague.seasons.map((season: any) => {
-		return {
-			id: season.id,
-			name: season.name,
-			type: season.type,
-			//creatorID: season.creator.username,
-			startDate: dayjs(season.startDate).format('MM/DD/YYYY'),
-			endDate: dayjs(season.endDate).format('MM/DD/YYYY'),
-			membersCount: season.members.length,
-			active: season.active
-		};
 	});
 
-	const tableSource: TableSource = {
-		// A list of heading labels.
-		head: ['Name', 'ID', 'Type', 'Start Date', 'End Date', 'Members', 'Status'],
-		// The data visibly shown in your table body UI.
-		body: tableMapperValues(seasonTableData, ['name', 'id', 'type', 'startDate', 'endDate', 'membersCount', 'active']),
-		// Optional: The data returned when interactive is enabled and a row is clicked.
-		meta: tableMapperValues(seasonTableData, ['name', 'id', 'type', 'startDate', 'endDate', 'membersCount', 'active'])
-		// Optional: A list of footer labels.
-		//foot: ['Total', '', '<code class="code">5</code>']
-	};
+	let tableSource = $derived<TableSource>({
+		head: ['Name', 'ID', 'Type', 'Start', 'End', 'Members', 'Status', 'Actions'],
+		body: tableMapperValues(seasonTableData, [...tableKeys]),
+		meta: tableMapperValues(seasonTableData, [...tableKeys])
+	});
 
-	import { getContext } from 'svelte';
-	const toastStore = getContext<{ trigger: (settings: ToastSettings) => void }>('toaster');
-
-	$: if (form?.missing) {
-		const t: ToastSettings = {
-			message: `Enter at least one valid Dota User ID`,
-			background: 'preset-filled-error-500'
-		};
-
-		toastStore.trigger(t);
-	} else if (form?.success) {
-		const t: ToastSettings = {
-			message: `Season created!`,
-			background: 'preset-filled-success-500'
-		};
-
-		toastStore.trigger(t);
-		// Invalidate the current page data to trigger a refresh
-		invalidate('app:leagues');
-	}
-	// Note: Skeleton v3 Tabs manages state internally - no need for tabSet variables
-
-	let friendsString: string = '';
-
-	const handleAddCommonFriend = (account_id: number) => {
-		if (!friendsString.includes(account_id.toString())) {
-			friendsString += `${account_id},`;
+	$effect(() => {
+		if (form?.missing) {
+			showToast('Enter at least one valid Dota User ID', 'preset-filled-error-500');
+		} else if (form?.addMembersSuccess) {
+			showToast('Members added to league', 'preset-filled-success-500');
+			invalidate(`/leagues/${data.selectedLeague?.id}`);
+			invalidate('app:leagues');
+		} else if (form?.removeMemberSuccess) {
+			showToast('Member removed from league', 'preset-filled-success-500');
+			invalidate(`/leagues/${data.selectedLeague?.id}`);
+			invalidate('app:leagues');
+		} else if (form?.success) {
+			showToast('Season created!', 'preset-filled-success-500');
+			invalidate('app:leagues');
 		}
-	};
+	});
 
-	const handleRemoveFromLeague = (user: User) => {
-		console.log(`remove ${user}`);
-	};
+	let friendsString = $state('');
+	let userSearchQuery = $state('');
+	let testToastCount = $state(0);
 
-	/* 
-		Calendar
-	*/
-	import { today, getLocalTimeZone } from '@internationalized/date';
+	let memberAccountIds = $derived(new Set(((data.selectedLeague as LeagueWithSeasonsAndMembers | undefined)?.members ?? []).map((m: any) => m.account_id)));
+	let usersNotInLeague = $derived((data.allUsers ?? []).filter((u: { account_id: number }) => !memberAccountIds.has(u.account_id)));
+	let filteredUsersToAdd = $derived(
+		userSearchQuery.trim()
+			? usersNotInLeague.filter((u: { username: string }) => u.username.toLowerCase().includes(userSearchQuery.toLowerCase()))
+			: usersNotInLeague
+	);
+
 	const start = today(getLocalTimeZone());
 	const end = start.add({ days: 7 });
-	let value = {
-		start,
-		end
-	};
+	let value = $state<{ start: typeof start; end: typeof end }>({ start, end });
 
-	$: leagueMemberIDs = selectedLeague.members.map((member: any) => member.account_id);
-	// $: (value: any) => {
-	// 	FormData.
-	// }
+	let leagueMemberIDs = $derived((selectedLeague as LeagueWithSeasonsAndMembers | null)?.members?.map((member: any) => member.account_id) ?? []);
 
 	async function handleSeasonStatusUpdate(seasonId: number, active: boolean) {
 		try {
@@ -189,39 +115,22 @@
 			});
 
 			if (response.ok) {
-				// Update local state immediately
-				seasonTableData = seasonTableData.map(season => {
-					if (season.id === seasonId) {
-						return { ...season, active };
-					}
-					return season;
-				});
+				seasonTableData = seasonTableData.map((season) =>
+					season.id === seasonId ? { ...season, active } : season
+				);
+				// Refresh the data (tableSource is $derived from seasonTableData)
+				if (selectedLeague) await invalidate(`/leagues/${selectedLeague.id}`);
 
-				// Force table to update
-				tableSource.body = tableMapperValues(seasonTableData, ['name', 'id', 'type', 'startDate', 'endDate', 'membersCount', 'active']);
-				tableSource.meta = tableSource.body;
-
-				// Refresh the data
-				await invalidate(`/leagues/${selectedLeague.id}`);
-
-				const t: ToastSettings = {
-					message: `Season status updated`,
-					background: 'preset-filled-success-500'
-				};
-				toastStore.trigger(t);
+				showToast('Season status updated', 'preset-filled-success-500');
 			}
 		} catch (error) {
-			const t: ToastSettings = {
-				message: `Failed to update season status`,
-				background: 'preset-filled-error-500'
-			};
-			toastStore.trigger(t);
+			showToast('Failed to update season status', 'preset-filled-error-500');
 		}
 	}
 
 	async function handleDeleteSeason(season: { id: number, name: string }) {
 		const confirmed = confirm(`Are you sure you want to delete ${season.name}? This cannot be undone.`);
-		if (!confirmed) return;
+		if (!confirmed || !selectedLeague) return;
 
 		const response = await fetch(`/api/leagues/${selectedLeague.id}/seasons/${season.id}`, {
 			method: 'DELETE'
@@ -229,36 +138,21 @@
 
 		const result = await response.json();
 		if (result.success) {
-			// Remove season from local state
-			seasonTableData = seasonTableData.filter(s => s.id !== season.id);
+			seasonTableData = seasonTableData.filter((s) => s.id !== season.id);
+			if (selectedLeague) await invalidate(`/leagues/${selectedLeague.id}`);
 
-			// Force table to update
-			tableSource.body = tableMapperValues(seasonTableData, ['name', 'id', 'type', 'startDate', 'endDate', 'membersCount', 'active']);
-			tableSource.meta = tableSource.body;
-
-			// Refresh the data
-			await invalidate(`/leagues/${selectedLeague.id}`);
-
-			const t: ToastSettings = {
-				message: 'Season deleted successfully',
-				background: 'preset-filled-success-500'
-			};
-			toastStore.trigger(t);
+			showToast('Season deleted successfully', 'preset-filled-success-500');
 		} else {
-			const t: ToastSettings = {
-				message: 'Failed to delete season',
-				background: 'preset-filled-error-500'
-			};
-			toastStore.trigger(t);
+			showToast('Failed to delete season', 'preset-filled-error-500');
 		}
 	}
 
-	// Form enhancement function
+	// Form enhancement function for season create
 	const enhanceForm = ({ form }: any) => {
 		return async ({ result, update }: any) => {
 			if (result.type === 'success') {
 				await Promise.all([
-					invalidate(`/leagues/${data.selectedLeague.id}`),
+					invalidate(`/leagues/${data.selectedLeague?.id}`),
 					invalidate('app:leagues'),
 					update()
 				]);
@@ -266,468 +160,418 @@
 			}
 		};
 	};
+
+	// Form enhancement for add/remove member actions
+	const enhanceMemberForm = () => {
+		return async ({ result, update }: any) => {
+			if (result.type === 'success') {
+				await Promise.all([
+					invalidate(`/leagues/${data.selectedLeague?.id}`),
+					invalidate('app:leagues'),
+					update()
+				]);
+			}
+		};
+	};
+
+	let refreshingMatches = $state(false);
+	async function refreshAllMatches() {
+		if (!selectedLeague || refreshingMatches) return;
+		refreshingMatches = true;
+		try {
+			const res = await fetch(`/api/leagues/${selectedLeague.id}/refresh-matches`, { method: 'POST' });
+			const result = await res.json();
+			if (res.ok && result.ok) {
+				showToast(`Refreshed matches for ${result.updated}/${result.total} members.`, 'preset-filled-success-500');
+				// Re-run all load functions for this page so memberMatchCounts refetches from DB
+				await invalidateAll();
+			} else {
+				showToast(result?.error ?? 'Failed to refresh matches', 'preset-filled-error-500');
+			}
+		} catch (e) {
+			showToast('Failed to refresh matches', 'preset-filled-error-500');
+		} finally {
+			refreshingMatches = false;
+		}
+	}
+
+	// Controlled tab state; custom classes so tab list + content layout and visibility work with our card layout.
+	let mainTab = $state('overview');
+	let membersSubTab = $state('members');
+
+	const mainTriggerClass = (value: string) =>
+		`px-6 py-3 font-medium transition-colors ${mainTab === value ? 'text-primary-500 font-semibold bg-primary-500/10' : 'text-surface-600 dark:text-surface-400'}`;
+	const subTriggerClass = (value: string) =>
+		`px-4 py-2.5 text-sm font-medium transition-colors ${membersSubTab === value ? 'text-primary-500 font-semibold bg-primary-500/10' : 'text-surface-600 dark:text-surface-400'}`;
 </script>
 
-<section class="lg:w-3/4 w-full h-screen px-4 lg:mx-auto my-4 space-y-8">
-	<!-- <div class="flex justify-center items-center space-x-8">
-		<img src={Trophy_light} class="w-20 h-20" alt="leagues page" />
-		<h2 class="h2 text-amber-500 vibrating">{selectedLeague.name}</h2>
-	</div>
-
-	<div class="card w-full border border-dashed border-red-500 p-4">
-		<div class="grid grid-cols-3 gap-4 place-items-center">
-			<div class="text-sm">
-				Commissioner: <p class="inline font-semibold text-xl text-primary-500">
-					{selectedLeague.creator.username}
-				</p>
+<section class="lg:max-w-5xl w-full min-h-screen px-4 lg:mx-auto py-6 space-y-6">
+	{#if selectedLeague}
+	<!-- League summary card: visible context without relying only on layout header -->
+	<div class="card border border-surface-200 dark:border-surface-700 p-5 rounded-xl bg-surface-50 dark:bg-surface-800/50">
+		<div class="flex flex-wrap items-center gap-x-8 gap-y-2 text-sm">
+			<div>
+				<span class="text-surface-500 dark:text-surface-400">Commissioner</span>
+				<p class="font-semibold text-primary-500">{selectedLeague.creator.username}</p>
 			</div>
 			<div>
-				Created on: <p class="inline font-semibold text-primary-500">
-					{dayjs(selectedLeague.createdDate).format('MM/DD/YYYY')}
-				</p>
+				<span class="text-surface-500 dark:text-surface-400">Created</span>
+				<p class="font-semibold text-surface-700 dark:text-surface-300">{dayjs(selectedLeague.createdDate).format('MMM D, YYYY')}</p>
 			</div>
 			<div>
-				Members: <p class="inline font-semibold text-primary-500">{selectedLeague.members.length}</p>
+				<span class="text-surface-500 dark:text-surface-400">Members</span>
+				<p class="font-semibold text-surface-700 dark:text-surface-300">{selectedLeague.members.length}</p>
 			</div>
 		</div>
-	</div> -->
-
-	<div class="space-y-2">
-		<h3 class="h3 text-primary-500">Active Seasons</h3>
-
-		{#if seasonTableData.length > 0}
-			<!-- <Table
-				source={tableSource}
-				class="table-compact"
-				regionCell="dark:first:text-purple-500 first:text-purple-600 first:font-bold"
-			/> -->
-
-			<div class="table-container">
-				<!-- Native Table Element -->
-				<table class="table ">
-					<thead>
-						<tr>
-							{#each tableSource.head as header, i}
-								<th>{header}</th>
-							{/each}
-						</tr>
-					</thead>
-					<tbody>
-						{#each tableSource.body as row, i}
-							<tr>
-								<td><a href={`/leagues/${selectedLeague.id}/seasons/${row[1]}`} class="font-bold text-purple-500 hover:underline hover:text-primary-600">{row[0]}</a></td>
-								<td>{row[1]}</td>
-								<td class="text-amber-500">{row[2]}</td>
-								<td>{row[3]}</td>
-								<td>{row[4]}</td>
-								<td>{row[5]}</td>
-								<td>
-									{#if row[6]}
-										<div class="flex items-center gap-2">
-											<span class="chip preset-filled-success-500">Active</span>
-											<button
-												class="btn btn-sm preset-tonal-warning"
-												on:click={() => handleSeasonStatusUpdate(parseInt(row[1]), false)}
-											>
-												Deactivate
-											</button>
-										</div>
-									{:else}
-										<div class="flex items-center gap-2">
-											<span class="chip preset-filled-surface-500">Inactive</span>
-											<button
-												class="btn btn-sm preset-tonal-success"
-												on:click={() => handleSeasonStatusUpdate(parseInt(row[1]), true)}
-											>
-												Activate
-											</button>
-										</div>
-									{/if}
-								</td>
-								<td>
-									<div class="flex gap-2">
-										<button
-											class="btn preset-filled-error-500"
-											on:click={() => handleDeleteSeason({ id: parseInt(row[1]), name: row[0] })}
-										>
-											<i class="fi fi-bs-trash"></i>
-										</button>
-									</div>
-								</td>
-							</tr>
-						{/each}
-					</tbody>
-					<!-- <tfoot>
-						<tr>
-							<td>{row[0]}</td>
-								<td>{row[1]}</td>
-								<td>{row[2]}</td>
-                                <td>{row[3]}</td>
-                                <td>{row[4]}</td>
-						</tr>
-					</tfoot> -->
-				</table>
-			</div>
-		{:else}
-			<div>No leagues found!</div>
-		{/if}
 	</div>
+
 	<div class="w-full">
-		<Tabs listJustify="justify-center" defaultValue="seasons">
-			{#snippet list()}
-				<Tabs.Control value="members">
-					{#snippet lead()}
-						<i class="fi fi-rr-users-alt"></i>
-					{/snippet}
-					Members
-				</Tabs.Control>
-				<Tabs.Control value="seasons">
-					{#snippet lead()}
-						<i class="fi fi-rr-calendar-star"></i>
-					{/snippet}
-					Seasons
-				</Tabs.Control>
-				<Tabs.Control value="history">
-					{#snippet lead()}
-						<i class="fi fi-rr-users-alt"></i>
-					{/snippet}
-					History
-				</Tabs.Control>
-			{/snippet}
+		<Tabs value={mainTab} onValueChange={(d) => (mainTab = d.value)}>
+			<div class="card p-0 overflow-hidden rounded-xl border border-surface-200 dark:border-surface-700">
+				<Tabs.List class="relative flex gap-0 min-h-12 bg-surface-100 dark:bg-surface-800 border-b border-surface-200 dark:border-surface-700">
+					<Tabs.Trigger value="overview" class={mainTriggerClass('overview')}>
+						<i class="fi fi-rr-apps mr-2" aria-hidden="true"></i>
+						Overview
+					</Tabs.Trigger>
+					<Tabs.Trigger value="members" class={mainTriggerClass('members')}>
+						<i class="fi fi-rr-users-alt mr-2" aria-hidden="true"></i>
+						Members
+					</Tabs.Trigger>
+					<Tabs.Trigger value="seasons" class={mainTriggerClass('seasons')}>
+						<i class="fi fi-rr-calendar-star mr-2" aria-hidden="true"></i>
+						Seasons
+					</Tabs.Trigger>
+					<Tabs.Trigger value="history" class={mainTriggerClass('history')}>
+						<i class="fi fi-rr-history mr-2" aria-hidden="true"></i>
+						History
+					</Tabs.Trigger>
+					<Tabs.Indicator />
+				</Tabs.List>
+			</div>
 
-			{#snippet content()}
-				<Tabs.Panel value="members">
-					<div class="space-y-4 card flex flex-col max-w-screen relative">
-						{#if !data.session || !data.session.user.roles || !data.session.user.roles.includes('dev')}
-							<div class="z-50 absolute w-full h-full bg-slate-900/90 flex items-center justify-center rounded-xl">
-								<img src={Lock} class="h-32 w-32 inline" alt="locked" />
-								<h3 class="h3 text-primary-500 rounded-xl m-4 bg-surface-500/90 p-4">
-									Contact an admin to manage Members!
-								</h3>
-							</div>
-						{/if}
-
-						<div class="p-4 space-y-4">
-							<form method="POST" class="space-y-8" action="?/createLeague" use:enhance>
-								<div>
-									<h4 class="h4 text-purple-500">Manage League Members</h4>
-
-									<Tabs defaultValue="members">
-										{#snippet list()}
-											<Tabs.Control value="members">
-												{#snippet lead()}
-													<i class="fi fi-rr-following"></i>
-												{/snippet}
-												Members
-											</Tabs.Control>
-											<Tabs.Control value="add-friends">
-												{#snippet lead()}
-													<i class="fi fi-br-user-add"></i>
-												{/snippet}
-												Add Friends
-											</Tabs.Control>
-											<Tabs.Control value="search-friends">
-												{#snippet lead()}
-													<i class="fi fi-rr-search-heart"></i>
-												{/snippet}
-												Search for Friends
-											</Tabs.Control>
-										{/snippet}
-
-										{#snippet content()}
-											<Tabs.Panel value="members">
-												<div class="flex w-full flex-wrap">
-													<div class="table-container">
-														<!-- Native Table Element -->
-														<table class="table ">
-															<thead>
-																<tr>
-																	<th>Position</th>
-																	<th>Last Turbo</th>
-																	<th>Actions</th>
-																</tr>
-															</thead>
-															<tbody>
-																{#each selectedLeague.members as friend}
-																	<tr class="items-center">
-																		<td>{friend?.user?.username || friend.account_id}</td>
-																		<td>{dayjs(friend.newestMatch).format('MM/DD/YYYY')}</td>
-																		<td>
-																			<button
-																				class="btn-icon btn-icon-sm preset-filled-warning-500 hover:translate-y-1 hover:bg-amber-500"
-																				on:click={(e) => {
-																					e.preventDefault();
-																					handleRemoveFromLeague(friend);
-																				}}
-																			>
-																				<i class="fi fi-bs-remove-user"></i>
-																			</button>
-																		</td>
-																	</tr>
-																{/each}
-															</tbody>
-															<!-- <tfoot>
-																<tr>
-																	<th colspan="3">Calculated Total Weight</th>
-																	<td>{totalWeight}</td>
-																</tr>
-															</tfoot> -->
-														</table>
-													</div>
-												</div>
-											</Tabs.Panel>
-											<Tabs.Panel value="add-friends">
-												<div class="flex flex-col space-y-4">
-													<div class="text-secondary-500">Most played with friends</div>
-													<div class="flex w-full flex-wrap">
-														{#if data.common.commonCombined}
-															{#each data.common.commonCombined as friend}
-																<div
-																	class="m-1 flex flex-col card card-hover xl:w-[calc(33%-1em)] md:w-[calc(50%-1em)] max-md:w-full h-full space-y-2 items-center"
-																>
-																	<div class="grid grid-cols-4 w-full min-h-[50px]">
-																		{#if friend.avatar_url}
-																			<div class="col-span-1 flex items-center w-full">
-																				<header class="rounded-l-full h-full">
-																					<img class="rounded-l-full h-full" src={friend.avatar_url} alt="friend" />
-																				</header>
-																			</div>
-																		{:else}
-																			<div class="col-span-1 flex justify-center items-center w-full">
-																				<header class="flex items-center">
-																					<i class="scale-150 fi fi-rr-portrait"></i>
-																				</header>
-																			</div>
-																		{/if}
-
-																		<div class="col-span-2">
-																			{#if friend.username}
-																				<section class="flex items-center h-full">
-																					<h5 class="h5 overflow-hidden text-ellipsis whitespace-nowrap">
-																						{friend.username}
-																					</h5>
-																				</section>
-																			{:else}
-																				<section class="flex items-center h-full">
-																					<h5 class="h5 overflow-hidden text-ellipsis whitespace-nowrap">{friend}</h5>
-																				</section>
-																			{/if}
-																		</div>
-																		<div
-																			class="preset-filled-success-500 rounded-r-full flex items-center justify-center hover:bg-green-300 hover:cursor-pointer"
-																		>
-																			<button
-																				class="p-2"
-																				disabled={friendsString.includes(
-																					friend.account_id ? friend.account_id : friend
-																				)}
-																				on:click={() =>
-																					handleAddCommonFriend(friend.account_id ? friend.account_id : friend)}
-																				><i class="fi fi-br-add"></i></button
-																			>
-																		</div>
-																	</div>
-																	<!-- <div class="flex justify-around space-x-2"></div> -->
-																	<!-- <footer>
-																		<button
-																			class="btn variant-ghost-secondary p-2"
-																			disabled={friendsString.includes(friend.account_id ? friend.account_id : friend)}
-																			on:click={() =>
-																				handleAddCommonFriend(friend.account_id ? friend.account_id : friend)}
-																			>Add to League</button
-																		>
-																	</footer> -->
-																</div>
-															{/each}
-														{/if}
-													</div>
-													<label class="label">
-														<span>Enter a comma separated list of your friend's Dota Account IDs:</span>
-														<textarea
-															class="textarea"
-															id="dotaUsersList"
-															name="dotaUsersList"
-															rows="4"
-															required
-															placeholder="100001, 20002, 30003, 40004, etc..."
-															bind:value={friendsString}
-														></textarea>
-													</label>
-
-													{#if form?.missing}
-														<!-- <p class="alert-message">Enter at least one valid Dota User ID.</p> -->
-														<aside class="alert preset-tonal-primary border border-primary-500" transition:fade|local={{ duration: 200 }}>
-															<div class="alert-message">
-																<h4 class="h4 text-red-600">Enter at least one valid Dota User ID</h4>
-																<p>Total length of valid Dota User IDs was 0.</p>
-															</div>
-														</aside>
-													{/if}
-												</div>
-											</Tabs.Panel>
-											<Tabs.Panel value="search-friends">
-												<div class="w-full italic text-center text-xl text-primary-500">Coming soon!</div>
-											</Tabs.Panel>
-										{/snippet}
-									</Tabs>
-								</div>
-
-								<div class="w-full flex justify-center">
-									<button type="submit" class="btn preset-filled-success-500 w-1/2 mx-auto">Update Members</button>
-								</div>
-							</form>
-						</div>
+			<!-- Overview: at-a-glance league info + active seasons -->
+			<Tabs.Content value="overview" class="focus:outline-none">
+				<div class="card mt-0 rounded-t-none border-t-0 border border-surface-200 dark:border-surface-700 p-6 space-y-6">
+					<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+						<h2 class="h3 text-surface-800 dark:text-surface-200">Active seasons</h2>
+						<button
+							type="button"
+							class="btn preset-tonal-success w-fit"
+							onclick={() => (mainTab = 'seasons')}
+						>
+							<i class="fi fi-rr-plus mr-2"></i>Create season
+						</button>
 					</div>
-				</Tabs.Panel>
-				<Tabs.Panel value="seasons">
-					<div class="space-y-4 card flex flex-col max-w-screen relative">
-						{#if !data.session.user.roles || !data.session.user.roles.includes('dev')}
-							<div class="z-50 absolute w-full h-full bg-slate-900/90 flex items-center justify-center rounded-xl">
-								<img src={Lock} class="h-32 w-32 inline" alt="locked" />
-								<h3 class="h3 text-primary-500 rounded-xl m-4 bg-surface-500/90 p-4">
-									Contact an admin to manage Seasons!
-								</h3>
+					{#if seasonTableData.length > 0}
+						<div class="table-container rounded-lg overflow-hidden border border-surface-200 dark:border-surface-700">
+							<table class="table">
+								<thead class="bg-surface-200 dark:bg-surface-700">
+									<tr>
+										{#each tableSource.head as header}
+											<th class="font-semibold text-surface-700 dark:text-surface-300 py-3 px-4 text-left">{header}</th>
+										{/each}
+									</tr>
+								</thead>
+								<tbody>
+									{#each tableSource.body as row}
+										<tr class="border-t border-surface-200 dark:border-surface-700 hover:bg-surface-100 dark:hover:bg-surface-800/50">
+											<td>
+												<a href={`/leagues/${selectedLeague.id}/seasons/${row[1]}`} class="font-semibold text-primary-500 hover:underline hover:text-primary-600">{row[0]}</a>
+											</td>
+											<td class="text-surface-500 dark:text-surface-400 text-sm">{row[1]}</td>
+											<td><span class="chip preset-tonal-warning text-xs">{row[2]}</span></td>
+											<td>{row[3]}</td>
+											<td>{row[4]}</td>
+											<td>{row[5]}</td>
+											<td>
+												{#if row[6]}
+													<span class="chip preset-filled-success-500 text-xs">Active</span>
+													<button
+														class="btn btn-sm preset-tonal-warning ml-1"
+														onclick={() => handleSeasonStatusUpdate(parseInt(row[1]), false)}
+													>Deactivate</button>
+												{:else}
+													<span class="chip preset-filled-surface-500 text-xs">Inactive</span>
+													<button
+														class="btn btn-sm preset-tonal-success ml-1"
+														onclick={() => handleSeasonStatusUpdate(parseInt(row[1]), true)}
+													>Activate</button>
+												{/if}
+											</td>
+											<td>
+												<button
+													class="btn btn-sm btn-icon preset-filled-error-500"
+													onclick={() => handleDeleteSeason({ id: parseInt(row[1]), name: row[0] })}
+													aria-label="Delete season {row[0]}"
+													title="Delete season"
+												>
+													<i class="fi fi-bs-trash" aria-hidden="true"></i>
+												</button>
+											</td>
+										</tr>
+									{/each}
+								</tbody>
+							</table>
+						</div>
+					{:else}
+						<div class="rounded-xl border border-dashed border-surface-300 dark:border-surface-600 p-8 text-center">
+							<p class="text-surface-500 dark:text-surface-400 mb-4">No seasons yet.</p>
+							<button type="button" class="btn preset-tonal-success" onclick={() => (mainTab = 'seasons')}>
+								<i class="fi fi-rr-plus mr-2"></i>Create first season
+							</button>
+						</div>
+					{/if}
+				</div>
+			</Tabs.Content>
+
+			<Tabs.Content value="members" class="focus:outline-none">
+					<div class="card flex flex-col relative mt-0 rounded-t-none border-t-0 border border-surface-200 dark:border-surface-700">
+						{#if !data.session || !data.session.user.roles || !data.session.user.roles.includes('dev')}
+							<div class="z-50 absolute inset-0 bg-surface-900/90 flex items-center justify-center rounded-b-xl">
+								<div class="text-center p-8 rounded-xl bg-surface-800 border border-surface-600">
+									<img src={Lock} class="h-24 w-24 mx-auto mb-4 opacity-80" alt="" />
+									<p class="text-surface-200 font-medium">Contact an admin to manage members.</p>
+								</div>
 							</div>
 						{/if}
 
-						<div class="p-4 space-y-4">
-							<form
-								method="POST"
-								class="space-y-8"
-								action="?/createSeason"
-								use:enhance={enhanceForm}
-							>
-								<input type="hidden" name="leagueID" value={selectedLeague.id} />
-								<input type="hidden" name="creatorID" value={data.session?.user.account_id} />
-								<input type="hidden" name="members" value={leagueMemberIDs.join(',')} />
-
-								<div class="space-y-8">
-									<h4 class="h4 text-amber-500">Create a Season</h4>
-									<!-- <label class="label">
-										<span>Season Name</span>
-										<input class="input" type="text" placeholder="Input" />
-									</label> -->
-
-									<div class="grid grid-cols-6 gap-2">
-										<label class="label text-xs col-span-3">
-											<span>League Name</span>
-											<input
-												class="input text-xs"
-												type="text"
-												disabled
-												name="leagueName"
-												bind:value={selectedLeague.name}
-											/>
-											<input
-												class="input text-xs"
-												type="text"
-												hidden
-												name="leagueName"
-												bind:value={selectedLeague.name}
-											/>
-										</label>
-										<label class="label text-xs">
-											<span>League ID</span>
-											<input
-												class="input text-xs"
-												type="text"
-												disabled
-												name="leagueID"
-												bind:value={selectedLeague.id}
-											/>
-											<input class="input text-xs" type="text" hidden name="leagueID" bind:value={selectedLeague.id} />
-										</label>
-										<label class="label text-xs">
-											<span>Creator ID</span>
-											<input
-												class="input text-xs"
-												type="text"
-												disabled
-												name="creatorID"
-												bind:value={data.session.user.account_id}
-											/>
-											<input
-												class="input text-xs"
-												type="text"
-												hidden
-												name="creatorID"
-												bind:value={data.session.user.account_id}
-											/>
-										</label>
-										<label class="label text-xs">
-											<span>Members Count</span>
-											<input
-												class="input text-xs"
-												type="text"
-												disabled
-												name="membersCount"
-												bind:value={selectedLeague.members.length}
-											/>
-											<input class="input text-xs" type="text" hidden name="members" bind:value={leagueMemberIDs} />
-										</label>
-									</div>
-									<label class="label" for="seasonType">
-										<span>Season Type</span>
-										<select class="select" name="seasonType" required>
-											<option value="dotadeck">Dotadeck</option>
-											<option value="random">Random Romp</option>
-											<option value="snake" disabled>Snake Draft Survival</option>
-											<option value="none" disabled>More season types to come soon!</option>
-											<!-- <option value="4">Option 4</option>
-											<option value="5">Option 5</option> -->
-										</select>
-									</label>
-
-									<!--
-										Hidden form fields 
-									-->
-
-									<label
-										for="seasonDateRange"
-										class="flex flex-col justify-center items-center w-full space-y-8 mx-auto"
-									>
-										<span class="text-primary-500 h4 border-b border-dashed border-secondary-500 w-1/2 text-center p-1"
-											>Season Date Range</span
+						<div class="p-6 space-y-6">
+							<div class="flex flex-wrap items-center justify-between gap-4">
+								<h2 class="h3 text-surface-800 dark:text-surface-200">Manage members</h2>
+								<div class="flex flex-wrap items-center gap-2">
+									{#if data.session?.user?.roles?.includes('dev')}
+										<button
+											type="button"
+											class="btn preset-filled-surface-500"
+											onclick={() => { testToastCount += 1; toaster.info({ title: `Test toast ${testToastCount}` }); }}
+											title="Fire a test toast (for testing stacking)"
 										>
-										<div class="flex justify-around w-full">
-											<div class="flex flex-col justify-center items-center">
-												<p class="h4 text-secondary-500">Your season will run from:</p>
-												{#if value.start && value.end}
-													<label class="label" for="seasonStartDate" hidden>
-														<input type="hidden" name="seasonStartDate" value={value.start.toString()} required />
-													</label>
-													<p class="font-bold text-green-500">
-														{dayjs(value.start.toString()).format('dddd [-] MM/DD/YYYY')}
-													</p>
-													<p class="text-xs italic">to</p>
-													<label class="label" for="seasonEndDate" hidden>
-														<input type="hidden" name="seasonEndDate" value={value.end.toString()} required />
-													</label>
-													<p class="font-bold text-green-500">
-														{dayjs(value.end.toString()).format('dddd [-] MM/DD/YYYY')}
-													</p>
+											Test toast
+										</button>
+									{/if}
+									{#if data.session?.user?.roles?.includes('dev') && selectedLeague?.members?.length}
+										<button
+											type="button"
+											class="btn preset-tonal-primary"
+											disabled={refreshingMatches}
+											onclick={refreshAllMatches}
+											title="Fetch latest matches from OpenDota for all league members"
+										>
+											{#if refreshingMatches}
+												<i class="fi fi-rr-spinner animate-spin mr-2" aria-hidden="true"></i>
+												Refreshing…
+											{:else}
+												<i class="fi fi-rr-refresh mr-2" aria-hidden="true"></i>
+												Refresh all matches
+											{/if}
+										</button>
+									{/if}
+								</div>
+							</div>
+
+							<Tabs value={membersSubTab} onValueChange={(d) => (membersSubTab = d.value)}>
+								<nav class="border-b border-surface-200 dark:border-surface-700 mb-6" aria-label="Member management">
+									<Tabs.List class="relative flex flex-wrap gap-0">
+										<Tabs.Trigger value="members" class={subTriggerClass('members')}>
+											<i class="fi fi-rr-following mr-1.5" aria-hidden="true"></i>
+											Current members
+										</Tabs.Trigger>
+										<Tabs.Trigger value="add-friends" class={subTriggerClass('add-friends')}>
+											<i class="fi fi-br-user-add mr-1.5" aria-hidden="true"></i>
+											Add by ID
+										</Tabs.Trigger>
+										<Tabs.Trigger value="pick-database" class={subTriggerClass('pick-database')}>
+											<i class="fi fi-rr-database mr-1.5" aria-hidden="true"></i>
+											From database
+										</Tabs.Trigger>
+										<Tabs.Indicator />
+									</Tabs.List>
+								</nav>
+
+								<Tabs.Content value="members" id="tabs:s2:content-members" class="focus:outline-none w-full">
+										<div class="flex w-full flex-wrap">
+											<div class="table-container w-full rounded-lg overflow-hidden border border-surface-200 dark:border-surface-700">
+												<table class="table w-full">
+													<thead class="bg-surface-200 dark:bg-surface-700">
+														<tr>
+															<th class="font-semibold text-surface-700 dark:text-surface-300 py-2.5 px-4">User</th>
+															<th class="font-semibold text-surface-700 dark:text-surface-300 py-2.5 px-4">Last Turbo</th>
+															<th class="font-semibold text-surface-700 dark:text-surface-300 py-2.5 px-4">Last Ranked</th>
+															<th class="font-semibold text-surface-700 dark:text-surface-300 py-2.5 px-4">Turbo (30d)</th>
+															<th class="font-semibold text-surface-700 dark:text-surface-300 py-2.5 px-4">Ranked (30d)</th>
+															<th class="font-semibold text-surface-700 dark:text-surface-300 py-2.5 px-4">Actions</th>
+														</tr>
+													</thead>
+													<tbody>
+														{#each selectedLeague.members as friend}
+															{@const member = friend as LeagueMemberRow}
+															<tr class="items-center">
+																<td class="flex items-center gap-2">
+																	{#if member?.user?.avatar_url ?? member?.avatar_url}
+																		<img class="rounded-full h-8 w-8 shrink-0" src={member?.user?.avatar_url ?? member?.avatar_url} alt="" />
+																	{:else}
+																		<div class="rounded-full h-8 w-8 shrink-0 bg-surface-500 flex items-center justify-center">
+																			<i class="fi fi-rr-portrait text-sm"></i>
+																		</div>
+																	{/if}
+																	<span>{member?.user?.username ?? member?.display_name ?? member.account_id}</span>
+																</td>
+																<td>{member.newestMatch ? dayjs(member.newestMatch).format('MM/DD/YYYY') : '—'}</td>
+																<td>{data.memberLastRanked?.[member.account_id] ? dayjs(data.memberLastRanked[member.account_id]).format('MM/DD/YYYY') : '—'}</td>
+																<td>{data.memberMatchCounts?.[member.account_id]?.turbo ?? 0}</td>
+																<td>{data.memberMatchCounts?.[member.account_id]?.ranked ?? 0}</td>
+																<td>
+																	<form method="POST" action="?/removeLeagueMember" use:enhance={enhanceMemberForm}>
+																		<input type="hidden" name="account_id" value={member.account_id} />
+																		<button
+																			type="submit"
+																			class="btn-icon btn-icon-sm preset-filled-warning-500 hover:translate-y-1 hover:bg-amber-500"
+																			title="Remove from league"
+																			aria-label="Remove {member?.user?.username ?? member?.display_name ?? member.account_id} from league"
+																		>
+																			<i class="fi fi-bs-remove-user" aria-hidden="true"></i>
+																		</button>
+																	</form>
+																</td>
+															</tr>
+														{/each}
+													</tbody>
+												</table>
+											</div>
+										</div>
+									</Tabs.Content>
+									<Tabs.Content value="add-friends" class="focus:outline-none">
+										<form method="POST" action="?/addLeagueMembers" use:enhance={enhanceMemberForm} class="flex flex-col space-y-4 max-w-md">
+											<p class="text-sm text-surface-500 dark:text-surface-400">Add members by Dota account ID. Enter one or more IDs, comma-separated.</p>
+											<label class="label">
+												<span class="font-medium text-surface-700 dark:text-surface-300">Account IDs</span>
+												<textarea
+													class="textarea mt-1"
+													name="account_ids"
+													rows="4"
+													placeholder="e.g. 65110965, 423076846"
+													bind:value={friendsString}
+												></textarea>
+											</label>
+											{#if form?.missing}
+												<aside class="alert preset-tonal-primary border border-primary-500" transition:fade|local={{ duration: 200 }}>
+													<div class="alert-message">
+														<h4 class="h4 text-red-600">Enter at least one valid Dota User ID</h4>
+													</div>
+												</aside>
+											{/if}
+											<button type="submit" class="btn preset-filled-success-500 w-fit">Add to league</button>
+										</form>
+									</Tabs.Content>
+									<Tabs.Content value="pick-database" class="focus:outline-none">
+										<div class="space-y-4 max-w-2xl">
+											<p class="text-sm text-surface-500 dark:text-surface-400">Add any user from the app database to this league.</p>
+											<label class="label block">
+												<span class="font-medium text-surface-700 dark:text-surface-300">Search users</span>
+												<input
+													type="search"
+													class="input mt-1"
+													placeholder="Filter by username..."
+													bind:value={userSearchQuery}
+													aria-label="Search users to add"
+												/>
+											</label>
+											<div class="max-h-80 overflow-y-auto rounded-lg border border-surface-200 dark:border-surface-700 divide-y divide-surface-200 dark:divide-surface-700">
+												{#if filteredUsersToAdd.length === 0}
+													<div class="p-6 text-center text-surface-500 dark:text-surface-400 text-sm">
+														{userSearchQuery.trim() ? 'No users match your search.' : 'All database users are already in this league.'}
+													</div>
+												{:else}
+													{#each filteredUsersToAdd as user}
+														<div class="flex items-center justify-between gap-4 p-3 hover:bg-surface-100 dark:hover:bg-surface-800/50">
+															<div class="flex items-center gap-3 min-w-0">
+																{#if user.avatar_url}
+																	<img class="rounded-full h-10 w-10 shrink-0" src={user.avatar_url} alt="" />
+																{:else}
+																	<div class="rounded-full h-10 w-10 shrink-0 bg-surface-500 flex items-center justify-center">
+																		<i class="fi fi-rr-portrait text-xl"></i>
+																	</div>
+																{/if}
+																<span class="font-medium truncate">{user.username}</span>
+																<span class="text-sm text-secondary-500 shrink-0">ID: {user.account_id}</span>
+															</div>
+															<form method="POST" action="?/addLeagueMembers" use:enhance={enhanceMemberForm} class="shrink-0">
+																<input type="hidden" name="account_ids" value={user.account_id} />
+																<button type="submit" class="btn btn-sm preset-tonal-success">
+																	<i class="fi fi-br-add mr-1"></i> Add to league
+																</button>
+															</form>
+														</div>
+													{/each}
 												{/if}
 											</div>
-											<div class="w-fit">
-												<RangeCalendar bind:value class="border rounded-md" numberOfMonths={2} />
-											</div>
 										</div>
-									</label>
+									</Tabs.Content>
+							</Tabs>
+						</div>
+					</div>
+				</Tabs.Content>
+				<Tabs.Content value="seasons" class="focus:outline-none">
+					<div class="card flex flex-col relative mt-0 rounded-t-none border-t-0 border border-surface-200 dark:border-surface-700">
+						{#if !data.session?.user?.roles?.includes('dev')}
+							<div class="z-50 absolute inset-0 bg-surface-900/90 flex items-center justify-center rounded-b-xl">
+								<div class="text-center p-8 rounded-xl bg-surface-800 border border-surface-600">
+									<img src={Lock} class="h-24 w-24 mx-auto mb-4 opacity-80" alt="" />
+									<p class="text-surface-200 font-medium">Contact an admin to manage seasons.</p>
+								</div>
+							</div>
+						{/if}
+
+						<div class="p-6 space-y-6">
+							<div>
+								<h2 class="h3 text-surface-800 dark:text-surface-200">Create a season</h2>
+								<p class="text-sm text-surface-500 dark:text-surface-400 mt-1">Active seasons are listed in the Overview tab.</p>
+							</div>
+
+							<form method="POST" action="?/createSeason" use:enhance={enhanceForm} class="space-y-6 max-w-xl">
+								<input type="hidden" name="leagueID" value={selectedLeague.id} />
+								<input type="hidden" name="leagueName" value={selectedLeague.name} />
+								<input type="hidden" name="creatorID" value={data.session?.user.account_id ?? ''} />
+								<input type="hidden" name="members" value={leagueMemberIDs.join(',')} />
+
+								<label class="label block" for="seasonType">
+									<span class="font-medium text-surface-700 dark:text-surface-300">Season type</span>
+									<select id="seasonType" class="select mt-1 w-full" name="seasonType" required>
+										<option value="dotadeck">Dotadeck</option>
+										<option value="random">Random Romp</option>
+										<option value="snake" disabled>Snake Draft Survival</option>
+										<option value="none" disabled>More season types coming soon</option>
+									</select>
+								</label>
+
+								<div id="seasonDateRange" class="space-y-3">
+									<span class="font-medium text-surface-700 dark:text-surface-300 block">Season date range</span>
+									<input type="hidden" name="seasonStartDate" value={value.start?.toString() ?? ''} required />
+									<input type="hidden" name="seasonEndDate" value={value.end?.toString() ?? ''} required />
+									{#if value.start && value.end}
+										<p class="text-sm text-surface-600 dark:text-surface-400">
+											{dayjs(value.start.toString()).format('MMM D, YYYY')} – {dayjs(value.end.toString()).format('MMM D, YYYY')}
+										</p>
+									{/if}
+									<RangeCalendar bind:value class="border border-surface-200 dark:border-surface-600 rounded-lg" numberOfMonths={2} />
 								</div>
 
-								<div class="w-full flex justify-center">
-									<button type="submit" class="btn preset-filled-success-500 w-1/2 mx-auto"
-										><i class="fi fi-rr-magic-wand mx-2"></i> Create Season</button
-									>
-								</div>
+								<button type="submit" class="btn preset-filled-success-500">
+									<i class="fi fi-rr-plus mr-2"></i>Create season
+								</button>
 							</form>
 						</div>
 					</div>
-				</Tabs.Panel>
-				<Tabs.Panel value="history">
-					(tab panel 3 contents)
-				</Tabs.Panel>
-			{/snippet}
+				</Tabs.Content>
+				<Tabs.Content value="history" class="focus:outline-none">
+					<div class="card mt-0 rounded-t-none border-t-0 border border-surface-200 dark:border-surface-700 p-12 text-center">
+						<i class="fi fi-rr-history text-4xl text-surface-400 dark:text-surface-500 mb-4" aria-hidden="true"></i>
+						<p class="text-surface-500 dark:text-surface-400">History coming soon.</p>
+					</div>
+				</Tabs.Content>
 		</Tabs>
 	</div>
+	{:else}
+		<p class="text-secondary-500">League not found.</p>
+	{/if}
 </section>

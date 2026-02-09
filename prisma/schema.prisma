@@ -57,6 +57,8 @@ model DotaUser {
   newestMatch   DateTime?
   oldestMatchID BigInt?
   newestMatchID BigInt?
+  display_name  String?         // from OpenDota when added by account ID (no Steam login)
+  avatar_url    String?         // from OpenDota when added by account ID
   leagues       League[]
   seasons       Season[]
   user          User?

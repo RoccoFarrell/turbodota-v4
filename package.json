@@ -18,7 +18,9 @@
     "lint": "prettier --check .",
     "format": "prettier --write .",
     "prisma": "cross-env NODE_ENV=development npx prisma generate && npx prisma db push",
-    "prisma:prod": "cross-env NODE_ENV=production npx prisma generate && npx prisma db push"
+    "prisma:prod": "cross-env NODE_ENV=production npx prisma generate && npx prisma db push",
+    "prisma:reset": "npx prisma migrate reset && npx prisma db seed",
+    "prisma:seed": "npx prisma db seed"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.1",
@@ -70,6 +72,7 @@
     "@floating-ui/dom": "^1.7.4",
     "@internationalized/date": "^3.10.0",
     "@lucia-auth/adapter-prisma": "^3.0.2",
+    "@prisma/adapter-pg": "^7.3.0",
     "@prisma/client": "^7.0.0",
     "@types/node-steam-openid": "^1.0.3",
     "@vercel/analytics": "^1.5.0",
@@ -81,6 +84,7 @@
     "dota2-css-hero-sprites": "^2.6.2",
     "lucia": "^2.7.7",
     "node-steam-openid": "^1.2.1",
+    "pg": "^8.18.0",
     "radix-icons-svelte": "^1.2.1"
   },
   "msw": {

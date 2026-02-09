@@ -2,6 +2,7 @@ import { json } from '@sveltejs/kit';
 import prisma from '$lib/server/prisma';
 import type { RequestHandler } from './$types';
 import { DOTADECK } from '$lib/constants/dotadeck';
+import { MATCH_CUTOFF_START_TIME } from '$lib/constants/matches';
 import winOrLoss from '$lib/helpers/winOrLoss';
 
 export const POST: RequestHandler = async ({ request, fetch }) => {
@@ -46,10 +47,11 @@ export const POST: RequestHandler = async ({ request, fetch }) => {
             return json({ success: false, error: 'No active draws found' });
         }
 
-        // Get all recent matches for the user
+        // Get all recent matches for the user (site-wide cutoff: no matches before 2026-01-01)
         const recentMatches = await prisma.match.findMany({
             where: {
                 account_id: heroDraws[0].seasonUser.accountId,
+                start_time: { gte: MATCH_CUTOFF_START_TIME }
             },
             orderBy: {
                 start_time: 'desc'
