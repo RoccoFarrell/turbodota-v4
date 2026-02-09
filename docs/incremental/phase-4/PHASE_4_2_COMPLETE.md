@@ -29,4 +29,4 @@
 
 ## Next
 
-**Phase 5 – Milestone 5.1**: Start run and advance node – `startRun(userId, lineupId)`, `advanceRun(runId, userId, nextNodeId)`, create battle when entering combat/elite/boss. See [DEVELOPMENT_ROADMAP.md](../DEVELOPMENT_ROADMAP.md#phase-5-run--encounter-flow).
+**Phase 5.1** is complete (see [phase-5/PHASE_5_1_COMPLETE.md](../phase-5/PHASE_5_1_COMPLETE.md)). Next: **Phase 6** – API layer.

@@ -9,6 +9,8 @@ export interface CreateBattleStateOptions {
 	elapsedTime?: number;
 	/** Optional initial lastFocusChangeAt (default 0). */
 	lastFocusChangeAt?: number;
+	/** Optional HP per lineup index (from run.heroHp); length must match lineup; omitted/full = use maxHp. */
+	initialHeroHp?: number[];
 }
 
 /**
@@ -20,16 +22,25 @@ export function createBattleState(
 	encounterId: string,
 	options?: CreateBattleStateOptions
 ): BattleState {
+	const initialHp = options?.initialHeroHp;
 	const player: HeroInstance[] = [];
-	for (const heroId of lineupHeroIds) {
+	for (let i = 0; i < lineupHeroIds.length; i++) {
+		const heroId = lineupHeroIds[i];
 		const def = getHeroDef(heroId);
 		if (!def) {
 			throw new Error(`Unknown hero id: ${heroId}`);
 		}
 		const maxHp = def.baseMaxHp;
+		const currentHp =
+			Array.isArray(initialHp) &&
+			initialHp.length === lineupHeroIds.length &&
+			typeof initialHp[i] === 'number' &&
+			initialHp[i] >= 0
+				? Math.min(initialHp[i], maxHp)
+				: maxHp;
 		player.push({
 			heroId: def.heroId,
-			currentHp: maxHp,
+			currentHp,
 			maxHp,
 			attackTimer: 0,
 			spellTimer: 0,

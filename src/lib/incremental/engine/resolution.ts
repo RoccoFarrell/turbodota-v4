@@ -190,3 +190,10 @@ export function resolveEnemyActions(state: BattleState): BattleState {
 
 	return removeDeadEnemies(next);
 }
+
+/** Named object export for tests (avoids SSR/bundler stripping function exports). */
+export const resolution = {
+	resolveAutoAttack,
+	resolveSpell,
+	resolveEnemyActions
+};

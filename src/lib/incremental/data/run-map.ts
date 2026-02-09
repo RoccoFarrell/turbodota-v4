@@ -12,10 +12,11 @@ export interface MapRunDb {
 			id: string;
 			status: string;
 			currentNodeId: string;
+			heroHp?: number[] | null;
 		} | null>;
 		update: (args: {
 			where: { id: string };
-			data: { currentNodeId: string };
+			data: { currentNodeId: string; heroHp?: null };
 		}) => Promise<unknown>;
 	};
 	incrementalMapNode: {

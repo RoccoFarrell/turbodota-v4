@@ -1,4 +1,4 @@
-import type { RequestHandler } from './$types';
+import type { RequestHandler } from '@sveltejs/kit';
 
 /**
  * Placeholder endpoint to reserve the api/incremental prefix.

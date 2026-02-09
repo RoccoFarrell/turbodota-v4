@@ -247,13 +247,13 @@ Phase 11+: Shops, Training, PvP, background (depends on 7–10)
 
 **Goal**: Advance run to next node; start battle when entering combat/elite/boss; no rewards or base healing yet.
 
-### Milestone 5.1: Start run and advance node
+### Milestone 5.1: Start run and advance node ✅
 **Dependencies**: 4.1, 4.2, 2.1
 
 **Tasks**:
-- [ ] `startRun(userId, lineupId)`: create IncrementalRun, create/assign map, set currentNodeId to first node. Validate lineup has 1–5 heroes.
-- [ ] `advanceRun(runId, userId, nextNodeId)`: validate nextNodeId is in current node’s nextNodeIds; set run.currentNodeId = nextNodeId. If new node is combat/elite/boss, return encounterId and lineup so caller can create battle state.
-- [ ] When entering combat node: create battle state (createBattleState(lineup.heroIds, encounterId)) and either attach to run in memory/cache or return to client for this request. Battle state persistence (e.g. Redis or DB) can be added in Phase 7 for “resume battle.”
+- [x] `startRun(userId, lineupId)`: create IncrementalRun, create/assign map, set currentNodeId to first node. Validate lineup has 1–5 heroes.
+- [x] `advanceRun(runId, userId, nextNodeId)`: validate nextNodeId is in current node’s nextNodeIds; set run.currentNodeId = nextNodeId. If new node is combat/elite/boss, return encounterId and lineup so caller can create battle state.
+- [x] When entering combat node: create battle state (createBattleState(lineup.heroIds, encounterId)) and either attach to run in memory/cache or return to client for this request. Battle state persistence (e.g. Redis or DB) can be added in Phase 7 for “resume battle.”
 
 **Files**: `src/lib/incremental/run/run-service.ts` (or under server/), using Prisma and battle-state.
 
@@ -268,16 +268,16 @@ Phase 11+: Shops, Training, PvP, background (depends on 7–10)
 
 **Goal**: REST API for lineups, runs, battle (get state, set focus/target, tick); auth on all endpoints.
 
-### Milestone 6.1: Lineups and heroes API
+### Milestone 6.1: Lineups and heroes API ✅
 **Dependencies**: 4.1, 1.1
 
 **Tasks**:
-- [ ] `GET /api/incremental/lineups` – list current user’s lineups (from Prisma).
-- [ ] `POST /api/incremental/lineups` – body `{ name, heroIds }` (heroIds = array of `Hero.id` Int); create lineup (validate 1–5, ids exist in `Hero` table).
-- [ ] `GET /api/incremental/lineups/[id]` – get lineup by id (auth: own only).
-- [ ] `PATCH /api/incremental/lineups/[id]` – update name or heroIds.
-- [ ] `DELETE /api/incremental/lineups/[id]` – delete lineup.
-- [ ] `GET /api/incremental/heroes` – return hero definitions from constants (for lineup builder UI).
+- [x] `GET /api/incremental/lineups` – list current user’s lineups (from Prisma).
+- [x] `POST /api/incremental/lineups` – body `{ name, heroIds }` (heroIds = array of `Hero.id` Int); create lineup (validate 1–5, ids exist in `Hero` table).
+- [x] `GET /api/incremental/lineups/[id]` – get lineup by id (auth: own only).
+- [x] `PATCH /api/incremental/lineups/[id]` – update name or heroIds.
+- [x] `DELETE /api/incremental/lineups/[id]` – delete lineup.
+- [x] `GET /api/incremental/heroes` – return hero definitions from constants (for lineup builder UI).
 
 **Files**: `src/routes/api/incremental/lineups/+server.ts`, `lineups/[id]/+server.ts`, `heroes/+server.ts`.
 
@@ -288,15 +288,15 @@ Phase 11+: Shops, Training, PvP, background (depends on 7–10)
 
 ---
 
-### Milestone 6.2: Runs and battle API
+### Milestone 6.2: Runs and battle API ✅
 **Dependencies**: 5.1, 3.2
 
 **Tasks**:
-- [ ] `POST /api/incremental/runs` – body `{ lineupId }`; start run (run-service.startRun).
-- [ ] `GET /api/incremental/runs/[runId]` – return run + map state (current node, next nodes).
-- [ ] `POST /api/incremental/runs/[runId]/advance` – body `{ nextNodeId }`; advance run; if new node is combat/elite/boss, create battle state (in-memory or cache keyed by runId) and return encounter started.
-- [ ] `GET /api/incremental/runs/[runId]/battle` – return current battle state for run (if in encounter).
-- [ ] `PATCH /api/incremental/runs/[runId]/battle` – body `{ focusedHeroIndex?, targetIndex?, deltaTime }`. Apply focus/target change (with 2s cooldown); run tick(state, deltaTime) and persist state back to cache/run; return new battle state. If result win/lose, update run (e.g. status, or mark node complete) and clear battle.
+- [x] `POST /api/incremental/runs` – body `{ lineupId }`; start run (run-service.startRun).
+- [x] `GET /api/incremental/runs/[runId]` – return run + map state (current node, next nodes).
+- [x] `POST /api/incremental/runs/[runId]/advance` – body `{ nextNodeId }`; advance run; if new node is combat/elite/boss, create battle state (in-memory or cache keyed by runId) and return encounter started.
+- [x] `GET /api/incremental/runs/[runId]/battle` – return current battle state for run (if in encounter).
+- [x] `PATCH /api/incremental/runs/[runId]/battle` – body `{ focusedHeroIndex?, targetIndex?, deltaTime }`. Apply focus/target change (with 2s cooldown); run tick(state, deltaTime) and persist state back to cache/run; return new battle state. If result win/lose, update run (e.g. status, or mark node complete) and clear battle.
 
 **Files**: `src/routes/api/incremental/runs/+server.ts`, `runs/[runId]/+server.ts`, `runs/[runId]/advance/+server.ts`, `runs/[runId]/battle/+server.ts`.
 
@@ -307,18 +307,18 @@ Phase 11+: Shops, Training, PvP, background (depends on 7–10)
 
 ---
 
-## Phase 7: PvE Integration – Rewards & Bases
+## Phase 7: PvE Integration – Rewards & Bases ✅ Complete
 
 **Goal**: After battle win: apply small heal, grant XP and gold; base node heals; run status and map progress persist.
 
-### Milestone 7.1: Post-encounter rewards and base healing
+### Milestone 7.1: Post-encounter rewards and base healing ✅
 **Dependencies**: 6.2, 4.1
 
 **Tasks**:
-- [ ] On battle **win**: apply small health (and mana if modeled) restore to lineup; grant XP (per-hero) and gold. Store run-level gold/XP or attach to run (e.g. run.gold, run.xpByHeroId).
-- [ ] On **advance** to a **base** node: apply fountain heal (e.g. full heal or large restore) to lineup for next encounter.
-- [ ] On battle **lose**: set run status to dead; no advance; optionally partial rewards (e.g. “reached floor 3”).
-- [ ] Persist run state (current node, gold, XP, hero current HP for next encounter) in DB or run record.
+- [x] On battle **win**: apply small health (and mana if modeled) restore to lineup; grant XP (per-hero) and gold. Store run-level gold/XP or attach to run (e.g. run.gold, run.xpByHeroId).
+- [x] On **advance** to a **base** node: apply fountain heal (e.g. full heal or large restore) to lineup for next encounter.
+- [x] On battle **lose**: set run status to dead; no advance; optionally partial rewards (e.g. “reached floor 3”).
+- [x] Persist run state (current node, gold, XP, hero current HP for next encounter) in DB or run record.
 
 **Files**: Run service + battle PATCH handler (when result is set, apply rewards and update run).
 
