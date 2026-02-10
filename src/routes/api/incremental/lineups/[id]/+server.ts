@@ -1,7 +1,7 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
 import prisma from '$lib/server/prisma';
-import { getHeroDef } from '$lib/incremental/constants';
+import { getAllowedHeroIds } from '$lib/server/incremental-hero-resolver';
 
 const MIN_HEROES = 1;
 const MAX_HEROES = 5;
@@ -48,9 +48,13 @@ export const PATCH: RequestHandler<{ id: string }> = async ({ params, request, l
 		if (body.heroIds.length < MIN_HEROES || body.heroIds.length > MAX_HEROES) {
 			error(400, `heroIds must have ${MIN_HEROES}–${MAX_HEROES} heroes`);
 		}
+		if (new Set(body.heroIds).size !== body.heroIds.length) {
+			error(400, 'Each hero can only appear once in a lineup');
+		}
+		const allowedHeroIds = await getAllowedHeroIds();
 		for (const hid of body.heroIds) {
 			if (typeof hid !== 'number' || !Number.isInteger(hid)) error(400, 'heroIds must be integers');
-			if (!getHeroDef(hid)) error(400, `Unknown hero id: ${hid}`);
+			if (!allowedHeroIds.has(hid)) error(400, `Unknown hero id: ${hid}`);
 		}
 		const rosterRows = await prisma.incrementalRosterHero.findMany({
 			where: { saveId: lineup!.saveId },

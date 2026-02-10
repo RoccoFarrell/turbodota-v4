@@ -1,14 +1,26 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
 import prisma from '$lib/server/prisma';
-import { advanceAction } from '$lib/incremental/actions';
-import { ACTION_TYPE_MINING } from '$lib/incremental/actions';
+import { advanceIdleTimer } from '$lib/incremental/actions/idle-timer';
+import { getActionDef, applyRewards, MINING_ACTION_ID, TRAINING_ACTION_ID } from '$lib/incremental/actions/action-definitions';
+import { TRAINING_STAT_KEYS, type TrainingStatKey } from '$lib/incremental/actions/constants';
 import { resolveIncrementalSave } from '$lib/server/incremental-save';
 
-/** POST /api/incremental/action – tick action (server-authoritative). Body: { saveId?, lastTickAt, progress?, actionType? } */
+function isValidStatKey(key: unknown): key is TrainingStatKey {
+	return typeof key === 'string' && (TRAINING_STAT_KEYS as readonly string[]).includes(key);
+}
+
+/** POST /api/incremental/action – tick or set action. Body: { saveId?, lastTickAt, progress?, actionType?, actionHeroId?, actionStatKey? } */
 export const POST: RequestHandler = async (event) => {
 	const { request } = event;
-	let body: { saveId?: string; lastTickAt?: number; progress?: number; actionType?: string };
+	let body: {
+		saveId?: string;
+		lastTickAt?: number;
+		progress?: number;
+		actionType?: string;
+		actionHeroId?: number;
+		actionStatKey?: string;
+	};
 	try {
 		body = await request.json();
 	} catch {
@@ -19,36 +31,62 @@ export const POST: RequestHandler = async (event) => {
 	const now = Date.now();
 	const lastTickAt = typeof body.lastTickAt === 'number' ? body.lastTickAt : now;
 	const progress = typeof body.progress === 'number' ? Math.max(0, Math.min(1, body.progress)) : 0;
-	const actionType = body.actionType === ACTION_TYPE_MINING ? ACTION_TYPE_MINING : ACTION_TYPE_MINING;
+	const actionId =
+		body.actionType === TRAINING_ACTION_ID ? TRAINING_ACTION_ID : MINING_ACTION_ID;
+	const actionHeroId = actionId === TRAINING_ACTION_ID ? body.actionHeroId : null;
+	const actionStatKey =
+		actionId === TRAINING_ACTION_ID && isValidStatKey(body.actionStatKey)
+			? body.actionStatKey
+			: null;
 
-	const result = advanceAction({
-		actionType,
+	if (actionId === TRAINING_ACTION_ID) {
+		if (typeof actionHeroId !== 'number' || !isValidStatKey(actionStatKey)) {
+			error(400, 'Training requires actionHeroId (number) and actionStatKey (valid stat key)');
+		}
+		const roster = await prisma.incrementalRosterHero.findMany({
+			where: { saveId },
+			select: { heroId: true }
+		});
+		if (!roster.some((r) => r.heroId === actionHeroId)) {
+			error(400, 'Hero is not on your roster');
+		}
+	}
+
+	const def = getActionDef(actionId);
+	const durationPerCompletionSec = def?.durationPerCompletionSec ?? 5;
+	const rateModifier = def?.rateModifier ?? 1;
+
+	const { progress: newProgress, completions } = advanceIdleTimer({
 		progress,
 		lastTickAt,
 		now,
-		rateModifier: 1
+		durationPerCompletionSec,
+		rateModifier
 	});
 
+	const params: Record<string, unknown> =
+		actionId === TRAINING_ACTION_ID && actionHeroId != null && actionStatKey != null
+			? { heroId: actionHeroId, statKey: actionStatKey }
+			: {};
+
 	await prisma.$transaction(async (tx) => {
-		const save = await tx.incrementalSave.findUnique({ where: { id: saveId }, select: { essence: true } });
-		if (!save) throw new Error('Save not found');
-		const newEssence = (save.essence ?? 0) + result.essenceEarned;
-		await tx.incrementalSave.update({
-			where: { id: saveId },
-			data: { essence: newEssence }
-		});
+		await applyRewards(actionId, params, completions, { saveId, tx });
 		await tx.incrementalActionState.upsert({
 			where: { saveId },
 			create: {
 				saveId,
-				actionType,
-				progress: result.progress,
-				lastTickAt: new Date(now)
+				actionType: actionId,
+				progress: newProgress,
+				lastTickAt: new Date(now),
+				actionHeroId: actionHeroId ?? undefined,
+				actionStatKey: actionStatKey ?? undefined
 			},
 			update: {
-				actionType,
-				progress: result.progress,
-				lastTickAt: new Date(now)
+				actionType: actionId,
+				progress: newProgress,
+				lastTickAt: new Date(now),
+				actionHeroId: actionHeroId ?? null,
+				actionStatKey: actionStatKey ?? null
 			}
 		});
 	});
@@ -57,12 +95,19 @@ export const POST: RequestHandler = async (event) => {
 		where: { id: saveId },
 		select: { essence: true }
 	});
+	const actionState = await prisma.incrementalActionState.findUnique({
+		where: { saveId },
+		select: { actionHeroId: true, actionStatKey: true }
+	});
 
 	return json({
 		essence: save?.essence ?? 0,
 		saveId,
-		progress: result.progress,
+		progress: newProgress,
 		lastTickAt: now,
-		essenceEarned: result.essenceEarned
+		essenceEarned: actionId === MINING_ACTION_ID ? completions * 1 : 0,
+		actionType: actionId,
+		actionHeroId: actionState?.actionHeroId ?? null,
+		actionStatKey: actionState?.actionStatKey ?? null
 	});
 };

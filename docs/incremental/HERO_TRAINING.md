@@ -1,7 +1,7 @@
 # Hero Training – Design & Development Plan
 
 **Status**: Design (to be incorporated into Phase 13).  
-**Related**: [ESSENCE_AND_BROWSER_ACTIONS.md](./ESSENCE_AND_BROWSER_ACTIONS.md), [DEVELOPMENT_ROADMAP.md](./DEVELOPMENT_ROADMAP.md), [ARCHITECTURE.md](./ARCHITECTURE.md).
+**Related**: [ESSENCE_AND_BROWSER_ACTIONS.md](./ESSENCE_AND_BROWSER_ACTIONS.md), [DEVELOPMENT_ROADMAP.md](./DEVELOPMENT_ROADMAP.md), [ARCHITECTURE.md](./ARCHITECTURE.md), [TRAINING_UI_AND_TALENT_TREE.md](./TRAINING_UI_AND_TALENT_TREE.md) (flow, training UI brainstorm, talent tree plan).
 
 ---
 

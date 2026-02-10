@@ -1,0 +1,128 @@
+heroId,localized_name,primaryAttribute,baseAttackInterval,baseAttackDamage,baseMaxHp,baseArmor,baseMagicResist,baseSpellInterval,abilityId1,abilityId2
+1,Anti-Mage,agi,1.44,25,137,0.9,0.25,8.7,antimage_1,antimage_2
+2,Axe,str,1.68,26,222,4.3,0.25,10.5,axe_1,axe_2
+3,Bane,universal,1.54,24,147,1.4,0.25,8.8,bane_1,bane_2
+4,Bloodseeker,agi,1.45,26,141,1,0.25,9.1,bloodseeker_1,bloodseeker_2
+5,Crystal Maiden,int,1.71,18,122,0.6,0.25,6.6,crystal_maiden_1,crystal_maiden_2
+6,Drow Ranger,agi,1.44,26,138,0.9,0.25,8.8,drow_ranger_1,drow_ranger_2
+7,Earthshaker,str,1.65,26,179,2.5,0.25,8.9,earthshaker_1,earthshaker_2
+8,Juggernaut,agi,1.46,27,143,1.1,0.25,9.2,juggernaut_1,juggernaut_2
+9,Mirana,agi,1.43,23,136,0.8,0.25,7.7,mirana_1,mirana_2
+10,Morphling,agi,1.45,26,141,1,0.25,9.1,morphling_1,morphling_2
+11,Shadow Fiend,agi,1.44,25,137,0.9,0.25,8.8,nevermore_1,nevermore_2
+12,Phantom Lancer,agi,1.43,25,134,0.8,0.25,8.6,phantom_lancer_1,phantom_lancer_2
+13,Puck,int,1.73,24,129,0.8,0.25,8.6,puck_1,puck_2
+14,Pudge,str,1.63,27,174,2.3,0.25,9.6,pudge_1,pudge_2
+15,Razor,agi,1.45,26,139,1,0.25,8.9,razor_1,razor_2
+16,Sand King,universal,1.59,25,160,1.9,0.25,8.7,sand_king_1,sand_king_2
+17,Storm Spirit,int,1.72,23,125,0.7,0.25,8.4,storm_spirit_1,storm_spirit_2
+18,Sven,str,1.68,30,188,2.8,0.25,10.6,sven_1,sven_2
+19,Tiny,str,1.67,25,186,2.7,0.25,9,tiny_1,tiny_2
+20,Vengeful Spirit,agi,1.41,24,131,0.6,0.25,8.3,vengefulspirit_1,vengefulspirit_2
+21,Windranger,universal,1.56,25,151,1.6,0.25,9.1,windrunner_1,windrunner_2
+22,Zeus,int,1.73,24,129,0.8,0.25,8.6,zuus_1,zuus_2
+23,Kunkka,str,1.64,27,177,2.4,0.25,9.7,kunkka_1,kunkka_2
+25,Lina,int,1.68,19,116,0.3,0.25,6.7,lina_1,lina_2
+26,Lion,int,1.72,23,124,0.7,0.25,8.3,lion_1,lion_2
+27,Shadow Shaman,int,1.73,24,128,0.8,0.25,8.6,shadow_shaman_1,shadow_shaman_2
+28,Slardar,str,1.63,27,176,2.3,0.25,9.7,slardar_1,slardar_2
+29,Tidehunter,str,1.69,30,189,2.9,0.25,10.7,tidehunter_1,tidehunter_2
+30,Witch Doctor,int,1.7,22,121,0.5,0.25,8.1,witch_doctor_1,witch_doctor_2
+31,Lich,int,1.74,24,129,0.9,0.25,8.7,lich_1,lich_2
+32,Riki,agi,1.48,28,148,1.3,0.25,9.6,riki_1,riki_2
+33,Enigma,universal,1.54,25,149,1.4,0.25,8.9,enigma_1,enigma_2
+34,Tinker,int,1.72,23,124,0.7,0.25,8.3,tinker_1,tinker_2
+35,Sniper,agi,1.47,27,145,1.2,0.25,9.4,sniper_1,sniper_2
+36,Necrophos,int,1.73,24,129,0.8,0.25,8.6,necrolyte_1,necrolyte_2
+37,Warlock,int,1.69,19,117,0.4,0.25,6.8,warlock_1,warlock_2
+38,Beastmaster,universal,1.58,26,157,1.8,0.25,9.5,beastmaster_1,beastmaster_2
+39,Queen of Pain,int,1.72,23,125,0.7,0.25,8.3,queenofpain_1,queenofpain_2
+40,Venomancer,universal,1.53,24,144,1.3,0.25,8.6,venomancer_1,venomancer_2
+41,Faceless Void,agi,1.43,25,136,0.8,0.25,8.7,faceless_void_1,faceless_void_2
+42,Wraith King,str,1.62,26,172,2.2,0.25,9.4,skeleton_king_1,skeleton_king_2
+43,Death Prophet,universal,1.57,26,154,1.7,0.25,9.3,death_prophet_1,death_prophet_2
+44,Phantom Assassin,agi,1.41,22,130,0.6,0.25,7.3,phantom_assassin_1,phantom_assassin_2
+45,Pugna,int,1.67,21,113,0.2,0.25,7.5,pugna_1,pugna_2
+46,Templar Assassin,agi,1.42,24,132,0.7,0.25,8.4,templar_assassin_1,templar_assassin_2
+47,Viper,agi,1.44,26,138,0.9,0.25,8.8,viper_1,viper_2
+48,Luna,agi,1.46,26,142,1.1,0.25,9.2,luna_1,luna_2
+49,Dragon Knight,str,1.65,25,214,4,0.25,9.9,dragon_knight_1,dragon_knight_2
+50,Dazzle,universal,1.59,23,160,1.9,0.25,8.2,dazzle_1,dazzle_2
+51,Clockwerk,str,1.64,27,192,2.9,0.25,9.7,rattletrap_1,rattletrap_2
+52,Leshrac,int,1.67,18,112,0.2,0.25,6.4,leshrac_1,leshrac_2
+53,Nature's Prophet,universal,1.53,24,144,1.3,0.25,8.5,furion_1,furion_2
+54,Lifestealer,str,1.65,24,181,2.5,0.25,8.6,life_stealer_1,life_stealer_2
+55,Dark Seer,int,1.72,23,125,0.7,0.25,8.3,dark_seer_1,dark_seer_2
+56,Clinkz,agi,1.48,26,148,1.3,0.25,8.6,clinkz_1,clinkz_2
+57,Omniknight,str,1.61,22,171,2.1,0.25,7.8,omniknight_1,omniknight_2
+58,Enchantress,int,1.7,20,155,2,0.25,8,enchantress_1,enchantress_2
+59,Huskar,str,1.64,28,178,2.4,0.25,9.9,huskar_1,huskar_2
+60,Night Stalker,str,1.66,29,184,2.6,0.25,10.3,night_stalker_1,night_stalker_2
+61,Broodmother,agi,1.42,24,131,0.7,0.25,8.4,broodmother_1,broodmother_2
+62,Bounty Hunter,agi,1.47,27,146,1.2,0.25,9.5,bounty_hunter_1,bounty_hunter_2
+63,Weaver,agi,1.43,25,136,0.8,0.25,8.7,weaver_1,weaver_2
+64,Jakiro,int,1.74,24,130,0.9,0.25,8.7,jakiro_1,jakiro_2
+65,Batrider,universal,1.56,26,153,1.6,0.25,9.2,batrider_1,batrider_2
+66,Chen,int,1.73,19,126,0.8,0.25,7,chen_1,chen_2
+67,Spectre,agi,1.45,26,139,1,0.25,8.9,spectre_1,spectre_2
+68,Ancient Apparition,int,1.68,17,114,0.3,0.25,6,ancient_apparition_1,ancient_apparition_2
+69,Doom,str,1.62,26,172,2.2,0.25,9.4,doom_bringer_1,doom_bringer_2
+70,Ursa,agi,1.45,26,140,1,0.25,9,ursa_1,ursa_2
+71,Spirit Breaker,str,1.63,27,189,2.8,0.25,9.6,spirit_breaker_1,spirit_breaker_2
+72,Gyrocopter,agi,1.45,26,141,1,0.25,9.1,gyrocopter_1,gyrocopter_2
+73,Alchemist,str,1.53,34,171,2.8,0.25,10.5,alchemist_1,alchemist_2
+74,Invoker,int,1.69,21,117,0.4,0.25,7.8,invoker_1,invoker_2
+75,Silencer,int,1.71,22,121,0.6,0.25,8.1,silencer_1,silencer_2
+76,Outworld Destroyer,int,1.67,20,112,0.2,0.25,7.4,obsidian_destroyer_1,obsidian_destroyer_2
+77,Lycan,str,1.66,29,183,2.6,0.25,10.2,lycan_1,lycan_2
+78,Brewmaster,universal,1.51,23,141,1.1,0.25,8.3,brewmaster_1,brewmaster_2
+79,Shadow Demon,int,1.71,22,122,0.6,0.25,8.1,shadow_demon_1,shadow_demon_2
+80,Lone Druid,agi,1.45,26,139,1,0.25,8.9,lone_druid_1,lone_druid_2
+81,Chaos Knight,str,1.49,32,162,2.4,0.25,9.7,chaos_knight_1,chaos_knight_2
+82,Meepo,agi,1.45,26,140,1,0.25,9,meepo_1,meepo_2
+83,Treant Protector,str,1.66,24,182,2.6,0.25,8.7,treant_1,treant_2
+84,Ogre Magi,str,1.64,27,177,2.4,0.25,9.8,ogre_magi_1,ogre_magi_2
+85,Undying,str,1.69,30,189,2.9,0.25,10.7,undying_1,undying_2
+86,Rubick,int,1.69,22,118,0.4,0.25,7.8,rubick_1,rubick_2
+87,Disruptor,int,1.7,22,120,0.5,0.25,8,disruptor_1,disruptor_2
+88,Nyx Assassin,universal,1.59,27,174,2.4,0.25,9.7,nyx_assassin_1,nyx_assassin_2
+89,Naga Siren,agi,1.45,26,141,1,0.25,9.1,naga_siren_1,naga_siren_2
+90,Keeper of the Light,int,1.72,21,124,0.7,0.25,7.3,keeper_of_the_light_1,keeper_of_the_light_2
+91,Io,universal,1.57,22,155,1.7,0.25,7.9,wisp_1,wisp_2
+92,Visage,universal,1.56,26,153,1.6,0.25,9.3,visage_1,visage_2
+93,Slark,agi,1.43,25,136,0.8,0.25,8.7,slark_1,slark_2
+94,Medusa,agi,1.45,26,139,1,0.25,9,medusa_1,medusa_2
+95,Troll Warlord,agi,1.45,26,141,1,0.25,9.1,troll_warlord_1,troll_warlord_2
+96,Centaur Warrunner,str,1.68,26,222,4.3,0.25,10.5,centaur_1,centaur_2
+97,Magnus,universal,1.58,27,158,1.8,0.25,9.6,magnataur_1,magnataur_2
+98,Timbersaw,str,1.66,29,183,2.6,0.25,10.2,shredder_1,shredder_2
+99,Bristleback,str,1.66,25,217,4.1,0.25,10.1,bristleback_1,bristleback_2
+100,Tusk,str,1.65,28,181,2.5,0.25,10,tusk_1,tusk_2
+101,Skywrath Mage,int,1.7,20,120,0.5,0.25,7,skywrath_mage_1,skywrath_mage_2
+102,Abaddon,universal,1.52,19,141,1.2,0.25,6.9,abaddon_1,abaddon_2
+103,Elder Titan,str,1.65,28,181,2.5,0.25,10.1,elder_titan_1,elder_titan_2
+104,Legion Commander,str,1.66,28,182,2.6,0.25,10.2,legion_commander_1,legion_commander_2
+105,Techies,universal,1.53,24,144,1.3,0.25,8.6,techies_1,techies_2
+106,Ember Spirit,agi,1.43,25,134,0.8,0.25,8.6,ember_spirit_1,ember_spirit_2
+107,Earth Spirit,str,1.63,27,176,2.3,0.25,9.7,earth_spirit_1,earth_spirit_2
+108,Underlord,str,1.68,30,189,2.8,0.25,10.6,abyssal_underlord_1,abyssal_underlord_2
+109,Terrorblade,agi,1.48,23,147,1.3,0.25,8,terrorblade_1,terrorblade_2
+110,Phoenix,str,1.66,28,182,2.6,0.25,10.1,phoenix_1,phoenix_2
+111,Oracle,int,1.69,22,118,0.4,0.25,7.8,oracle_1,oracle_2
+112,Winter Wyvern,int,1.72,19,126,0.7,0.25,7,winter_wyvern_1,winter_wyvern_2
+113,Arc Warden,universal,1.53,24,145,1.3,0.25,8.6,arc_warden_1,arc_warden_2
+114,Monkey King,agi,1.42,24,132,0.7,0.25,8.4,monkey_king_1,monkey_king_2
+119,Dark Willow,int,1.7,22,120,0.5,0.25,8,dark_willow_1,dark_willow_2
+120,Pangolier,universal,1.54,21,149,1.4,0.25,7.4,pangolier_1,pangolier_2
+121,Grimstroke,int,1.73,23,127,0.8,0.25,8.6,grimstroke_1,grimstroke_2
+123,Hoodwink,agi,1.43,25,151,1.3,0.25,8.7,hoodwink_1,hoodwink_2
+126,Void Spirit,universal,1.56,25,152,1.6,0.25,9.2,void_spirit_1,void_spirit_2
+128,Snapfire,universal,1.56,26,153,1.6,0.25,9.2,snapfire_1,snapfire_2
+129,Mars,str,1.67,29,185,2.7,0.25,10.3,mars_1,mars_2
+131,Ringmaster,int,1.68,21,114,0.3,0.25,7.6,ringmaster_1,ringmaster_2
+135,Dawnbreaker,str,1.65,24,181,2.5,0.25,8.6,dawnbreaker_1,dawnbreaker_2
+136,Marci,universal,1.57,24,154,1.7,0.25,8.3,marci_1,marci_2
+137,Primal Beast,str,1.62,26,187,2.7,0.25,9.4,primal_beast_1,primal_beast_2
+138,Muerta,int,1.68,21,114,0.3,0.25,7.6,muerta_1,muerta_2
+145,Kez,agi,1.43,25,136,0.8,0.25,8.7,kez_1,kez_2
+155,Largo,str,1.67,25,186,2.7,0.25,9,largo_1,largo_2

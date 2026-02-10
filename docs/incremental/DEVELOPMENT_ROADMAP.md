@@ -17,7 +17,7 @@ This roadmap breaks the incremental game into **short, discrete development chun
 
 Phases 0–4 and run/battle/PvE (doc Phase 5 Run, 6.2 Runs API, Phase 7 PvE) are already implemented; content unchanged. Only **delivery order** is roster (5–7) then battle/map (11–12).
 
-**Reference**: [ARCHITECTURE.md](./ARCHITECTURE.md), [BATTLE_MECHANICS.md](./BATTLE_MECHANICS.md), [CORE_CONCEPT.md](./CORE_CONCEPT.md), [OPEN_QUESTIONS.md](./OPEN_QUESTIONS.md), [ESSENCE_AND_BROWSER_ACTIONS.md](./ESSENCE_AND_BROWSER_ACTIONS.md), [HERO_TRAINING.md](./HERO_TRAINING.md).
+**Reference**: [ARCHITECTURE.md](./ARCHITECTURE.md), [BATTLE_MECHANICS.md](./BATTLE_MECHANICS.md), [CORE_CONCEPT.md](./CORE_CONCEPT.md), [OPEN_QUESTIONS.md](./OPEN_QUESTIONS.md), [ESSENCE_AND_BROWSER_ACTIONS.md](./ESSENCE_AND_BROWSER_ACTIONS.md), [HERO_TRAINING.md](./HERO_TRAINING.md), [TRAINING_UI_AND_TALENT_TREE.md](./TRAINING_UI_AND_TALENT_TREE.md) (training UI flow, talent tree plan).
 
 ---
 

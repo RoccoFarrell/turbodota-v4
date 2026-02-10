@@ -15,7 +15,7 @@ function gameModeLabel(game_mode: number): 'Turbo' | 'Ranked' | 'Other' {
 	return 'Other';
 }
 
-/** GET /api/incremental/roster/eligible-wins – last 10 games; wins eligible; exclude already-converted for this save. Query: saveId (optional). */
+/** GET /api/incremental/roster/eligible-wins – last 10 games with flags for UI. Query: saveId (optional). */
 export const GET: RequestHandler = async (event) => {
 	const session = await event.locals.auth.validate();
 	if (!session) return new Response(null, { status: 401 });
@@ -23,7 +23,7 @@ export const GET: RequestHandler = async (event) => {
 	const { saveId: resolvedSaveId } = await resolveIncrementalSave(event, { saveId });
 	const accountId = session.user.account_id;
 
-	const [matches, converted, heroes] = await Promise.all([
+	const [matches, converted, roster, heroes] = await Promise.all([
 		prisma.match.findMany({
 			where: { account_id: accountId },
 			orderBy: { start_time: 'desc' },
@@ -34,22 +34,42 @@ export const GET: RequestHandler = async (event) => {
 			where: { saveId: resolvedSaveId },
 			select: { matchId: true }
 		}),
+		prisma.incrementalRosterHero.findMany({
+			where: { saveId: resolvedSaveId },
+			select: { heroId: true }
+		}),
 		prisma.hero.findMany({ select: { id: true, localized_name: true } })
 	]);
 
 	const heroNames = new Map(heroes.map((h) => [h.id, h.localized_name]));
-	const convertedSet = new Set(converted.map((c) => c.matchId));
-	const eligible = matches
-		.filter((m) => isWin(m.player_slot, m.radiant_win) && !convertedSet.has(m.match_id))
-		.map((m) => ({
+	const convertedSet = new Set(converted.map((c) => c.matchId.toString()));
+	const rosterHeroIds = new Set(roster.map((r) => r.heroId));
+
+	const recentMatches = matches.map((m) => {
+		const win = isWin(m.player_slot, m.radiant_win);
+		const alreadyRecruited = convertedSet.has(m.match_id.toString());
+		const onRoster = rosterHeroIds.has(m.hero_id);
+		const isDuplicateHero = win && !alreadyRecruited && onRoster;
+		const eligible = win && !alreadyRecruited && !onRoster;
+
+		return {
 			matchId: m.match_id.toString(),
 			heroId: m.hero_id,
 			heroName: heroNames.get(m.hero_id) ?? `Hero ${m.hero_id}`,
 			startTime: Number(m.start_time),
-			gameMode: m.game_mode,
 			gameModeLabel: gameModeLabel(m.game_mode),
-			win: true
-		}));
+			win,
+			alreadyRecruited,
+			isDuplicateHero,
+			eligible
+		};
+	});
 
-	return json({ eligibleWins: eligible, saveId: resolvedSaveId });
+	const eligibleWins = recentMatches.filter((m) => m.eligible);
+
+	return json({
+		recentMatches,
+		eligibleWins,
+		saveId: resolvedSaveId
+	});
 };

@@ -6,7 +6,7 @@ import {
 	getLineupsBySaveId,
 	type IncrementalDb
 } from '$lib/incremental/data/lineup';
-import { getHeroDef } from '$lib/incremental/constants';
+import { getAllowedHeroIds } from '$lib/server/incremental-hero-resolver';
 import { resolveIncrementalSave } from '$lib/server/incremental-save';
 
 const MIN_HEROES = 1;
@@ -36,9 +36,13 @@ export const POST: RequestHandler = async (event) => {
 	if (heroIds.length < MIN_HEROES || heroIds.length > MAX_HEROES) {
 		error(400, `heroIds must have ${MIN_HEROES}–${MAX_HEROES} heroes`);
 	}
+	if (new Set(heroIds).size !== heroIds.length) {
+		error(400, 'Each hero can only appear once in a lineup');
+	}
+	const allowedHeroIds = await getAllowedHeroIds();
 	for (const id of heroIds) {
 		if (typeof id !== 'number' || !Number.isInteger(id)) error(400, 'heroIds must be integers');
-		if (!getHeroDef(id)) error(400, `Unknown hero id: ${id}`);
+		if (!allowedHeroIds.has(id)) error(400, `Unknown hero id: ${id}`);
 	}
 	const rosterRows = await prisma.incrementalRosterHero.findMany({
 		where: { saveId: resolvedSaveId },

@@ -268,7 +268,7 @@
 	{#snippet header()}
 		<!-- App Bar -->
 		<AppBar class="shadow-lg shadow-surface-950 bg-surface-900 border-b-1 border-surface-500">
-			<AppBar.Toolbar class="grid grid-cols-[auto_1fr_auto] items-center p-2">
+			<AppBar.Toolbar class="grid grid-cols-[auto_1fr_auto] items-center">
 				<AppBar.Lead>
 					<!-- Hamburger Button-->
 					<div class="flex items-center">

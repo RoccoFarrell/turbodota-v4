@@ -155,6 +155,24 @@ body {
 	display: inline-block;
 }
 
+/* Spell icons: 9 cols × 6 rows, 16×16 px each. Bottom-right 3×3 blank. --spell-x, --spell-y are 0-based col/row. */
+.spell-icon {
+	background-image: url('/spell_icons.png');
+	background-repeat: no-repeat;
+	display: inline-block;
+	width: 32px;
+	height: 32px;
+	flex-shrink: 0;
+	/* Sheet 144×96 scaled 2× → 288×192; one cell = 32×32 in scaled space */
+	background-size: 288px 192px;
+	background-position: calc(-32px * var(--spell-x, 0)) calc(-32px * var(--spell-y, 0));
+	image-rendering: pixelated;
+	image-rendering: -moz-crisp-edges;
+	image-rendering: crisp-edges;
+	border: 2px solid hsl(var(--primary));
+	border-radius: 6px;
+}
+
 @keyframes shake {
 	2.5%,
 	22.5% {
