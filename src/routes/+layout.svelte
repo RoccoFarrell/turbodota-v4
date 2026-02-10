@@ -114,16 +114,16 @@
 
 	let navigatingTest = false;
 
-	//set context for modal component
-
-	setContext('heroes', data.heroDescriptions.allHeroes);
+	//set context for modal component (always an array; fallback if layout load used DB)
+	const allHeroes = data.heroDescriptions?.allHeroes ?? [];
+	setContext('heroes', allHeroes);
 
 	//create ban store
 	import { banStore } from '$lib/stores/banStore';
 
 	/* Initialize store */
-	let heroes = data.heroDescriptions.allHeroes;
-	if (heroes.length === 0) heroes = getContext('heroes');
+	const ctxHeroes = getContext<Hero[] | undefined>('heroes');
+	const heroes: Hero[] = allHeroes.length > 0 ? allHeroes : (Array.isArray(ctxHeroes) ? ctxHeroes : []);
 	banStore.setAllHeroes(heroes);
 
 	/* Set bans from preferences */

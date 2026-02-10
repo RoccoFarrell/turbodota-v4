@@ -1,18 +1,18 @@
 /**
- * Data layer: create lineup, run; query by userId.
+ * Data layer: create lineup, run; query by saveId.
  */
 
 import { describe, it, expect, vi } from 'vitest';
 import {
 	createLineup,
-	getLineupsByUserId,
+	getLineupsBySaveId,
 	createRun,
 	getRunsByUserId,
 	type IncrementalDb
 } from './lineup';
 
 function mockDb(): IncrementalDb {
-	const lineups: Array<{ id: string; userId: string; name: string; heroIds: number[] }> = [];
+	const lineups: Array<{ id: string; saveId: string; name: string; heroIds: number[] }> = [];
 	const runs: Array<{
 		id: string;
 		userId: string;
@@ -25,18 +25,18 @@ function mockDb(): IncrementalDb {
 	}> = [];
 	return {
 		incrementalLineup: {
-			create: vi.fn(async (args: { data: { userId: string; name: string; heroIds: number[] } }) => {
+			create: vi.fn(async (args: { data: { saveId: string; name: string; heroIds: number[] } }) => {
 				const row = {
 					id: `lineup_${lineups.length + 1}`,
-					userId: args.data.userId,
+					saveId: args.data.saveId,
 					name: args.data.name,
 					heroIds: args.data.heroIds
 				};
 				lineups.push(row);
 				return row;
 			}),
-			findMany: vi.fn(async (args: { where: { userId: string } }) =>
-				lineups.filter((l) => l.userId === args.where.userId)
+			findMany: vi.fn(async (args: { where: { saveId: string } }) =>
+				lineups.filter((l) => l.saveId === args.where.saveId)
 			)
 		},
 		incrementalRun: {
@@ -72,20 +72,20 @@ function mockDb(): IncrementalDb {
 }
 
 describe('incremental data layer', () => {
-	it('createLineup and getLineupsByUserId: store and query by userId', async () => {
+	it('createLineup and getLineupsBySaveId: store and query by saveId', async () => {
 		const db = mockDb();
-		const userId = 'user_1';
+		const saveId = 'save_1';
 		const lineup = await createLineup(db, {
-			userId,
+			saveId,
 			name: 'Wolf pack team',
 			heroIds: [99, 25, 50]
 		});
-		expect(lineup.userId).toBe(userId);
+		expect(lineup.saveId).toBe(saveId);
 		expect(lineup.name).toBe('Wolf pack team');
 		expect(lineup.heroIds).toEqual([99, 25, 50]);
 		expect(lineup.id).toBeDefined();
 
-		const list = await getLineupsByUserId(db, userId);
+		const list = await getLineupsBySaveId(db, saveId);
 		expect(list.length).toBeGreaterThanOrEqual(1);
 		expect(list.some((l) => l.id === lineup.id)).toBe(true);
 	});
@@ -93,8 +93,9 @@ describe('incremental data layer', () => {
 	it('createRun and getRunsByUserId: store and query by userId', async () => {
 		const db = mockDb();
 		const userId = 'user_2';
+		const saveId = 'save_2';
 		const lineup = await createLineup(db, {
-			userId,
+			saveId,
 			name: 'Test',
 			heroIds: [25]
 		});

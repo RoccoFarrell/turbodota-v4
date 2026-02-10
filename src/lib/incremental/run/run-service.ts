@@ -28,10 +28,14 @@ export interface RunRecord {
 /** DB interface for run service: MapRunDb + run create + run findUnique with RunRecord + lineup findUnique. */
 export interface RunServiceDb extends Omit<MapRunDb, 'incrementalRun'> {
 	incrementalLineup: {
-		findUnique: (args: { where: { id: string } }) => Promise<{
+		findUnique: (args: {
+			where: { id: string };
+			include?: { save: { select: { userId: true } } };
+		}) => Promise<{
 			id: string;
-			userId: string;
+			saveId: string;
 			heroIds: number[];
+			save?: { userId: string };
 		} | null>;
 	};
 	incrementalRun: {
@@ -82,9 +86,12 @@ export async function startRun(
 	lineupId: string,
 	options?: { seed?: string }
 ): Promise<StartRunResult> {
-	const lineup = await db.incrementalLineup.findUnique({ where: { id: lineupId } });
+	const lineup = await db.incrementalLineup.findUnique({
+		where: { id: lineupId },
+		include: { save: { select: { userId: true } } }
+	});
 	if (!lineup) throw new Error('Lineup not found');
-	if (lineup.userId !== userId) throw new Error('Lineup does not belong to user');
+	if (lineup.save?.userId !== userId) throw new Error('Lineup does not belong to user');
 	if (lineup.heroIds.length < MIN_HEROES || lineup.heroIds.length > MAX_HEROES) {
 		throw new Error(`Lineup must have ${MIN_HEROES}–${MAX_HEROES} heroes`);
 	}

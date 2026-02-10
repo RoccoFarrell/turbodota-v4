@@ -80,6 +80,21 @@ async function main() {
 
 main()
 	.then(async () => {
+		// Populate Hero table from OpenDota (same as GET /api/getHeroes?forceUpdate=true)
+		const origin = process.env.SITE_ORIGIN ?? process.env.ORIGIN ?? 'http://localhost:5173';
+		const url = `${origin}/api/getHeroes?forceUpdate=true`;
+		try {
+			const res = await fetch(url);
+			if (res.ok) {
+				const data = await res.json();
+				console.log(`[seed] Heroes synced from OpenDota (${data.allHeroes?.length ?? 0} heroes).`);
+			} else {
+				console.warn(`[seed] GET ${url} returned ${res.status}. Start the app and run the seed again, or visit that URL to sync heroes.`);
+			}
+		} catch (e) {
+			console.warn('[seed] Could not fetch /api/getHeroes?forceUpdate=true:', (e as Error).message);
+			console.warn('Start the dev server (npm run dev) and run "npx prisma db seed" again, or visit /api/getHeroes?forceUpdate=true in the browser to populate heroes.');
+		}
 		await prisma.$disconnect();
 	})
 	.catch(async (e) => {

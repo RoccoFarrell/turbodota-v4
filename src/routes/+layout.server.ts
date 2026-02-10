@@ -8,26 +8,13 @@ import { calculateRandomLeaderboard, calculateTownLeaderboard } from '$lib/helpe
 export const load: LayoutServerLoad = async ({ locals, url }) => {
 	let tx_startTime = dayjs();
 
-	const getHeroes = async () => {
-		const response = await fetch(`${url.origin}/api/getHeroes`, {
-			method: 'Get',
-			headers: {
-				'content-type': 'application/json'
-			}
+	// Load heroes from DB so layout always has a full list on every route (including /incremental).
+	// Avoids server-to-self fetch to /api/getHeroes during SSR, which can fail or return empty.
+	const getHeroDescriptions = async (): Promise<{ allHeroes: Hero[] }> => {
+		const allHeroes = await prisma.hero.findMany({
+			orderBy: { localized_name: 'asc' }
 		});
-
-		let responseData = await response.json();
-
-		//console.log(Object.keys(responseData))
-		responseData = {
-			...responseData,
-			allHeroes: responseData.allHeroes.sort((a: Hero, b: Hero) => {
-				if (a.localized_name < b.localized_name) return -1;
-				else return 1;
-			})
-		};
-
-		return responseData;
+		return { allHeroes };
 	};
 
 	const session = await locals.auth.validate();
@@ -134,9 +121,10 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 		} else console.error('could not load season leaderboard in server');
 	}
 
+	const heroDescriptions = await getHeroDescriptions();
 	return {
 		session,
-		heroDescriptions: await getHeroes(),
+		heroDescriptions,
 		userPreferences,
 		league: {
 			leagueID: leagueAndSeasonsResult ? leagueAndSeasonsResult[0].id : null,

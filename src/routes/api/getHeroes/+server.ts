@@ -3,13 +3,10 @@ import type { RequestHandler } from './$types';
 import type { Hero } from '@prisma/client';
 import prisma from '$lib/server/prisma';
 
-export const GET: RequestHandler = async ({ params, url }) => {
+export const GET: RequestHandler = async ({ url }) => {
 	console.log(`-----------\n[api/getHeroes] - received GET to ${url.href}\n-----------`);
-	//console.log(`params: ${JSON.stringify(params)}`)
-	//check if user was updated recently, otherwise use the database
 
-	let forceUpdate: boolean = false;
-	let updateInterval = new Date();
+	const forceUpdate = url.searchParams.get('forceUpdate') === 'true';
 	let dataSource: string = '';
 
 	let allHeroes: Hero[] = [];

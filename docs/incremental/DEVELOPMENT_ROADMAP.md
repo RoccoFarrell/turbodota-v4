@@ -2,7 +2,22 @@
 
 This roadmap breaks the incremental game into **short, discrete development chunks** that can be **tested in isolation**. Each phase delivers working, testable functionality so that parts can be integrated in later phases without big-bang merges.
 
-**Reference**: [ARCHITECTURE.md](./ARCHITECTURE.md), [BATTLE_MECHANICS.md](./BATTLE_MECHANICS.md), [CORE_CONCEPT.md](./CORE_CONCEPT.md), [OPEN_QUESTIONS.md](./OPEN_QUESTIONS.md).
+**Roster-first launch**: Complete roster system **before** any battling or map UI so you can ship roster building first, then release battle/map later.
+
+| Roster-first order | Section in doc | Content |
+|--------------------|----------------|--------|
+| Phase 5 | Phase 5 | API – Lineups and Heroes ✅ |
+| Phase 6 | Phase 6 goal + **Phase 8** (8.1→6.1, 8.2→6.2, 8.3→6.3) | Essence, mining, roster, convert-win |
+| Phase 7 | Phase 11 | UI – Lineup Builder |
+| Phase 8–9 | Phase 6.2 (doc) | Runs/battle API (run & encounter flow) ✅ |
+| Phase 10 | Phase 7 (doc) | PvE Integration ✅ |
+| Phase 11 | Phase 9 (doc) | UI – Battle Screen |
+| Phase 12 | Phase 10 (doc) | UI – Map & Run Flow |
+| 13–16 | Phases 12–15 (doc) | Shops, Training, PvP, background |
+
+Phases 0–4 and run/battle/PvE (doc Phase 5 Run, 6.2 Runs API, Phase 7 PvE) are already implemented; content unchanged. Only **delivery order** is roster (5–7) then battle/map (11–12).
+
+**Reference**: [ARCHITECTURE.md](./ARCHITECTURE.md), [BATTLE_MECHANICS.md](./BATTLE_MECHANICS.md), [CORE_CONCEPT.md](./CORE_CONCEPT.md), [OPEN_QUESTIONS.md](./OPEN_QUESTIONS.md), [ESSENCE_AND_BROWSER_ACTIONS.md](./ESSENCE_AND_BROWSER_ACTIONS.md), [HERO_TRAINING.md](./HERO_TRAINING.md).
 
 ---
 
@@ -11,7 +26,7 @@ This roadmap breaks the incremental game into **short, discrete development chun
 1. **Small chunks** – Each milestone is implementable and testable in a focused slice (types, formulas, one engine module, one API surface).
 2. **Test in isolation** – Unit tests for pure logic (formulas, timers, resolution); simulation tests for the full battle loop; integration tests for API + engine.
 3. **No hidden coupling** – Dependencies flow one way: foundation → engine → data → API → UI. Later phases integrate earlier deliverables.
-4. **Ship incrementally** – After Phase 5 you can run a battle via API; after Phase 6 you can run a full PvE encounter; after Phase 7 you have a playable battle UI.
+4. **Ship incrementally** – **Roster-first**: Phases 5–7 deliver the full roster system (lineups API, Essence + mining + convert-win, lineup builder UI). Ship this as a discrete feature; users mine Essence, convert wins to roster, build lineups. **Later**: Phases 8–12 add run/battle backend and Battle/Map UI.
 
 ---
 
@@ -24,15 +39,13 @@ Phase 2–3: Battle engine (state, timers, resolution, loop)  (depends on 0–1;
      ↓
 Phase 4:   Data layer (Prisma, run/map)    (depends on types)
      ↓
-Phase 5:   Run/Map logic                   (depends on 4 + engine)
+Phase 5–7: ROSTER SYSTEM (ship first)      Lineups API → Essence/roster/mining → Lineup Builder UI
      ↓
-Phase 6:   API (lineups, runs, battle)      (depends on 4, 5, engine)
+Phase 8–10: Run/battle backend             Run flow, Runs/battle API, PvE rewards (already implemented)
      ↓
-Phase 7:   PvE integration (rewards, bases) (depends on 6)
+Phase 11–12: Battle & Map UI               (depends on 9)
      ↓
-Phase 8–10: UI (battle, map, lineup)       (depends on API)
-     ↓
-Phase 11+: Shops, Training, PvP, background (depends on 7–10)
+Phase 13+: Shops, Training, PvP, background
 ```
 
 ---
@@ -243,32 +256,36 @@ Phase 11+: Shops, Training, PvP, background (depends on 7–10)
 
 ---
 
-## Phase 5: Run & Encounter Flow
+## Phase 5: API – Lineups and Heroes
 
-**Goal**: Advance run to next node; start battle when entering combat/elite/boss; no rewards or base healing yet.
+**Goal**: REST API for lineups and hero list. Enables roster system and lineup builder. (Runs/battle API are Phase 9.)
 
-### Milestone 5.1: Start run and advance node ✅
-**Dependencies**: 4.1, 4.2, 2.1
+### Milestone 5.1: Lineups and heroes API ✅
+**Dependencies**: 4.1, 1.1
 
 **Tasks**:
-- [x] `startRun(userId, lineupId)`: create IncrementalRun, create/assign map, set currentNodeId to first node. Validate lineup has 1–5 heroes.
-- [x] `advanceRun(runId, userId, nextNodeId)`: validate nextNodeId is in current node’s nextNodeIds; set run.currentNodeId = nextNodeId. If new node is combat/elite/boss, return encounterId and lineup so caller can create battle state.
-- [x] When entering combat node: create battle state (createBattleState(lineup.heroIds, encounterId)) and either attach to run in memory/cache or return to client for this request. Battle state persistence (e.g. Redis or DB) can be added in Phase 7 for “resume battle.”
+- [x] `GET /api/incremental/lineups` – list current user's lineups (from Prisma).
+- [x] `POST /api/incremental/lineups` – body `{ name, heroIds }` (heroIds = array of `Hero.id` Int); create lineup (validate 1–5, ids exist in `Hero` table). Roster validation added in Phase 6.
+- [x] `GET /api/incremental/lineups/[id]` – get lineup by id (auth: own only).
+- [x] `PATCH /api/incremental/lineups/[id]` – update name or heroIds.
+- [x] `DELETE /api/incremental/lineups/[id]` – delete lineup.
+- [x] `GET /api/incremental/heroes` – return hero definitions from constants (for lineup builder UI).
 
-**Files**: `src/lib/incremental/run/run-service.ts` (or under server/), using Prisma and battle-state.
+**Files**: `src/routes/api/incremental/lineups/+server.ts`, `lineups/[id]/+server.ts`, `heroes/+server.ts`.
 
-**Testing**:
-- startRun creates run with map; advanceRun moves to next node; when node is combat, advanceRun returns encounterId and battle can be created.
+**Testing**: Integration: create lineup, get, update, delete; get heroes returns list.
 
-**Deliverable**: Run lifecycle: start → advance → enter encounter (battle state created).
+**Deliverable**: Lineup CRUD and hero list available via API. **Roster-first launch** uses this.
 
 ---
 
-## Phase 6: API Layer
+## Phase 6: Essence, Browser Actions & Roster
 
-**Goal**: REST API for lineups, runs, battle (get state, set focus/target, tick); auth on all endpoints.
+**Goal**: Meta-currency (Essence), passive browser action system (mining with bar-per-strike), and roster building by converting one win from last 10 Dota 2 games into a roster hero. Design: [ESSENCE_AND_BROWSER_ACTIONS.md](./ESSENCE_AND_BROWSER_ACTIONS.md).
 
-### Milestone 6.1: Lineups and heroes API ✅
+**Roster-first order**: Implement Essence/roster/mining right after Phase 5. Full milestone list: **Phase 8** below (8.1→6.1, 8.2→6.2, 8.3→6.3). The milestones listed next (6.1 Lineups API, 6.2 Runs API) are **already implemented**; in roster-first order they are Phase 5 and Phase 9 respectively.
+
+### Milestone 6.1: Lineups and heroes API ✅ (roster-first: Phase 5)
 **Dependencies**: 4.1, 1.1
 
 **Tasks**:
@@ -288,8 +305,8 @@ Phase 11+: Shops, Training, PvP, background (depends on 7–10)
 
 ---
 
-### Milestone 6.2: Runs and battle API ✅
-**Dependencies**: 5.1, 3.2
+### Milestone 6.2: Runs and battle API ✅ (roster-first: Phase 9)
+**Dependencies**: 5.1 (Phase 8 Run), 3.2
 
 **Tasks**:
 - [x] `POST /api/incremental/runs` – body `{ lineupId }`; start run (run-service.startRun).
@@ -308,6 +325,8 @@ Phase 11+: Shops, Training, PvP, background (depends on 7–10)
 ---
 
 ## Phase 7: PvE Integration – Rewards & Bases ✅ Complete
+
+**Roster-first order**: This is **Phase 10** (implement after Run flow and Runs API). Ship roster (Phases 5–6 + Lineup Builder) first.
 
 **Goal**: After battle win: apply small heal, grant XP and gold; base node heals; run status and map progress persist.
 
@@ -330,11 +349,71 @@ Phase 11+: Shops, Training, PvP, background (depends on 7–10)
 
 ---
 
-## Phase 8: UI – Battle Screen
+## Phase 8: Essence, Browser Actions & Roster
+
+**Roster-first order**: Implement this **as Phase 6** (8.1→6.1, 8.2→6.2, 8.3→6.3). Content below is the full Essence/roster/mining scope.
+
+**Goal**: Meta-currency (Essence), passive browser action system (mining with bar-per-strike), and roster building by converting one win from last 10 Dota 2 games into a roster hero. Design: [ESSENCE_AND_BROWSER_ACTIONS.md](./ESSENCE_AND_BROWSER_ACTIONS.md).
+
+### Milestone 8.1: Browser action system, Essence, and Mining (backend)
+**Dependencies**: 4.1 (Prisma; add wallet/action state)
+
+**Tasks**:
+- [ ] Add Prisma: user Essence balance (e.g. `User.essence` or `IncrementalWallet`); optional `IncrementalActionState` (userId, actionType, progress, lastTickAt) for server-side reconciliation.
+- [ ] Types: action type (e.g. `mining`), action state (progress 0–1, lastTickAt); mining constants (base duration per strike, Essence per strike).
+- [ ] Server action engine (pure): given (actionType, progress, lastTickAt, now, rateModifier), compute new progress and number of completions in elapsed time. Unit-testable.
+- [ ] `GET /api/incremental/wallet` (or `/essence`) – return current user Essence balance.
+- [ ] Tick/reconcile endpoint: e.g. `PATCH /api/incremental/action` or `POST /api/incremental/action/tick` – body `{ lastTickAt, progress, deltaTime }` (or client sends lastTickAt + progress; server computes deltaTime). Server advances action, grants Essence for each mining completion, persists balance and returns new progress + balance. Server-authoritative (rate-limit / validate to prevent cheat).
+
+**Files**: `prisma/schema.prisma`, `src/lib/incremental/actions/` (types, engine, mining constants), `src/routes/api/incremental/wallet/+server.ts`, `src/routes/api/incremental/action/+server.ts` (or similar).
+
+**Testing**: Unit tests for action engine (progress 0→1, multiple completions in one tick). Integration: tick mining for N seconds, assert Essence granted; GET wallet returns updated balance.
+
+**Deliverable**: Server can tick mining and grant Essence; client can call tick and GET wallet.
+
+---
+
+### Milestone 8.2: Roster and convert-win API
+**Dependencies**: 8.1, existing match history (Stratz or app's match fetch)
+
+**Tasks**:
+- [ ] Prisma: store user's roster (e.g. `IncrementalRosterHero`: userId, heroId; or JSON array of heroIds on User). Store converted match ids (e.g. `IncrementalConvertedMatch`: userId, matchId) so each win is converted at most once.
+- [ ] `GET /api/incremental/roster` – return current user's unlocked hero ids (for lineup builder and UI).
+- [ ] `GET /api/incremental/roster/eligible-wins` – return last 10 games for user with win/loss and hero; only wins are eligible; exclude already-converted matchIds.
+- [ ] `POST /api/incremental/roster/convert-win` – body `{ matchId }`. Validate: match in user's last 10, win, not yet converted, user has enough Essence, hero not already on roster (v1). Deduct Essence, add hero to roster, record match as converted. Return updated roster and wallet.
+- [ ] Lineup API (6.1): when creating/updating lineup, validate that each `heroId` is in the user's roster (if roster exists). Reject or filter otherwise.
+
+**Files**: `prisma/schema.prisma`, `src/routes/api/incremental/roster/+server.ts`, `roster/eligible-wins/+server.ts`, `roster/convert-win/+server.ts`; update lineups API to validate heroIds against roster.
+
+**Testing**: Convert a win → roster contains hero, Essence decreased, same matchId cannot be converted again. Create lineup with non-roster hero → reject (or filter).
+
+**Deliverable**: User can spend Essence to convert one win from last 10 into a roster hero; lineups only allow roster heroes.
+
+---
+
+### Milestone 8.3: Mining and convert-win UI
+**Dependencies**: 8.1, 8.2
+
+**Tasks**:
+- [ ] Mining UI: progress bar (0–100%) for current strike; label "Mining," optional "Next strike in X.Xs" and "+Y Essence per strike." Client tick loop (e.g. every 100–200 ms): update local progress with deltaTime; when progress ≥ 1, call server tick endpoint (or send heartbeat), reset progress, refresh wallet from response.
+- [ ] Wallet display: show current Essence balance (from GET wallet or tick response).
+- [ ] Convert-win UI: load eligible wins (GET eligible-wins); show list of wins (game, hero, result). Per win: "Convert to roster" button (show Essence cost). On confirm, POST convert-win with matchId; refresh roster and wallet; show success or error (e.g. "Already on roster").
+
+**Files**: `src/routes/incremental/+page.svelte` (or dedicated mining/roster subpages), components for action bar, wallet, eligible-wins list.
+
+**Testing**: Manual: mine until bar fills, see Essence increase; convert a win, see hero on roster and Essence decrease; try converting same win again (rejected).
+
+**Deliverable**: User can mine Essence in the browser and convert a Dota 2 win to add a hero to their roster.
+
+---
+
+## Phase 9: UI – Battle Screen
+
+**Roster-first order**: This is **Phase 11** (after Run flow, Runs API, PvE). Deps in roster-first: 9.1 (Runs/battle API).
 
 **Goal**: Minimal playable battle UI: display lineup, focus, timers, target, enemies; tap to focus (with 2s cooldown); change target; poll or push battle state from API.
 
-### Milestone 8.1: Battle view and focus/target actions
+### Milestone 9.1: Battle view and focus/target actions
 **Dependencies**: 6.2
 
 **Tasks**:
@@ -353,12 +432,14 @@ Phase 11+: Shops, Training, PvP, background (depends on 7–10)
 
 ---
 
-## Phase 9: UI – Map & Run Flow
+## Phase 10: UI – Map & Run Flow
+
+**Roster-first order**: This is **Phase 12**. Deps: 9.1 (Runs API), 11.1 (Battle UI).
 
 **Goal**: Map view shows current node and choices; advance to next node (combat → battle screen; base → heal then next).
 
-### Milestone 9.1: Map page and navigation
-**Dependencies**: 6.2, 8.1
+### Milestone 10.1: Map page and navigation
+**Dependencies**: 6.2, 9.1
 
 **Tasks**:
 - [ ] Page `incremental/run/[runId]`: load run state (current node, next nodes). Display current node type (combat, elite, boss, base, shop, etc.) and next node choices (e.g. buttons or links).
@@ -374,16 +455,18 @@ Phase 11+: Shops, Training, PvP, background (depends on 7–10)
 
 ---
 
-## Phase 10: UI – Lineup Builder
+## Phase 11: UI – Lineup Builder
 
-**Goal**: User can pick 1–5 heroes from a list (unlocked heroes; for v1 can be “all defined heroes”) and save lineup; start run from lineup.
+**Roster-first order**: This is **Phase 7**. Ship with Phases 5–6 for roster launch (build lineups; Start run when Phase 12 ships). Dependencies in roster-first: 5.1 (Lineups API), 6.2 (roster/convert-win).
 
-### Milestone 10.1: Lineup builder page
-**Dependencies**: 6.1
+**Goal**: User can pick 1–5 heroes from their **roster** (unlocked via Phase 6 convert-win or other paths), save lineup, and start run. “all defined heroes”.
+
+### Milestone 11.1: Lineup builder page
+**Dependencies**: 6.1, 8.2 (roster)
 
 **Tasks**:
 - [ ] Page to list user’s lineups (from GET lineups) and “Create lineup” or “Edit.”
-- [ ] Lineup editor: fetch GET heroes; show selectable heroes (1–5 slots); save via POST (create) or PATCH (update). Validate 1–5.
+- [ ] Lineup editor: fetch GET roster (unlocked hero ids) and hero definitions; show **only roster heroes** as selectable (1–5 slots); save via POST (create) or PATCH (update). Validate 1–5 and heroIds in roster.
 - [ ] From lineup list or detail, “Start run” button → POST runs with lineupId → redirect to run/[runId] (map).
 
 **Files**: `src/routes/incremental/lineup/+page.svelte`, `lineup/[id]/+page.svelte` (or single page with create/edit).
@@ -395,11 +478,11 @@ Phase 11+: Shops, Training, PvP, background (depends on 7–10)
 
 ---
 
-## Phase 11: Shops & Relics (Optional / Later)
+## Phase 12: Shops & Relics (Optional / Later)
 
 **Goal**: Shop node: spend gold on run boosts and relics; apply modifiers in battle (spell haste, attack poison, etc.).
 
-### Milestone 11.1: Shop data and run modifiers
+### Milestone 12.1: Shop data and run modifiers
 **Dependencies**: 7.1
 
 **Tasks**:
@@ -413,31 +496,86 @@ Phase 11+: Shops, Training, PvP, background (depends on 7–10)
 
 ---
 
-## Phase 12: Hero Unlock & Training (Optional / Later)
+## Phase 13: Hero Training (Optional / Later)
 
-**Goal**: Heroes unlocked via Dota 2 wins (and forge); Training for passive stat growth per hero; battle uses trained stats.
+**Goal**: After unlocking a hero with Essence (convert-win), the player can **train** that hero’s base stats in the idle part of the game. Same browser action system as mining; one active action = Mining OR Training(heroId, statKey). Each of **seven** stats is trainable per hero, with **Dota 2 themed buildings** (training grounds) for expression (e.g. magic build vs tank build).
 
-### Milestone 12.1: Unlock and Training data
-**Dependencies**: 4.1, 6.1
+**Design**: [HERO_TRAINING.md](./HERO_TRAINING.md) – hero creation (roster + HeroDef base stats), trainable stats, idle integration, persistence, and building themes.
+
+### Milestone 13.1: Training data and API
+**Dependencies**: 4.1, 8.1 (action system), 8.2 (roster)
 
 **Tasks**:
-- [ ] Define how Dota 2 wins map to hero unlock/boost (reuse or mirror card-battler forge/claim if applicable). Persist “unlocked heroes” and optionally “hero progress” per user.
-- [ ] Training: per **(userId, heroId)** where heroId = `Hero.id` (Option A); persist (e.g. IncrementalHeroTraining table). Training can be “queued” and advance over time or on login (design choice).
-- [ ] When building battle state, resolve each lineup slot: heroId → Hero + incremental stats + that user’s training for that heroId.
-- [ ] Lineup builder: only show unlocked heroes (from `Hero` table); show training progress per hero in UI.
+- [ ] Prisma: `IncrementalHeroTraining` (saveId, heroId, statKey, value). Unique (saveId, heroId, statKey). Only roster heroes can have training rows.
+- [ ] `GET /api/incremental/training` – return all (heroId, statKey, value) for current save (for UI and battle). Optional: `GET /api/incremental/heroes/[heroId]/training` for single-hero view.
+- [ ] Constants: define seven `statKey`s (hp, attack_damage, spell_power, attack_speed, spell_haste, armor, magic_resist) and mapping to formula hooks (see HERO_TRAINING.md).
 
-**Files**: Prisma models for unlock/training; run/battle state uses trained stats; API for training queue and progress; UI for training.
+**Files**: `prisma/schema.prisma`, `src/routes/api/incremental/training/+server.ts`, `src/lib/incremental/constants/training.ts` (or under actions).
 
-**Deliverable**: Progression tied to Dota 2 and passive Training; lineup strength reflects unlocks and training.
+**Deliverable**: Training progress persisted per save/hero/stat; API to read it.
 
 ---
 
-## Phase 13: PvP (Optional / Later)
+### Milestone 13.2: Action engine and tick for training
+**Dependencies**: 8.1, 13.1
+
+**Tasks**:
+- [ ] Extend action type to `training` with params (heroId, statKey). Same progress bar and tick loop; effective duration per training tick (constant or per-stat).
+- [ ] On training completion: increment `IncrementalHeroTraining.value` for (saveId, heroId, statKey). Validate hero is on roster for this save.
+- [ ] Tick endpoint: accept `actionType: 'training'`, `heroId`, `statKey` when not mining; apply completions to training table; return new progress and optional training snapshot.
+- [ ] **One active action**: switching to Training pauses (or resets) Mining; switching to Mining pauses Training. Persist current action type and params (saveId, actionType, heroId?, statKey?, progress, lastTickAt).
+
+**Files**: `src/lib/incremental/actions/` (action-engine, constants), `src/routes/api/incremental/action/+server.ts`, Prisma IncrementalActionState (or equivalent) with action params.
+
+**Deliverable**: User can choose “Train Lina – Spell Power”; bar fills; on complete, Lina’s spell_power training value increases; battle can read it.
+
+---
+
+### Milestone 13.3: Battle integration (effective stats)
+**Dependencies**: 13.1, 6.2 (battle state)
+
+**Tasks**:
+- [ ] When building battle state (createBattleState or run service): for each lineup hero, load HeroDef(heroId) and training(saveId, heroId). Compute **effective** baseMaxHp, attack flat, spell power, attack speed, spell haste, armor, magic resist (base + trained).
+- [ ] Resolution and formulas already accept modifiers; pass effective stats (or base + modifier object) so damage/interval/resist use trained values. No change to formula signatures beyond where numbers come from.
+
+**Files**: `src/lib/incremental/engine/battle-state.ts`, run service or battle PATCH handler that builds state, `src/lib/incremental/stats/formulas.ts` (if needed for modifier application).
+
+**Deliverable**: Battles use trained stats; lineup strength reflects training.
+
+---
+
+### Milestone 13.4: Training UI – buildings and training grounds
+**Dependencies**: 13.2, 13.3 (optional for display-only), 8.3 (incremental page)
+
+**Tasks**:
+- [ ] **Training grounds**: One section/card per **building** (stat). Seven buildings: Barracks (HP), Weapon Smithy (attack_damage), Arcane Sanctum (spell_power), Swift Forge (attack_speed), Cooldown Grotto (spell_haste), Blacksmith (armor), Cloak Pavilion (magic_resist). Each shows name, short description, “Current trainer: Hero +N” or “Idle”.
+- [ ] **Start training**: From each building, user selects a **roster hero** and “Train here”; active action becomes Training(heroId, statKey). Same progress bar as mining (one bar, label e.g. “Training Lina – Spell Power”).
+- [ ] **Switch action**: From bar or a “Mining” / “Training” toggle: switch between Mining and Training (and between Training targets). Pause/resume or reset per design choice.
+- [ ] **Per-hero view** (optional): “My heroes” – list roster with each hero’s seven stat values and link to “Train” per stat (building).
+- [ ] Lineup builder / roster view: show trained stats per hero (e.g. “Lina +5 spell power, +2 spell haste”) so build expression is visible.
+
+**Files**: `src/routes/incremental/+page.svelte` or dedicated `incremental/training/+page.svelte`, components for building cards, hero selector, shared action bar.
+
+**Deliverable**: Full training loop in UI with Dota 2 themed buildings; clear expression (magic vs tank vs hybrid).
+
+---
+
+### Milestone 13.5 (optional): Unlock and Training polish
+**Dependencies**: 13.4
+
+**Tasks**:
+- [ ] (Optional) Additional hero unlock paths (Dota 2 / forge) if desired; integrate with roster.
+- [ ] Building icons or art placeholders; tooltips for each stat and building.
+- [ ] Balance: base duration per training tick, value per completion (e.g. +1 per tick), caps or diminishing returns if desired.
+
+---
+
+## Phase 14: PvP (Optional / Later)
 
 **Goal**: Separate PvP mode: two players, two lineups; both send focus/target; battle pauses if either leaves.
 
-### Milestone 13.1: PvP battle flow
-**Dependencies**: 6.2, 8.1
+### Milestone 14.1: PvP battle flow
+**Dependencies**: 6.2, 9.1
 
 **Tasks**:
 - [ ] PvP match creation (queue or challenge): create battle state with two “player” sides (each has lineup, focus, target). No run/map.
@@ -450,11 +588,11 @@ Phase 11+: Shops, Training, PvP, background (depends on 7–10)
 
 ---
 
-## Phase 14: Background PvE (Optional / Later)
+## Phase 15: Background PvE (Optional / Later)
 
 **Goal**: When player leaves battle screen, battle continues on server (auto-rotation every 10s); on return, show current state; persist battle state.
 
-### Milestone 14.1: Persistent battle and background tick
+### Milestone 15.1: Persistent battle and background tick
 **Dependencies**: 6.2, 7.1
 
 **Tasks**:
@@ -474,24 +612,27 @@ Phase 11+: Shops, Training, PvP, background (depends on 7–10)
 |-------|--------|-------------------|------------------|
 | 0 ✅ | Setup, types | Placeholder test, type shape | All |
 | 1 ✅ | Constants, formulas | Unit tests | Engine |
-| 2 | State, timers | Unit + small integration | Resolution |
-| 3 | Resolution, loop | Simulation (full battle) | API |
-| 4 | Prisma, map | DB + map tests | Run flow |
-| 5 | Run/encounter flow | Service tests | API |
-| 6 | API | Integration (curl/Playwright) | UI |
-| 7 | Rewards, bases | Integration | UI flow |
-| 8 | Battle UI | Manual + E2E | Map UI |
-| 9 | Map UI | Manual + E2E | Lineup |
-| 10 | Lineup UI | Manual + E2E | Full game |
-| 11–14 | Shops, Training, PvP, background | Per-milestone | Existing |
+| 2 ✅ | State, timers | Unit + small integration | Resolution |
+| 3 ✅ | Resolution, loop | Simulation (full battle) | API |
+| 4 ✅ | Prisma, map | DB + map tests | Run flow |
+| 5 | **Lineups API** (roster-first) | Integration | Phase 6, 7 |
+| 6 | **Essence, actions, roster** | Unit + integration | Lineup, Training |
+| 7 | **Lineup Builder UI** (roster-first) | Manual + E2E | Full roster system |
+| 8 ✅ | Run/encounter flow | Service tests | API |
+| 9 ✅ | Runs/battle API | Integration | UI |
+| 10 ✅ | Rewards, bases | Integration | UI flow |
+| 11 | Battle UI | Manual + E2E | Map UI |
+| 12 | Map UI | Manual + E2E | Full game |
+| 13–16 | Shops, Training, PvP, background | Per-milestone | Existing |
 
 ---
 
 ## Recommended Order and Checkpoints
 
 - **Checkpoint A (playable battle in code)**: Complete Phases 0–3. You can simulate a full battle and test focus/timers/resolution in tests.
-- **Checkpoint B (playable via API)**: Complete Phases 4–6. You can start a run, advance to combat, and run a battle via API (e.g. Postman or Bruno).
-- **Checkpoint C (playable in browser)**: Complete Phases 7–10. Full PvE loop in UI: lineup → run → map → battle → rewards → map.
-- **Checkpoint D (full vision)**: Add Phases 11–14 as needed (shops, Training, PvP, background PvE).
+- **Checkpoint B (playable via API)**: Complete Phases 4, 8, 9. You can start a run, advance to combat, and run a battle via API (e.g. Postman or Bruno).
+- **Checkpoint C (roster-first launch)**: Complete Phases 5–7. **Ship here.** User can mine Essence, convert a win from last 10 games to roster, build lineups (no run/battle/map UI yet).
+- **Checkpoint D (playable battle in browser)**: Complete Phases 8–12. Full PvE loop: lineup → start run → map → battle → rewards → map.
+- **Checkpoint E (full vision)**: Add Phases 13–16 as needed (shops, Training, PvP, background PvE).
 
 Use this roadmap to implement in short chunks; run tests after each milestone so integration in later phases stays straightforward.

@@ -3,34 +3,33 @@ import type { RequestHandler } from '@sveltejs/kit';
 import prisma from '$lib/server/prisma';
 import {
 	createLineup,
-	getLineupsByUserId,
+	getLineupsBySaveId,
 	type IncrementalDb
 } from '$lib/incremental/data/lineup';
 import { getHeroDef } from '$lib/incremental/constants';
+import { resolveIncrementalSave } from '$lib/server/incremental-save';
 
 const MIN_HEROES = 1;
 const MAX_HEROES = 5;
 
-/** GET /api/incremental/lineups – list current user's lineups */
-export const GET: RequestHandler = async ({ locals }) => {
-	const session = await locals.auth.validate();
-	if (!session) error(401, 'Unauthorized');
-	const userId = session.user.userId;
-	const lineups = await getLineupsByUserId(prisma as unknown as IncrementalDb, userId);
-	return json(lineups);
+/** GET /api/incremental/lineups – list lineups for current save. Query: saveId (optional). */
+export const GET: RequestHandler = async (event) => {
+	const saveId = event.url.searchParams.get('saveId') ?? undefined;
+	const { saveId: resolvedSaveId } = await resolveIncrementalSave(event, { saveId });
+	const lineups = await getLineupsBySaveId(prisma as unknown as IncrementalDb, resolvedSaveId);
+	return json({ lineups, saveId: resolvedSaveId });
 };
 
-/** POST /api/incremental/lineups – create lineup. Body: { name, heroIds } */
-export const POST: RequestHandler = async ({ request, locals }) => {
-	const session = await locals.auth.validate();
-	if (!session) error(401, 'Unauthorized');
-	const userId = session.user.userId;
-	let body: { name?: string; heroIds?: number[] };
+/** POST /api/incremental/lineups – create lineup. Body: { saveId?, name, heroIds } */
+export const POST: RequestHandler = async (event) => {
+	const { request } = event;
+	let body: { saveId?: string; name?: string; heroIds?: number[] };
 	try {
 		body = await request.json();
 	} catch {
 		error(400, 'Invalid JSON');
 	}
+	const { saveId: resolvedSaveId } = await resolveIncrementalSave(event, { saveId: body.saveId });
 	const { name, heroIds } = body;
 	if (typeof name !== 'string' || !name.trim()) error(400, 'name is required');
 	if (!Array.isArray(heroIds)) error(400, 'heroIds must be an array of numbers');
@@ -41,10 +40,18 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 		if (typeof id !== 'number' || !Number.isInteger(id)) error(400, 'heroIds must be integers');
 		if (!getHeroDef(id)) error(400, `Unknown hero id: ${id}`);
 	}
+	const rosterRows = await prisma.incrementalRosterHero.findMany({
+		where: { saveId: resolvedSaveId },
+		select: { heroId: true }
+	});
+	const rosterSet = new Set(rosterRows.map((r) => r.heroId));
+	for (const id of heroIds) {
+		if (!rosterSet.has(id)) error(400, `Hero ${id} is not on your roster`);
+	}
 	const lineup = await createLineup(prisma as unknown as IncrementalDb, {
-		userId,
+		saveId: resolvedSaveId,
 		name: name.trim(),
 		heroIds
 	});
-	return json(lineup);
+	return json({ ...lineup, saveId: resolvedSaveId });
 };

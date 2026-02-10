@@ -7,10 +7,10 @@
 export interface IncrementalDb {
 	incrementalLineup: {
 		create: (args: {
-			data: { userId: string; name: string; heroIds: number[] };
-		}) => Promise<{ id: string; userId: string; name: string; heroIds: number[] }>;
-		findMany: (args: { where: { userId: string } }) => Promise<
-			Array<{ id: string; userId: string; name: string; heroIds: number[] }>
+			data: { saveId: string; name: string; heroIds: number[] };
+		}) => Promise<{ id: string; saveId: string; name: string; heroIds: number[] }>;
+		findMany: (args: { where: { saveId: string } }) => Promise<
+			Array<{ id: string; saveId: string; name: string; heroIds: number[] }>
 		>;
 	};
 	incrementalRun: {
@@ -47,13 +47,13 @@ export interface IncrementalDb {
 
 export async function createLineup(
 	db: IncrementalDb,
-	data: { userId: string; name: string; heroIds: number[] }
+	data: { saveId: string; name: string; heroIds: number[] }
 ) {
 	return db.incrementalLineup.create({ data });
 }
 
-export async function getLineupsByUserId(db: IncrementalDb, userId: string) {
-	return db.incrementalLineup.findMany({ where: { userId } });
+export async function getLineupsBySaveId(db: IncrementalDb, saveId: string) {
+	return db.incrementalLineup.findMany({ where: { saveId } });
 }
 
 export async function createRun(

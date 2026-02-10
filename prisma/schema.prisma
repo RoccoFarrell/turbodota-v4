@@ -35,8 +35,8 @@ model User {
   Turbotown     Turbotown[]
   userCards     UserCard[]
   dotaDeckGames DotaDeckGame[]
-  incrementalLineups IncrementalLineup[]
   incrementalRuns    IncrementalRun[]
+  incrementalSaves   IncrementalSave[]
 }
 
 model UserPrefs {
@@ -604,18 +604,36 @@ enum IncrementalNodeType {
   BASE
 }
 
-model IncrementalLineup {
+// One save = one "game slot" (essence, roster, action state, lineups). User can have multiple saves.
+model IncrementalSave {
   id        String   @id @default(cuid())
   userId    String
+  name      String?  // e.g. "Main", "Alt" – optional label
+  essence   Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user               User                        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  actionState        IncrementalActionState?
+  rosterHeroes       IncrementalRosterHero[]
+  convertedMatches   IncrementalConvertedMatch[]
+  lineups            IncrementalLineup[]
+
+  @@index([userId])
+}
+
+model IncrementalLineup {
+  id        String   @id @default(cuid())
+  saveId    String
   name      String
   heroIds   Int[]    // ordered array of Hero.id
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  save IncrementalSave @relation(fields: [saveId], references: [id], onDelete: Cascade)
   runs IncrementalRun[]
 
-  @@index([userId])
+  @@index([saveId])
 }
 
 model IncrementalRun {
@@ -653,4 +671,41 @@ model IncrementalMapNode {
   run IncrementalRun @relation(fields: [runId], references: [id], onDelete: Cascade)
 
   @@index([runId])
+}
+
+// Phase 6: per-save essence, browser actions, roster
+model IncrementalActionState {
+  id          String   @id @default(cuid())
+  saveId      String   @unique
+  actionType  String   // e.g. "mining"
+  progress    Float    @default(0)   // 0..1 within current strike
+  lastTickAt  DateTime @default(now())
+
+  save IncrementalSave @relation(fields: [saveId], references: [id], onDelete: Cascade)
+
+  @@index([saveId])
+}
+
+model IncrementalRosterHero {
+  id        String   @id @default(cuid())
+  saveId    String
+  heroId    Int      // Hero.id
+  createdAt DateTime @default(now())
+
+  save IncrementalSave @relation(fields: [saveId], references: [id], onDelete: Cascade)
+
+  @@unique([saveId, heroId])
+  @@index([saveId])
+}
+
+model IncrementalConvertedMatch {
+  id        String   @id @default(cuid())
+  saveId    String
+  matchId   BigInt   // Match.match_id
+  createdAt DateTime @default(now())
+
+  save IncrementalSave @relation(fields: [saveId], references: [id], onDelete: Cascade)
+
+  @@unique([saveId, matchId])
+  @@index([saveId])
 }

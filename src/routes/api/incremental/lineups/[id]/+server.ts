@@ -6,29 +6,32 @@ import { getHeroDef } from '$lib/incremental/constants';
 const MIN_HEROES = 1;
 const MAX_HEROES = 5;
 
-/** GET /api/incremental/lineups/[id] – get lineup (own only) */
+function authLineup(lineup: { save?: { userId: string } | null }, sessionUserId: string) {
+	if (!lineup?.save) error(404, 'Lineup not found');
+	if (lineup.save.userId !== sessionUserId) error(403, 'Forbidden');
+}
+
+/** GET /api/incremental/lineups/[id] – get lineup (own only, via save) */
 export const GET: RequestHandler<{ id: string }> = async ({ params, locals }) => {
 	const session = await locals.auth.validate();
 	if (!session) error(401, 'Unauthorized');
-	const id = params.id;
-	const lineup = await prisma.incrementalLineup.findUnique({ where: { id } });
-	if (!lineup) error(404, 'Lineup not found');
-	if (lineup.userId !== session.user.userId) error(403, 'Forbidden');
+	const lineup = await prisma.incrementalLineup.findUnique({
+		where: { id: params.id },
+		include: { save: { select: { userId: true } } }
+	});
+	authLineup(lineup, session.user.userId);
 	return json(lineup);
 };
 
 /** PATCH /api/incremental/lineups/[id] – update name or heroIds */
-export const PATCH: RequestHandler<{ id: string }> = async ({
-	params,
-	request,
-	locals
-}) => {
+export const PATCH: RequestHandler<{ id: string }> = async ({ params, request, locals }) => {
 	const session = await locals.auth.validate();
 	if (!session) error(401, 'Unauthorized');
-	const id = params.id;
-	const lineup = await prisma.incrementalLineup.findUnique({ where: { id } });
-	if (!lineup) error(404, 'Lineup not found');
-	if (lineup.userId !== session.user.userId) error(403, 'Forbidden');
+	const lineup = await prisma.incrementalLineup.findUnique({
+		where: { id: params.id },
+		include: { save: { select: { userId: true } } }
+	});
+	authLineup(lineup, session.user.userId);
 	let body: { name?: string; heroIds?: number[] };
 	try {
 		body = await request.json();
@@ -49,10 +52,18 @@ export const PATCH: RequestHandler<{ id: string }> = async ({
 			if (typeof hid !== 'number' || !Number.isInteger(hid)) error(400, 'heroIds must be integers');
 			if (!getHeroDef(hid)) error(400, `Unknown hero id: ${hid}`);
 		}
+		const rosterRows = await prisma.incrementalRosterHero.findMany({
+			where: { saveId: lineup!.saveId },
+			select: { heroId: true }
+		});
+		const rosterSet = new Set(rosterRows.map((r) => r.heroId));
+		for (const hid of body.heroIds) {
+			if (!rosterSet.has(hid)) error(400, `Hero ${hid} is not on your roster`);
+		}
 		updates.heroIds = body.heroIds;
 	}
 	const updated = await prisma.incrementalLineup.update({
-		where: { id },
+		where: { id: params.id },
 		data: updates
 	});
 	return json(updated);
@@ -62,10 +73,11 @@ export const PATCH: RequestHandler<{ id: string }> = async ({
 export const DELETE: RequestHandler<{ id: string }> = async ({ params, locals }) => {
 	const session = await locals.auth.validate();
 	if (!session) error(401, 'Unauthorized');
-	const id = params.id;
-	const lineup = await prisma.incrementalLineup.findUnique({ where: { id } });
-	if (!lineup) error(404, 'Lineup not found');
-	if (lineup.userId !== session.user.userId) error(403, 'Forbidden');
-	await prisma.incrementalLineup.delete({ where: { id } });
+	const lineup = await prisma.incrementalLineup.findUnique({
+		where: { id: params.id },
+		include: { save: { select: { userId: true } } }
+	});
+	authLineup(lineup, session.user.userId);
+	await prisma.incrementalLineup.delete({ where: { id: params.id } });
 	return new Response(null, { status: 204 });
 };
