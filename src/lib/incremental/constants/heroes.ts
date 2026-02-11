@@ -37,12 +37,13 @@ const heroes: HeroDef[] = [
 		baseArmor: 2,
 		baseMagicResist: 0.25,
 		baseSpellInterval: 8,
-		abilityIds: ['shadow_wave']
+		abilityIds: ['poison_touch']
 	}
 ];
 
 const byHeroId = new Map(heroes.map((h) => [h.heroId, h]));
 
+/** Returns the hero definition from constants (used when DB defs are not injected, e.g. tests). */
 export function getHeroDef(heroId: number): HeroDef | undefined {
 	return byHeroId.get(heroId);
 }

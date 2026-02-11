@@ -1,5 +1,5 @@
-import type { BattleState, HeroInstance, EnemyInstance } from '../types';
-import { getHeroDef, getEncounterDef, getEnemyDef } from '../constants';
+import type { BattleState, HeroInstance, HeroDef } from '../types';
+import { getHeroDef as getHeroDefConst, getEncounterDef, getEnemyDef } from '../constants';
 
 /** Used so the first focus change is allowed (elapsedTime - lastFocusChangeAt >= 2 at start). */
 const FOCUS_CHANGE_COOLDOWN = 2;
@@ -11,6 +11,8 @@ export interface CreateBattleStateOptions {
 	lastFocusChangeAt?: number;
 	/** Optional HP per lineup index (from run.heroHp); length must match lineup; omitted/full = use maxHp. */
 	initialHeroHp?: number[];
+	/** When set, use this instead of constants (e.g. hero defs from DB). */
+	getHeroDef?: (heroId: number) => HeroDef | undefined;
 }
 
 /**
@@ -23,6 +25,7 @@ export function createBattleState(
 	options?: CreateBattleStateOptions
 ): BattleState {
 	const initialHp = options?.initialHeroHp;
+	const getHeroDef = options?.getHeroDef ?? getHeroDefConst;
 	const player: HeroInstance[] = [];
 	for (let i = 0; i < lineupHeroIds.length; i++) {
 		const heroId = lineupHeroIds[i];
@@ -84,6 +87,7 @@ export function createBattleState(
 		enemyFocusedIndex: 0,
 		lastFocusChangeAt,
 		elapsedTime,
-		result: null
+		result: null,
+		combatLog: []
 	};
 }

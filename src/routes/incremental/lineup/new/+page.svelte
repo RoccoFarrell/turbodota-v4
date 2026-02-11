@@ -34,7 +34,7 @@
 			if (list.length > 0) saveId = list[0].id;
 		}
 		if (!saveId) {
-			const w = await fetch('/api/incremental/wallet');
+			const w = await fetch('/api/incremental/bank');
 			if (w.ok) {
 				const data = await w.json();
 				saveId = data.saveId ?? null;

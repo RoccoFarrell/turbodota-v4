@@ -7,6 +7,7 @@
 import prisma from '$lib/server/prisma';
 import type { HeroDef, AbilityDef, PrimaryAttribute } from '$lib/incremental/types';
 import { PrimaryAttribute as PrimaryAttributeConst } from '$lib/incremental/types';
+import { getAbilityDef as getAbilityDefConst } from '$lib/incremental/constants';
 
 function primaryAttribute(value: string): PrimaryAttribute {
 	if (value === 'str' || value === 'agi' || value === 'int' || value === 'universal') return value;
@@ -48,6 +49,13 @@ export async function getHeroDefsFromDb(saveId?: string | null): Promise<{
 
 	const abilityMap = new Map<string, AbilityDef>();
 	for (const a of abilities) {
+		const fromConst = getAbilityDefConst(a.id);
+		// DB abilities with effect "stun" and target single_enemy get stun debuff when constants don't provide statusEffectOnHit
+		const statusEffectOnHit =
+			fromConst?.statusEffectOnHit ??
+			(a.effect === 'stun' && a.target === 'single_enemy'
+				? { statusEffectId: 'stun' as const, duration: 1.5 }
+				: undefined);
 		abilityMap.set(a.id, {
 			id: a.id,
 			type: a.type as 'active' | 'passive',
@@ -56,7 +64,10 @@ export async function getHeroDefsFromDb(saveId?: string | null): Promise<{
 			target: a.target,
 			damageType: a.damageType ?? undefined,
 			baseDamage: a.baseDamage ?? undefined,
-			returnDamageRatio: a.returnDamageRatio ?? undefined
+			returnDamageRatio: a.returnDamageRatio ?? undefined,
+			abilityName: a.abilityName,
+			description: a.description ?? undefined,
+			statusEffectOnHit
 		});
 	}
 

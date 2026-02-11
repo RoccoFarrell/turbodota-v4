@@ -34,6 +34,16 @@
 	let heroes = $state<AtlasHero[]>([]);
 	let loading = $state(true);
 	let error = $state<string | null>(null);
+	let searchQuery = $state('');
+
+	/** Heroes filtered by search (case-insensitive substring on localizedName). */
+	const filteredHeroes = $derived(
+		searchQuery.trim() === ''
+			? heroes
+			: heroes.filter((h) =>
+					h.localizedName.toLowerCase().includes(searchQuery.trim().toLowerCase())
+				)
+	);
 
 	async function fetchAtlas() {
 		loading = true;
@@ -74,7 +84,7 @@
 		return {
 			id: a.id,
 			abilityName: a.abilityName,
-			description: a.description,
+			description: a.description ?? undefined,
 			type: a.type as 'active' | 'passive',
 			trigger: a.trigger,
 			effect: a.effect,
@@ -110,16 +120,37 @@
 			(after migrating) to upload base stats and abilities from the CSVs.
 		</p>
 	{:else}
-		<div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-			{#each heroes as h}
-				<HeroCard
-					heroId={h.heroId}
-					displayName={h.localizedName}
-					def={atlasHeroToDef(h)}
-					abilities={[atlasAbilityToCard(h.ability1), atlasAbilityToCard(h.ability2)]}
-					variant="full"
+		<div class="space-y-4">
+			<label class="block">
+				<span class="sr-only">Search heroes</span>
+				<input
+					type="search"
+					placeholder="Search by hero name…"
+					bind:value={searchQuery}
+					class="w-full max-w-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-amber-500 dark:focus:ring-amber-400"
+					aria-label="Search heroes"
 				/>
-			{/each}
+			</label>
+			{#if searchQuery.trim() && filteredHeroes.length === 0}
+				<p class="text-gray-500 dark:text-gray-400">No heroes match “{searchQuery.trim()}”.</p>
+			{:else}
+				<p class="text-sm text-gray-500 dark:text-gray-400">
+					{filteredHeroes.length} hero{filteredHeroes.length === 1 ? '' : 's'}
+					{searchQuery.trim() ? ' matching' : ''}
+				</p>
+				<div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+					{#each filteredHeroes as h}
+						<HeroCard
+							heroId={h.heroId}
+							displayName={h.localizedName}
+							def={atlasHeroToDef(h)}
+							abilities={[atlasAbilityToCard(h.ability1), atlasAbilityToCard(h.ability2)]}
+							variant="full"
+							highlightQuery={searchQuery.trim() || undefined}
+						/>
+					{/each}
+				</div>
+			{/if}
 		</div>
 	{/if}
 </div>

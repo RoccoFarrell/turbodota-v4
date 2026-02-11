@@ -3,6 +3,18 @@ import type { RequestHandler } from '@sveltejs/kit';
 import prisma from '$lib/server/prisma';
 import { startRun, type RunServiceDb } from '$lib/incremental/run/run-service';
 
+/** GET /api/incremental/runs – list current user's runs (most recent first). */
+export const GET: RequestHandler = async ({ locals }) => {
+	const session = await locals.auth.validate();
+	if (!session) error(401, 'Unauthorized');
+	const runs = await prisma.incrementalRun.findMany({
+		where: { userId: session.user.userId },
+		orderBy: { startedAt: 'desc' },
+		select: { id: true, status: true, startedAt: true }
+	});
+	return json({ runs });
+};
+
 /** POST /api/incremental/runs – start run. Body: { lineupId, seed? } */
 export const POST: RequestHandler = async ({ request, locals }) => {
 	const session = await locals.auth.validate();

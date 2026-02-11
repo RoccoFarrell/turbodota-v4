@@ -12,12 +12,13 @@ export interface MapNodeTemplate {
 	nextTemplateIndices: number[]; // indices into the template array
 }
 
-/** Minimal linear graph: combat → combat → combat → elite → boss. */
+/** Linear graph: start (REST) → combat → combat → combat → elite → boss. Run starts at start node; only the first encounter is available until it is won. */
 const DEFAULT_GRAPH_TEMPLATE: MapNodeTemplate[] = [
-	{ nodeType: 'COMBAT', encounterId: 'wolf_pack', nextTemplateIndices: [1] },
+	{ nodeType: 'REST', encounterId: null, nextTemplateIndices: [1] },
 	{ nodeType: 'COMBAT', encounterId: 'wolf_pack', nextTemplateIndices: [2] },
 	{ nodeType: 'COMBAT', encounterId: 'wolf_pack', nextTemplateIndices: [3] },
-	{ nodeType: 'ELITE', encounterId: 'wolf_pack', nextTemplateIndices: [4] },
+	{ nodeType: 'COMBAT', encounterId: 'wolf_pack', nextTemplateIndices: [4] },
+	{ nodeType: 'ELITE', encounterId: 'wolf_pack', nextTemplateIndices: [5] },
 	{ nodeType: 'BOSS', encounterId: 'wolf_pack', nextTemplateIndices: [] }
 ];
 

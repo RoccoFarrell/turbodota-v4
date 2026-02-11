@@ -56,7 +56,7 @@
 			if (list.length > 0) saveId = list[0].id;
 		}
 		if (!saveId) {
-			const w = await fetch('/api/incremental/wallet');
+			const w = await fetch('/api/incremental/bank');
 			if (w.ok) {
 				const data = await w.json();
 				saveId = data.saveId ?? null;
@@ -65,9 +65,9 @@
 		}
 	}
 
-	async function fetchWallet() {
+	async function fetchBank() {
 		await ensureSave();
-		const res = await fetch(`/api/incremental/wallet${saveParam()}`);
+		const res = await fetch(`/api/incremental/bank${saveParam()}`);
 		if (res.ok) {
 			const data = await res.json();
 			essence = data.essence ?? 0;
@@ -240,7 +240,7 @@
 
 	onMount(() => {
 		(async () => {
-			await fetchWallet();
+			await fetchBank();
 			await fetchRoster();
 			await fetchTraining();
 		})();
@@ -272,7 +272,7 @@
 			<select
 				class="mt-1 block w-full rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-gray-900 dark:text-gray-100"
 				bind:value={saveId}
-				onchange={() => { fetchWallet(); fetchRoster(); fetchTraining(); }}
+				onchange={() => { fetchBank(); fetchRoster(); fetchTraining(); }}
 			>
 				{#each saves as s}
 					<option value={s.id}>{s.name ?? 'Save'} ({s.essence} Essence)</option>
@@ -281,7 +281,7 @@
 		</section>
 	{/if}
 
-	<!-- Wallet -->
+	<!-- Bank -->
 	<section class="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 p-4">
 		<h2 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Essence</h2>
 		<p class="mt-1 text-2xl font-semibold text-gray-900 dark:text-gray-100">{essence}</p>

@@ -7,17 +7,17 @@ This roadmap breaks the incremental game into **short, discrete development chun
 | Roster-first order | Section in doc | Content |
 |--------------------|----------------|--------|
 | Phase 5 | Phase 5 | API – Lineups and Heroes ✅ |
-| Phase 6 | Phase 6 goal + **Phase 8** (8.1→6.1, 8.2→6.2, 8.3→6.3) | Essence, mining, roster, convert-win |
-| Phase 7 | Phase 11 | UI – Lineup Builder |
+| Phase 6 | Phase 6 goal + **Phase 8** (8.1→6.1, 8.2→6.2, 8.3→6.3) | Essence, mining, roster, convert-win ✅ |
+| Phase 7 | Phase 11 | UI – Lineup Builder ✅ |
 | Phase 8–9 | Phase 6.2 (doc) | Runs/battle API (run & encounter flow) ✅ |
 | Phase 10 | Phase 7 (doc) | PvE Integration ✅ |
-| Phase 11 | Phase 9 (doc) | UI – Battle Screen |
-| Phase 12 | Phase 10 (doc) | UI – Map & Run Flow |
+| Phase 11 | Phase 9 (doc) | UI – Battle Screen ✅ |
+| Phase 12 | Phase 10 (doc) | UI – Map & Run Flow ✅ |
 | 13–16 | Phases 12–15 (doc) | Shops, Training, PvP, background |
 
-Phases 0–4 and run/battle/PvE (doc Phase 5 Run, 6.2 Runs API, Phase 7 PvE) are already implemented; content unchanged. Only **delivery order** is roster (5–7) then battle/map (11–12).
+Phases 0–4, run/battle/PvE (doc Phase 5 Run, 6.2 Runs API, Phase 7 PvE), **Phase 5 (Lineups API)**, **Phase 6 / Phase 8 (Essence, mining, roster, convert-win)**, **Phase 7 / Phase 11 (Lineup Builder)**, **Phase 9 (Battle Screen UI)**, and **Phase 10 (Map & Run Flow)** are implemented. Remaining: Phase 12+ (shops, training/leveling, PvP, background).
 
-**Reference**: [ARCHITECTURE.md](./ARCHITECTURE.md), [BATTLE_MECHANICS.md](./BATTLE_MECHANICS.md), [CORE_CONCEPT.md](./CORE_CONCEPT.md), [OPEN_QUESTIONS.md](./OPEN_QUESTIONS.md), [ESSENCE_AND_BROWSER_ACTIONS.md](./ESSENCE_AND_BROWSER_ACTIONS.md), [HERO_TRAINING.md](./HERO_TRAINING.md), [TRAINING_UI_AND_TALENT_TREE.md](./TRAINING_UI_AND_TALENT_TREE.md) (training UI flow, talent tree plan).
+**Reference**: [ARCHITECTURE.md](./ARCHITECTURE.md), [BATTLE_MECHANICS.md](./BATTLE_MECHANICS.md), [CORE_CONCEPT.md](./CORE_CONCEPT.md), [OPEN_QUESTIONS.md](./OPEN_QUESTIONS.md), [ESSENCE_AND_BROWSER_ACTIONS.md](./ESSENCE_AND_BROWSER_ACTIONS.md), [HERO_TRAINING.md](./HERO_TRAINING.md), [TRAINING_UI_AND_TALENT_TREE.md](./TRAINING_UI_AND_TALENT_TREE.md) (training UI flow, talent tree plan). **Leveling system**: [LEVELING_SYSTEM.md](./LEVELING_SYSTEM.md) (Melvor-like progression: formula layer, building upgrades, talent application, mining level, skill tree expansion, multi-hero training). **Dota 2 integration**: [DOTA2_REWARDS_ITEMS_LOOTBOX.md](./DOTA2_REWARDS_ITEMS_LOOTBOX.md) (match API payloads, rewards from stats, item system, lootbox for roster-hero wins). **Bank**: [BANK_SYSTEM.md](./BANK_SYSTEM.md) (flexible per-save currencies + item inventory; replaces hardcoded Essence; integrates with idle, Dota, battle, shops).
 
 ---
 
@@ -45,7 +45,7 @@ Phase 8–10: Run/battle backend             Run flow, Runs/battle API, PvE rewa
      ↓
 Phase 11–12: Battle & Map UI               (depends on 9)
      ↓
-Phase 13+: Shops, Training, PvP, background
+Phase 13+: Training, Leveling system (formulas, buildings, talents), Shops, PvP, background
 ```
 
 ---
@@ -265,11 +265,11 @@ Phase 13+: Shops, Training, PvP, background
 
 **Tasks**:
 - [x] `GET /api/incremental/lineups` – list current user's lineups (from Prisma).
-- [x] `POST /api/incremental/lineups` – body `{ name, heroIds }` (heroIds = array of `Hero.id` Int); create lineup (validate 1–5, ids exist in `Hero` table). Roster validation added in Phase 6.
+- [x] `POST /api/incremental/lineups` – body `{ name, heroIds }` (heroIds = array of `Hero.id` Int); create lineup (validate 1–5, ids exist in Hero/IncrementalHeroBaseStat). Roster validation added in Phase 6.
 - [x] `GET /api/incremental/lineups/[id]` – get lineup by id (auth: own only).
 - [x] `PATCH /api/incremental/lineups/[id]` – update name or heroIds.
 - [x] `DELETE /api/incremental/lineups/[id]` – delete lineup.
-- [x] `GET /api/incremental/heroes` – return hero definitions from constants (for lineup builder UI).
+- [x] `GET /api/incremental/heroes` – return hero definitions (DB: IncrementalHeroBaseStat + abilities; optional saveId for effective stats with training).
 
 **Files**: `src/routes/api/incremental/lineups/+server.ts`, `lineups/[id]/+server.ts`, `heroes/+server.ts`.
 
@@ -279,7 +279,7 @@ Phase 13+: Shops, Training, PvP, background
 
 ---
 
-## Phase 6: Essence, Browser Actions & Roster
+## Phase 6: Essence, Browser Actions & Roster ✅ Complete
 
 **Goal**: Meta-currency (Essence), passive browser action system (mining with bar-per-strike), and roster building by converting one win from last 10 Dota 2 games into a roster hero. Design: [ESSENCE_AND_BROWSER_ACTIONS.md](./ESSENCE_AND_BROWSER_ACTIONS.md).
 
@@ -289,12 +289,12 @@ Phase 13+: Shops, Training, PvP, background
 **Dependencies**: 4.1, 1.1
 
 **Tasks**:
-- [x] `GET /api/incremental/lineups` – list current user’s lineups (from Prisma).
-- [x] `POST /api/incremental/lineups` – body `{ name, heroIds }` (heroIds = array of `Hero.id` Int); create lineup (validate 1–5, ids exist in `Hero` table).
+- [x] `GET /api/incremental/lineups` – list current user's lineups (from Prisma).
+- [x] `POST /api/incremental/lineups` – body `{ name, heroIds }` (heroIds = array of `Hero.id` Int); create lineup (validate 1–5, ids exist in Hero/IncrementalHeroBaseStat).
 - [x] `GET /api/incremental/lineups/[id]` – get lineup by id (auth: own only).
 - [x] `PATCH /api/incremental/lineups/[id]` – update name or heroIds.
 - [x] `DELETE /api/incremental/lineups/[id]` – delete lineup.
-- [x] `GET /api/incremental/heroes` – return hero definitions from constants (for lineup builder UI).
+- [x] `GET /api/incremental/heroes` – return hero definitions (DB-backed; optional saveId for training).
 
 **Files**: `src/routes/api/incremental/lineups/+server.ts`, `lineups/[id]/+server.ts`, `heroes/+server.ts`.
 
@@ -349,57 +349,57 @@ Phase 13+: Shops, Training, PvP, background
 
 ---
 
-## Phase 8: Essence, Browser Actions & Roster
+## Phase 8: Essence, Browser Actions & Roster ✅ Complete
 
 **Roster-first order**: Implement this **as Phase 6** (8.1→6.1, 8.2→6.2, 8.3→6.3). Content below is the full Essence/roster/mining scope.
 
 **Goal**: Meta-currency (Essence), passive browser action system (mining with bar-per-strike), and roster building by converting one win from last 10 Dota 2 games into a roster hero. Design: [ESSENCE_AND_BROWSER_ACTIONS.md](./ESSENCE_AND_BROWSER_ACTIONS.md).
 
-### Milestone 8.1: Browser action system, Essence, and Mining (backend)
-**Dependencies**: 4.1 (Prisma; add wallet/action state)
+### Milestone 8.1: Browser action system, Essence, and Mining (backend) ✅
+**Dependencies**: 4.1 (Prisma; add bank/action state)
 
 **Tasks**:
-- [ ] Add Prisma: user Essence balance (e.g. `User.essence` or `IncrementalWallet`); optional `IncrementalActionState` (userId, actionType, progress, lastTickAt) for server-side reconciliation.
-- [ ] Types: action type (e.g. `mining`), action state (progress 0–1, lastTickAt); mining constants (base duration per strike, Essence per strike).
-- [ ] Server action engine (pure): given (actionType, progress, lastTickAt, now, rateModifier), compute new progress and number of completions in elapsed time. Unit-testable.
-- [ ] `GET /api/incremental/wallet` (or `/essence`) – return current user Essence balance.
-- [ ] Tick/reconcile endpoint: e.g. `PATCH /api/incremental/action` or `POST /api/incremental/action/tick` – body `{ lastTickAt, progress, deltaTime }` (or client sends lastTickAt + progress; server computes deltaTime). Server advances action, grants Essence for each mining completion, persists balance and returns new progress + balance. Server-authoritative (rate-limit / validate to prevent cheat).
+- [x] Prisma: Essence per save (`IncrementalSave.essence`); `IncrementalActionState` (saveId, actionType, progress, lastTickAt, actionHeroId, actionStatKey) for server-side reconciliation.
+- [x] Types: action type (mining, training), action state (progress 0–1, lastTickAt); mining constants (base duration per strike, Essence per strike).
+- [x] Server action engine (pure): given (actionType, progress, lastTickAt, now, rateModifier), compute new progress and completions. Unit-testable (`idle-timer.ts`, `action-engine.ts`).
+- [x] `GET /api/incremental/bank` – return current save's Essence balance (query: saveId optional; uses resolveIncrementalSave).
+- [x] `POST /api/incremental/action` – body `{ saveId?, lastTickAt, progress, actionType?, actionHeroId?, actionStatKey? }`. Server advances action, grants Essence for mining completions (or training progress), persists state; server-authoritative.
 
-**Files**: `prisma/schema.prisma`, `src/lib/incremental/actions/` (types, engine, mining constants), `src/routes/api/incremental/wallet/+server.ts`, `src/routes/api/incremental/action/+server.ts` (or similar).
+**Files**: `prisma/schema.prisma`, `src/lib/incremental/actions/` (idle-timer, action-engine, action-definitions, constants), `src/routes/api/incremental/bank/+server.ts`, `src/routes/api/incremental/action/+server.ts`.
 
-**Testing**: Unit tests for action engine (progress 0→1, multiple completions in one tick). Integration: tick mining for N seconds, assert Essence granted; GET wallet returns updated balance.
+**Testing**: Unit tests for action engine. Integration: tick mining for N seconds, assert Essence granted; GET bank returns updated balance.
 
-**Deliverable**: Server can tick mining and grant Essence; client can call tick and GET wallet.
+**Deliverable**: Server can tick mining and grant Essence; client can call tick and GET bank.
 
 ---
 
-### Milestone 8.2: Roster and convert-win API
+### Milestone 8.2: Roster and convert-win API ✅
 **Dependencies**: 8.1, existing match history (Stratz or app's match fetch)
 
 **Tasks**:
-- [ ] Prisma: store user's roster (e.g. `IncrementalRosterHero`: userId, heroId; or JSON array of heroIds on User). Store converted match ids (e.g. `IncrementalConvertedMatch`: userId, matchId) so each win is converted at most once.
-- [ ] `GET /api/incremental/roster` – return current user's unlocked hero ids (for lineup builder and UI).
-- [ ] `GET /api/incremental/roster/eligible-wins` – return last 10 games for user with win/loss and hero; only wins are eligible; exclude already-converted matchIds.
-- [ ] `POST /api/incremental/roster/convert-win` – body `{ matchId }`. Validate: match in user's last 10, win, not yet converted, user has enough Essence, hero not already on roster (v1). Deduct Essence, add hero to roster, record match as converted. Return updated roster and wallet.
-- [ ] Lineup API (6.1): when creating/updating lineup, validate that each `heroId` is in the user's roster (if roster exists). Reject or filter otherwise.
+- [x] Prisma: `IncrementalRosterHero` (saveId, heroId); `IncrementalConvertedMatch` (saveId, matchId) so each win is converted at most once per save.
+- [x] `GET /api/incremental/roster` – return current save's unlocked hero ids (query: saveId optional).
+- [x] `GET /api/incremental/roster/eligible-wins` – return last 10 games for user with win/loss and hero; only wins eligible; exclude already-converted matchIds; flag already-on-roster.
+- [x] `POST /api/incremental/roster/convert-win` – body `{ saveId?, matchId }`. Validate match in last 10, win, not converted, enough Essence, hero not already on roster. Deduct Essence, add hero to roster, record converted. Return updated roster and bank (essence balance).
+- [x] Lineup API: when creating/updating lineup, validate each heroId is in the user's roster for that save. Reject if not.
 
-**Files**: `prisma/schema.prisma`, `src/routes/api/incremental/roster/+server.ts`, `roster/eligible-wins/+server.ts`, `roster/convert-win/+server.ts`; update lineups API to validate heroIds against roster.
+**Files**: `prisma/schema.prisma`, `src/routes/api/incremental/roster/+server.ts`, `roster/eligible-wins/+server.ts`, `roster/convert-win/+server.ts`; lineups API validates heroIds against roster.
 
-**Testing**: Convert a win → roster contains hero, Essence decreased, same matchId cannot be converted again. Create lineup with non-roster hero → reject (or filter).
+**Testing**: Convert a win → roster contains hero, Essence decreased; same matchId cannot be converted again. Create lineup with non-roster hero → reject.
 
 **Deliverable**: User can spend Essence to convert one win from last 10 into a roster hero; lineups only allow roster heroes.
 
 ---
 
-### Milestone 8.3: Mining and convert-win UI
+### Milestone 8.3: Mining and convert-win UI ✅
 **Dependencies**: 8.1, 8.2
 
 **Tasks**:
-- [ ] Mining UI: progress bar (0–100%) for current strike; label "Mining," optional "Next strike in X.Xs" and "+Y Essence per strike." Client tick loop (e.g. every 100–200 ms): update local progress with deltaTime; when progress ≥ 1, call server tick endpoint (or send heartbeat), reset progress, refresh wallet from response.
-- [ ] Wallet display: show current Essence balance (from GET wallet or tick response).
-- [ ] Convert-win UI: load eligible wins (GET eligible-wins); show list of wins (game, hero, result). Per win: "Convert to roster" button (show Essence cost). On confirm, POST convert-win with matchId; refresh roster and wallet; show success or error (e.g. "Already on roster").
+- [x] Mining UI: progress bar (0–100%) for current strike; label "Mining" (or "Training Hero – Stat"); optional "Next strike in X.Xs" and "+Y Essence per strike." Client tick loop (e.g. every 200 ms): POST action with lastTickAt/progress; refresh bank and progress from response.
+- [x] Bank display: show current Essence balance (from GET bank or tick response); save selector when multiple saves exist.
+- [x] Convert-win UI: Tavern page (`/incremental/tavern`) loads eligible wins (GET eligible-wins); shows list of wins (game, hero, result). Per win: "Convert to roster" (Essence cost). POST convert-win with matchId; refresh roster and bank; success or error (e.g. "Already on roster").
 
-**Files**: `src/routes/incremental/+page.svelte` (or dedicated mining/roster subpages), components for action bar, wallet, eligible-wins list.
+**Files**: `src/routes/incremental/+page.svelte` (action bar, bank, training section), `src/routes/incremental/tavern/+page.svelte` (convert-win, roster display).
 
 **Testing**: Manual: mine until bar fills, see Essence increase; convert a win, see hero on roster and Essence decrease; try converting same win again (rejected).
 
@@ -413,15 +413,15 @@ Phase 13+: Shops, Training, PvP, background
 
 **Goal**: Minimal playable battle UI: display lineup, focus, timers, target, enemies; tap to focus (with 2s cooldown); change target; poll or push battle state from API.
 
-### Milestone 9.1: Battle view and focus/target actions
+### Milestone 9.1: Battle view and focus/target actions ✅
 **Dependencies**: 6.2
 
 **Tasks**:
-- [ ] Page or component: load battle state from `GET /api/incremental/runs/[runId]/battle`. Display player heroes (1–5), current focus (highlight), attack and spell timer progress (bars or countdowns), 2s cooldown indicator after focus switch.
-- [ ] Display enemy list with HP and which is enemy “focus”; show shared target selection.
-- [ ] Tap hero to set focus (call PATCH with focusedHeroIndex); tap enemy to set target (call PATCH with targetIndex). Enforce 2s cooldown in UI (disable or show cooldown).
-- [ ] Poll or interval: every 100–200 ms send PATCH with deltaTime to advance battle; update local state from response. Or use a single “tick” button for testing.
-- [ ] When result win/lose, show outcome and redirect or offer “continue” (advance to next node).
+- [x] Page or component: load battle state from `GET /api/incremental/runs/[runId]/battle`. Display player heroes (1–5), current focus (highlight), attack and spell timer progress (bars or countdowns), 2s cooldown indicator after focus switch.
+- [x] Display enemy list with HP and which is enemy “focus”; show shared target selection.
+- [x] Tap hero to set focus (call PATCH with focusedHeroIndex); tap enemy to set target (call PATCH with targetIndex). Enforce 2s cooldown in UI (disable or show cooldown).
+- [x] Poll or interval: every 100–200 ms send PATCH with deltaTime to advance battle; update local state from response. Or use a single “tick” button for testing.
+- [x] When result win/lose, show outcome and redirect or offer “continue” (advance to next node).
 
 **Files**: `src/routes/incremental/run/[runId]/battle/+page.svelte`, optional components for hero row, enemy row, timer bar.
 
@@ -438,13 +438,13 @@ Phase 13+: Shops, Training, PvP, background
 
 **Goal**: Map view shows current node and choices; advance to next node (combat → battle screen; base → heal then next).
 
-### Milestone 10.1: Map page and navigation
+### Milestone 10.1: Map page and navigation ✅
 **Dependencies**: 6.2, 9.1
 
 **Tasks**:
-- [ ] Page `incremental/run/[runId]`: load run state (current node, next nodes). Display current node type (combat, elite, boss, base, shop, etc.) and next node choices (e.g. buttons or links).
-- [ ] On “choose next node”: call POST advance with nextNodeId. If response indicates battle started, redirect to `run/[runId]/battle`. If base, show “healed” and then show next choices again.
-- [ ] After battle win from battle screen, redirect back to map (run/[runId]) with updated state and next choices.
+- [x] Page `incremental/run/[runId]`: load run state via **GET `/api/incremental/runs/[runId]/map`** (returns runState + full path nodes for visual display). Display current node type (combat, elite, boss, base, shop, etc.) and next node choices (tap nodes on the path).
+- [x] For **encounter nodes** (combat/elite/boss): tap node → **POST `battle/enter`** with nextNodeId → navigate to `run/[runId]/battle?nodeId=`. For **base/shop**: tap node → POST advance → show “Healed” (or shop) and refresh to show next choices.
+- [x] After battle win: battle page calls **POST `battle/complete`** (advances run, records clearance) → redirect back to map (run/[runId]) with updated state and next choices.
 
 **Files**: `src/routes/incremental/run/[runId]/+page.svelte`, navigation from battle to map.
 
@@ -455,32 +455,58 @@ Phase 13+: Shops, Training, PvP, background
 
 ---
 
-## Phase 11: UI – Lineup Builder
+## Phase 11: UI – Lineup Builder ✅ Complete
 
 **Roster-first order**: This is **Phase 7**. Ship with Phases 5–6 for roster launch (build lineups; Start run when Phase 12 ships). Dependencies in roster-first: 5.1 (Lineups API), 6.2 (roster/convert-win).
 
-**Goal**: User can pick 1–5 heroes from their **roster** (unlocked via Phase 6 convert-win or other paths), save lineup, and start run. “all defined heroes”.
+**Goal**: User can pick 1–5 heroes from their **roster** (unlocked via Phase 6 convert-win or other paths), save lineup, and start run.
 
-### Milestone 11.1: Lineup builder page
+### Milestone 11.1: Lineup builder page ✅
 **Dependencies**: 6.1, 8.2 (roster)
 
 **Tasks**:
-- [ ] Page to list user’s lineups (from GET lineups) and “Create lineup” or “Edit.”
-- [ ] Lineup editor: fetch GET roster (unlocked hero ids) and hero definitions; show **only roster heroes** as selectable (1–5 slots); save via POST (create) or PATCH (update). Validate 1–5 and heroIds in roster.
-- [ ] From lineup list or detail, “Start run” button → POST runs with lineupId → redirect to run/[runId] (map).
+- [x] Page to list user's lineups (from GET lineups) and “Create lineup” or “Edit.”
+- [x] Lineup editor: fetch GET roster (unlocked hero ids) and hero definitions (GET heroes with saveId); show **only roster heroes** as selectable (1–5 slots); save via POST (create) or PATCH (update). Validate 1–5 and heroIds in roster.
+- [x] From lineup list or detail, “Start run” button → POST /api/incremental/runs with lineupId → redirect to run/[runId] (map).
 
-**Files**: `src/routes/incremental/lineup/+page.svelte`, `lineup/[id]/+page.svelte` (or single page with create/edit).
+**Files**: `src/routes/incremental/lineup/+page.svelte`, `lineup/[id]/+page.svelte`, `lineup/new/+page.svelte`.
 
-**Testing**:
-- Create lineup with 3 heroes, start run, land on map with that lineup for first combat.
+**Testing**: Create lineup with 3 heroes, start run, land on map with that lineup for first combat.
 
 **Deliverable**: End-to-end: build lineup → start run → map → battle → rewards.
 
 ---
 
+## Other implemented features (current codebase)
+
+These are in the app but not called out as separate phases in the roster-first table; they support the roster/training experience.
+
+### Saves (multi-save per user) ✅
+- **API**: `GET /api/incremental/saves` – list current user's saves (id, name, essence, createdAt). `POST /api/incremental/saves` – create save (body: `{ name? }`).
+- **Usage**: Roster, training, lineups, and talent tree all accept optional `saveId`; UI uses save selector when multiple saves exist. Currently Essence is stored on `IncrementalSave.essence`; a future **Bank** (see below) will hold all currencies and item inventory per save.
+
+**Files**: `src/routes/api/incremental/saves/+server.ts`.
+
+### Bank system (planned)
+- **Design**: [BANK_SYSTEM.md](./BANK_SYSTEM.md). The **Bank** is the single per-save store for **currencies** (Essence, Loot Coins, Gold, Wood, etc.) and **item inventory** (materials, equipable items from loot/crafting/shops).
+- **Replaces**: Hardcoded `IncrementalSave.essence`; migration will backfill Essence into Bank currency table and drop the column.
+- **Integrates with**: Mining (grant Essence to Bank), convert-win (spend Essence from Bank), Dota roster-hero wins (grant Loot Coins + items to Bank), battles (grant Gold/Wood to Bank), shops (spend from Bank), item system (equip from Bank inventory). Bank API returns balances + optional item summary.
+- **Implementation**: Add Bank currency table + Bank item inventory table; Bank service (get/add/deduct); switch action rewards, convert-win, and saves to use Bank; then add Loot Coins and item drops. See BANK_SYSTEM.md §8 for roadmap steps.
+
+### Atlas (hero reference) ✅
+- **API**: `GET /api/incremental/atlas` – all heroes with base stats and abilities from DB (`IncrementalHeroBaseStat`, `IncrementalHeroAbility`). Auth required.
+- **UI**: `/incremental/atlas` – browse all heroes with base stats and ability cards (for reference when building lineups or viewing roster).
+
+**Files**: `src/routes/api/incremental/atlas/+server.ts`, `src/routes/incremental/atlas/+page.svelte`.
+
+### Heroes API (DB-backed) ✅
+- `GET /api/incremental/heroes` returns hero definitions from **DB** (IncrementalHeroBaseStat + abilities); optional `saveId` includes training for effective stats. Used by lineup builder, Tavern, and training UI.
+
+---
+
 ## Phase 12: Shops & Relics (Optional / Later)
 
-**Goal**: Shop node: spend gold on run boosts and relics; apply modifiers in battle (spell haste, attack poison, etc.).
+**Goal**: Shop node: spend gold (from **Bank**) on run boosts and relics; apply modifiers in battle (spell haste, attack poison, etc.). Bank holds currencies and item inventory (see [BANK_SYSTEM.md](./BANK_SYSTEM.md)).
 
 ### Milestone 12.1: Shop data and run modifiers
 **Dependencies**: 7.1
@@ -496,19 +522,19 @@ Phase 13+: Shops, Training, PvP, background
 
 ---
 
-## Phase 13: Hero Training (Optional / Later)
+## Phase 13: Hero Training & Incremental Leveling (Optional / Later)
 
-**Goal**: After unlocking a hero with Essence (convert-win), the player can **train** that hero’s base stats in the idle part of the game. Same browser action system as mining; one active action = Mining OR Training(heroId, statKey). Each of **seven** stats is trainable per hero, with **Dota 2 themed buildings** (training grounds) for expression (e.g. magic build vs tank build).
+**Goal**: (1) **Hero training**: After unlocking a hero with Essence (convert-win, spent from **Bank**), the player trains that hero’s base stats in the idle game. One active action = Mining OR Training(heroId, statKey). Seven stats per hero, Dota 2 themed buildings. (2) **Leveling system**: Melvor-like progression – levels/XP for stats, Essence scaling (Bank), building upgrades (costs from Bank), skill tree with interlocking mechanics, and progressively bigger numbers. Design for extensibility (new stats, trees, currencies without rewrites).
 
-**Design**: [HERO_TRAINING.md](./HERO_TRAINING.md) – hero creation (roster + HeroDef base stats), trainable stats, idle integration, persistence, and building themes.
+**Design**: [HERO_TRAINING.md](./HERO_TRAINING.md), [TRAINING_UI_AND_TALENT_TREE.md](./TRAINING_UI_AND_TALENT_TREE.md), [LEVELING_SYSTEM.md](./LEVELING_SYSTEM.md), [BANK_SYSTEM.md](./BANK_SYSTEM.md).
 
-### Milestone 13.1: Training data and API
+### Milestone 13.1: Training data and API ✅
 **Dependencies**: 4.1, 8.1 (action system), 8.2 (roster)
 
 **Tasks**:
-- [ ] Prisma: `IncrementalHeroTraining` (saveId, heroId, statKey, value). Unique (saveId, heroId, statKey). Only roster heroes can have training rows.
-- [ ] `GET /api/incremental/training` – return all (heroId, statKey, value) for current save (for UI and battle). Optional: `GET /api/incremental/heroes/[heroId]/training` for single-hero view.
-- [ ] Constants: define seven `statKey`s (hp, attack_damage, spell_power, attack_speed, spell_haste, armor, magic_resist) and mapping to formula hooks (see HERO_TRAINING.md).
+- [x] Prisma: `IncrementalHeroTraining` (saveId, heroId, statKey, value). Unique (saveId, heroId, statKey). Only roster heroes can have training rows.
+- [x] `GET /api/incremental/training` – return all (heroId, statKey, value) for current save (for UI and battle). Optional: `GET /api/incremental/heroes/[heroId]/training` for single-hero view.
+- [x] Constants: define seven `statKey`s (hp, attack_damage, spell_power, attack_speed, spell_haste, armor, magic_resist) and mapping to formula hooks (see HERO_TRAINING.md).
 
 **Files**: `prisma/schema.prisma`, `src/routes/api/incremental/training/+server.ts`, `src/lib/incremental/constants/training.ts` (or under actions).
 
@@ -516,14 +542,14 @@ Phase 13+: Shops, Training, PvP, background
 
 ---
 
-### Milestone 13.2: Action engine and tick for training
+### Milestone 13.2: Action engine and tick for training ✅
 **Dependencies**: 8.1, 13.1
 
 **Tasks**:
-- [ ] Extend action type to `training` with params (heroId, statKey). Same progress bar and tick loop; effective duration per training tick (constant or per-stat).
-- [ ] On training completion: increment `IncrementalHeroTraining.value` for (saveId, heroId, statKey). Validate hero is on roster for this save.
-- [ ] Tick endpoint: accept `actionType: 'training'`, `heroId`, `statKey` when not mining; apply completions to training table; return new progress and optional training snapshot.
-- [ ] **One active action**: switching to Training pauses (or resets) Mining; switching to Mining pauses Training. Persist current action type and params (saveId, actionType, heroId?, statKey?, progress, lastTickAt).
+- [x] Extend action type to `training` with params (heroId, statKey). Same progress bar and tick loop; effective duration per training tick (constant or per-stat).
+- [x] On training completion: increment `IncrementalHeroTraining.value` for (saveId, heroId, statKey). Validate hero is on roster for this save.
+- [x] Tick endpoint: accept `actionType: 'training'`, `heroId`, `statKey` when not mining; apply completions to training table; return new progress and optional training snapshot.
+- [x] **One active action**: switching to Training pauses (or resets) Mining; switching to Mining pauses Training. Persist current action type and params (saveId, actionType, heroId?, statKey?, progress, lastTickAt).
 
 **Files**: `src/lib/incremental/actions/` (action-engine, constants), `src/routes/api/incremental/action/+server.ts`, Prisma IncrementalActionState (or equivalent) with action params.
 
@@ -531,12 +557,12 @@ Phase 13+: Shops, Training, PvP, background
 
 ---
 
-### Milestone 13.3: Battle integration (effective stats)
+### Milestone 13.3: Battle integration (effective stats) ✅
 **Dependencies**: 13.1, 6.2 (battle state)
 
 **Tasks**:
-- [ ] When building battle state (createBattleState or run service): for each lineup hero, load HeroDef(heroId) and training(saveId, heroId). Compute **effective** baseMaxHp, attack flat, spell power, attack speed, spell haste, armor, magic resist (base + trained).
-- [ ] Resolution and formulas already accept modifiers; pass effective stats (or base + modifier object) so damage/interval/resist use trained values. No change to formula signatures beyond where numbers come from.
+- [x] When building battle state (createBattleState or run service): for each lineup hero, load HeroDef(heroId) and training(saveId, heroId). Compute **effective** baseMaxHp, attack flat, spell power, attack speed, spell haste, armor, magic resist (base + trained).
+- [x] Resolution and formulas already accept modifiers; pass effective stats (or base + modifier object) so damage/interval/resist use trained values. No change to formula signatures beyond where numbers come from.
 
 **Files**: `src/lib/incremental/engine/battle-state.ts`, run service or battle PATCH handler that builds state, `src/lib/incremental/stats/formulas.ts` (if needed for modifier application).
 
@@ -544,15 +570,15 @@ Phase 13+: Shops, Training, PvP, background
 
 ---
 
-### Milestone 13.4: Training UI – buildings and training grounds
+### Milestone 13.4: Training UI – buildings and training grounds ✅
 **Dependencies**: 13.2, 13.3 (optional for display-only), 8.3 (incremental page)
 
 **Tasks**:
-- [ ] **Training grounds**: One section/card per **building** (stat). Seven buildings: Barracks (HP), Weapon Smithy (attack_damage), Arcane Sanctum (spell_power), Swift Forge (attack_speed), Cooldown Grotto (spell_haste), Blacksmith (armor), Cloak Pavilion (magic_resist). Each shows name, short description, “Current trainer: Hero +N” or “Idle”.
-- [ ] **Start training**: From each building, user selects a **roster hero** and “Train here”; active action becomes Training(heroId, statKey). Same progress bar as mining (one bar, label e.g. “Training Lina – Spell Power”).
-- [ ] **Switch action**: From bar or a “Mining” / “Training” toggle: switch between Mining and Training (and between Training targets). Pause/resume or reset per design choice.
-- [ ] **Per-hero view** (optional): “My heroes” – list roster with each hero’s seven stat values and link to “Train” per stat (building).
-- [ ] Lineup builder / roster view: show trained stats per hero (e.g. “Lina +5 spell power, +2 spell haste”) so build expression is visible.
+- [x] **Training grounds**: One section/card per **building** (stat). Seven buildings: Barracks (HP), Weapon Smithy (attack_damage), Arcane Sanctum (spell_power), Swift Forge (attack_speed), Cooldown Grotto (spell_haste), Blacksmith (armor), Cloak Pavilion (magic_resist). Each shows name, short description, “Current trainer: Hero +N” or “Idle”.
+- [x] **Start training**: From each building, user selects a **roster hero** and “Train here”; active action becomes Training(heroId, statKey). Same progress bar as mining (one bar, label e.g. “Training Lina – Spell Power”).
+- [x] **Switch action**: From bar or a “Mining” / “Training” toggle: switch between Mining and Training (and between Training targets). Pause/resume or reset per design choice.
+- [x] **Per-hero view** (optional): “My heroes” – list roster with each hero’s seven stat values and link to “Train” per stat (building).
+- [x] Lineup builder / roster view: show trained stats per hero (e.g. “Lina +5 spell power, +2 spell haste”) so build expression is visible.
 
 **Files**: `src/routes/incremental/+page.svelte` or dedicated `incremental/training/+page.svelte`, components for building cards, hero selector, shared action bar.
 
@@ -567,6 +593,107 @@ Phase 13+: Shops, Training, PvP, background
 - [ ] (Optional) Additional hero unlock paths (Dota 2 / forge) if desired; integrate with roster.
 - [ ] Building icons or art placeholders; tooltips for each stat and building.
 - [ ] Balance: base duration per training tick, value per completion (e.g. +1 per tick), caps or diminishing returns if desired.
+
+---
+
+### Milestone 13.6: Leveling formula layer (XP, level, progressive stats)
+**Dependencies**: 13.1
+
+**Tasks**:
+- [ ] Treat training `value` as total XP; add level curve: `xpForLevel(L)`, `levelFromTotalXp(xp)` (constants or formula). Optionally cache `level` on IncrementalHeroTraining.
+- [ ] Add `statGainForLevel(statKey, level)` (or table) so effective stat in battle = base + gain(level); tune for “progressively bigger numbers” (e.g. polynomial or table).
+- [ ] Single module: e.g. `src/lib/incremental/stats/leveling-formulas.ts` used by battle (effective stats) and by training reward display (level from XP).
+- [ ] Battle integration: effective stats = base + level-derived gain (already have training; switch to level-based gain from same XP value).
+
+**Files**: `src/lib/incremental/stats/leveling-formulas.ts`, constants for XP curve and stat gain per level; battle-state or formulas.
+
+**Deliverable**: Training progress expressed as level (from XP); battles use level for stat scaling; one formula layer for future content.
+
+---
+
+### Milestone 13.7: Wire talents into action tick (rate modifiers)
+**Dependencies**: 8.1, 13.1 (talents and training exist)
+
+**Tasks**:
+- [ ] Implement `getRateModifier(saveId, actionType, statKey?)`: load purchased talent node IDs for save; sum `percent` from nodes that apply (mining_speed for mining; training_speed for statKey or “all”). Return `1 + sum(percent)`.
+- [ ] Action API: when ticking, pass `rateModifier` from `getRateModifier` into idle timer (replace current fixed 1). Mining and training duration both respect talents.
+- [ ] Optional: `getRewardMultiplier(saveId, actionType?)` for future “double XP” etc.
+
+**Files**: `src/lib/incremental/actions/` or server helper that reads IncrementalTalentNode + talent-nodes.ts; `src/routes/api/incremental/action/+server.ts`.
+
+**Deliverable**: Purchased talent nodes (e.g. Mining +10%, Barracks +10%) actually reduce action duration.
+
+---
+
+### Milestone 13.8: Mining level / Essence scaling
+**Dependencies**: 8.1, 13.7
+
+**Tasks**:
+- [ ] Add `miningLevel` (Int, default 0) to IncrementalSave, or small table IncrementalUpgrade (saveId, upgradeType, level). Cost to upgrade: Essence (formula or table, e.g. 50 * 2^level).
+- [ ] `essencePerStrike = baseEssence * miningMultiplier(miningLevel)` (e.g. 1.15^level). Apply in applyRewards for mining.
+- [ ] API: e.g. POST /api/incremental/upgrades/mining (or PATCH save) to spend Essence and increment mining level (validate cost).
+
+**Files**: `prisma/schema.prisma`, migration; action-definitions applyRewards; new or existing upgrade endpoint.
+
+**Deliverable**: Essence income scales with mining level; upgrades bought with Essence.
+
+---
+
+### Milestone 13.9: Building upgrades (per-stat efficiency)
+**Dependencies**: 13.1, 13.7
+
+**Tasks**:
+- [ ] Data: IncrementalBuildingLevel (saveId, statKey, level) or JSON on save. Level 0 = unupgraded; cost curve (e.g. Essence) per level.
+- [ ] Effect: effective training duration for stat = baseDuration / (1 + buildingSpeedBonus(level)). Stack with talent modifiers in same formula.
+- [ ] Resolve building level when computing rateModifier for training (or in duration formula). Purchase endpoint: spend Essence to raise building level for one stat.
+
+**Files**: Prisma schema or save JSON; leveling-formulas or action duration resolution; upgrade endpoint.
+
+**Deliverable**: Each of the seven buildings can be upgraded; higher level = faster training for that stat.
+
+---
+
+### Milestone 13.10: Skill tree expansion (new node types)
+**Dependencies**: 13.7
+
+**Tasks**:
+- [ ] Add node types: e.g. `training_double_xp`, `essence_per_strike`, `parallel_training` (unlock second training slot or “train 2 heroes same stat”). Definitions in talent-nodes.ts with payload (percent, etc.).
+- [ ] Apply reward multipliers in applyRewards: e.g. if “double XP” node purchased, grant 2× training value/XP per completion. Essence node: multiply essence per strike.
+- [ ] Add new nodes to TALENT_NODES with prerequisiteIds; document tree shape for “train 2 at once” and double XP branches.
+
+**Files**: `src/lib/incremental/constants/talent-nodes.ts`, action-definitions applyRewards, talent resolution helper.
+
+**Deliverable**: Talent tree has double XP, essence bonus, and path to multi-hero training; rewards scale with purchases.
+
+---
+
+### Milestone 13.11: Multi-hero training (one bar, two heroes same stat)
+**Dependencies**: 13.10 (parallel_training or equivalent node)
+
+**Tasks**:
+- [ ] Option B (simpler): one action “Training [Stat]” with two heroes. Bar fills once; on completion, both heroes get +XP for that stat. Action state: e.g. actionHeroIds (length 1 or 2), actionStatKey.
+- [ ] Schema: extend IncrementalActionState to store second hero (e.g. actionHeroId2) when unlocked; or single JSON array actionHeroIds. Validate both heroes on roster.
+- [ ] applyRewards: when training with two heroes, upsert training for (saveId, hero1, statKey) and (saveId, hero2, statKey) with same completion value.
+- [ ] UI: when “train 2 at once” unlocked, allow selecting a second hero for same building; show “Training Hero A & B – Stat”.
+
+**Files**: Prisma (optional new column or JSON); action API and applyRewards; training UI.
+
+**Deliverable**: User can train two roster heroes in the same stat with one progress bar (when talent purchased).
+
+---
+
+### Milestone 13.12: Leveling system UI
+**Dependencies**: 13.6–13.11
+
+**Tasks**:
+- [ ] Mining upgrade: button/section to spend Essence to raise mining level; show current level and next cost.
+- [ ] Building upgrades: per-building “Upgrade” (show level, cost, effect); purchase calls upgrade API.
+- [ ] Talent tree page: ensure new node types (double XP, essence, parallel) are visible and purchasable; show effect in tooltips.
+- [ ] Training UI: show level (and XP) per hero per stat where applicable; optional “train 2 heroes” selector when unlocked.
+
+**Files**: `src/routes/incremental/+page.svelte`, `incremental/talents/+page.svelte`, training/buildings components.
+
+**Deliverable**: Full leveling loop visible and playable: upgrade mining and buildings, spend talent points, train one or two heroes with scaling rewards.
 
 ---
 
@@ -615,15 +742,16 @@ Phase 13+: Shops, Training, PvP, background
 | 2 ✅ | State, timers | Unit + small integration | Resolution |
 | 3 ✅ | Resolution, loop | Simulation (full battle) | API |
 | 4 ✅ | Prisma, map | DB + map tests | Run flow |
-| 5 | **Lineups API** (roster-first) | Integration | Phase 6, 7 |
-| 6 | **Essence, actions, roster** | Unit + integration | Lineup, Training |
-| 7 | **Lineup Builder UI** (roster-first) | Manual + E2E | Full roster system |
+| 5 ✅ | **Lineups API** (roster-first) | Integration | Phase 6, 7 |
+| 6 ✅ | **Essence, actions, roster** | Unit + integration | Lineup, Training |
+| 7 ✅ | **Lineup Builder UI** (roster-first) | Manual + E2E | Full roster system |
 | 8 ✅ | Run/encounter flow | Service tests | API |
 | 9 ✅ | Runs/battle API | Integration | UI |
 | 10 ✅ | Rewards, bases | Integration | UI flow |
 | 11 | Battle UI | Manual + E2E | Map UI |
 | 12 | Map UI | Manual + E2E | Full game |
-| 13–16 | Shops, Training, PvP, background | Per-milestone | Existing |
+| 13 | Training (data, engine, battle, UI) + Leveling (formulas, talents wired, mining/building upgrades, skill tree, multi-hero, UI) | Per-milestone | Battle, roster |
+| 14–16 | Shops, PvP, background | Per-milestone | Existing |
 
 ---
 
@@ -633,6 +761,6 @@ Phase 13+: Shops, Training, PvP, background
 - **Checkpoint B (playable via API)**: Complete Phases 4, 8, 9. You can start a run, advance to combat, and run a battle via API (e.g. Postman or Bruno).
 - **Checkpoint C (roster-first launch)**: Complete Phases 5–7. **Ship here.** User can mine Essence, convert a win from last 10 games to roster, build lineups (no run/battle/map UI yet).
 - **Checkpoint D (playable battle in browser)**: Complete Phases 8–12. Full PvE loop: lineup → start run → map → battle → rewards → map.
-- **Checkpoint E (full vision)**: Add Phases 13–16 as needed (shops, Training, PvP, background PvE).
+- **Checkpoint E (full vision)**: Add Phase 13 (Training + Incremental Leveling: formula layer, talents wired, mining/building upgrades, skill tree expansion, multi-hero training, UI), then Phases 14–16 (shops, PvP, background PvE).
 
 Use this roadmap to implement in short chunks; run tests after each milestone so integration in later phases stays straightforward.

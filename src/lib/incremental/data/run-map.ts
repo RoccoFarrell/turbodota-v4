@@ -13,6 +13,7 @@ export interface MapRunDb {
 			status: string;
 			currentNodeId: string;
 			heroHp?: number[] | null;
+			nodeClearances?: unknown;
 		} | null>;
 		update: (args: {
 			where: { id: string };
@@ -37,6 +38,14 @@ export interface MapRunDb {
 			encounterId: string | null;
 			nextNodeIds: string[];
 		} | null>;
+		findMany: (args: { where: { runId: string } }) => Promise<
+			Array<{
+				id: string;
+				nodeType: string;
+				encounterId: string | null;
+				nextNodeIds: string[];
+			}>
+		>;
 	};
 }
 
@@ -86,10 +95,35 @@ export async function getRunState(db: MapRunDb, runId: string): Promise<RunState
 	const currentNode = await db.incrementalMapNode.findUnique({
 		where: { id: run.currentNodeId }
 	});
+	const nodeClearances =
+		run.nodeClearances != null && typeof run.nodeClearances === 'object'
+			? (run.nodeClearances as RunState['nodeClearances'])
+			: undefined;
+
 	return {
 		runId: run.id,
 		status: toRunStatus(run.status),
 		currentNodeId: run.currentNodeId,
-		nextNodeIds: currentNode?.nextNodeIds ?? []
+		currentNodeType: currentNode?.nodeType,
+		nextNodeIds: currentNode?.nextNodeIds ?? [],
+		nodeClearances
 	};
+}
+
+export interface MapNodeForRun {
+	id: string;
+	nodeType: string;
+	encounterId: string | null;
+	nextNodeIds: string[];
+}
+
+/**
+ * Return all map nodes for a run (for full path display).
+ */
+export async function getRunMapNodes(
+	db: MapRunDb,
+	runId: string
+): Promise<MapNodeForRun[]> {
+	const nodes = await db.incrementalMapNode.findMany({ where: { runId } });
+	return nodes;
 }

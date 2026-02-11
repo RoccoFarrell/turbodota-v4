@@ -30,6 +30,8 @@
 		variant?: HeroCardVariant;
 		/** Optional scale for hero icon (e.g. scale-125, scale-150). Default varies by variant. */
 		iconScale?: string;
+		/** When set, highlight matching substring in display name (e.g. for Atlas search). */
+		highlightQuery?: string;
 	}
 
 	let {
@@ -39,8 +41,41 @@
 		training = {},
 		abilities = [],
 		variant = 'full',
-		iconScale
+		iconScale,
+		highlightQuery
 	}: Props = $props();
+
+	/** Safe HTML with query matches wrapped in <mark>. Used when highlightQuery is set (e.g. Atlas search). */
+	function highlightMatch(text: string, query: string): string {
+		if (!query.trim()) {
+			return escapeHtml(text);
+		}
+		const re = new RegExp(
+			query.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+			'gi'
+		);
+		let result = '';
+		let lastEnd = 0;
+		let m: RegExpExecArray | null;
+		while ((m = re.exec(text)) !== null) {
+			result += escapeHtml(text.slice(lastEnd, m.index));
+			result += '<mark class="bg-amber-200 dark:bg-amber-600/50 rounded px-0.5">' + escapeHtml(m[0]) + '</mark>';
+			lastEnd = re.lastIndex;
+		}
+		result += escapeHtml(text.slice(lastEnd));
+		return result;
+	}
+	function escapeHtml(s: string): string {
+		return s
+			.replace(/&/g, '&amp;')
+			.replace(/</g, '&lt;')
+			.replace(/>/g, '&gt;')
+			.replace(/"/g, '&quot;');
+	}
+
+	const highlightedNameHtml = $derived(
+		highlightQuery ? highlightMatch(displayName, highlightQuery) : null
+	);
 
 	const scale = $derived(iconScale ?? (variant === 'compact' ? 'scale-75' : variant === 'short' ? 'scale-150' : ''));
 
@@ -120,7 +155,11 @@
 			></span>
 			<div class="min-w-0 flex-1">
 				<h2 class="text-base font-semibold text-gray-900 dark:text-gray-100">
-					{displayName}
+					{#if highlightedNameHtml != null}
+						{@html highlightedNameHtml}
+					{:else}
+						{displayName}
+					{/if}
 				</h2>
 				{#if def}
 					<span

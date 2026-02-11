@@ -77,7 +77,7 @@
 			if (list.length > 0) saveId = list[0].id;
 		}
 		if (!saveId) {
-			const w = await fetch('/api/incremental/wallet');
+			const w = await fetch('/api/incremental/bank');
 			if (w.ok) {
 				const data = await w.json();
 				saveId = data.saveId ?? null;
@@ -86,9 +86,9 @@
 		}
 	}
 
-	async function fetchWallet() {
+	async function fetchBank() {
 		await ensureSave();
-		const res = await fetch(`/api/incremental/wallet${saveParam()}`);
+		const res = await fetch(`/api/incremental/bank${saveParam()}`);
 		if (res.ok) {
 			const data = await res.json();
 			essence = data.essence ?? 0;
@@ -217,7 +217,7 @@
 
 	onMount(() => {
 		(async () => {
-			await fetchWallet();
+			await fetchBank();
 			await fetchHeroes();
 			await fetchEligibleWins();
 			await fetchRoster();
@@ -236,7 +236,7 @@
 				id="tavern-save"
 				class="mt-1 block w-full rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-gray-900 dark:text-gray-100"
 				bind:value={saveId}
-				onchange={() => { fetchWallet(); fetchHeroes(); fetchEligibleWins(); fetchRoster(); fetchTraining(); }}
+				onchange={() => { fetchBank(); fetchHeroes(); fetchEligibleWins(); fetchRoster(); fetchTraining(); }}
 			>
 				{#each saves as s}
 					<option value={s.id}>{s.name ?? 'Save'} ({s.essence} Essence)</option>

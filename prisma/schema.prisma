@@ -605,6 +605,7 @@ enum IncrementalNodeType {
 }
 
 // One save = one "game slot" (essence, roster, action state, lineups). User can have multiple saves.
+// Currencies and items will move to Bank (see docs/incremental/BANK_SYSTEM.md) in a future migration.
 model IncrementalSave {
   id        String   @id @default(cuid())
   userId    String
@@ -651,6 +652,7 @@ model IncrementalRun {
   gold           Int                  @default(0)
   heroHp         Json?                // number[] HP per lineup index after last encounter; null = full HP (e.g. after base)
   xpByHeroId     Json?                // Record<string, number> heroId -> XP
+  nodeClearances Json?                // Record<nodeId, { outcome: 'victory'|'skip', durationSeconds?: number, gold?: number, ... }> per cleared node
   createdAt      DateTime             @default(now())
   updatedAt      DateTime             @updatedAt
 

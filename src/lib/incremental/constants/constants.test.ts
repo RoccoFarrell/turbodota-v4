@@ -27,11 +27,11 @@ describe('incremental constants', () => {
 			expect(def!.abilityIds).toContain('laguna_blade');
 		});
 
-		/** Dazzle (50): has shadow_wave ability. */
+		/** Dazzle (50): has poison_touch (castable stun) ability. */
 		it('returns hero def for Dazzle (50)', () => {
 			const def = getHeroDef(50);
 			expect(def).toBeDefined();
-			expect(def!.abilityIds).toContain('shadow_wave');
+			expect(def!.abilityIds).toContain('poison_touch');
 		});
 
 		/** Unknown hero id returns undefined. */

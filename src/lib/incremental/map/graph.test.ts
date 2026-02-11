@@ -6,20 +6,22 @@ import { describe, it, expect } from 'vitest';
 import { generateMapForRun } from './graph';
 
 describe('map graph', () => {
-	it('generateMapForRun produces 5 nodes in linear order (3 combat, 1 elite, 1 boss)', () => {
+	it('generateMapForRun produces 6 nodes: start (REST) then 3 combat, 1 elite, 1 boss', () => {
 		const runId = 'run_1';
 		const nodes = generateMapForRun(runId);
-		expect(nodes).toHaveLength(5);
-		expect(nodes[0].nodeType).toBe('COMBAT');
+		expect(nodes).toHaveLength(6);
+		expect(nodes[0].nodeType).toBe('REST');
+		expect(nodes[0].encounterId).toBeNull();
 		expect(nodes[1].nodeType).toBe('COMBAT');
 		expect(nodes[2].nodeType).toBe('COMBAT');
-		expect(nodes[3].nodeType).toBe('ELITE');
-		expect(nodes[4].nodeType).toBe('BOSS');
-		expect(nodes[0].encounterId).toBe('wolf_pack');
-		expect(nodes[4].nextNodeIds).toEqual([]);
+		expect(nodes[3].nodeType).toBe('COMBAT');
+		expect(nodes[4].nodeType).toBe('ELITE');
+		expect(nodes[5].nodeType).toBe('BOSS');
+		expect(nodes[1].encounterId).toBe('wolf_pack');
+		expect(nodes[5].nextNodeIds).toEqual([]);
 	});
 
-	it('generateMapForRun: first node nextNodeIds points to second node', () => {
+	it('generateMapForRun: start node nextNodeIds points to first combat', () => {
 		const runId = 'run_2';
 		const nodes = generateMapForRun(runId);
 		expect(nodes[0].nextNodeIds).toHaveLength(1);

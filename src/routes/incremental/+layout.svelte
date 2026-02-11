@@ -10,6 +10,7 @@
 		{ label: 'Training & Mining', path: '/incremental' },
 		{ label: 'Hero Tavern', path: '/incremental/tavern' },
 		{ label: 'Lineups', path: '/incremental/lineup' },
+		{ label: 'Run (Map)', path: '/incremental/run' },
 		{ label: 'Talents', path: '/incremental/talents' },
 		{ label: 'Atlas', path: '/incremental/atlas' }
 	];

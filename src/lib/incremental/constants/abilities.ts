@@ -22,7 +22,8 @@ const abilities: AbilityDef[] = [
 		effect: 'magic_damage',
 		target: 'single_enemy',
 		damageType: 'magical',
-		baseDamage: 100
+		baseDamage: 100,
+		statusEffectOnHit: { statusEffectId: 'stun', duration: 1.5 }
 	},
 	{
 		id: 'shadow_wave',
@@ -31,6 +32,16 @@ const abilities: AbilityDef[] = [
 		effect: 'heal_lowest_ally_damage_nearby',
 		target: 'lowest_hp_ally',
 		damageType: 'magical' // damage portion to nearby enemies
+	},
+	{
+		id: 'poison_touch',
+		type: 'active',
+		trigger: 'timer',
+		effect: 'magic_damage',
+		target: 'single_enemy',
+		damageType: 'magical',
+		baseDamage: 30,
+		statusEffectOnHit: { statusEffectId: 'stun', duration: 1.5 }
 	}
 ];
 

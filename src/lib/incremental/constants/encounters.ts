@@ -1,21 +1,22 @@
 import type { EncounterDef, EnemyDef } from '../types';
 
+/** Scaled so ~30s of auto-attacks from 3 heroes clears the pack without killing the roster (enemies focus Front Liner). */
 const enemies: EnemyDef[] = [
 	{
 		id: 'large_wolf',
 		name: 'Large Wolf',
-		hp: 80,
-		attackInterval: 2,
-		damage: 12,
+		hp: 700,
+		attackInterval: 3,
+		damage: 4,
 		baseArmor: 2,
 		baseMagicResist: 0
 	},
 	{
 		id: 'small_wolf',
 		name: 'Small Wolf',
-		hp: 30,
-		attackInterval: 1.5,
-		damage: 5,
+		hp: 250,
+		attackInterval: 2.5,
+		damage: 2,
 		baseArmor: 0,
 		baseMagicResist: 0
 	}

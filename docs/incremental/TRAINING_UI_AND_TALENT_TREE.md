@@ -1,7 +1,7 @@
 # Training UI & Talent Tree – Brainstorm
 
 **Status**: Brainstorm / planning.  
-**Related**: [HERO_TRAINING.md](./HERO_TRAINING.md), [ESSENCE_AND_BROWSER_ACTIONS.md](./ESSENCE_AND_BROWSER_ACTIONS.md), [DEVELOPMENT_ROADMAP.md](./DEVELOPMENT_ROADMAP.md).
+**Related**: [HERO_TRAINING.md](./HERO_TRAINING.md), [ESSENCE_AND_BROWSER_ACTIONS.md](./ESSENCE_AND_BROWSER_ACTIONS.md), [BANK_SYSTEM.md](./BANK_SYSTEM.md), [DEVELOPMENT_ROADMAP.md](./DEVELOPMENT_ROADMAP.md).
 
 ---
 
@@ -31,7 +31,7 @@ So: **Mine → Unlock hero → Hero appears in roster and in training UI → Ass
 
 - **Option A**: Section on the main Incremental page (`/incremental`) – e.g. “Training” collapsible or tab next to Mining and Convert-win. Same page, one bar: either “Mining” or “Training Hero X – Stat Y”.
 - **Option B**: Dedicated page `/incremental/training` – full “Training grounds” view with all seven buildings, hero picker, and the same shared bar at top. Navigation: Incremental → Lineups | **Training** (or “Town”).
-- **Option C**: “Town” or “Camp” as a hub – Mining, Convert-win, and Training grounds are all in one scrollable view (e.g. `/incremental` with sections: Wallet, Mining, Convert-win, **Training grounds**). One bar for current action.
+- **Option C**: “Town” or “Camp” as a hub – Mining, Convert-win, and Training grounds are all in one scrollable view (e.g. `/incremental` with sections: **Bank** (currencies + item inventory), Mining, Convert-win, **Training grounds**). One bar for current action.
 
 Recommendation: Start with **Option A or C** (training on the same page as mining) so the single progress bar is obviously shared; add a clear “Training” section with the seven buildings and “Send hero here” per building. Later, a dedicated Training page (Option B) can mirror the same flow if the main page gets crowded.
 

@@ -3,7 +3,7 @@ import type { RequestHandler } from '@sveltejs/kit';
 import prisma from '$lib/server/prisma';
 import { resolveIncrementalSave } from '$lib/server/incremental-save';
 
-/** GET /api/incremental/wallet – return Essence and current action state for idle UI. Query: saveId (optional). */
+/** GET /api/incremental/bank – return Essence and current action state for idle UI. Query: saveId (optional). */
 export const GET: RequestHandler = async (event) => {
 	const saveId = event.url.searchParams.get('saveId') ?? undefined;
 	const { saveId: resolvedSaveId } = await resolveIncrementalSave(event, { saveId });

@@ -3,7 +3,7 @@
 **Status**: Planning only — no code changes.  
 **Purpose**: Define the foundation for (a) **building your hero roster** and (b) **passive incremental training** (idle-game style). This doc covers the **browser-based passive counter** and **Essence** as the first use of that system.
 
-**Related**: [CORE_CONCEPT.md](./CORE_CONCEPT.md), [ARCHITECTURE.md](./ARCHITECTURE.md), [DEVELOPMENT_ROADMAP.md](./DEVELOPMENT_ROADMAP.md).
+**Related**: [BANK_SYSTEM.md](./BANK_SYSTEM.md) (Essence and other currencies live in the Bank), [CORE_CONCEPT.md](./CORE_CONCEPT.md), [ARCHITECTURE.md](./ARCHITECTURE.md), [DEVELOPMENT_ROADMAP.md](./DEVELOPMENT_ROADMAP.md).
 
 ---
 
@@ -47,7 +47,7 @@ So: **progress** goes from 0 to 1 over **duration (seconds) / rate**. When progr
 ### 2.3 Persistence and Authority
 
 - **Server** is the source of truth for:
-  - User’s **Essence balance** (and any other currencies).
+  - **Bank** balances (Essence and other currencies) and item inventory, per save. See [BANK_SYSTEM.md](./BANK_SYSTEM.md).
   - Which action type is active (if we persist “current action”).
   - Optional: last action tick timestamp, progress (so server can validate or run catch-up).
 - **Client** holds:
@@ -86,11 +86,11 @@ Either way: **reward granting is server-side**; client only displays and sends t
 
 ### 3.2 Storage and API
 
-- **Storage**: Per-user balance, e.g. `User.essence` or `IncrementalWallet` (userId, essence, updatedAt). Server-only; never trust client balance for spending.
-- **API** (to be added in implementation phase):
-  - `GET /api/incremental/wallet` or `GET /api/incremental/essence` — return current Essence balance (and any other meta-currencies).
-  - When mining completes a strike: server grants Essence (via reconciliation or tick endpoint). No client “add Essence” call; grant is a side effect of **action tick** or **action complete**.
-  - Spending: e.g. `POST /api/incremental/roster/convert-win` with body `{ matchId }` (or `{ gameIndex }`); server validates win is in last 10, deducts Essence, adds that hero to roster. See §5.
+- **Storage**: Per-save **Bank** holds all currencies (Essence, Loot Coins, Gold, Wood, etc.) and item inventory. See [BANK_SYSTEM.md](./BANK_SYSTEM.md). Server-only; never trust client balance for spending. (Current implementation uses `IncrementalSave.essence` until Bank is implemented.)
+- **API** (current and planned):
+  - `GET /api/incremental/bank` — return current save’s Bank balances (Essence and other currencies) and optionally item inventory; also action state for idle UI.
+  - When mining completes a strike: server grants Essence to Bank (via action tick). No client “add Essence” call; grant is a side effect of **action tick**.
+  - Spending: e.g. `POST /api/incremental/roster/convert-win` with body `{ matchId }`; server validates win is in last 10, deducts Essence from Bank, adds that hero to roster. See §5.
 
 ---
 
@@ -167,7 +167,7 @@ Either way: **reward granting is server-side**; client only displays and sends t
 
 ## 8. Suggested Implementation Order (when you leave planning)
 
-1. **Types and constants**: Action type enum/union; mining constants (duration, reward); wallet/essence in schema.
+1. **Types and constants**: Action type enum/union; mining constants (duration, reward); bank/essence in schema.
 2. **Server action engine** (pure logic): Given (actionType, progress, lastTickAt, now), compute new progress and list of “completions” (rewards). No persistence yet.
 3. **API**: Persist Essence; endpoint to “tick” or “reconcile” action (client sends lastTickAt + progress; server returns new balance + new progress).
 4. **Client**: Tick loop (requestAnimationFrame or setInterval); progress bar; on interval send tick to server; display Essence from server.

@@ -2,18 +2,18 @@ import { describe, it, expect } from 'vitest';
 import { createBattleState } from './battle-state';
 import { advanceTimers, applyFocusChange, applyAutoRotation } from './timers';
 
-/** Timer advance (focused hero + enemies only) and focus change / auto-rotation rules. */
+/** Timer advance (all attack, focused spell + enemies) and focus change / auto-rotation rules. */
 describe('timers', () => {
-	/** Only focused hero's attack and spell timers increase; other player heroes stay at 0. */
-	it('advanceTimers: only focused hero timers increase, others stay 0', () => {
+	/** All heroes attack timers advance; only focused hero spell timer advances. */
+	it('advanceTimers: all attack timers advance, only focused spell timer advances', () => {
 		const state = createBattleState([99, 25, 50], 'wolf_pack');
 		const next = advanceTimers(state, 0.5);
 		expect(next.player[0].attackTimer).toBe(0.5);
-		expect(next.player[0].spellTimer).toBe(0.5);
-		expect(next.player[1].attackTimer).toBe(0);
-		expect(next.player[1].spellTimer).toBe(0);
-		expect(next.player[2].attackTimer).toBe(0);
-		expect(next.player[2].spellTimer).toBe(0);
+		expect(next.player[0].spellTimer).toBe(0.5); // focused
+		expect(next.player[1].attackTimer).toBe(0.5);
+		expect(next.player[1].spellTimer).toBe(0); // not focused
+		expect(next.player[2].attackTimer).toBe(0.5);
+		expect(next.player[2].spellTimer).toBe(0); // not focused
 	});
 
 	/** All enemy timers advance by deltaTime. */
@@ -28,7 +28,7 @@ describe('timers', () => {
 	/** After focus change: old and new focused hero timers are 0; focusedHeroIndex updated. */
 	it('applyFocusChange: after change, old and new hero timers 0, focus index updated', () => {
 		let state = createBattleState([99, 25, 50], 'wolf_pack', { elapsedTime: 5 });
-		state = advanceTimers(state, 1); // focus 0 now has timers 1
+		state = advanceTimers(state, 1); // all attack + focus 0 spell
 		state = applyFocusChange(state, 1);
 		expect(state.focusedHeroIndex).toBe(1);
 		expect(state.player[0].attackTimer).toBe(0);
@@ -55,7 +55,7 @@ describe('timers', () => {
 			elapsedTime: 0,
 			lastFocusChangeAt: 0
 		});
-		state = advanceTimers(state, 1); // focus 0 has timers 1
+		state = advanceTimers(state, 1); // all have attack 1, focus 0 has spell 1
 		state = { ...state, elapsedTime: 10 }; // 10s elapsed
 		state = applyAutoRotation(state);
 		expect(state.focusedHeroIndex).toBe(1); // cycled 0 -> 1

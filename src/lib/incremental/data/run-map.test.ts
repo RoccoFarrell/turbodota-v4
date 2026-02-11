@@ -44,9 +44,9 @@ describe('run-map', () => {
 		const runId = 'run_1';
 		const { db, run, nodes } = mockMapRunDb(runId);
 		const result = await createRunMap(db, runId);
-		expect(result.nodeCount).toBe(5);
+		expect(result.nodeCount).toBe(6);
 		expect(result.firstNodeId).toBeDefined();
-		expect(nodes.size).toBe(5);
+		expect(nodes.size).toBe(6);
 		// Run's currentNodeId should have been updated via update()
 		expect(db.incrementalRun.update).toHaveBeenCalledWith(
 			expect.objectContaining({ where: { id: runId }, data: { currentNodeId: result.firstNodeId } })

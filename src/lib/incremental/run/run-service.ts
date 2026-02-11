@@ -2,7 +2,7 @@
  * Run lifecycle: startRun (create run + map), advanceRun (move to next node, return encounter when combat/elite/boss).
  */
 
-import type { RunState, BattleState } from '../types';
+import type { RunState, BattleState, HeroDef } from '../types';
 import { createRunMap, getRunState, type MapRunDb } from '../data/run-map';
 import { createBattleState } from '../engine/battle-state';
 
@@ -114,6 +114,11 @@ export async function startRun(
 	return { runState, runId: run.id };
 }
 
+/** Options for advanceRun when creating a battle (e.g. hero defs from DB). */
+export interface AdvanceRunOptions {
+	getHeroDef?: (heroId: number) => HeroDef | undefined;
+}
+
 /**
  * Advance run to next node. Validates nextNodeId is in current node's nextNodeIds and run belongs to user.
  * If the new node is combat/elite/boss, returns encounterId, lineup heroIds, and initial battle state.
@@ -122,7 +127,8 @@ export async function advanceRun(
 	db: RunServiceDb,
 	runId: string,
 	userId: string,
-	nextNodeId: string
+	nextNodeId: string,
+	options?: AdvanceRunOptions
 ): Promise<AdvanceRunResult> {
 	const run = await db.incrementalRun.findUnique({ where: { id: runId } });
 	if (!run) throw new Error('Run not found');
@@ -163,7 +169,8 @@ export async function advanceRun(
 				? run.heroHp
 				: undefined;
 		const battleState = createBattleState(lineup.heroIds, newNode.encounterId, {
-			initialHeroHp
+			initialHeroHp,
+			getHeroDef: options?.getHeroDef
 		});
 		result.encounter = {
 			encounterId: newNode.encounterId,
@@ -173,4 +180,53 @@ export async function advanceRun(
 	}
 
 	return result;
+}
+
+/**
+ * Create encounter (battle state) for a given next node without advancing the run.
+ * Use when user "enters" battle; advance run only when they win.
+ * Validates nextNodeId is in current node's nextNodeIds; throws if node is not combat/elite/boss.
+ */
+export async function createEncounterForNode(
+	db: RunServiceDb,
+	runId: string,
+	userId: string,
+	nextNodeId: string,
+	options?: AdvanceRunOptions
+): Promise<{ encounterId: string; heroIds: number[]; battleState: BattleState }> {
+	const run = await db.incrementalRun.findUnique({ where: { id: runId } });
+	if (!run) throw new Error('Run not found');
+	if (run.userId !== userId) throw new Error('Run does not belong to user');
+	if (run.status !== 'ACTIVE') throw new Error('Run is not active');
+
+	const currentNode = await db.incrementalMapNode.findUnique({
+		where: { id: run.currentNodeId }
+	});
+	if (!currentNode) throw new Error('Current node not found');
+	if (!currentNode.nextNodeIds.includes(nextNodeId)) {
+		throw new Error('Invalid next node');
+	}
+
+	const newNode = await db.incrementalMapNode.findUnique({
+		where: { id: nextNodeId }
+	});
+	if (!newNode || !ENCOUNTER_NODE_TYPES.has(newNode.nodeType) || !newNode.encounterId) {
+		throw new Error('Node is not a combat/elite/boss encounter');
+	}
+
+	const lineup = await db.incrementalLineup.findUnique({ where: { id: run.lineupId } });
+	if (!lineup) throw new Error('Lineup not found');
+	const initialHeroHp =
+		Array.isArray(run.heroHp) && run.heroHp.length === lineup.heroIds.length
+			? run.heroHp
+			: undefined;
+	const battleState = createBattleState(lineup.heroIds, newNode.encounterId, {
+		initialHeroHp,
+		getHeroDef: options?.getHeroDef
+	});
+	return {
+		encounterId: newNode.encounterId,
+		heroIds: lineup.heroIds,
+		battleState
+	};
 }
