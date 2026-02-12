@@ -5,6 +5,8 @@
 
 import type { TrainingStatKey } from './constants';
 import { TRAINING_STAT_KEYS } from './constants';
+import { getRewardMultiplier } from '../stats/upgrade-formulas';
+import { getUpgradeLevel } from '../upgrades/upgrade-service';
 
 export type ActionId = string;
 
@@ -67,7 +69,12 @@ export async function applyRewards(
 	if (completions <= 0) return;
 
 	if (actionId === 'mining') {
-		const amount = completions * 1; // essence per completion
+		// Load mining level to calculate essence multiplier
+		const miningLevel = await getUpgradeLevel(ctx.saveId, 'mining');
+		const baseEssencePerStrike = 1;
+		const multiplier = getRewardMultiplier('mining', miningLevel);
+		const amount = completions * baseEssencePerStrike * multiplier;
+
 		const save = await ctx.tx.incrementalSave.findUnique({
 			where: { id: ctx.saveId },
 			select: { essence: true }

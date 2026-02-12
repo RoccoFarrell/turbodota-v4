@@ -32,11 +32,11 @@ model User {
   dota_user    DotaUser?   @relation(fields: [account_id], references: [account_id])
 
   //matches      Match[]
-  Turbotown     Turbotown[]
-  userCards     UserCard[]
-  dotaDeckGames DotaDeckGame[]
-  incrementalRuns    IncrementalRun[]
-  incrementalSaves   IncrementalSave[]
+  Turbotown        Turbotown[]
+  userCards        UserCard[]
+  dotaDeckGames    DotaDeckGame[]
+  incrementalRuns  IncrementalRun[]
+  incrementalSaves IncrementalSave[]
 }
 
 model UserPrefs {
@@ -57,8 +57,8 @@ model DotaUser {
   newestMatch   DateTime?
   oldestMatchID BigInt?
   newestMatchID BigInt?
-  display_name  String?         // from OpenDota when added by account ID (no Steam login)
-  avatar_url    String?         // from OpenDota when added by account ID
+  display_name  String? // from OpenDota when added by account ID (no Steam login)
+  avatar_url    String? // from OpenDota when added by account ID
   leagues       League[]
   seasons       Season[]
   user          User?
@@ -609,19 +609,20 @@ enum IncrementalNodeType {
 model IncrementalSave {
   id        String   @id @default(cuid())
   userId    String
-  name      String?  // e.g. "Main", "Alt" – optional label
+  name      String? // e.g. "Main", "Alt" – optional label
   essence   Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user               User                             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  actionState        IncrementalActionState?
-  rosterHeroes       IncrementalRosterHero[]
-  convertedMatches   IncrementalConvertedMatch[]
-  lineups            IncrementalLineup[]
-  heroTraining       IncrementalHeroTraining[]
-  heroModifications  IncrementalSaveHeroModification[]
-  talentNodes        IncrementalTalentNode[]
+  user              User                              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  actionState       IncrementalActionState?
+  rosterHeroes      IncrementalRosterHero[]
+  convertedMatches  IncrementalConvertedMatch[]
+  lineups           IncrementalLineup[]
+  heroTraining      IncrementalHeroTraining[]
+  heroModifications IncrementalSaveHeroModification[]
+  talentNodes       IncrementalTalentNode[]
+  upgrades          IncrementalUpgrade[]
 
   @@index([userId])
 }
@@ -630,11 +631,11 @@ model IncrementalLineup {
   id        String   @id @default(cuid())
   saveId    String
   name      String
-  heroIds   Int[]    // ordered array of Hero.id
+  heroIds   Int[] // ordered array of Hero.id
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  save IncrementalSave @relation(fields: [saveId], references: [id], onDelete: Cascade)
+  save IncrementalSave  @relation(fields: [saveId], references: [id], onDelete: Cascade)
   runs IncrementalRun[]
 
   @@index([saveId])
@@ -644,15 +645,15 @@ model IncrementalRun {
   id             String               @id @default(cuid())
   userId         String
   lineupId       String
-  status         IncrementalRunStatus  @default(ACTIVE)
-  currentNodeId String               // id of current IncrementalMapNode
+  status         IncrementalRunStatus @default(ACTIVE)
+  currentNodeId  String // id of current IncrementalMapNode
   startedAt      DateTime             @default(now())
   finishedAt     DateTime?
-  seed           String?              // optional for reproducible maps
+  seed           String? // optional for reproducible maps
   gold           Int                  @default(0)
-  heroHp         Json?                // number[] HP per lineup index after last encounter; null = full HP (e.g. after base)
-  xpByHeroId     Json?                // Record<string, number> heroId -> XP
-  nodeClearances Json?                // Record<nodeId, { outcome: 'victory'|'skip', durationSeconds?: number, gold?: number, ... }> per cleared node
+  heroHp         Json? // number[] HP per lineup index after last encounter; null = full HP (e.g. after base)
+  xpByHeroId     Json? // Record<string, number> heroId -> XP
+  nodeClearances Json? // Record<nodeId, { outcome: 'victory'|'skip', durationSeconds?: number, gold?: number, ... }> per cleared node
   createdAt      DateTime             @default(now())
   updatedAt      DateTime             @updatedAt
 
@@ -668,8 +669,8 @@ model IncrementalMapNode {
   id          String              @id @default(cuid())
   runId       String
   nodeType    IncrementalNodeType
-  encounterId String?              // set for combat / elite / boss
-  nextNodeIds String[]            // ids of reachable nodes (stored as text array or JSON in PG)
+  encounterId String? // set for combat / elite / boss
+  nextNodeIds String[] // ids of reachable nodes (stored as text array or JSON in PG)
   floor       Int?
   act         Int?
 
@@ -682,11 +683,11 @@ model IncrementalMapNode {
 model IncrementalActionState {
   id            String   @id @default(cuid())
   saveId        String   @unique
-  actionType    String   // "mining" | "training"
-  progress      Float    @default(0)   // 0..1 within current strike
+  actionType    String // "mining" | "training"
+  progress      Float    @default(0) // 0..1 within current strike
   lastTickAt    DateTime @default(now())
-  actionHeroId  Int?     // when actionType = training: which hero
-  actionStatKey String?  // when actionType = training: which stat (e.g. spell_power)
+  actionHeroId  Int? // when actionType = training: which hero
+  actionStatKey String? // when actionType = training: which stat (e.g. spell_power)
 
   save IncrementalSave @relation(fields: [saveId], references: [id], onDelete: Cascade)
 
@@ -696,7 +697,7 @@ model IncrementalActionState {
 model IncrementalRosterHero {
   id        String   @id @default(cuid())
   saveId    String
-  heroId    Int      // Hero.id
+  heroId    Int // Hero.id
   createdAt DateTime @default(now())
 
   save IncrementalSave @relation(fields: [saveId], references: [id], onDelete: Cascade)
@@ -708,7 +709,7 @@ model IncrementalRosterHero {
 model IncrementalConvertedMatch {
   id        String   @id @default(cuid())
   saveId    String
-  matchId   BigInt   // Match.match_id
+  matchId   BigInt // Match.match_id
   createdAt DateTime @default(now())
 
   save IncrementalSave @relation(fields: [saveId], references: [id], onDelete: Cascade)
@@ -721,9 +722,9 @@ model IncrementalConvertedMatch {
 model IncrementalHeroTraining {
   id        String   @id @default(cuid())
   saveId    String
-  heroId    Int      // Hero.id
-  statKey   String   // hp, attack_damage, spell_power, attack_speed, spell_haste, armor, magic_resist
-  value     Float    @default(0)   // trained amount (up to 3 decimal places)
+  heroId    Int // Hero.id
+  statKey   String // hp, attack_damage, spell_power, attack_speed, spell_haste, armor, magic_resist
+  value     Float    @default(0) // trained amount (up to 3 decimal places)
   updatedAt DateTime @updatedAt
 
   save IncrementalSave @relation(fields: [saveId], references: [id], onDelete: Cascade)
@@ -737,7 +738,7 @@ model IncrementalHeroTraining {
 model IncrementalTalentNode {
   id        String   @id @default(cuid())
   saveId    String
-  nodeId    String   // e.g. unlock_swift_forge, spell_power_training_15
+  nodeId    String // e.g. unlock_swift_forge, spell_power_training_15
   createdAt DateTime @default(now())
 
   save IncrementalSave @relation(fields: [saveId], references: [id], onDelete: Cascade)
@@ -746,36 +747,51 @@ model IncrementalTalentNode {
   @@index([saveId])
 }
 
+// Phase 13.6: extensible upgrade system (mining level, building upgrades, future skills)
+model IncrementalUpgrade {
+  id          String   @id @default(cuid())
+  saveId      String
+  upgradeType String // e.g., "mining", "building_hp", "building_spell_power", future: "woodcutting", "crafting", etc.
+  level       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  save IncrementalSave @relation(fields: [saveId], references: [id], onDelete: Cascade)
+
+  @@unique([saveId, upgradeType])
+  @@index([saveId])
+}
+
 // Balance data: hero base stats and abilities (seeded from heroes_base_stats.csv + hero_abilities.csv)
 model IncrementalHeroBaseStat {
-  heroId              Int     @unique // Hero.id
-  localizedName       String
-  primaryAttribute    String
-  baseAttackInterval  Float
-  baseAttackDamage    Int
-  baseMaxHp           Int
-  baseArmor           Float
-  baseMagicResist     Float
-  baseSpellInterval   Float?
-  abilityId1          String
-  abilityId2          String
-  updatedAt           DateTime @updatedAt
+  heroId             Int      @unique // Hero.id
+  localizedName      String
+  primaryAttribute   String
+  baseAttackInterval Float
+  baseAttackDamage   Int
+  baseMaxHp          Int
+  baseArmor          Float
+  baseMagicResist    Float
+  baseSpellInterval  Float?
+  abilityId1         String
+  abilityId2         String
+  updatedAt          DateTime @updatedAt
 
   @@index([heroId])
 }
 
 model IncrementalHeroAbility {
-  id                 String   @id // e.g. antimage_1
-  abilityName        String
-  description        String?  // user-facing explanation of what the ability does
-  type               String   // active | passive
-  trigger            String
-  effect             String
-  target             String
-  damageType         String?
-  baseDamage         Int?
-  returnDamageRatio  Float?
-  updatedAt          DateTime @updatedAt
+  id                String   @id // e.g. antimage_1
+  abilityName       String
+  description       String? // user-facing explanation of what the ability does
+  type              String // active | passive
+  trigger           String
+  effect            String
+  target            String
+  damageType        String?
+  baseDamage        Int?
+  returnDamageRatio Float?
+  updatedAt         DateTime @updatedAt
 
   @@index([id])
 }
@@ -787,9 +803,9 @@ model IncrementalSaveHeroModification {
   id        String   @id @default(cuid())
   saveId    String
   heroId    Int
-  kind      String   // e.g. "spell_override", "equipment", "talent"
-  key       String   // e.g. "ability_1", "slot_0"
-  valueJson String   // JSON value; interpretation depends on kind+key
+  kind      String // e.g. "spell_override", "equipment", "talent"
+  key       String // e.g. "ability_1", "slot_0"
+  valueJson String // JSON value; interpretation depends on kind+key
   updatedAt DateTime @updatedAt
 
   save IncrementalSave @relation(fields: [saveId], references: [id], onDelete: Cascade)
