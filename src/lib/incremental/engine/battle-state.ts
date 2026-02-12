@@ -1,4 +1,4 @@
-import type { BattleState, HeroInstance, HeroDef } from '../types';
+import type { BattleState, HeroInstance, HeroDef, EnemyInstance } from '../types';
 import { getHeroDef as getHeroDefConst, getEncounterDef, getEnemyDef } from '../constants';
 
 /** Used so the first focus change is allowed (elapsedTime - lastFocusChangeAt >= 2 at start). */
@@ -65,13 +65,17 @@ export function createBattleState(
 		}
 		const count = entry.count ?? 1;
 		for (let i = 0; i < count; i++) {
-			enemy.push({
+			const instance: EnemyInstance = {
 				enemyDefId: def.id,
 				currentHp: def.hp,
 				maxHp: def.hp,
 				attackTimer: 0,
 				buffs: []
-			});
+			};
+			if (def.summonAbility) {
+				instance.spellTimer = 0;
+			}
+			enemy.push(instance);
 		}
 	}
 

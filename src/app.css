@@ -172,6 +172,28 @@ body {
 	border: 2px solid hsl(var(--primary));
 	border-radius: 6px;
 }
+.spell-icon--sm {
+	width: 20px;
+	height: 20px;
+	background-size: 180px 120px;
+	background-position: calc(-20px * var(--spell-x, 0)) calc(-20px * var(--spell-y, 0));
+	border-width: 1px;
+	border-radius: 4px;
+}
+
+/* Sprite sheet utility class - use with CSS variables for frame positioning */
+/* Example: <div class="sprite-sheet-frame" style="--sprite-src: url('/spritesheets/video_spritesheet.png'); --sprite-frame: 5; --sprite-width: 128; --sprite-height: 128; --sprite-cols: 10;"></div> */
+.sprite-sheet-frame {
+	background-image: var(--sprite-src);
+	background-repeat: no-repeat;
+	display: inline-block;
+	width: var(--sprite-width, 128px);
+	height: var(--sprite-height, 128px);
+	background-size: var(--sprite-sheet-width, auto) var(--sprite-sheet-height, auto);
+	/* Calculate position: frame % cols gives column, Math.floor(frame / cols) gives row */
+	background-position: calc(-1 * var(--sprite-width, 128px) * (var(--sprite-frame, 0) % var(--sprite-cols, 1))) 
+	                     calc(-1 * var(--sprite-height, 128px) * floor(var(--sprite-frame, 0) / var(--sprite-cols, 1)));
+}
 
 @keyframes shake {
 	2.5%,

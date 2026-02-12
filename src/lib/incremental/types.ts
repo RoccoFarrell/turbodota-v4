@@ -86,6 +86,8 @@ export interface EnemyDef {
 	baseArmor: number;
 	baseMagicResist: number; // 0–1
 	spellInterval?: number | null; // optional spell timer
+	/** When set, this enemy can summon another enemy on a timer (interval in seconds). */
+	summonAbility?: { enemyDefId: string; interval: number };
 }
 
 /** Encounter definition: roster of enemies. */
@@ -160,7 +162,7 @@ export interface BattleDefsProvider {
 /** One entry in the battle combat log for UI display. */
 export interface CombatLogEntry {
 	time: number; // elapsedTime when the action occurred
-	type: 'auto_attack' | 'spell' | 'enemy_attack' | 'return_damage' | 'death';
+	type: 'auto_attack' | 'spell' | 'enemy_attack' | 'return_damage' | 'death' | 'status_effect' | 'summon';
 	/** Hero index (player side) when type is auto_attack or spell. */
 	attackerHeroIndex?: number;
 	attackerHeroId?: number;
@@ -185,6 +187,11 @@ export interface CombatLogEntry {
 	/** For death: which side and index. */
 	deathTarget?: 'enemy' | 'hero';
 	deathIndex?: number;
+	/** For status_effect: status effect id and duration */
+	statusEffectId?: string;
+	statusEffectDuration?: number;
+	/** For summon: the enemy def id that was summoned (summonedEnemyDefId). */
+	summonedEnemyDefId?: string;
 }
 
 /** Full battle state. All heroes' attack timers advance; only Front Liner spell timer advances. */
@@ -193,7 +200,7 @@ export interface BattleState {
 	enemy: EnemyInstance[];
 	focusedHeroIndex: number;
 	targetIndex: number; // index into enemy[] (shared target = who your team attacks)
-	enemyFocusedIndex: number; // which enemy is the enemy team's focus (default 0)
+	enemyFocusedIndex: number; // index of enemy front liner (first alive in lineup); 0 after removeDeadEnemies
 	lastFocusChangeAt: number; // seconds since battle start when focus was last changed
 	elapsedTime: number; // seconds since battle start
 	result: BattleResult;

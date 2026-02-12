@@ -56,10 +56,28 @@ export function nonFocusTargetPenalty(
 // Damage types and resistance
 // ---------------------------------------------------------------------------
 
-/** Physical damage reduced by armor. Formula: damage * 100 / (100 + armor). */
-export function applyPhysicalDamage(damage: number, targetArmor: number): number {
+/** Dota-style armor constant: each point of armor contributes 6% to the factor denominator. */
+const ARMOR_FACTOR = 0.06;
+
+/**
+ * Physical damage factor from total armor (ΣArmor).
+ * Factor = 1 - (0.06 × ΣArmor) / (1 + 0.06 × |ΣArmor|).
+ * Positive armor reduces damage; negative armor amplifies it.
+ */
+export function physicalDamageFactor(totalArmor: number): number {
+	const signed = ARMOR_FACTOR * totalArmor;
+	const denom = 1 + ARMOR_FACTOR * Math.abs(totalArmor);
+	return 1 - signed / denom;
+}
+
+/**
+ * Physical damage after armor. Uses Dota-style formula so status-effect flat bonus/penalty
+ * and future Main Armor (Base + AGI × 0.167) are all expressed in totalArmor.
+ */
+export function applyPhysicalDamage(damage: number, totalArmor: number): number {
 	if (damage <= 0) return 0;
-	return (damage * 100) / (100 + targetArmor);
+	const factor = physicalDamageFactor(totalArmor);
+	return Math.max(0, damage * factor);
 }
 
 /** Magical damage reduced by magic resist (0–1). Formula: damage * (1 - magicResist). */

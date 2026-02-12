@@ -18,6 +18,10 @@ describe('map graph', () => {
 		expect(nodes[4].nodeType).toBe('ELITE');
 		expect(nodes[5].nodeType).toBe('BOSS');
 		expect(nodes[1].encounterId).toBe('wolf_pack');
+		expect(nodes[2].encounterId).toBe('armor_camp');
+		expect(nodes[3].encounterId).toBe('dps_camp');
+		expect(nodes[4].encounterId).toBe('elite_camp');
+		expect(nodes[5].encounterId).toBe('skull_lord_boss');
 		expect(nodes[5].nextNodeIds).toEqual([]);
 	});
 

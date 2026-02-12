@@ -3,17 +3,28 @@
 	import { goto } from '$app/navigation';
 	import { toaster } from '$lib/toaster';
 	import { getContext } from 'svelte';
-	import HeroCard from '$lib/incremental/components/HeroCard.svelte';
-	import type { HeroDef } from '$lib/incremental/types';
+	import LineupCard from '$lib/incremental/components/LineupCard.svelte';
+	import type { HeroDef, AbilityDef } from '$lib/incremental/types';
 
 	const layoutHeroes = getContext<Array<{ id: number; localized_name: string }>>('heroes') ?? [];
 
-	let heroesFromApi = $state<{ heroes: HeroDef[]; heroNames: Array<{ heroId: number; localizedName: string }> }>({
+	let heroesFromApi = $state<{
+		heroes: HeroDef[];
+		heroNames: Array<{ heroId: number; localizedName: string }>;
+		abilityDefs: Record<string, AbilityDef>;
+	}>({
 		heroes: [],
-		heroNames: []
+		heroNames: [],
+		abilityDefs: {}
 	});
-	const heroById = $derived(new Map(heroesFromApi.heroes.map((h) => [h.heroId, h])));
 	const heroNameById = $derived(new Map(heroesFromApi.heroNames.map((n) => [n.heroId, n.localizedName])));
+	const heroById = $derived(new Map(heroesFromApi.heroes.map((h) => [h.heroId, h])));
+	function getHeroDef(heroId: number): HeroDef | undefined {
+		return heroById.get(heroId);
+	}
+	function getAbilityDef(abilityId: string): AbilityDef | undefined {
+		return heroesFromApi.abilityDefs[abilityId];
+	}
 
 	function heroName(heroId: number): string {
 		return heroNameById.get(heroId) ?? layoutHeroes.find((h) => h.id === heroId)?.localized_name ?? `Hero ${heroId}`;
@@ -23,11 +34,21 @@
 		return saveId ? `?saveId=${encodeURIComponent(saveId)}` : '';
 	}
 
+	type ActiveRunSummary = {
+		runId: string;
+		status: string;
+		currentNodeId: string;
+		startedAt: number;
+	};
 	let saveId = $state<string | null>(null);
 	let saves = $state<Array<{ id: string; name: string | null; essence: number; createdAt: string }>>([]);
-	let lineups = $state<Array<{ id: string; saveId: string; name: string; heroIds: number[] }>>([]);
+	let lineups = $state<
+		Array<{ id: string; saveId: string; name: string; heroIds: number[]; activeRun: ActiveRunSummary | null }>
+	>([]);
 	let rosterHeroIds = $state<number[]>([]);
 	let startingRunId = $state<string | null>(null);
+	let cancellingRunId = $state<string | null>(null);
+	let deletingLineupId = $state<string | null>(null);
 
 	async function ensureSave() {
 		if (saveId) return;
@@ -48,7 +69,7 @@
 
 	async function fetchLineups() {
 		if (!saveId) return;
-		const res = await fetch(`/api/incremental/lineups${saveParam()}`);
+		const res = await fetch(`/api/incremental/lineups${saveParam()}`, { cache: 'no-store' });
 		if (res.ok) {
 			const data = await res.json();
 			lineups = data.lineups ?? [];
@@ -65,10 +86,14 @@
 	}
 
 	async function fetchHeroes() {
-		const res = await fetch('/api/incremental/heroes');
+		const res = await fetch(`/api/incremental/heroes${saveParam()}`);
 		if (res.ok) {
 			const data = await res.json();
-			heroesFromApi = { heroes: data.heroes ?? [], heroNames: data.heroNames ?? [] };
+			heroesFromApi = {
+				heroes: data.heroes ?? [],
+				heroNames: data.heroNames ?? [],
+				abilityDefs: data.abilityDefs ?? {}
+			};
 		}
 	}
 
@@ -99,6 +124,48 @@
 			}
 		} finally {
 			startingRunId = null;
+		}
+	}
+
+	async function cancelRun(runId: string) {
+		cancellingRunId = runId;
+		try {
+			const res = await fetch(`/api/incremental/runs/${runId}/cancel`, { method: 'POST' });
+			const data = await res.json().catch(() => ({}));
+			if (!res.ok) {
+				toaster.error({
+					title: 'Cancel run failed',
+					description: data.message ?? data.error ?? res.statusText
+				});
+				return;
+			}
+			toaster.success({ title: 'Run cancelled', description: 'You can start a new run for this lineup.' });
+			await fetchLineups();
+		} finally {
+			cancellingRunId = null;
+		}
+	}
+
+	function updateLineupOrder(lineupId: string, newHeroIds: number[]) {
+		lineups = lineups.map((l) => (l.id === lineupId ? { ...l, heroIds: newHeroIds } : l));
+	}
+
+	async function deleteLineup(lineupId: string) {
+		deletingLineupId = lineupId;
+		try {
+			const res = await fetch(`/api/incremental/lineups/${lineupId}`, { method: 'DELETE' });
+			if (!res.ok) {
+				const data = await res.json().catch(() => ({}));
+				toaster.error({
+					title: 'Delete failed',
+					description: data.message ?? data.error ?? res.statusText
+				});
+				return;
+			}
+			toaster.success({ title: 'Lineup deleted' });
+			await fetchLineups();
+		} finally {
+			deletingLineupId = null;
 		}
 	}
 
@@ -139,7 +206,7 @@
 		</section>
 	{/if}
 
-	<section class="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 p-4">
+	<section class="space-y-3">
 		{#if lineups.length === 0}
 			<p class="text-gray-600 dark:text-gray-400">
 				No lineups yet. Create one with 1–5 heroes from your roster.
@@ -151,43 +218,27 @@
 				Create your first lineup →
 			</a>
 		{:else}
-			<ul class="space-y-3">
-				{#each lineups as lineup}
-					<li
-						class="flex flex-wrap items-center justify-between gap-3 rounded border border-gray-200 dark:border-gray-600 p-3 bg-white dark:bg-gray-800/80"
-					>
-						<div class="min-w-0 flex-1">
-							<p class="font-medium text-gray-900 dark:text-gray-100">{lineup.name}</p>
-							<div class="mt-2 flex flex-wrap gap-2">
-								{#each lineup.heroIds as hid}
-									<HeroCard
-										heroId={hid}
-										displayName={heroName(hid)}
-										def={heroById.get(hid) ?? null}
-										variant="compact"
-									/>
-								{/each}
-							</div>
-						</div>
-						<div class="flex shrink-0 gap-2">
-							<a
-								href="/incremental/lineup/{lineup.id}"
-								class="rounded border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-							>
-								Edit
-							</a>
-							<button
-								type="button"
-								class="rounded bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
-								disabled={startingRunId !== null}
-								onclick={() => startRun(lineup.id)}
-							>
-								{startingRunId === lineup.id ? 'Starting…' : 'Start run'}
-							</button>
-						</div>
-					</li>
-				{/each}
-			</ul>
+			{#each lineups as lineup}
+				<LineupCard
+					name={lineup.name}
+					lineupId={lineup.id}
+					heroIds={lineup.heroIds}
+					getHeroName={heroName}
+					variant="lineups"
+					showActions={true}
+					activeRun={lineup.activeRun}
+					getHeroDef={getHeroDef}
+					getAbilityDef={getAbilityDef}
+					onDelete={() => deleteLineup(lineup.id)}
+					onStartRun={() => startRun(lineup.id)}
+					onCancelRun={cancelRun}
+					onUpdate={(newHeroIds) => newHeroIds && updateLineupOrder(lineup.id, newHeroIds)}
+					startingRunId={startingRunId}
+					cancellingRunId={cancellingRunId}
+					deletingLineupId={deletingLineupId}
+					onConfirmDelete={(lineupName) => confirm(`Delete lineup "${lineupName}"? This cannot be undone.`)}
+				/>
+			{/each}
 		{/if}
 	</section>
 

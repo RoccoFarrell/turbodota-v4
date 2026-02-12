@@ -5,12 +5,16 @@
 import { describe, it, expect } from 'vitest';
 import { createBattleState } from './battle-state';
 import { resolution } from './resolution';
-import { getHeroDef, getEnemyDef } from '../constants';
+import { getHeroDef, getAbilityDef } from './test-fixtures';
+import { getEnemyDef } from '../constants';
 import * as formulas from '../stats/formulas';
+
+const defs = { getHeroDef, getAbilityDef };
+const withDefs = { getHeroDef };
 
 describe('resolution', () => {
 	it('resolveAutoAttack: reduces target enemy HP and resets hero attack timer', () => {
-		const state = createBattleState([99, 25, 50], 'wolf_pack');
+		const state = createBattleState([99, 25, 50], 'wolf_pack', withDefs);
 		const def = getHeroDef(99)!;
 		const interval = formulas.attackInterval(def.baseAttackInterval, 0);
 		// Advance focused hero (0) attack timer so it's ready
@@ -20,14 +24,14 @@ describe('resolution', () => {
 				i === 0 ? { ...p, attackTimer: interval } : p
 			)
 		};
-		const after = resolution.resolveAutoAttack(ready, 0);
+		const after = resolution.resolveAutoAttack(ready, 0, defs);
 		expect(after.player[0].attackTimer).toBe(0);
 		const target = after.enemy[state.targetIndex];
 		expect(target.currentHp).toBeLessThan(getEnemyDef(target.enemyDefId)!.hp);
 	});
 
 	it('resolveAutoAttack: non-focus target takes reduced damage', () => {
-		const state = createBattleState([25], 'wolf_pack');
+		const state = createBattleState([25], 'wolf_pack', withDefs);
 		const def = getHeroDef(25)!;
 		const interval = formulas.attackInterval(def.baseAttackInterval, 0);
 		const ready = {
@@ -37,19 +41,19 @@ describe('resolution', () => {
 			enemyFocusedIndex: 0
 		};
 		const hpBefore = ready.enemy[1].currentHp;
-		const after = resolution.resolveAutoAttack(ready, 0);
+		const after = resolution.resolveAutoAttack(ready, 0, defs);
 		const damageToNonFocus = hpBefore - after.enemy[1].currentHp;
 		// Same hero attacking focus would do more (full damage)
 		ready.targetIndex = 0;
 		ready.enemyFocusedIndex = 0;
 		const hpFocusBefore = ready.enemy[0].currentHp;
-		const afterFocus = resolution.resolveAutoAttack(ready, 0);
+		const afterFocus = resolution.resolveAutoAttack(ready, 0, defs);
 		const damageToFocus = hpFocusBefore - afterFocus.enemy[0].currentHp;
 		expect(damageToNonFocus).toBeLessThan(damageToFocus);
 	});
 
 	it('resolveSpell: reduces enemy HP and resets spell timer (e.g. Laguna)', () => {
-		const state = createBattleState([25], 'wolf_pack');
+		const state = createBattleState([25], 'wolf_pack', withDefs);
 		const def = getHeroDef(25)!;
 		const interval = formulas.spellInterval(def.baseSpellInterval!, 0);
 		const ready = {
@@ -57,13 +61,13 @@ describe('resolution', () => {
 			player: state.player.map((p) => ({ ...p, spellTimer: interval }))
 		};
 		const hpBefore = ready.enemy[0].currentHp;
-		const after = resolution.resolveSpell(ready, 0);
+		const after = resolution.resolveSpell(ready, 0, defs);
 		expect(after.player[0].spellTimer).toBe(0);
 		expect(after.enemy[0].currentHp).toBeLessThan(hpBefore);
 	});
 
 	it('when all enemies dead, state.result === "win"', () => {
-		let state = createBattleState([25], 'wolf_pack');
+		let state = createBattleState([25], 'wolf_pack', withDefs);
 		const def = getHeroDef(25)!;
 		const attackInt = formulas.attackInterval(def.baseAttackInterval, 0);
 		const spellInt = formulas.spellInterval(def.baseSpellInterval!, 0);
@@ -82,7 +86,7 @@ describe('resolution', () => {
 				spellTimer: spellInt
 			}))
 		};
-		state = resolution.resolveSpell(state, 0);
+		state = resolution.resolveSpell(state, 0, defs);
 		// Keep attacking until all dead
 		while (state.result === null && state.enemy.length > 0) {
 			state = {
@@ -91,14 +95,14 @@ describe('resolution', () => {
 					i === 0 ? { ...p, attackTimer: attackInt } : p
 				)
 			};
-			state = resolution.resolveAutoAttack(state, 0);
+			state = resolution.resolveAutoAttack(state, 0, defs);
 		}
 		expect(state.result).toBe('win');
 	});
 
 	it('when enemy attacks Bristleback, attacker takes return damage', () => {
 		// Lineup with Bristleback (99) focused; one enemy
-		let state = createBattleState([99], 'wolf_pack');
+		let state = createBattleState([99], 'wolf_pack', withDefs);
 		const largeWolf = getEnemyDef('large_wolf')!;
 		state = {
 			...state,
@@ -114,8 +118,30 @@ describe('resolution', () => {
 			}))
 		};
 		const enemyHpBefore = state.enemy[0].currentHp;
-		state = resolution.resolveEnemyActions(state);
+		state = resolution.resolveEnemyActions(state, defs);
 		// Enemy should have taken return damage (Bristleback passive)
 		expect(state.enemy[0].currentHp).toBeLessThan(enemyHpBefore);
+	});
+
+	it('resolveEnemySummons: adds lesser_skull when skull_lord spellTimer >= interval and resets summoner spellTimer', () => {
+		let state = createBattleState([99], 'skull_lord_boss', withDefs);
+		expect(state.enemy).toHaveLength(1);
+		expect(state.enemy[0].enemyDefId).toBe('skull_lord');
+		// Set spellTimer to interval (12) so summon triggers
+		state = {
+			...state,
+			enemy: state.enemy.map((e) => ({
+				...e,
+				spellTimer: 12
+			}))
+		};
+		const after = resolution.resolveEnemySummons(state);
+		expect(after.enemy).toHaveLength(2);
+		expect(after.enemy[0].enemyDefId).toBe('skull_lord');
+		expect(after.enemy[0].spellTimer).toBe(0);
+		expect(after.enemy[1].enemyDefId).toBe('lesser_skull');
+		expect(after.enemy[1].currentHp).toBe(getEnemyDef('lesser_skull')!.hp);
+		expect(after.enemy[1].attackTimer).toBe(0);
+		expect(after.combatLog?.some((e) => e.type === 'summon' && e.summonedEnemyDefId === 'lesser_skull')).toBe(true);
 	});
 });

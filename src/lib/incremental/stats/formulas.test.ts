@@ -5,6 +5,7 @@ import {
 	attackDamage,
 	spellDamage,
 	nonFocusTargetPenalty,
+	physicalDamageFactor,
 	applyPhysicalDamage,
 	applyMagicalDamage,
 	applyPureDamage,
@@ -74,11 +75,17 @@ describe('incremental formulas', () => {
 	});
 
 	describe('damage types and resistance', () => {
-		/** Physical: damage × 100 / (100 + armor); 0 armor = full, high armor = halved. */
+		/** Physical: Dota-style factor 1 - (0.06×armor)/(1+0.06×|armor|); 0 armor = full; negative armor amplifies. */
+		it('physicalDamageFactor: 0 armor = 1, positive reduces, negative amplifies', () => {
+			expect(physicalDamageFactor(0)).toBe(1);
+			expect(physicalDamageFactor(10)).toBeCloseTo(0.625, 3); // 1 - 0.6/1.6
+			expect(physicalDamageFactor(20)).toBeCloseTo(1 - 1.2 / 2.2, 3);
+			expect(physicalDamageFactor(-20)).toBeCloseTo(1 + 1.2 / 2.2, 3);
+		});
 		it('applyPhysicalDamage: reduced by armor', () => {
 			expect(applyPhysicalDamage(100, 0)).toBe(100);
-			expect(applyPhysicalDamage(100, 100)).toBe(50); // 100/(100+100)
-			expect(applyPhysicalDamage(100, 50)).toBeCloseTo(66.67, 1);
+			expect(applyPhysicalDamage(100, 10)).toBeCloseTo(62.5, 1);
+			expect(applyPhysicalDamage(100, -20)).toBeGreaterThan(100);
 		});
 		/** Magical: damage × (1 - magicResist); 0 = full, 1 = zero. */
 		it('applyMagicalDamage: reduced by magic resist 0–1', () => {
@@ -92,8 +99,8 @@ describe('incremental formulas', () => {
 		});
 		/** applyDamageByType routes to physical/magical/pure and applies correct reduction. */
 		it('applyDamageByType dispatches by type', () => {
-			const target = { armor: 100, magicResist: 0.5 };
-			expect(applyDamageByType(100, DamageTypeConst.PHYSICAL, target)).toBe(50);
+			const target = { armor: 10, magicResist: 0.5 };
+			expect(applyDamageByType(100, DamageTypeConst.PHYSICAL, target)).toBeCloseTo(62.5, 1);
 			expect(applyDamageByType(100, DamageTypeConst.MAGICAL, target)).toBe(50);
 			expect(applyDamageByType(100, DamageTypeConst.PURE, target)).toBe(100);
 		});

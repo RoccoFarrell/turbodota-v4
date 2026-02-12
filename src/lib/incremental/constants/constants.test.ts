@@ -1,56 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import { getHeroDef, getAbilityDef, getEncounterDef } from './index';
+import { getHeroDef, getAbilityDef, getEncounterDef, getEnemyDef } from './index';
 
-/** Lookup helpers and reference data for heroes, abilities, encounters. */
+/** Lookup helpers and reference data. Hero/ability defs come from DB only (see getHeroDefsFromDb). */
 describe('incremental constants', () => {
-	describe('getHeroDef', () => {
-		/** Bristleback (99): str, passive-only (null spell interval), armor/resist, bristleback_return. */
-		it('returns hero def for Bristleback (99) with passive ability', () => {
-			const def = getHeroDef(99);
-			expect(def).toBeDefined();
-			expect(def!.heroId).toBe(99);
-			expect(def!.primaryAttribute).toBe('str');
-			expect(def!.baseMaxHp).toBe(150);
-			expect(def!.baseArmor).toBe(4);
-			expect(def!.baseMagicResist).toBe(0.25);
-			expect(def!.baseSpellInterval).toBeNull();
-			expect(def!.abilityIds).toEqual(['bristleback_return']);
-		});
-
-		/** Lina (25): int, 10s spell interval, laguna_blade ability. */
-		it('returns hero def for Lina (25) with Laguna Blade', () => {
-			const def = getHeroDef(25);
-			expect(def).toBeDefined();
-			expect(def!.heroId).toBe(25);
-			expect(def!.primaryAttribute).toBe('int');
-			expect(def!.baseSpellInterval).toBe(10);
-			expect(def!.abilityIds).toContain('laguna_blade');
-		});
-
-		/** Dazzle (50): has poison_touch (castable stun) ability. */
-		it('returns hero def for Dazzle (50)', () => {
-			const def = getHeroDef(50);
-			expect(def).toBeDefined();
-			expect(def!.abilityIds).toContain('poison_touch');
-		});
-
-		/** Unknown hero id returns undefined. */
-		it('returns undefined for unknown hero id', () => {
-			expect(getHeroDef(999)).toBeUndefined();
-		});
-	});
-
-	describe('getAbilityDef', () => {
-		/** Laguna Blade: active, timer trigger. */
-		it('returns ability def by id', () => {
-			const laguna = getAbilityDef('laguna_blade');
-			expect(laguna).toBeDefined();
-			expect(laguna!.type).toBe('active');
-			expect(laguna!.trigger).toBe('timer');
-		});
-		/** Unknown ability id returns undefined. */
-		it('returns undefined for unknown id', () => {
-			expect(getAbilityDef('unknown')).toBeUndefined();
+	describe('getHeroDef / getAbilityDef (stub)', () => {
+		it('return undefined (defs come from database)', () => {
+			expect(getHeroDef(99)).toBeUndefined();
+			expect(getHeroDef(25)).toBeUndefined();
+			expect(getAbilityDef('laguna_blade')).toBeUndefined();
 		});
 	});
 
@@ -67,9 +24,39 @@ describe('incremental constants', () => {
 			expect(small?.count ?? 1).toBe(2);
 		});
 
+		/** New encounters are available. */
+		it('returns armor_camp and skull_lord_boss', () => {
+			const armor = getEncounterDef('armor_camp');
+			expect(armor).toBeDefined();
+			expect(armor!.id).toBe('armor_camp');
+			expect(armor!.enemies).toHaveLength(2);
+			const boss = getEncounterDef('skull_lord_boss');
+			expect(boss).toBeDefined();
+			expect(boss!.id).toBe('skull_lord_boss');
+			expect(boss!.enemies).toHaveLength(1);
+			expect(boss!.enemies[0].enemyDefId).toBe('skull_lord');
+		});
+
 		/** Unknown encounter id returns undefined. */
 		it('returns undefined for unknown encounter', () => {
 			expect(getEncounterDef('unknown')).toBeUndefined();
+		});
+	});
+
+	describe('getEnemyDef', () => {
+		it('returns enemy def for skull_lord and armored_brute', () => {
+			const skull = getEnemyDef('skull_lord');
+			expect(skull).toBeDefined();
+			expect(skull!.id).toBe('skull_lord');
+			expect(skull!.name).toBe('Skull Lord');
+			expect(skull!.hp).toBe(2500);
+			const brute = getEnemyDef('armored_brute');
+			expect(brute).toBeDefined();
+			expect(brute!.id).toBe('armored_brute');
+			expect(brute!.baseArmor).toBe(35);
+		});
+		it('returns undefined for unknown enemy id', () => {
+			expect(getEnemyDef('unknown')).toBeUndefined();
 		});
 	});
 });

@@ -14,8 +14,9 @@ This roadmap breaks the incremental game into **short, discrete development chun
 | Phase 11 | Phase 9 (doc) | UI – Battle Screen ✅ |
 | Phase 12 | Phase 10 (doc) | UI – Map & Run Flow ✅ |
 | 13–16 | Phases 12–15 (doc) | Shops, Training, PvP, background |
+| 17 | Phase 16 (doc) | User Onboarding (mine → recruit → train → lineup → run + rewards) |
 
-Phases 0–4, run/battle/PvE (doc Phase 5 Run, 6.2 Runs API, Phase 7 PvE), **Phase 5 (Lineups API)**, **Phase 6 / Phase 8 (Essence, mining, roster, convert-win)**, **Phase 7 / Phase 11 (Lineup Builder)**, **Phase 9 (Battle Screen UI)**, and **Phase 10 (Map & Run Flow)** are implemented. Remaining: Phase 12+ (shops, training/leveling, PvP, background).
+Phases 0–4, run/battle/PvE (doc Phase 5 Run, 6.2 Runs API, Phase 7 PvE), **Phase 5 (Lineups API)**, **Phase 6 / Phase 8 (Essence, mining, roster, convert-win)**, **Phase 7 / Phase 11 (Lineup Builder)**, **Phase 9 (Battle Screen UI)**, and **Phase 10 (Map & Run Flow)** are implemented. Remaining: Phase 12+ (shops, training/leveling, PvP, background). **Phase 16 (User Onboarding)** after Phase 15 (or when 8, 9, 10, 11, 13 are done).
 
 **Reference**: [ARCHITECTURE.md](./ARCHITECTURE.md), [BATTLE_MECHANICS.md](./BATTLE_MECHANICS.md), [CORE_CONCEPT.md](./CORE_CONCEPT.md), [OPEN_QUESTIONS.md](./OPEN_QUESTIONS.md), [ESSENCE_AND_BROWSER_ACTIONS.md](./ESSENCE_AND_BROWSER_ACTIONS.md), [HERO_TRAINING.md](./HERO_TRAINING.md), [TRAINING_UI_AND_TALENT_TREE.md](./TRAINING_UI_AND_TALENT_TREE.md) (training UI flow, talent tree plan). **Leveling system**: [LEVELING_SYSTEM.md](./LEVELING_SYSTEM.md) (Melvor-like progression: formula layer, building upgrades, talent application, mining level, skill tree expansion, multi-hero training). **Dota 2 integration**: [DOTA2_REWARDS_ITEMS_LOOTBOX.md](./DOTA2_REWARDS_ITEMS_LOOTBOX.md) (match API payloads, rewards from stats, item system, lootbox for roster-hero wins). **Bank**: [BANK_SYSTEM.md](./BANK_SYSTEM.md) (flexible per-save currencies + item inventory; replaces hardcoded Essence; integrates with idle, Dota, battle, shops).
 
@@ -46,6 +47,8 @@ Phase 8–10: Run/battle backend             Run flow, Runs/battle API, PvE rewa
 Phase 11–12: Battle & Map UI               (depends on 9)
      ↓
 Phase 13+: Training, Leveling system (formulas, buildings, talents), Shops, PvP, background
+     ↓
+Phase 16: User Onboarding (depends on 8, 9, 10, 11, 13)
 ```
 
 ---
@@ -733,6 +736,53 @@ These are in the app but not called out as separate phases in the roster-first t
 
 ---
 
+## Phase 16: User Onboarding Flow (Optional / Later)
+
+**Goal**: Guided first-time flow: new player completes (1) Mine Essence → (2) Recruit a hero (convert Dota 2 win) → (3) Train a hero → (4) Build a lineup → (5) Start and begin a dungeon run. Each completed step grants rewards (e.g. currency, talent points, or unlocking a talent tree branch).
+
+**Dependencies**: Phase 8.1, 8.2, 8.3 (Essence, roster, mining/convert UI); Phase 9 (Battle UI); Phase 10 (Map & Run Flow); Phase 11 (Lineup Builder); Phase 13 (Training: data, action, battle integration, UI). Optionally Phase 13.7+ (talents wired) if rewards unlock talent nodes.
+
+**Design (to be detailed):** Reward curve (e.g. how much Essence per step), which talent nodes or branches unlock at which step, and whether “begin run” means “start run” only or “complete first combat” (recommend “start run” for clarity). [TRAINING_UI_AND_TALENT_TREE.md](./TRAINING_UI_AND_TALENT_TREE.md) and [LEVELING_SYSTEM.md](./LEVELING_SYSTEM.md) define talent points and tree shape; onboarding can grant points or auto-purchase specific nodes.
+
+### Milestone 16.1: Onboarding state and progress
+**Dependencies**: 8.1, 8.2, 8.3, 9, 10, 11, 13.1–13.4
+
+**Tasks**:
+- [ ] Persist onboarding progress per save (e.g. `IncrementalOnboardingProgress` or JSON on save: steps completed, e.g. `firstMineDone`, `firstRecruitDone`, `firstTrainDone`, `firstLineupCreated`, `firstRunStarted`).
+- [ ] API: e.g. `GET /api/incremental/onboarding` returns current step and completed steps; updates implicit when player does the action (first mining completion, first convert-win, first training completion, first lineup save, first run start).
+
+**Files**: Prisma schema or save JSON; `src/routes/api/incremental/onboarding/+server.ts`.
+
+**Deliverable**: Server tracks which onboarding steps are done per save; client can read progress.
+
+---
+
+### Milestone 16.2: Step completion detection and rewards
+**Dependencies**: 16.1
+
+**Tasks**:
+- [ ] When a step is completed (detected server-side or via existing APIs), mark it in onboarding state and grant rewards. Rewards per step (design to tune): currency (e.g. bonus Essence from Bank), and/or talent points or auto-unlock of specific talent nodes (e.g. “Unlock Barracks” after first recruit). Define reward table (step id → reward type and payload).
+- [ ] If talent tree is not yet wired (Phase 13.7), rewards can be currency-only initially; talent unlocks added when 13.7+ is done.
+
+**Files**: Onboarding service or action handlers (mining completion, convert-win, training completion, lineup create, run start); reward table constants or config.
+
+**Deliverable**: Completing each onboarding step grants defined rewards; progress and rewards persist per save.
+
+---
+
+### Milestone 16.3: Onboarding UI
+**Dependencies**: 16.1, 16.2
+
+**Tasks**:
+- [ ] Checklist or linear flow UI (e.g. on `/incremental` or dedicated `/incremental/onboarding`): show the five steps with done/current/locked; highlight “next” action (e.g. “Mine your first Essence”, “Convert a win at the Tavern”, “Train a hero”, “Build a lineup”, “Start a run”).
+- [ ] After each step: show reward (e.g. “+50 Essence”, “Talent branch unlocked”) and advance to next step. Optional: dismissible or collapsible so returning players are not stuck in onboarding.
+
+**Files**: `src/routes/incremental/+page.svelte` or `src/routes/incremental/onboarding/+page.svelte`; components for onboarding checklist.
+
+**Deliverable**: New players can follow a single guided path through mining → recruit → train → lineup → run, with clear rewards at each step; progress and rewards persist per save.
+
+---
+
 ## Summary Table
 
 | Phase | Focus | Test in isolation | Integrates with |
@@ -751,7 +801,8 @@ These are in the app but not called out as separate phases in the roster-first t
 | 11 | Battle UI | Manual + E2E | Map UI |
 | 12 | Map UI | Manual + E2E | Full game |
 | 13 | Training (data, engine, battle, UI) + Leveling (formulas, talents wired, mining/building upgrades, skill tree, multi-hero, UI) | Per-milestone | Battle, roster |
-| 14–16 | Shops, PvP, background | Per-milestone | Existing |
+| 14–15 | Shops, PvP, background | Per-milestone | Existing |
+| 16 | User Onboarding (state, step rewards, checklist UI) | Per-milestone | Mining, roster, training, lineup, run |
 
 ---
 
@@ -761,6 +812,7 @@ These are in the app but not called out as separate phases in the roster-first t
 - **Checkpoint B (playable via API)**: Complete Phases 4, 8, 9. You can start a run, advance to combat, and run a battle via API (e.g. Postman or Bruno).
 - **Checkpoint C (roster-first launch)**: Complete Phases 5–7. **Ship here.** User can mine Essence, convert a win from last 10 games to roster, build lineups (no run/battle/map UI yet).
 - **Checkpoint D (playable battle in browser)**: Complete Phases 8–12. Full PvE loop: lineup → start run → map → battle → rewards → map.
-- **Checkpoint E (full vision)**: Add Phase 13 (Training + Incremental Leveling: formula layer, talents wired, mining/building upgrades, skill tree expansion, multi-hero training, UI), then Phases 14–16 (shops, PvP, background PvE).
+- **Checkpoint E (full vision)**: Add Phase 13 (Training + Incremental Leveling: formula layer, talents wired, mining/building upgrades, skill tree expansion, multi-hero training, UI), then Phases 14–15 (shops, PvP, background PvE).
+- **Checkpoint F (onboarding)**: Add Phase 16 after 13 (and optionally 14–15). New players get a guided path with rewards; onboarding state and reward table can be extended (e.g. more steps or reward types) without changing core systems.
 
 Use this roadmap to implement in short chunks; run tests after each milestone so integration in later phases stays straightforward.

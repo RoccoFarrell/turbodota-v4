@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { getStatusEffectDef } from '$lib/incremental/constants';
+	import SpriteSheetAnimation from '$lib/components/SpriteSheetAnimation.svelte';
 
 	/**
 	 * Shared battle card for heroes and enemies: name, icon, health bar, armor/MR badges,
@@ -38,6 +39,10 @@
 		/** Visual state: Front Liner (hero) or Target (enemy) */
 		selected: boolean;
 		selectedClass: string; // e.g. green or red border/glow
+		/** Enemy-only: this enemy is the lineup front liner (first alive). Distinct from selected = Target. */
+		frontLiner?: boolean;
+		/** Enemy-only: extra class when frontLiner is true (e.g. amber left border). */
+		frontLinerClass?: string;
 		disabled?: boolean;
 		onclick?: () => void;
 		// Hero-only
@@ -58,6 +63,35 @@
 		enemyAttackProgress?: number; // 0–1
 		/** Status effects on this unit (stun, poison, etc.) for visual feedback and paused timers. */
 		buffs?: BuffProp[];
+		// Sprite sheet support (for enemies or animated portraits)
+		/** Path to sprite sheet image */
+		spriteSheetSrc?: string;
+		/** Sprite sheet metadata object */
+		spriteSheetMetadata?: {
+			spriteSheet: {
+				width: number;
+				height: number;
+				rows: number;
+				columns: number;
+				frameWidth: number;
+				frameHeight: number;
+				totalFrames: number;
+			};
+			video: {
+				fps: number;
+				startTime: number;
+			};
+			frames: Array<{
+				index: number;
+				time: number;
+				x: number;
+				y: number;
+				width: number;
+				height: number;
+			}>;
+		};
+		/** Static image path (alternative to sprite sheet) */
+		staticImageSrc?: string;
 	}
 
 	let {
@@ -69,6 +103,8 @@
 		magicResist,
 		selected,
 		selectedClass,
+		frontLiner = false,
+		frontLinerClass = '',
 		disabled = false,
 		onclick,
 		heroId,
@@ -84,7 +120,10 @@
 		enemyAttackInterval = 0,
 		enemyAttackTimer = 0,
 		enemyAttackProgress = 0,
-		buffs = []
+		buffs = [],
+		spriteSheetSrc,
+		spriteSheetMetadata,
+		staticImageSrc
 	}: Props = $props();
 
 	const buffsList = $derived(buffs ?? []);
@@ -130,12 +169,30 @@
 	const hasSpells = $derived(
 		kind === 'hero' && ((spellInfo?.abilities?.length ?? 0) > 0 || spellIntervalSec != null)
 	);
+
+	/** Enemy card border/ring/shadow: gold = frontliner, red = target, both when overlapping. */
+	const enemyCardOutlineClass = $derived.by(() => {
+		if (kind !== 'enemy') return '';
+		const base = 'border-2 ';
+		if (frontLiner && selected) {
+			// Both: gold border (frontliner) + red ring (target) so both states are clear
+			return base + 'border-amber-400 dark:border-amber-500 bg-amber-50/30 dark:bg-amber-900/25 ring-2 ring-red-500 shadow-[0_0_0_2px_rgba(245,158,11,0.5),0_0_12px_rgba(239,68,68,0.5)]';
+		}
+		if (frontLiner) {
+			// Frontliner only: strong gold highlight
+			return base + 'border-amber-400 dark:border-amber-500 bg-amber-50/40 dark:bg-amber-900/30 ring-2 ring-amber-400/80 dark:ring-amber-500/70 shadow-[0_0_12px_rgba(245,158,11,0.5)]';
+		}
+		if (selected) {
+			return selectedClass;
+		}
+		return 'border-gray-300 dark:border-gray-600';
+	});
 </script>
 
 <button
 	type="button"
-	class="group rounded-lg border-2 p-3 w-[168px] min-w-[168px] max-w-[168px] box-border text-left transition relative
-		{selected ? selectedClass : 'border-gray-300 dark:border-gray-600'}
+	class="group rounded-lg border-2 p-3 {kind === 'enemy' ? 'w-[200px] min-w-[200px] max-w-[200px]' : 'w-[168px] min-w-[168px] max-w-[168px]'} box-border {kind === 'enemy' ? 'text-center' : 'text-left'} transition relative
+		{kind === 'enemy' ? enemyCardOutlineClass : (selected ? selectedClass : 'border-gray-300 dark:border-gray-600')}
 		{disabled ? 'pointer-events-none opacity-90' : ''}
 		{currentHp <= 0 ? 'opacity-60' : ''}"
 	disabled={disabled || currentHp <= 0}
@@ -158,27 +215,64 @@
 		</span>
 	</div>
 
-	<div class="flex items-center gap-2 pr-16">
-		{#if kind === 'hero' && heroId != null}
-			<i
-				class="d2mh hero-{heroId} shrink-0 w-9 h-9 rounded bg-gray-700"
-				title={displayName}
-				aria-hidden="true"
-			></i>
-		{:else}
-			<div
-				class="shrink-0 w-9 h-9 rounded bg-gray-600 flex items-center justify-center text-lg font-bold text-gray-300"
-				title={displayName}
-			>
-				{displayName.charAt(0)}
-			</div>
-		{/if}
-		<div class="min-w-0">
-			<div class="font-medium text-gray-800 dark:text-gray-200 truncate">
-				{displayName}{#if selected} <span class="font-semibold">({kind === 'hero' ? 'Front Liner' : 'Target'})</span>{/if}
+	{#if kind === 'hero'}
+		<!-- Hero layout: icon + name side by side -->
+		<div class="flex items-center gap-2 pr-16">
+			{#if heroId != null}
+				<i
+					class="d2mh hero-{heroId} shrink-0 w-9 h-9 rounded bg-gray-700"
+					title={displayName}
+					aria-hidden="true"
+				></i>
+			{/if}
+			<div class="min-w-0">
+				<div class="font-medium text-gray-800 dark:text-gray-200 truncate">
+					{displayName}{#if selected} <span class="font-semibold">(Front Liner)</span>{/if}
+				</div>
 			</div>
 		</div>
-	</div>
+	{:else}
+		<!-- Enemy layout: centered image, name below -->
+		<div class="flex flex-col items-center gap-2">
+			{#if spriteSheetSrc && spriteSheetMetadata}
+				<!-- Enemy with sprite sheet: animated, larger and centered -->
+				<div class="w-20 h-20 rounded bg-gray-700 overflow-hidden flex items-center justify-center" title={displayName}>
+					<div style="transform: scale({80 / spriteSheetMetadata.spriteSheet.frameWidth}); transform-origin: center; width: {spriteSheetMetadata.spriteSheet.frameWidth}px; height: {spriteSheetMetadata.spriteSheet.frameHeight}px; position: relative;">
+						<SpriteSheetAnimation
+							src={spriteSheetSrc}
+							metadata={spriteSheetMetadata}
+							fps={spriteSheetMetadata.video.fps}
+							autoplay={true}
+							loop={true}
+						/>
+					</div>
+				</div>
+			{:else if staticImageSrc}
+				<!-- Enemy with static image -->
+				<img
+					src={staticImageSrc}
+					alt={displayName}
+					class="w-20 h-20 rounded bg-gray-700 object-cover"
+					title={displayName}
+				/>
+			{:else}
+				<!-- Fallback: first letter -->
+				<div
+					class="w-20 h-20 rounded bg-gray-600 flex items-center justify-center text-2xl font-bold text-gray-300"
+					title={displayName}
+				>
+					{displayName.charAt(0)}
+				</div>
+			{/if}
+			<div class="text-center w-full">
+				<div class="font-semibold text-gray-800 dark:text-gray-200 text-sm">
+					{displayName}
+					{#if frontLiner}<span class="font-semibold text-amber-400 dark:text-amber-400" title="Enemy front liner — full damage only on this target"> (Front)</span>{/if}
+					{#if selected}<span class="font-bold text-red-500 dark:text-red-400" title="Your team's target"> (Target)</span>{/if}
+				</div>
+			</div>
+		</div>
+	{/if}
 
 	<!-- Health bar (red) -->
 	<div class="mt-2">
@@ -193,21 +287,7 @@
 		</p>
 	</div>
 
-	<!-- Status effects: stun, poison, etc. (any unit) -->
-	{#if statusBadges.length > 0}
-		<div class="mt-1.5 flex flex-wrap gap-1">
-			{#each statusBadges as badge}
-				<span
-					class="rounded px-1.5 py-0.5 text-[10px] font-semibold {badge.isStun
-						? 'bg-amber-500/90 text-amber-950'
-						: 'bg-gray-600 text-gray-200'}"
-					title="{badge.name} — {badge.duration.toFixed(1)}s remaining"
-				>
-					{#if badge.isStun}⏸ {/if}{badge.name} {badge.duration.toFixed(1)}s
-				</span>
-			{/each}
-		</div>
-	{/if}
+	<!-- Status effects removed - now shown as badges above card -->
 
 	{#if kind === 'hero'}
 		<!-- Attack bar (paused when stunned) -->
@@ -291,8 +371,33 @@
 			{/if}
 		</div>
 	{:else}
-		<!-- Enemy: attack timer (paused when stunned) -->
-		<div class="mt-2">
+		<!-- Enemy: stats and attack timer -->
+		<div class="mt-2 space-y-2">
+			<!-- Enemy stats: Attack damage, Armor, MR -->
+			<div class="space-y-1 text-xs">
+				<div class="flex items-center justify-between">
+					<span class="text-gray-400">Attack:</span>
+					<span class="font-medium text-amber-400">{enemyAttackDamage} dmg</span>
+				</div>
+				<div class="flex items-center justify-between">
+					<span class="text-gray-400">Interval:</span>
+					<span class="font-medium text-gray-300">{enemyAttackInterval.toFixed(1)}s</span>
+				</div>
+				<div class="flex items-center justify-between">
+					<span class="text-gray-400">Armor:</span>
+					<span class="font-medium text-gray-300">{armor}</span>
+				</div>
+				<div class="flex items-center justify-between">
+					<span class="text-gray-400">Magic Resist:</span>
+					<span class="font-medium text-gray-300">{mrPercent}%</span>
+				</div>
+				<div class="flex items-center justify-between border-t border-gray-600 pt-1 mt-1">
+					<span class="text-gray-400">DPS:</span>
+					<span class="font-semibold text-amber-300">{atkDps.toFixed(1)}</span>
+				</div>
+			</div>
+
+			<!-- Attack timer (paused when stunned) -->
 			<div
 				class="relative rounded {isStunned ? 'bg-amber-900/40 border border-amber-600/60' : ''}"
 				class:opacity-60={isStunned}

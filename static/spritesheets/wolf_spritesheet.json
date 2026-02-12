@@ -1,0 +1,57 @@
+{
+  "spriteSheet": {
+    "width": 384,
+    "height": 256,
+    "rows": 2,
+    "columns": 3,
+    "frameWidth": 128,
+    "frameHeight": 128,
+    "totalFrames": 5
+  },
+  "video": {
+    "fps": 1,
+    "startTime": 0
+  },
+  "frames": [
+    {
+      "index": 0,
+      "time": 0,
+      "x": 0,
+      "y": 0,
+      "width": 128,
+      "height": 128
+    },
+    {
+      "index": 1,
+      "time": 1,
+      "x": 128,
+      "y": 0,
+      "width": 128,
+      "height": 128
+    },
+    {
+      "index": 2,
+      "time": 2,
+      "x": 256,
+      "y": 0,
+      "width": 128,
+      "height": 128
+    },
+    {
+      "index": 3,
+      "time": 3,
+      "x": 0,
+      "y": 128,
+      "width": 128,
+      "height": 128
+    },
+    {
+      "index": 4,
+      "time": 4,
+      "x": 128,
+      "y": 128,
+      "width": 128,
+      "height": 128
+    }
+  ]
+}

@@ -10,8 +10,10 @@
 		CombatLogEntry
 	} from '$lib/incremental/types';
 	import { getHeroDef, getEnemyDef, getAbilityDef } from '$lib/incremental/constants';
+	import { getEnemySpriteConfig } from '$lib/incremental/constants/enemy-sprites';
 	import { attackInterval, spellInterval } from '$lib/incremental/stats/formulas';
 	import BattleCard from '$lib/incremental/components/BattleCard.svelte';
+	import StatusEffectBadge from '$lib/incremental/components/StatusEffectBadge.svelte';
 	import type { SpellInfoAbility, SpellInfoActive } from '$lib/incremental/components/BattleCard.svelte';
 
 	const runId = $derived($page.params.runId);
@@ -20,10 +22,11 @@
 	const FOCUS_COOLDOWN_SEC = 2;
 	const BASE_TICK_INTERVAL_MS = 150;
 	const DELTA_TIME = 0.15;
-	/** Fixed battle card width; 5-card lineup width = BATTLE_CARD_W*5 + gap*4 */
-	const BATTLE_CARD_W = 168;
+	/** Fixed battle card widths */
+	const HERO_CARD_W = 168;
+	const ENEMY_CARD_W = 200;
 	const BATTLE_LINEUP_GAP = 12;
-	const BATTLE_LINEUP_WIDTH = 5 * BATTLE_CARD_W + 4 * BATTLE_LINEUP_GAP;
+	const BATTLE_LINEUP_WIDTH = 5 * Math.max(HERO_CARD_W, ENEMY_CARD_W) + 4 * BATTLE_LINEUP_GAP;
 
 	let battle = $state<BattleState | null>(null);
 	let loading = $state(true);
@@ -34,6 +37,8 @@
 	let heroDefById = $state<Map<number, HeroDef>>(new Map());
 	/** Ability id -> def from API (DB); fallback to constants in getSpellInfo */
 	let abilityDefById = $state<Map<string, import('$lib/incremental/types').AbilityDef>>(new Map());
+	/** Enemy sprite sheet metadata: enemyId -> metadata object */
+	let enemySpriteMetadata = $state<Map<string, any>>(new Map());
 
 	/** Battle controls: auto-rotate front liner (default off). */
 	let autoRotateFrontLiner = $state(false);
@@ -43,10 +48,15 @@
 	/** Combat log filters (default all enabled). */
 	let logShowAutoAttacks = $state(true);
 	let logShowSpells = $state(true);
+	let logShowStatusEffects = $state(true);
 
 	// Derived lists so each block reliably re-runs when battle state updates (fixes health bars not updating)
 	const playerList = $derived(battle?.player ?? []);
 	const enemyList = $derived(battle?.enemy ?? []);
+	/** Index of the enemy front liner (first alive in lineup). -1 if none. */
+	const enemyFrontLinerIndex = $derived(
+		enemyList.length > 0 ? enemyList.findIndex((e) => e.currentHp > 0) : -1
+	);
 
 	/** Combat log: filtered by toggles, last 80, reversed so newest is on top. */
 	const combatLogDisplay = $derived(
@@ -54,9 +64,12 @@
 			const log = battle?.combatLog ?? [];
 			const filtered = log.filter(
 				(entry) =>
+					entry.type === 'death' ||
 					(entry.type === 'auto_attack' && logShowAutoAttacks) ||
+					(entry.type === 'enemy_attack' && logShowAutoAttacks) ||
 					(entry.type === 'spell' && logShowSpells) ||
-					(entry.type !== 'auto_attack' && entry.type !== 'spell')
+					(entry.type === 'status_effect' && logShowStatusEffects) ||
+					(entry.type === 'return_damage' && (logShowAutoAttacks || logShowSpells))
 			);
 			return filtered.slice(-80).slice().reverse();
 		})()
@@ -186,6 +199,11 @@
 		action: string;
 		damage: string;
 		resistanceDetail: string;
+		statusEffect?: string;
+		/** true = hero (blue), false = enemy (red). Undefined when no attacker. */
+		attackerFriendly?: boolean;
+		/** true = hero (blue), false = enemy (red). */
+		targetFriendly?: boolean;
 	} {
 		const time = `[${entry.time.toFixed(1)}s]`;
 		let attacker = '';
@@ -193,6 +211,9 @@
 		let action = '';
 		let damage = '';
 		let resistanceDetail = '';
+		let statusEffect: string | undefined;
+		let attackerFriendly: boolean | undefined;
+		let targetFriendly: boolean | undefined;
 		const d = entry.damage ?? 0;
 		const dtype = entry.damageType ?? 'physical';
 		const raw = entry.rawDamage;
@@ -202,23 +223,50 @@
 		if (entry.type === 'auto_attack') {
 			attacker = heroDisplayName(entry.attackerHeroId ?? 0);
 			target = enemyName(entry.targetEnemyDefId ?? '');
+			attackerFriendly = true;
+			targetFriendly = false;
 			action = 'auto-attack';
 			damage = `${d} ${dtype}`;
 		} else if (entry.type === 'spell') {
 			attacker = heroDisplayName(entry.attackerHeroId ?? 0);
 			target = enemyName(entry.targetEnemyDefId ?? '');
+			attackerFriendly = true;
+			targetFriendly = false;
 			action = entry.abilityId ?? 'spell';
 			damage = `${d} ${dtype}`;
 		} else if (entry.type === 'enemy_attack') {
 			attacker = enemyName(entry.attackerEnemyDefId ?? '');
 			target = heroDisplayName(entry.targetHeroId ?? 0);
+			attackerFriendly = false;
+			targetFriendly = true;
 			action = '→ Front Liner';
 			damage = `${d} physical`;
 		} else if (entry.type === 'return_damage') {
 			attacker = heroDisplayName(entry.attackerHeroId ?? 0);
 			target = enemyName(entry.targetEnemyDefId ?? '');
+			attackerFriendly = true;
+			targetFriendly = false;
 			action = 'return';
 			damage = `${d} ${dtype}`;
+		} else if (entry.type === 'status_effect') {
+			attacker = entry.attackerHeroId != null 
+				? heroDisplayName(entry.attackerHeroId)
+				: entry.attackerEnemyDefId != null
+					? enemyName(entry.attackerEnemyDefId)
+					: '';
+			target = entry.targetHeroId != null
+				? heroDisplayName(entry.targetHeroId)
+				: entry.targetEnemyDefId != null
+					? enemyName(entry.targetEnemyDefId)
+					: '';
+			attackerFriendly = entry.attackerHeroId != null ? true : entry.attackerEnemyDefId != null ? false : undefined;
+			targetFriendly = entry.targetHeroId != null ? true : entry.targetEnemyDefId != null ? false : undefined;
+			action = entry.statusEffectId ?? 'status effect';
+			statusEffect = entry.statusEffectId;
+		} else if (entry.type === 'death') {
+			target = entry.deathTarget === 'hero' ? 'Hero' : 'Enemy';
+			targetFriendly = entry.deathTarget === 'hero';
+			action = 'died';
 		}
 
 		if (raw != null && (armor != null || mr != null)) {
@@ -232,7 +280,30 @@
 				resistanceDetail = ` (${raw} raw, armor ${armor})`;
 			}
 		}
-		return { time, attacker, target, action, damage, resistanceDetail };
+		return { time, attacker, target, action, damage, resistanceDetail, statusEffect, attackerFriendly, targetFriendly };
+	}
+
+	/** Load sprite sheet metadata for enemies in the current battle */
+	async function loadEnemySpriteSheets() {
+		if (!battle) return;
+		const enemyIds = new Set(battle.enemy.map(e => e.enemyDefId));
+		for (const enemyId of enemyIds) {
+			const config = getEnemySpriteConfig(enemyId);
+			if (config && !enemySpriteMetadata.has(enemyId)) {
+				try {
+					const res = await fetch(config.spriteSheetMetadataPath);
+					if (res.ok) {
+						const metadata = await res.json();
+						enemySpriteMetadata.set(enemyId, metadata);
+						console.log(`Loaded sprite sheet metadata for ${enemyId}:`, metadata);
+					} else {
+						console.warn(`Failed to load sprite sheet metadata for ${enemyId}: ${res.status} ${res.statusText}`);
+					}
+				} catch (e) {
+					console.warn(`Failed to load sprite sheet metadata for ${enemyId}:`, e);
+				}
+			}
+		}
 	}
 
 	async function loadBattle(): Promise<boolean> {
@@ -246,6 +317,8 @@
 			}
 			battle = await res.json();
 			error = null;
+			// Load sprite sheet metadata for enemies
+			await loadEnemySpriteSheets();
 			return true;
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Failed to load battle';
@@ -478,15 +551,17 @@
 					<!-- Your heroes: always 5 slots -->
 					<section class="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 p-4">
 						<h2 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">Your heroes</h2>
-						<div
-							class="grid gap-3 overflow-x-auto"
-							style="grid-template-columns: repeat(5, {BATTLE_CARD_W}px); max-width: 100%;"
-						>
-							{#each Array(5) as _, slotIndex}
-								{#if playerList[slotIndex]}
-									{@const hero = playerList[slotIndex]}
-									{@const isFrontLiner = battle && slotIndex === battle.focusedHeroIndex}
-									{@const def = getDef(hero.heroId)}
+						<div class="flex flex-wrap justify-center gap-3">
+							{#each playerList as hero, slotIndex}
+								{@const isFrontLiner = battle && slotIndex === battle.focusedHeroIndex}
+								{@const def = getDef(hero.heroId)}
+								<div class="flex flex-col items-center">
+									<!-- Fixed-height slot for status effects so the card doesn't move -->
+									<div class="min-h-[52px] flex flex-wrap justify-center items-center gap-1.5 mb-2 w-full">
+										{#each hero.buffs ?? [] as buff}
+											<StatusEffectBadge buff={buff} size={36} />
+										{/each}
+									</div>
 									<BattleCard
 										kind="hero"
 										displayName={heroDisplayName(hero.heroId)}
@@ -509,34 +584,29 @@
 										spellInfo={getSpellInfo(hero, slotIndex)}
 										buffs={hero.buffs ?? []}
 									/>
-								{:else}
-									<div
-										class="h-[140px] rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 bg-gray-100/50 dark:bg-gray-800/30 flex items-center justify-center"
-										style="width: {BATTLE_CARD_W}px; min-width: {BATTLE_CARD_W}px;"
-										aria-hidden="true"
-									>
-										<span class="text-xs text-gray-400 dark:text-gray-500">Empty</span>
-									</div>
-								{/if}
+								</div>
 							{/each}
 						</div>
 						<p class="mt-2 text-xs text-gray-500">Tap a hero to set Front Liner. All attack Target; only Front Liner casts spells.</p>
 					</section>
 
-					<!-- Enemies: same width grid, 5 slots; center when fewer than 5 -->
+					<!-- Enemies: flex layout that wraps, no horizontal scroll -->
 					<section class="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 p-4">
-						<h2 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">Enemies — tap to set Target</h2>
-						<div
-							class="grid gap-3 overflow-x-auto mx-auto"
-							style="grid-template-columns: repeat(5, {BATTLE_CARD_W}px); width: {BATTLE_LINEUP_WIDTH}px; max-width: 100%;"
-						>
-							{#each Array(5) as _, slotIndex}
-								{@const leftPad = Math.floor((5 - enemyList.length) / 2)}
-								{@const enemyIndex = slotIndex - leftPad}
-								{#if enemyIndex >= 0 && enemyList[enemyIndex]}
-									{@const enemy = enemyList[enemyIndex]}
-									{@const isTarget = battle && enemyIndex === battle.targetIndex}
-									{@const edef = getEnemyDef(enemy.enemyDefId)}
+						<h2 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">Enemies — Front (amber) · Target (red) · tap to set Target</h2>
+						<div class="flex flex-wrap justify-center gap-3">
+							{#each enemyList as enemy, enemyIndex}
+								{@const isTarget = battle && enemyIndex === battle.targetIndex}
+								{@const isFrontLiner = enemyFrontLinerIndex >= 0 && enemyIndex === enemyFrontLinerIndex}
+								{@const edef = getEnemyDef(enemy.enemyDefId)}
+									{@const spriteConfig = getEnemySpriteConfig(enemy.enemyDefId)}
+									{@const spriteMetadata = enemySpriteMetadata.get(enemy.enemyDefId)}
+								<div class="flex flex-col items-center">
+									<!-- Fixed-height slot for status effects so the card doesn't move -->
+									<div class="min-h-[52px] flex flex-wrap justify-center items-center gap-1.5 mb-2 w-full">
+										{#each enemy.buffs ?? [] as buff}
+											<StatusEffectBadge buff={buff} size={36} />
+										{/each}
+									</div>
 									<BattleCard
 										kind="enemy"
 										displayName={edef?.name ?? enemy.enemyDefId}
@@ -546,22 +616,26 @@
 										magicResist={edef?.baseMagicResist ?? 0}
 										selected={isTarget}
 										selectedClass="border-red-500 bg-red-50 dark:bg-red-900/20 ring-2 ring-red-500 shadow-[0_0_12px_rgba(239,68,68,0.6)]"
+										frontLiner={isFrontLiner}
+										frontLinerClass="border-l-4 border-l-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.35)]"
 										onclick={() => onEnemyClick(enemyIndex)}
 										enemyAttackDamage={edef?.damage ?? 0}
 										enemyAttackInterval={edef?.attackInterval ?? 1}
 										enemyAttackTimer={enemy.attackTimer}
 										enemyAttackProgress={edef && edef.attackInterval > 0 ? Math.min(1, enemy.attackTimer / edef.attackInterval) : 0}
 										buffs={enemy.buffs ?? []}
+										spriteSheetSrc={spriteConfig?.spriteSheetSrc}
+										spriteSheetMetadata={spriteMetadata}
+										staticImageSrc={spriteConfig?.staticImageSrc}
 									/>
-								{:else}
-									<div style="width: {BATTLE_CARD_W}px; min-width: {BATTLE_CARD_W}px;" aria-hidden="true"></div>
-								{/if}
+								</div>
 							{/each}
 						</div>
 					</section>
 
 					<p class="text-sm text-gray-500 dark:text-gray-400">
-						Tap an enemy to set Target (your team focuses attacks and spells on them).
+						<strong class="text-amber-500">Front</strong> = enemy front liner (first in lineup); full damage only on them.
+						<strong class="text-red-500"> Target</strong> = who your team attacks. Tap an enemy to set Target.
 					</p>
 				</div>
 
@@ -588,25 +662,49 @@
 							>
 								Spells
 							</button>
+							<button
+								type="button"
+								class="rounded px-2 py-1 text-xs font-medium transition-colors {logShowStatusEffects
+									? 'bg-purple-600/80 text-white'
+									: 'bg-gray-700 text-gray-400 hover:bg-gray-600'}"
+								onclick={() => (logShowStatusEffects = !logShowStatusEffects)}
+							>
+								Status Effects
+							</button>
 						</div>
 						<div class="max-h-48 lg:max-h-[420px] overflow-y-auto font-mono text-xs space-y-0.5">
 							<div class="flex flex-col">
 								{#each combatLogDisplay as entry}
 									{@const parts = getLogParts(entry)}
 									{@const isSpell = entry.type === 'spell'}
+									{@const isStatusEffect = entry.type === 'status_effect'}
+									{@const isDeath = entry.type === 'death'}
 									<div
 										class="flex flex-wrap gap-x-1 items-baseline py-0.5 border-l-2 {isSpell
 											? 'border-violet-500/60'
-											: 'border-transparent'}"
+											: isStatusEffect
+												? 'border-purple-500/60'
+												: isDeath
+													? 'border-red-500/60'
+													: 'border-transparent'}"
 									>
 										<span class="text-gray-500 shrink-0">{parts.time}</span>
-										<span class="text-blue-400 font-semibold">{parts.attacker}</span>
+										<span class="font-semibold {parts.attackerFriendly === true ? 'text-blue-400' : parts.attackerFriendly === false ? 'text-red-400' : 'text-gray-400'}">{parts.attacker}</span>
 										<span class="text-gray-500">→</span>
-										<span class="text-red-400 font-semibold">{parts.target}</span>
+										<span class="font-semibold {parts.targetFriendly === true ? 'text-blue-400' : parts.targetFriendly === false ? 'text-red-400' : 'text-gray-400'}">{parts.target}</span>
 										<span class="text-gray-500">:</span>
-										<span class="{isSpell ? 'text-violet-400' : 'text-amber-400'}">{parts.action}</span>
-										{#if parts.damage}
-											<span class="text-emerald-300">{parts.damage} dmg{parts.resistanceDetail}</span>
+										{#if isStatusEffect}
+											<span class="text-purple-400 font-semibold">⚡ {parts.statusEffect?.replace(/_/g, ' ') ?? parts.action}</span>
+											{#if entry.statusEffectDuration != null}
+												<span class="text-purple-300">({entry.statusEffectDuration.toFixed(1)}s)</span>
+											{/if}
+										{:else if isDeath}
+											<span class="text-red-400 font-semibold">{parts.action}</span>
+										{:else}
+											<span class="{isSpell ? 'text-violet-400' : 'text-amber-400'}">{parts.action}</span>
+											{#if parts.damage}
+												<span class="text-emerald-300">{parts.damage} dmg{parts.resistanceDetail}</span>
+											{/if}
 										{/if}
 									</div>
 								{/each}

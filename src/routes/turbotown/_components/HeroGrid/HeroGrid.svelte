@@ -210,10 +210,10 @@
 						<div class="object-contain m-1 relative">
 							{#if $banStore.bannedHeroes.indexOf(hero) !== -1}
 								<div class="w-full h-full bg-red-600 rounded-xl z-10 absolute bg-opacity-70">
-									<button onclick={() => banStore.banHero(hero)} class="w-full h-full"></button>
+									<button onclick={() => banStore.banHero(hero)} class="w-full h-full" aria-label="Unban {hero.localized_name ?? hero.id}"></button>
 								</div>
 							{/if}
-							<button onclick={() => banStore.banHero(hero)}><i class={`z-0 d2mh hero-${hero.id}`}></i></button>
+							<button onclick={() => banStore.banHero(hero)} aria-label="Ban {hero.localized_name ?? hero.id}"><i class={`z-0 d2mh hero-${hero.id}`}></i></button>
 						</div>
 					{/each}
 				{/if}
@@ -230,10 +230,10 @@
 						<div class={`object-contain m-3 relative`}>
 							{#if $banStore.bannedHeroes.indexOf(hero) !== -1}
 								<div class="w-full h-full bg-red-600 rounded-xl z-10 absolute bg-opacity-70">
-									<button onclick={() => banStore.banHero(hero)} class="w-full h-full"></button>
+									<button onclick={() => banStore.banHero(hero)} class="w-full h-full" aria-label="Unban {hero.localized_name ?? hero.id}"></button>
 								</div>
 							{/if}
-							<button onclick={() => banStore.banHero(hero)}
+							<button onclick={() => banStore.banHero(hero)} aria-label="Ban {hero.localized_name ?? hero.id}"
 								><i class={`z-0 d2mh hero-${hero.id} scale-125`}></i></button
 							>
 						</div>

@@ -16,10 +16,10 @@ export interface MapNodeTemplate {
 const DEFAULT_GRAPH_TEMPLATE: MapNodeTemplate[] = [
 	{ nodeType: 'REST', encounterId: null, nextTemplateIndices: [1] },
 	{ nodeType: 'COMBAT', encounterId: 'wolf_pack', nextTemplateIndices: [2] },
-	{ nodeType: 'COMBAT', encounterId: 'wolf_pack', nextTemplateIndices: [3] },
-	{ nodeType: 'COMBAT', encounterId: 'wolf_pack', nextTemplateIndices: [4] },
-	{ nodeType: 'ELITE', encounterId: 'wolf_pack', nextTemplateIndices: [5] },
-	{ nodeType: 'BOSS', encounterId: 'wolf_pack', nextTemplateIndices: [] }
+	{ nodeType: 'COMBAT', encounterId: 'armor_camp', nextTemplateIndices: [3] },
+	{ nodeType: 'COMBAT', encounterId: 'dps_camp', nextTemplateIndices: [4] },
+	{ nodeType: 'ELITE', encounterId: 'elite_camp', nextTemplateIndices: [5] },
+	{ nodeType: 'BOSS', encounterId: 'skull_lord_boss', nextTemplateIndices: [] }
 ];
 
 export interface GeneratedMapNode {

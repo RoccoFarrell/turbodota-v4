@@ -12,12 +12,49 @@ import { resolveIncrementalSave } from '$lib/server/incremental-save';
 const MIN_HEROES = 1;
 const MAX_HEROES = 5;
 
-/** GET /api/incremental/lineups – list lineups for current save. Query: saveId (optional). */
+/** GET /api/incremental/lineups – list lineups for current save. Query: saveId (optional). Includes activeRun per lineup when authenticated. */
 export const GET: RequestHandler = async (event) => {
 	const saveId = event.url.searchParams.get('saveId') ?? undefined;
 	const { saveId: resolvedSaveId } = await resolveIncrementalSave(event, { saveId });
 	const lineups = await getLineupsBySaveId(prisma as unknown as IncrementalDb, resolvedSaveId);
-	return json({ lineups, saveId: resolvedSaveId });
+
+	const session = await event.locals.auth.validate();
+	let lineupsWithRuns = lineups;
+	if (session && lineups.length > 0) {
+		const lineupIds = lineups.map((l) => l.id);
+		const activeRuns = await prisma.incrementalRun.findMany({
+			where: {
+				userId: session.user.userId,
+				lineupId: { in: lineupIds },
+				status: 'ACTIVE'
+			},
+			select: { id: true, lineupId: true, status: true, currentNodeId: true, startedAt: true },
+			orderBy: { startedAt: 'desc' }
+		});
+		// One run per lineup: keep the most recent (first after orderBy desc)
+		const runByLineupId = new Map<string, (typeof activeRuns)[0]>();
+		for (const r of activeRuns) {
+			if (!runByLineupId.has(r.lineupId)) runByLineupId.set(r.lineupId, r);
+		}
+		lineupsWithRuns = lineups.map((l) => {
+			const run = runByLineupId.get(l.id);
+			return {
+				...l,
+				activeRun: run
+					? {
+							runId: run.id,
+							status: run.status,
+							currentNodeId: run.currentNodeId,
+							startedAt: run.startedAt.getTime()
+						}
+					: null
+			};
+		});
+	} else {
+		lineupsWithRuns = lineups.map((l) => ({ ...l, activeRun: null }));
+	}
+
+	return json({ lineups: lineupsWithRuns, saveId: resolvedSaveId });
 };
 
 /** POST /api/incremental/lineups – create lineup. Body: { saveId?, name, heroIds } */

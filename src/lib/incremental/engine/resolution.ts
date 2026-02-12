@@ -54,11 +54,16 @@ function updateResult(state: BattleState): BattleState {
 	return state;
 }
 
-/** Filter out dead enemies (currentHp <= 0), clamp target and enemyFocused indices. */
+/** Index of the enemy front liner: first alive enemy in lineup order. -1 if none. */
+function getEnemyFrontLinerIndex(state: BattleState): number {
+	return state.enemy.findIndex((e) => e.currentHp > 0);
+}
+
+/** Filter out dead enemies (currentHp <= 0), clamp target index; front liner becomes index 0. */
 function removeDeadEnemies(state: BattleState): BattleState {
 	const enemy = state.enemy.filter((e) => e.currentHp > 0);
-	const { targetIndex, enemyFocusedIndex } = clampIndices(state, enemy.map((_, i) => i));
-	return updateResult({ ...state, enemy, targetIndex, enemyFocusedIndex });
+	const { targetIndex } = clampIndices(state, enemy.map((_, i) => i));
+	return updateResult({ ...state, enemy, targetIndex, enemyFocusedIndex: 0 });
 }
 
 /**
@@ -86,8 +91,10 @@ export function resolveAutoAttack(
 	if (!enemyDef) return state;
 
 	const rawDamage = attackDamage(def.baseAttackDamage);
-	const isTargetEnemyFocus = targetIdx === state.enemyFocusedIndex;
-	const damage = nonFocusTargetPenalty(rawDamage, isTargetEnemyFocus);
+	const enemyFrontLinerIndex = getEnemyFrontLinerIndex(state);
+	const isTargetEnemyFrontLiner =
+		enemyFrontLinerIndex >= 0 && targetIdx === enemyFrontLinerIndex;
+	const damage = nonFocusTargetPenalty(rawDamage, isTargetEnemyFrontLiner);
 	const targetArmorMr = getEffectiveArmorMr(target.buffs, enemyDef.baseArmor, enemyDef.baseMagicResist);
 	const finalDamage = applyDamageByType(damage, DamageTypeConst.PHYSICAL, targetArmorMr);
 
@@ -115,13 +122,22 @@ export function resolveAutoAttack(
 	return next;
 }
 
-/** Effective armor and magic resist from base stats + buff modifiers. */
+/** AGI-to-armor: each point of AGI adds this much to Main Armor (Dota-style). */
+const AGI_ARMOR_FACTOR = 0.167;
+
+/**
+ * Effective armor (ΣArmor) and magic resist from base + buffs.
+ * Main Armor = baseArmor + (agi ?? 0) × 0.167; ΣArmor = Main + Σ(armorMod from buffs).
+ * Ready for armor negation when we add f(ArmorNegation).
+ */
 function getEffectiveArmorMr(
 	buffs: Buff[] | undefined,
 	baseArmor: number,
-	baseMagicResist: number
+	baseMagicResist: number,
+	agi?: number
 ): { armor: number; magicResist: number } {
-	let armor = baseArmor;
+	const mainArmor = baseArmor + (agi ?? 0) * AGI_ARMOR_FACTOR;
+	let armor = mainArmor;
 	let magicResist = baseMagicResist;
 	for (const b of buffs ?? []) {
 		const def = getStatusEffectDef(b.id);
@@ -202,16 +218,28 @@ export function resolveSpell(
 		let target = state.enemy[targetIdx];
 		const enemyDef = getEnemyDef(target.enemyDefId);
 		if (enemyDef) {
+			const enemyFrontLinerIndex = getEnemyFrontLinerIndex(state);
+			const isTargetEnemyFrontLiner =
+				enemyFrontLinerIndex >= 0 && targetIdx === enemyFrontLinerIndex;
 			const targetArmorMr = getEffectiveArmorMr(
 				target.buffs,
 				enemyDef.baseArmor,
 				enemyDef.baseMagicResist
 			);
 			let finalDamage = 0;
+			let rawSpellDamage: number | undefined;
 			const damageType: DamageType = ability.damageType ?? DamageTypeConst.PURE;
 			if (ability.baseDamage != null && ability.baseDamage > 0) {
-				const rawDamage = spellDamage(ability.baseDamage, 0);
-				finalDamage = applyDamageByType(rawDamage, damageType, targetArmorMr);
+				rawSpellDamage = spellDamage(ability.baseDamage, 0);
+				const damageAfterPenalty = nonFocusTargetPenalty(
+					rawSpellDamage,
+					isTargetEnemyFrontLiner
+				);
+				finalDamage = applyDamageByType(
+					damageAfterPenalty,
+					damageType,
+					targetArmorMr
+				);
 			}
 
 			let targetBuffs = target.buffs ?? [];
@@ -222,6 +250,17 @@ export function resolveSpell(
 						...targetBuffs,
 						{ id: statusEffectId, duration, value: ability.baseDamage }
 					];
+					// Log status effect application
+					combatLog = appendLog(state, {
+						time: state.elapsedTime,
+						type: 'status_effect',
+						attackerHeroIndex: heroIndex,
+						attackerHeroId: hero.heroId,
+						targetEnemyIndex: targetIdx,
+						targetEnemyDefId: target.enemyDefId,
+						statusEffectId,
+						statusEffectDuration: duration
+					});
 				}
 			}
 
@@ -233,7 +272,8 @@ export function resolveSpell(
 					buffs: targetBuffs
 				};
 			});
-			combatLog = appendLog(state, {
+			// Append to current combatLog (which may include status_effect) so we don't overwrite it
+			combatLog = appendLog({ ...state, combatLog }, {
 				time: state.elapsedTime,
 				type: 'spell',
 				attackerHeroIndex: heroIndex,
@@ -244,8 +284,8 @@ export function resolveSpell(
 				damageType: damageType,
 				abilityId,
 				rawDamage:
-					ability.baseDamage != null && ability.baseDamage > 0
-						? Math.round(spellDamage(ability.baseDamage, 0))
+					rawSpellDamage != null
+						? Math.round(rawSpellDamage)
 						: undefined,
 				targetArmor: enemyDef.baseArmor,
 				targetMagicResist: enemyDef.baseMagicResist
@@ -372,6 +412,60 @@ export function resolveEnemyActions(state: BattleState, defs?: BattleDefsProvide
 }
 
 /**
+ * Resolve enemy summons: for each living enemy with summonAbility whose spellTimer >= interval,
+ * add a new EnemyInstance for the summoned def, reset that enemy's spellTimer to 0, and append a combat log entry.
+ * Does not remove dead enemies (handled elsewhere). Returns updated state.
+ */
+export function resolveEnemySummons(
+	state: BattleState,
+	_defs?: BattleDefsProvider
+): BattleState {
+	if (state.result !== null) return state;
+
+	let next = state;
+	for (let i = 0; i < next.enemy.length; i++) {
+		const enemy = next.enemy[i];
+		if (enemy.currentHp <= 0) continue;
+		const def = getEnemyDef(enemy.enemyDefId);
+		if (!def?.summonAbility) continue;
+		const interval = def.summonAbility.interval;
+		const timer = enemy.spellTimer ?? 0;
+		if (timer < interval) continue;
+
+		const summonedDef = getEnemyDef(def.summonAbility.enemyDefId);
+		if (!summonedDef) continue;
+
+		const newEnemy: EnemyInstance = {
+			enemyDefId: summonedDef.id,
+			currentHp: summonedDef.hp,
+			maxHp: summonedDef.hp,
+			attackTimer: 0,
+			buffs: []
+		};
+
+		const enemyList = [...next.enemy, newEnemy];
+		const updatedSummoner = { ...enemy, spellTimer: 0 };
+		const enemyUpdated = enemyList.map((e, j) =>
+			j === i ? updatedSummoner : e
+		) as EnemyInstance[];
+
+		const logEntry: CombatLogEntry = {
+			time: next.elapsedTime,
+			type: 'summon',
+			attackerEnemyDefId: def.id,
+			attackerEnemyIndex: i,
+			summonedEnemyDefId: summonedDef.id
+		};
+		next = {
+			...next,
+			enemy: enemyUpdated,
+			combatLog: appendLog(next, logEntry)
+		};
+	}
+	return next;
+}
+
+/**
  * Process buffs: tick damage (poison), heal over time, duration decay. Removes expired buffs.
  */
 export function processBuffs(
@@ -442,5 +536,6 @@ export const resolution = {
 	resolveAutoAttack,
 	resolveSpell,
 	resolveEnemyActions,
+	resolveEnemySummons,
 	processBuffs
 };

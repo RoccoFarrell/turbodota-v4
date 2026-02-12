@@ -73,7 +73,7 @@ export const PATCH: RequestHandler<{ id: string }> = async ({ params, request, l
 	return json(updated);
 };
 
-/** DELETE /api/incremental/lineups/[id] */
+/** DELETE /api/incremental/lineups/[id] – only when lineup has no active run. */
 export const DELETE: RequestHandler<{ id: string }> = async ({ params, locals }) => {
 	const session = await locals.auth.validate();
 	if (!session) error(401, 'Unauthorized');
@@ -82,6 +82,10 @@ export const DELETE: RequestHandler<{ id: string }> = async ({ params, locals })
 		include: { save: { select: { userId: true } } }
 	});
 	authLineup(lineup, session.user.userId);
+	const activeRun = await prisma.incrementalRun.findFirst({
+		where: { lineupId: params.id, status: 'ACTIVE' }
+	});
+	if (activeRun) error(400, 'Cannot delete a lineup that has an active run. Cancel the run first.');
 	await prisma.incrementalLineup.delete({ where: { id: params.id } });
 	return new Response(null, { status: 204 });
 };

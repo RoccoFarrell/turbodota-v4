@@ -13,6 +13,7 @@ import {
 	resolveAutoAttack,
 	resolveSpell,
 	resolveEnemyActions,
+	resolveEnemySummons,
 	processBuffs
 } from './resolution';
 import { getHeroDef } from '../constants';
@@ -95,6 +96,7 @@ export function tick(
 
 	if (s.result !== null) return s;
 	s = resolveEnemyActions(s, defs);
+	s = resolveEnemySummons(s, defs);
 	s = ensureFocusOnLivingHero(s);
 	return s;
 }

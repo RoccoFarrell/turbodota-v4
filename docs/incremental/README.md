@@ -20,6 +20,7 @@ A **separate** game concept from the card-battler: an incremental/idle-style gam
 | [BATTLE_MECHANICS.md](./BATTLE_MECHANICS.md) | Battle flow, focus/tap, timers, damage resolution |
 | [SPELLS_AND_ABILITIES.md](./SPELLS_AND_ABILITIES.md) | Active vs passive abilities, hero examples (Bristleback, Lina, Dazzle) |
 | [PROGRESSION_AND_ENCOUNTERS.md](./PROGRESSION_AND_ENCOUNTERS.md) | Map structure, PvE encounters, PvP battles |
+| [ENCOUNTERS_AND_MAP.md](./ENCOUNTERS_AND_MAP.md) | Encounter model and run encounter order (graph = source of truth) |
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | Code layout, data models, timer engine, API surface |
 | [DEVELOPMENT_ROADMAP.md](./DEVELOPMENT_ROADMAP.md) | Phased implementation plan; short, testable chunks |
 | [OPEN_QUESTIONS.md](./OPEN_QUESTIONS.md) | Resolved decisions and open questions |

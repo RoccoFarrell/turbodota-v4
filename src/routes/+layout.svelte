@@ -302,7 +302,7 @@
 							<div class={"h-full m-auto grid grid-cols-2"}>
 								{#if data.session && !$page.url.pathname.includes('herostats')}
 									<div class="flex justify-center items-center">
-										<a href="/feed" class="h-10 w-10">
+										<a href="/feed" class="h-10 w-10" aria-label="Notifications">
 											<div class="relative inline-block mt-2">
 												<span class="vibrating badge-icon bg-primary-500 absolute -top-2 right-0 z-50"
 													><p class="inline text-amber-500 font-bold"></p></span

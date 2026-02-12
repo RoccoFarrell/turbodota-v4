@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount, getContext } from 'svelte';
+	import { dev } from '$app/environment';
 	import { toaster } from '$lib/toaster';
 	import {
 		formatStat,
@@ -63,6 +64,9 @@
 	let trainingHeroId = $state<string>('');
 	let trainingStatKey = $state<string>('');
 	let sendingToTrain = $state(false);
+	// Debug: recruit any hero
+	let debugRecruitHeroId = $state<string>('');
+	let debugRecruiting = $state(false);
 
 	function saveParam() {
 		return saveId ? `?saveId=${encodeURIComponent(saveId)}` : '';
@@ -175,6 +179,33 @@
 			await fetchRoster();
 		} finally {
 			convertingMatchId = null;
+		}
+	}
+
+	async function recruitHeroDebug() {
+		const heroId = debugRecruitHeroId ? parseInt(debugRecruitHeroId, 10) : null;
+		if (heroId == null || !saveId) return;
+		debugRecruiting = true;
+		try {
+			const res = await fetch('/api/incremental/roster/recruit-debug', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ saveId, heroId })
+			});
+			const data = await res.json().catch(() => ({}));
+			if (!res.ok) {
+				toaster.error({
+					title: 'Debug recruit failed',
+					description: data.message ?? data.error ?? res.statusText
+				});
+				return;
+			}
+			toaster.success({ title: 'Hero recruited (debug)', description: 'They have joined your roster.' });
+			debugRecruitHeroId = '';
+			await fetchRoster();
+			await fetchEligibleWins();
+		} finally {
+			debugRecruiting = false;
 		}
 	}
 
@@ -317,6 +348,37 @@
 					</li>
 				{/each}
 			</ul>
+		{/if}
+
+		{#if dev}
+			<div class="mt-4 rounded border border-amber-500/50 bg-amber-500/10 p-3">
+				<p class="text-xs font-medium uppercase tracking-wide text-amber-600 dark:text-amber-400">Debug: Recruit any hero</p>
+				<p class="mt-1 text-sm text-gray-600 dark:text-gray-300">Add any hero to your roster without a match (no essence cost).</p>
+				<div class="mt-2 flex flex-wrap items-end gap-2">
+					<div class="min-w-48">
+						<label for="debug-recruit-hero" class="sr-only">Hero</label>
+						<select
+							id="debug-recruit-hero"
+							class="block w-full rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-2 py-1.5 text-sm text-gray-900 dark:text-gray-100"
+							bind:value={debugRecruitHeroId}
+						>
+							<option value="">— Select hero —</option>
+							{#each layoutHeroes as h}
+								<option value={h.id} disabled={rosterHeroIds.includes(h.id)}>
+									{h.localized_name}{rosterHeroIds.includes(h.id) ? ' (on roster)' : ''}
+								</option>
+							{/each}
+						</select>
+					</div>
+					<button
+						class="rounded bg-amber-600 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+						disabled={!debugRecruitHeroId || debugRecruiting}
+						onclick={recruitHeroDebug}
+					>
+						{debugRecruiting ? '…' : 'Recruit (debug)'}
+					</button>
+				</div>
+			</div>
 		{/if}
 		</section>
 

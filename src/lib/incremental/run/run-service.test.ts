@@ -15,7 +15,11 @@ describe('run-service', () => {
 
 		const db: RunServiceDb = {
 			incrementalLineup: {
-				findUnique: async (args) => lineupStore.find((l) => l.id === args.where.id) ?? null
+				findUnique: async (args) => {
+					const row = lineupStore.find((l) => l.id === args.where.id);
+					if (!row) return null;
+					return { id: row.id, heroIds: row.heroIds, save: { userId: row.userId } };
+				}
 			},
 			incrementalRun: {
 				create: async (args) => {
@@ -171,7 +175,13 @@ describe('run-service', () => {
 		const runs = new Map<string, RunRecord>();
 		const nodes = new Map<string, { nextNodeIds: string[]; nodeType: string; encounterId: string | null }>();
 		const db: RunServiceDb = {
-			incrementalLineup: { findUnique: async (args) => lineupStore.find((l) => l.id === args.where.id) ?? null },
+			incrementalLineup: {
+				findUnique: async (args) => {
+					const row = lineupStore.find((l) => l.id === args.where.id);
+					if (!row) return null;
+					return { id: row.id, heroIds: row.heroIds, save: { userId: row.userId } };
+				}
+			},
 			incrementalRun: {
 				create: async () => ({ id: 'r1', userId: 'u', lineupId: 'l1', status: 'ACTIVE', currentNodeId: '', startedAt: new Date(), seed: null }),
 				findUnique: async (args) => runs.get(args.where.id) ?? null,

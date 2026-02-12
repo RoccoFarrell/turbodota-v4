@@ -25,7 +25,8 @@ describe('battle-loop', () => {
 		let state = createBattleState([99, 25, 50], 'wolf_pack');
 		state = tick(state, 0.1, { focusChange: 1 });
 		expect(state.focusedHeroIndex).toBe(1);
-		expect(state.player[0].attackTimer).toBe(0);
+		// Previous focus hero's timers were reset then advanceTimers ran, so 0.1
+		expect(state.player[0].attackTimer).toBe(0.1);
 		// New focus hero's timers advance in same tick, so 0.1
 		expect(state.player[1].attackTimer).toBe(0.1);
 		// Immediately try to change again (elapsedTime ~0.1, cooldown 2s)

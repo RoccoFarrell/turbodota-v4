@@ -7,11 +7,16 @@
 import prisma from '$lib/server/prisma';
 import type { HeroDef, AbilityDef, PrimaryAttribute } from '$lib/incremental/types';
 import { PrimaryAttribute as PrimaryAttributeConst } from '$lib/incremental/types';
-import { getAbilityDef as getAbilityDefConst } from '$lib/incremental/constants';
 
 function primaryAttribute(value: string): PrimaryAttribute {
 	if (value === 'str' || value === 'agi' || value === 'int' || value === 'universal') return value;
 	return PrimaryAttributeConst.STR;
+}
+
+/** Derive statusEffectOnHit from DB ability when effect/target imply a stun. */
+function statusEffectOnHitFromDb(effect: string | null, target: string | null): { statusEffectId: 'stun'; duration: number } | undefined {
+	if (effect === 'stun' && target === 'single_enemy') return { statusEffectId: 'stun', duration: 1.5 };
+	return undefined;
 }
 
 export interface HeroNameRow {
@@ -49,20 +54,14 @@ export async function getHeroDefsFromDb(saveId?: string | null): Promise<{
 
 	const abilityMap = new Map<string, AbilityDef>();
 	for (const a of abilities) {
-		const fromConst = getAbilityDefConst(a.id);
-		// DB abilities with effect "stun" and target single_enemy get stun debuff when constants don't provide statusEffectOnHit
-		const statusEffectOnHit =
-			fromConst?.statusEffectOnHit ??
-			(a.effect === 'stun' && a.target === 'single_enemy'
-				? { statusEffectId: 'stun' as const, duration: 1.5 }
-				: undefined);
+		const statusEffectOnHit = statusEffectOnHitFromDb(a.effect, a.target);
 		abilityMap.set(a.id, {
 			id: a.id,
 			type: a.type as 'active' | 'passive',
 			trigger: a.trigger,
 			effect: a.effect,
 			target: a.target,
-			damageType: a.damageType ?? undefined,
+			damageType: (a.damageType as AbilityDef['damageType']) ?? undefined,
 			baseDamage: a.baseDamage ?? undefined,
 			returnDamageRatio: a.returnDamageRatio ?? undefined,
 			abilityName: a.abilityName,

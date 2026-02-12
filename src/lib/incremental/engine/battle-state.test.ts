@@ -1,11 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import { createBattleState } from './battle-state';
+import { getHeroDef } from './test-fixtures';
+
+const withDefs = { getHeroDef };
 
 /** createBattleState builds initial BattleState from lineup hero ids and encounter id. */
 describe('battle-state', () => {
-	/** Bristleback (99), Lina (25), Dazzle (50) vs wolf_pack: 3 player heroes, 3 enemies (1 large + 2 small), focus 0, result null. */
+	/** Bristleback (99), Lina (25), Dazzle (50) vs wolf_pack: 3 player heroes, 3 enemies, focus 0, result null. */
 	it('createBattleState([99, 25, 50], "wolf_pack") returns state with 3 player heroes, 3 enemies, focusedHeroIndex 0, result null', () => {
-		const state = createBattleState([99, 25, 50], 'wolf_pack');
+		const state = createBattleState([99, 25, 50], 'wolf_pack', withDefs);
 		expect(state.player).toHaveLength(3);
 		expect(state.enemy).toHaveLength(3);
 		expect(state.focusedHeroIndex).toBe(0);
@@ -19,7 +22,7 @@ describe('battle-state', () => {
 
 	/** All player hero timers start at 0; hero instances have correct heroId, maxHp/currentHp from def. */
 	it('all player hero timers are 0 and hero instances have correct heroId and HP from def', () => {
-		const state = createBattleState([99, 25, 50], 'wolf_pack');
+		const state = createBattleState([99, 25, 50], 'wolf_pack', withDefs);
 		expect(state.player[0].heroId).toBe(99);
 		expect(state.player[0].currentHp).toBe(150);
 		expect(state.player[0].maxHp).toBe(150);
@@ -32,28 +35,28 @@ describe('battle-state', () => {
 		expect(state.player[2].maxHp).toBe(120);
 	});
 
-	/** Enemy instances: 1 large_wolf (80 HP), 2 small_wolf (30 HP each); all timers 0. */
+	/** Enemy instances: 1 large_wolf (700 HP), 2 small_wolf (250 HP each); all timers 0. */
 	it('enemy side has 1 large_wolf and 2 small_wolf with correct HP and timers 0', () => {
-		const state = createBattleState([99, 25, 50], 'wolf_pack');
+		const state = createBattleState([99, 25, 50], 'wolf_pack', withDefs);
 		const large = state.enemy.filter((e) => e.enemyDefId === 'large_wolf');
 		const small = state.enemy.filter((e) => e.enemyDefId === 'small_wolf');
 		expect(large).toHaveLength(1);
-		expect(large[0].currentHp).toBe(80);
-		expect(large[0].maxHp).toBe(80);
+		expect(large[0].currentHp).toBe(700);
+		expect(large[0].maxHp).toBe(700);
 		expect(large[0].attackTimer).toBe(0);
 		expect(small).toHaveLength(2);
-		expect(small[0].currentHp).toBe(30);
-		expect(small[0].maxHp).toBe(30);
+		expect(small[0].currentHp).toBe(250);
+		expect(small[0].maxHp).toBe(250);
 	});
 
 	/** Unknown hero id throws. */
 	it('throws for unknown hero id', () => {
-		expect(() => createBattleState([999], 'wolf_pack')).toThrow('Unknown hero id: 999');
+		expect(() => createBattleState([999], 'wolf_pack', withDefs)).toThrow('Unknown hero id: 999');
 	});
 
 	/** Unknown encounter id throws. */
 	it('throws for unknown encounter id', () => {
-		expect(() => createBattleState([99], 'unknown_encounter')).toThrow(
+		expect(() => createBattleState([99], 'unknown_encounter', withDefs)).toThrow(
 			'Unknown encounter id: unknown_encounter'
 		);
 	});
@@ -61,10 +64,19 @@ describe('battle-state', () => {
 	/** Options can set initial elapsedTime and lastFocusChangeAt. */
 	it('accepts options for elapsedTime and lastFocusChangeAt', () => {
 		const state = createBattleState([99], 'wolf_pack', {
+			...withDefs,
 			elapsedTime: 5,
 			lastFocusChangeAt: 3
 		});
 		expect(state.elapsedTime).toBe(5);
 		expect(state.lastFocusChangeAt).toBe(3);
+	});
+
+	/** Enemies with summonAbility (e.g. skull_lord) get spellTimer initialized to 0. */
+	it('skull_lord in encounter has spellTimer 0', () => {
+		const state = createBattleState([99], 'skull_lord_boss', withDefs);
+		const skullLord = state.enemy.find((e) => e.enemyDefId === 'skull_lord');
+		expect(skullLord).toBeDefined();
+		expect(skullLord?.spellTimer).toBe(0);
 	});
 });
