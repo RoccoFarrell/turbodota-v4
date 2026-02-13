@@ -2,7 +2,6 @@ export { advanceIdleTimer, type IdleTimerInput, type IdleTimerResult } from './i
 export {
 	getActionDef,
 	getDurationSec,
-	applyRewards,
 	MINING_ACTION_ID,
 	TRAINING_ACTION_ID,
 	type ActionId,

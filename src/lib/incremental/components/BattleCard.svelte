@@ -185,45 +185,31 @@
 		if (selected) {
 			return selectedClass;
 		}
-		return 'border-gray-300 dark:border-gray-600';
+		return 'border-gray-400 dark:border-gray-500';
 	});
 </script>
 
 <button
 	type="button"
 	class="group rounded-lg border-2 p-3 {kind === 'enemy' ? 'w-[200px] min-w-[200px] max-w-[200px]' : 'w-[168px] min-w-[168px] max-w-[168px]'} box-border {kind === 'enemy' ? 'text-center' : 'text-left'} transition relative
-		{kind === 'enemy' ? enemyCardOutlineClass : (selected ? selectedClass : 'border-gray-300 dark:border-gray-600')}
+		{kind === 'enemy' ? enemyCardOutlineClass : (selected ? selectedClass : 'border-gray-400 dark:border-gray-500')}
 		{disabled ? 'pointer-events-none opacity-90' : ''}
 		{currentHp <= 0 ? 'opacity-60' : ''}"
 	disabled={disabled || currentHp <= 0}
 	onclick={onclick}
 	title={displayName}
 >
-	<!-- Armor / MR badges -->
-	<div class="absolute top-2 right-2 flex gap-1">
-		<span
-			class="rounded px-1.5 py-0.5 text-[10px] font-medium bg-gray-600 text-gray-200"
-			title="Armor (reduces physical damage)"
-		>
-			🛡 {armor}
-		</span>
-		<span
-			class="rounded px-1.5 py-0.5 text-[10px] font-medium bg-purple-700 text-purple-100"
-			title="Magic resist"
-		>
-			✨ {mrPercent}%
-		</span>
-	</div>
-
 	{#if kind === 'hero'}
 		<!-- Hero layout: icon + name side by side -->
-		<div class="flex items-center gap-2 pr-16">
+		<div class="flex items-center gap-2">
 			{#if heroId != null}
-				<i
-					class="d2mh hero-{heroId} shrink-0 w-9 h-9 rounded bg-gray-700"
-					title={displayName}
-					aria-hidden="true"
-				></i>
+				<div class="shrink-0 w-9 h-9 rounded ring-1 ring-emerald-500/40 dark:ring-emerald-400/30 bg-emerald-950/25 dark:bg-emerald-950/30 flex items-center justify-center">
+					<i
+						class="d2mh hero-{heroId} w-full h-full rounded bg-gray-700"
+						title={displayName}
+						aria-hidden="true"
+					></i>
+				</div>
 			{/if}
 			<div class="min-w-0">
 				<div class="font-medium text-gray-800 dark:text-gray-200 truncate">
@@ -236,32 +222,35 @@
 		<div class="flex flex-col items-center gap-2">
 			{#if spriteSheetSrc && spriteSheetMetadata}
 				<!-- Enemy with sprite sheet: animated, larger and centered -->
-				<div class="w-20 h-20 rounded bg-gray-700 overflow-hidden flex items-center justify-center" title={displayName}>
-					<div style="transform: scale({80 / spriteSheetMetadata.spriteSheet.frameWidth}); transform-origin: center; width: {spriteSheetMetadata.spriteSheet.frameWidth}px; height: {spriteSheetMetadata.spriteSheet.frameHeight}px; position: relative;">
-						<SpriteSheetAnimation
-							src={spriteSheetSrc}
-							metadata={spriteSheetMetadata}
-							fps={spriteSheetMetadata.video.fps}
-							autoplay={true}
-							loop={true}
-						/>
+				<div class="w-20 h-20 rounded overflow-hidden flex items-center justify-center ring-1 ring-red-500/40 dark:ring-red-400/30 bg-red-950/25 dark:bg-red-950/30" title={displayName}>
+					<div class="w-full h-full flex items-center justify-center bg-gray-700">
+						<div style="transform: scale({80 / spriteSheetMetadata.spriteSheet.frameWidth}); transform-origin: center; width: {spriteSheetMetadata.spriteSheet.frameWidth}px; height: {spriteSheetMetadata.spriteSheet.frameHeight}px; position: relative;">
+							<SpriteSheetAnimation
+								src={spriteSheetSrc}
+								metadata={spriteSheetMetadata}
+								fps={spriteSheetMetadata.video.fps}
+								autoplay={true}
+								loop={true}
+							/>
+						</div>
 					</div>
 				</div>
 			{:else if staticImageSrc}
 				<!-- Enemy with static image -->
-				<img
-					src={staticImageSrc}
-					alt={displayName}
-					class="w-20 h-20 rounded bg-gray-700 object-cover"
-					title={displayName}
-				/>
+				<div class="w-20 h-20 rounded overflow-hidden ring-1 ring-red-500/40 dark:ring-red-400/30 bg-red-950/25 dark:bg-red-950/30 flex items-center justify-center">
+					<img
+						src={staticImageSrc}
+						alt={displayName}
+						class="w-full h-full object-cover bg-gray-700"
+						title={displayName}
+					/>
+				</div>
 			{:else}
 				<!-- Fallback: first letter -->
-				<div
-					class="w-20 h-20 rounded bg-gray-600 flex items-center justify-center text-2xl font-bold text-gray-300"
-					title={displayName}
-				>
-					{displayName.charAt(0)}
+				<div class="w-20 h-20 rounded ring-1 ring-red-500/40 dark:ring-red-400/30 bg-red-950/25 dark:bg-red-950/30 flex items-center justify-center overflow-hidden" title={displayName}>
+					<div class="w-full h-full flex items-center justify-center bg-gray-600 text-2xl font-bold text-gray-300">
+						{displayName.charAt(0)}
+					</div>
 				</div>
 			{/if}
 			<div class="text-center w-full">
@@ -373,22 +362,22 @@
 	{:else}
 		<!-- Enemy: stats and attack timer -->
 		<div class="mt-2 space-y-2">
-			<!-- Enemy stats: Attack damage, Armor, MR -->
+			<!-- Enemy stats: Atk Dmg, Atk Spd, Armor, MR, DPS -->
 			<div class="space-y-1 text-xs">
 				<div class="flex items-center justify-between">
-					<span class="text-gray-400">Attack:</span>
+					<span class="text-gray-400">⚔️ Atk Dmg:</span>
 					<span class="font-medium text-amber-400">{enemyAttackDamage} dmg</span>
 				</div>
 				<div class="flex items-center justify-between">
-					<span class="text-gray-400">Interval:</span>
+					<span class="text-gray-400">⏱️ Atk Spd:</span>
 					<span class="font-medium text-gray-300">{enemyAttackInterval.toFixed(1)}s</span>
 				</div>
 				<div class="flex items-center justify-between">
-					<span class="text-gray-400">Armor:</span>
+					<span class="text-gray-400">🛡 Armor:</span>
 					<span class="font-medium text-gray-300">{armor}</span>
 				</div>
 				<div class="flex items-center justify-between">
-					<span class="text-gray-400">Magic Resist:</span>
+					<span class="text-gray-400">✨ MR:</span>
 					<span class="font-medium text-gray-300">{mrPercent}%</span>
 				</div>
 				<div class="flex items-center justify-between border-t border-gray-600 pt-1 mt-1">

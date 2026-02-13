@@ -3,12 +3,14 @@
   - Atlas: variant="full" — base stats + full ability details (2 slots with spell icons).
   - Tavern → Your roster: variant="short" — base stats + training breakdown + ability list.
   - Lineup list & edit: variant="compact" — icon + name only (optionally attribute if def present).
+  - Roster (tavern/training): variant="roster" — final computed stats, trained stats in green, hover shows base + training.
 -->
 <script lang="ts">
 	import type { HeroDef, AbilityDef } from '$lib/incremental/types';
 	import { formatStat } from '$lib/incremental/actions/constants';
 	import type { TrainingStatKey } from '$lib/incremental/actions/constants';
 	import { TRAINING_BUILDINGS } from '$lib/incremental/actions/constants';
+	import { attackInterval, spellInterval } from '$lib/incremental/stats/formulas';
 
 	/** Ability info for display: AbilityDef plus optional DB fields (name, description). */
 	export type HeroCardAbility = AbilityDef & {
@@ -16,7 +18,7 @@
 		description?: string | null;
 	};
 
-	export type HeroCardVariant = 'full' | 'short' | 'compact';
+	export type HeroCardVariant = 'full' | 'short' | 'compact' | 'roster';
 
 	interface Props {
 		heroId: number;
@@ -77,7 +79,7 @@
 		highlightQuery ? highlightMatch(displayName, highlightQuery) : null
 	);
 
-	const scale = $derived(iconScale ?? (variant === 'compact' ? 'scale-75' : variant === 'short' ? 'scale-150' : ''));
+	const scale = $derived(iconScale ?? (variant === 'compact' ? 'scale-75' : variant === 'short' || variant === 'roster' ? 'scale-150' : ''));
 
 	// Spell icon position from Atlas (9×6 grid, 45 valid icons)
 	const SPELL_ICONS: [number, number][] = [
@@ -122,6 +124,18 @@
 		const tr = trainedKey != null ? training?.[trainedKey] : undefined;
 		if (tr != null) return `${base} +${format(tr)}`;
 		return base;
+	}
+
+	/** Roster variant: final computed value and whether it was modified by training (for green + tooltip). */
+	function rosterStat(
+		label: string,
+		finalValue: string,
+		baseValue: string,
+		trainedAmount: number | undefined
+	): { finalValue: string; isTrained: boolean; tooltip: string } {
+		const isTrained = trainedAmount != null && trainedAmount !== 0;
+		const tooltip = isTrained ? `${label}: Base ${baseValue}, Training +${formatStat(trainedAmount)}` : '';
+		return { finalValue, isTrained, tooltip };
 	}
 
 	const abilitySlots = $derived(variant === 'full' ? [0, 1] : []);
@@ -220,6 +234,58 @@
 		</div>
 	{/if}
 
+	{#if variant === 'roster' && def}
+		{@const finalHp = Math.round(def.baseMaxHp + (training?.hp ?? 0))}
+		{@const finalAttackDamage = def.baseAttackDamage + (training?.attack_damage ?? 0)}
+		{@const finalArmor = def.baseArmor + (training?.armor ?? 0)}
+		{@const baseMrPct = def.baseMagicResist * 100}
+		{@const finalMrPct = Math.max(0, Math.min(100, baseMrPct + (training?.magic_resist ?? 0)))}
+		{@const finalAttackIntervalSec = attackInterval(def.baseAttackInterval, training?.attack_speed ?? 0)}
+		{@const finalSpellIntervalSec = def.baseSpellInterval != null ? spellInterval(def.baseSpellInterval, training?.spell_haste ?? 0) : null}
+		{@const finalSpellPower = training?.spell_power ?? 0}
+		<div class="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+			<div class="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+				<span class="text-gray-500 dark:text-gray-400">HP</span>
+				<span
+					class={rosterStat('HP', String(finalHp), String(Math.round(def.baseMaxHp)), training?.hp).isTrained ? 'text-emerald-500 dark:text-emerald-400 font-medium' : 'text-gray-900 dark:text-gray-100'}
+					title={rosterStat('HP', String(finalHp), String(Math.round(def.baseMaxHp)), training?.hp).tooltip}
+				>{finalHp}</span>
+				<span class="text-gray-500 dark:text-gray-400">Attack damage</span>
+				<span
+					class={rosterStat('Attack damage', formatStat(finalAttackDamage), formatStat(def.baseAttackDamage), training?.attack_damage).isTrained ? 'text-emerald-500 dark:text-emerald-400 font-medium' : 'text-gray-900 dark:text-gray-100'}
+					title={rosterStat('Attack damage', formatStat(finalAttackDamage), formatStat(def.baseAttackDamage), training?.attack_damage).tooltip}
+				>{Number.isInteger(finalAttackDamage) ? finalAttackDamage : formatStat(finalAttackDamage)}</span>
+				<span class="text-gray-500 dark:text-gray-400">Armor</span>
+				<span
+					class={rosterStat('Armor', formatStat(finalArmor), formatStat(def.baseArmor), training?.armor).isTrained ? 'text-emerald-500 dark:text-emerald-400 font-medium' : 'text-gray-900 dark:text-gray-100'}
+					title={rosterStat('Armor', formatStat(finalArmor), formatStat(def.baseArmor), training?.armor).tooltip}
+				>{Number.isInteger(finalArmor) ? finalArmor : formatStat(finalArmor)}</span>
+				<span class="text-gray-500 dark:text-gray-400">Magic resist</span>
+				<span
+					class={rosterStat('Magic resist', `${finalMrPct.toFixed(1)}%`, `${(baseMrPct).toFixed(1)}%`, training?.magic_resist).isTrained ? 'text-emerald-500 dark:text-emerald-400 font-medium' : 'text-gray-900 dark:text-gray-100'}
+					title={rosterStat('Magic resist', `${finalMrPct.toFixed(1)}%`, `${(baseMrPct).toFixed(1)}%`, training?.magic_resist).tooltip}
+				>{finalMrPct.toFixed(1)}%</span>
+				<span class="text-gray-500 dark:text-gray-400">Attack interval</span>
+				<span
+					class={rosterStat('Attack interval', `${finalAttackIntervalSec.toFixed(2)}s`, `${def.baseAttackInterval.toFixed(2)}s`, training?.attack_speed).isTrained ? 'text-emerald-500 dark:text-emerald-400 font-medium' : 'text-gray-900 dark:text-gray-100'}
+					title={rosterStat('Attack interval', `${finalAttackIntervalSec.toFixed(2)}s`, `${def.baseAttackInterval.toFixed(2)}s`, training?.attack_speed).tooltip}
+				>{finalAttackIntervalSec.toFixed(2)}s</span>
+				{#if def.baseSpellInterval != null}
+					<span class="text-gray-500 dark:text-gray-400">Spell interval</span>
+					<span
+						class={rosterStat('Spell interval', `${(finalSpellIntervalSec ?? 0).toFixed(2)}s`, `${def.baseSpellInterval.toFixed(2)}s`, training?.spell_haste).isTrained ? 'text-emerald-500 dark:text-emerald-400 font-medium' : 'text-gray-900 dark:text-gray-100'}
+						title={rosterStat('Spell interval', `${(finalSpellIntervalSec ?? 0).toFixed(2)}s`, `${def.baseSpellInterval.toFixed(2)}s`, training?.spell_haste).tooltip}
+					>{(finalSpellIntervalSec ?? 0).toFixed(2)}s</span>
+				{/if}
+				<span class="text-gray-500 dark:text-gray-400">Spell power</span>
+				<span
+					class={rosterStat('Spell power', formatStat(finalSpellPower), '0', training?.spell_power).isTrained ? 'text-emerald-500 dark:text-emerald-400 font-medium' : 'text-gray-900 dark:text-gray-100'}
+					title={rosterStat('Spell power', formatStat(finalSpellPower), '0', training?.spell_power).tooltip}
+				>{finalSpellPower === 0 ? '0' : formatStat(finalSpellPower)}</span>
+			</div>
+		</div>
+	{/if}
+
 	{#if !def && variant !== 'compact'}
 		<div class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
 			Base stats and abilities not yet in the database.
@@ -233,7 +299,7 @@
 
 	<!-- Abilities -->
 	{#if variant !== 'compact' && ((def?.abilityIds?.length ?? 0) > 0 || (abilities?.length ?? 0) > 0)}
-		<div class="p-4 grid grid-cols-2 gap-3 flex-1 min-h-0" class:grid-cols-1={variant === 'short'}>
+		<div class="p-4 grid grid-cols-2 gap-3 flex-1 min-h-0" class:grid-cols-1={variant === 'short' || variant === 'roster'}>
 			{#if variant === 'full'}
 				{#each abilitySlots as i}
 					{@const ability = abilities?.[i] ?? null}
@@ -283,7 +349,7 @@
 						</div>
 					{/if}
 				{/each}
-			{:else if variant === 'short' && def}
+			{:else if (variant === 'short' || variant === 'roster') && def}
 				<p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase mt-0 mb-1">Abilities</p>
 				<ul class="text-sm text-gray-700 dark:text-gray-300 space-y-0.5 col-span-1">
 					{#each def.abilityIds ?? [] as aid}

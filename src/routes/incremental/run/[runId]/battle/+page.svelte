@@ -289,7 +289,7 @@
 		const enemyIds = new Set(battle.enemy.map(e => e.enemyDefId));
 		for (const enemyId of enemyIds) {
 			const config = getEnemySpriteConfig(enemyId);
-			if (config && !enemySpriteMetadata.has(enemyId)) {
+			if (config?.spriteSheetMetadataPath && !enemySpriteMetadata.has(enemyId)) {
 				try {
 					const res = await fetch(config.spriteSheetMetadataPath);
 					if (res.ok) {
@@ -555,7 +555,7 @@
 							{#each playerList as hero, slotIndex}
 								{@const isFrontLiner = battle && slotIndex === battle.focusedHeroIndex}
 								{@const def = getDef(hero.heroId)}
-								<div class="flex flex-col items-center">
+								<div class="flex flex-col items-center shadow-md">
 									<!-- Fixed-height slot for status effects so the card doesn't move -->
 									<div class="min-h-[52px] flex flex-wrap justify-center items-center gap-1.5 mb-2 w-full">
 										{#each hero.buffs ?? [] as buff}
@@ -600,7 +600,7 @@
 								{@const edef = getEnemyDef(enemy.enemyDefId)}
 									{@const spriteConfig = getEnemySpriteConfig(enemy.enemyDefId)}
 									{@const spriteMetadata = enemySpriteMetadata.get(enemy.enemyDefId)}
-								<div class="flex flex-col items-center">
+								<div class="flex flex-col items-center shadow-md">
 									<!-- Fixed-height slot for status effects so the card doesn't move -->
 									<div class="min-h-[52px] flex flex-wrap justify-center items-center gap-1.5 mb-2 w-full">
 										{#each enemy.buffs ?? [] as buff}

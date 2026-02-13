@@ -100,7 +100,7 @@
 		}
 		for (const enemyId of enemyIds) {
 			const config = getEnemySpriteConfig(enemyId);
-			if (config && !enemySpriteMetadata.has(enemyId)) {
+			if (config?.spriteSheetMetadataPath && !enemySpriteMetadata.has(enemyId)) {
 				try {
 					const res = await fetch(config.spriteSheetMetadataPath);
 					if (res.ok) {
@@ -385,7 +385,7 @@
 								<div class="mt-3 pl-0 flex flex-wrap gap-3">
 									{#each previewEnemies as { enemyDefId, def, count }}
 										{#each Array(count) as _}
-											<div class="flex flex-col items-center shrink-0">
+											<div class="flex flex-col items-center shrink-0 shadow-md">
 												<BattleCard
 													kind="enemy"
 													displayName={def?.name ?? enemyDefId}
@@ -442,7 +442,7 @@
 									<div class="flex flex-wrap gap-3 items-start flex-1 min-w-0">
 										{#each previewEnemies as { enemyDefId, def, count }}
 											{#each Array(count) as _}
-												<div class="flex flex-col items-center shrink-0">
+												<div class="flex flex-col items-center shrink-0 shadow-md">
 													<BattleCard
 														kind="enemy"
 														displayName={def?.name ?? enemyDefId}

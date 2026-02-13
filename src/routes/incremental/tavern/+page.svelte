@@ -11,7 +11,7 @@
 		type TrainingStatKey
 	} from '$lib/incremental/actions';
 	import type { HeroDef, AbilityDef } from '$lib/incremental/types';
-	import HeroCard from '$lib/incremental/components/HeroCard.svelte';
+	import HeroRoster from '$lib/incremental/components/HeroRoster.svelte';
 
 	/** Hero list from root layout (OpenDota names for any hero id) */
 	const layoutHeroes = getContext<Array<{ id: number; localized_name: string }>>('heroes') ?? [];
@@ -383,32 +383,14 @@
 		</section>
 
 		<!-- 2) Your roster -->
-		<section class="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 p-4 min-w-0">
-			<h2 class="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
-				Your roster
-			</h2>
-			{#if rosterHeroIds.length === 0}
-				<p class="text-sm text-gray-500 dark:text-gray-400">
-					Recruit heroes from recent wins to see their details and train them.
-				</p>
-			{:else}
-				<div class="space-y-4">
-					{#each rosterHeroIds as hid}
-						{@const def = getHeroDef(hid)}
-						{@const trained = trainingValues[hid] ?? {}}
-						<HeroCard
-							heroId={hid}
-							displayName={heroName(hid, '')}
-							def={def ?? null}
-							training={trained}
-							abilities={def?.abilityIds?.map((id) => getAbilityDef(id) ?? null) ?? []}
-							variant="short"
-							iconScale="scale-150"
-						/>
-					{/each}
-				</div>
-			{/if}
-		</section>
+		<HeroRoster
+			rosterHeroIds={rosterHeroIds}
+			getHeroDef={getHeroDef}
+			getAbilityDef={getAbilityDef}
+			heroName={heroName}
+			trainingValues={trainingValues}
+			title="Your roster"
+		/>
 	</div>
 
 	<!-- 3) Training assignment + building/skill tree requirements -->

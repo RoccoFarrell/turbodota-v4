@@ -2,19 +2,23 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
 import prisma from '$lib/server/prisma';
 import { advanceIdleTimer } from '$lib/incremental/actions/idle-timer';
-import { getActionDef, applyRewards, MINING_ACTION_ID, TRAINING_ACTION_ID } from '$lib/incremental/actions/action-definitions';
+import { getActionDef, MINING_ACTION_ID, TRAINING_ACTION_ID } from '$lib/incremental/actions/action-definitions';
+import { applyRewards } from '$lib/incremental/actions/action-rewards.server';
 import { TRAINING_STAT_KEYS, type TrainingStatKey } from '$lib/incremental/actions/constants';
 import { resolveIncrementalSave } from '$lib/server/incremental-save';
+import { getRateModifier } from '$lib/incremental/actions/talent-rate-modifier';
+import { getMaxSlots } from '$lib/incremental/actions/slot-helpers';
 
 function isValidStatKey(key: unknown): key is TrainingStatKey {
 	return typeof key === 'string' && (TRAINING_STAT_KEYS as readonly string[]).includes(key);
 }
 
-/** POST /api/incremental/action – tick or set action. Body: { saveId?, lastTickAt, progress?, actionType?, actionHeroId?, actionStatKey? } */
+/** POST /api/incremental/action – tick or set action for a slot. Body: { saveId?, slotIndex?, lastTickAt, progress?, actionType?, actionHeroId?, actionStatKey? } */
 export const POST: RequestHandler = async (event) => {
 	const { request } = event;
 	let body: {
 		saveId?: string;
+		slotIndex?: number;
 		lastTickAt?: number;
 		progress?: number;
 		actionType?: string;
@@ -27,6 +31,12 @@ export const POST: RequestHandler = async (event) => {
 		error(400, 'Invalid JSON');
 	}
 	const { saveId } = await resolveIncrementalSave(event, { saveId: body.saveId });
+
+	const slotIndex = typeof body.slotIndex === 'number' ? body.slotIndex : 0;
+	const maxSlots = await getMaxSlots(saveId);
+	if (slotIndex < 0 || slotIndex >= maxSlots) {
+		error(400, `Invalid slot index ${slotIndex}. You have ${maxSlots} slot(s) available.`);
+	}
 
 	const now = Date.now();
 	const lastTickAt = typeof body.lastTickAt === 'number' ? body.lastTickAt : now;
@@ -54,7 +64,7 @@ export const POST: RequestHandler = async (event) => {
 
 	const def = getActionDef(actionId);
 	const durationPerCompletionSec = def?.durationPerCompletionSec ?? 5;
-	const rateModifier = def?.rateModifier ?? 1;
+	const rateModifier = await getRateModifier(saveId, actionId, actionStatKey);
 
 	const { progress: newProgress, completions } = advanceIdleTimer({
 		progress,
@@ -71,10 +81,12 @@ export const POST: RequestHandler = async (event) => {
 
 	await prisma.$transaction(async (tx) => {
 		await applyRewards(actionId, params, completions, { saveId, tx });
-		await tx.incrementalActionState.upsert({
-			where: { saveId },
+		// Write to multi-slot table
+		await tx.incrementalActionSlot.upsert({
+			where: { saveId_slotIndex: { saveId, slotIndex } },
 			create: {
 				saveId,
+				slotIndex,
 				actionType: actionId,
 				progress: newProgress,
 				lastTickAt: new Date(now),
@@ -89,25 +101,43 @@ export const POST: RequestHandler = async (event) => {
 				actionStatKey: actionStatKey ?? null
 			}
 		});
+		// Keep legacy table in sync for backward compat (slot 0 only)
+		if (slotIndex === 0) {
+			await tx.incrementalActionState.upsert({
+				where: { saveId },
+				create: {
+					saveId,
+					actionType: actionId,
+					progress: newProgress,
+					lastTickAt: new Date(now),
+					actionHeroId: actionHeroId ?? undefined,
+					actionStatKey: actionStatKey ?? undefined
+				},
+				update: {
+					actionType: actionId,
+					progress: newProgress,
+					lastTickAt: new Date(now),
+					actionHeroId: actionHeroId ?? null,
+					actionStatKey: actionStatKey ?? null
+				}
+			});
+		}
 	});
 
 	const save = await prisma.incrementalSave.findUnique({
 		where: { id: saveId },
 		select: { essence: true }
 	});
-	const actionState = await prisma.incrementalActionState.findUnique({
-		where: { saveId },
-		select: { actionHeroId: true, actionStatKey: true }
-	});
 
 	return json({
 		essence: save?.essence ?? 0,
 		saveId,
+		slotIndex,
 		progress: newProgress,
 		lastTickAt: now,
-		essenceEarned: actionId === MINING_ACTION_ID ? completions * 1 : 0,
+		essenceEarned: actionId === MINING_ACTION_ID ? completions : 0,
 		actionType: actionId,
-		actionHeroId: actionState?.actionHeroId ?? null,
-		actionStatKey: actionState?.actionStatKey ?? null
+		actionHeroId: actionHeroId ?? null,
+		actionStatKey: actionStatKey ?? null
 	});
 };

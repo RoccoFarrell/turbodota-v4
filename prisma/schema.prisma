@@ -616,6 +616,7 @@ model IncrementalSave {
 
   user              User                              @relation(fields: [userId], references: [id], onDelete: Cascade)
   actionState       IncrementalActionState?
+  actionSlots       IncrementalActionSlot[]
   rosterHeroes      IncrementalRosterHero[]
   convertedMatches  IncrementalConvertedMatch[]
   lineups           IncrementalLineup[]
@@ -679,7 +680,7 @@ model IncrementalMapNode {
   @@index([runId])
 }
 
-// Phase 6: per-save essence, browser actions, roster
+// Phase 6: per-save essence, browser actions, roster (legacy single-slot; kept for migration)
 model IncrementalActionState {
   id            String   @id @default(cuid())
   saveId        String   @unique
@@ -691,6 +692,23 @@ model IncrementalActionState {
 
   save IncrementalSave @relation(fields: [saveId], references: [id], onDelete: Cascade)
 
+  @@index([saveId])
+}
+
+// Multi-slot action system: each save can have multiple concurrent action slots
+model IncrementalActionSlot {
+  id            String   @id @default(cuid())
+  saveId        String
+  slotIndex     Int // 0, 1, 2, ... (0 = default slot, always available)
+  actionType    String // "mining", "training", or future actions
+  progress      Float    @default(0) // 0..1 within current completion
+  lastTickAt    DateTime @default(now())
+  actionHeroId  Int? // when actionType = training: which hero
+  actionStatKey String? // when actionType = training: which stat
+
+  save IncrementalSave @relation(fields: [saveId], references: [id], onDelete: Cascade)
+
+  @@unique([saveId, slotIndex])
   @@index([saveId])
 }
 

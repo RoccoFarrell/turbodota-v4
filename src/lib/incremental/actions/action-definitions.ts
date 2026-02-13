@@ -1,12 +1,10 @@
 /**
  * Action registry: each action has a speed (duration per completion) and a reward.
- * The idle timer is generic; this module defines action types and applies rewards.
+ * Reward application lives in action-rewards.server.ts (server-only).
  */
 
 import type { TrainingStatKey } from './constants';
 import { TRAINING_STAT_KEYS } from './constants';
-import { getRewardMultiplier } from '../stats/upgrade-formulas';
-import { getUpgradeLevel } from '../upgrades/upgrade-service';
 
 export type ActionId = string;
 
@@ -21,7 +19,7 @@ export interface ActionDef {
 	rateModifier?: number;
 }
 
-/** All registered actions. Add new actions here; rewards are applied in applyRewards. */
+/** All registered actions. Add new actions here; rewards are applied in action-rewards.server.ts. */
 const ACTIONS: ActionDef[] = [
 	{ id: 'mining', durationPerCompletionSec: 3 },
 	{ id: 'training', durationPerCompletionSec: 5 }
@@ -39,7 +37,7 @@ export function getDurationSec(actionId: ActionId, _params?: ActionParams): numb
 	return def.durationPerCompletionSec / Math.max(0.01, def.rateModifier ?? 1);
 }
 
-/** Context for applying rewards (Prisma transaction client). */
+/** Context for applying rewards (Prisma transaction client). Used by action-rewards.server.ts. */
 export interface RewardContext {
 	saveId: string;
 	tx: {
@@ -55,56 +53,6 @@ export interface RewardContext {
 			}) => Promise<unknown>;
 		};
 	};
-}
-
-/**
- * Apply rewards for the given action and completions. No timer logic – pure reward side effects.
- */
-export async function applyRewards(
-	actionId: ActionId,
-	params: ActionParams,
-	completions: number,
-	ctx: RewardContext
-): Promise<void> {
-	if (completions <= 0) return;
-
-	if (actionId === 'mining') {
-		// Load mining level to calculate essence multiplier
-		const miningLevel = await getUpgradeLevel(ctx.saveId, 'mining');
-		const baseEssencePerStrike = 1;
-		const multiplier = getRewardMultiplier('mining', miningLevel);
-		const amount = completions * baseEssencePerStrike * multiplier;
-
-		const save = await ctx.tx.incrementalSave.findUnique({
-			where: { id: ctx.saveId },
-			select: { essence: true }
-		});
-		if (!save) throw new Error('Save not found');
-		await ctx.tx.incrementalSave.update({
-			where: { id: ctx.saveId },
-			data: { essence: (save.essence ?? 0) + amount }
-		});
-		return;
-	}
-
-	if (actionId === 'training') {
-		const heroId = params.heroId as number | undefined;
-		const statKey = params.statKey as string | undefined;
-		if (typeof heroId !== 'number' || !isValidStatKey(statKey)) return;
-		const value = completions * 1; // value per completion
-		await ctx.tx.incrementalHeroTraining.upsert({
-			where: {
-				saveId_heroId_statKey: { saveId: ctx.saveId, heroId, statKey }
-			},
-			create: { saveId: ctx.saveId, heroId, statKey, value },
-			update: { value: { increment: value } }
-		});
-		return;
-	}
-}
-
-function isValidStatKey(key: unknown): key is TrainingStatKey {
-	return typeof key === 'string' && (TRAINING_STAT_KEYS as readonly string[]).includes(key);
 }
 
 export const MINING_ACTION_ID = 'mining' as const;

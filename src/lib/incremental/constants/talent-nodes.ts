@@ -6,7 +6,7 @@
 
 import type { TrainingStatKey } from '../actions/constants';
 
-export type TalentNodeType = 'unlock_building' | 'training_speed' | 'mining_speed';
+export type TalentNodeType = 'unlock_building' | 'training_speed' | 'mining_speed' | 'unlock_slot';
 
 export interface TalentNodeDef {
 	id: string;
@@ -67,6 +67,20 @@ export const TALENT_NODES: TalentNodeDef[] = [
 		percent: 0.05,
 		name: 'Discipline +5%',
 		description: 'All training 5% faster'
+	},
+	{
+		id: 'unlock_slot_2',
+		type: 'unlock_slot',
+		prerequisiteIds: ['mining_speed_10', 'hp_training_10'],
+		name: 'Second Action Slot',
+		description: 'Unlock a second action slot to train or collect simultaneously'
+	},
+	{
+		id: 'unlock_slot_3',
+		type: 'unlock_slot',
+		prerequisiteIds: ['unlock_slot_2', 'all_training_5'],
+		name: 'Third Action Slot',
+		description: 'Unlock a third action slot for maximum efficiency'
 	}
 ];
 

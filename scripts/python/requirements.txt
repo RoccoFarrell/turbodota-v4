@@ -1,0 +1,4 @@
+# Dependencies for scripts in this folder (e.g. make-icon-transparent.py)
+# Use rembg[cpu] so onnxruntime is installed (required for background removal)
+rembg[cpu]>=2.0.50
+pillow>=10.0.0
