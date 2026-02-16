@@ -41,9 +41,15 @@ export function getDurationSec(actionId: ActionId, _params?: ActionParams): numb
 export interface RewardContext {
 	saveId: string;
 	tx: {
-		incrementalSave: {
-			findUnique: (args: { where: { id: string }; select: { essence: true } }) => Promise<{ essence: number | null } | null>;
-			update: (args: { where: { id: string }; data: { essence: number } }) => Promise<unknown>;
+		incrementalBankCurrency: {
+			findUnique: (args: { where: { saveId_currencyKey: { saveId: string; currencyKey: string } }; select?: { amount: true } }) => Promise<{ amount: number } | null>;
+			findMany: (args: { where: { saveId: string }; select?: { currencyKey: true; amount: true } }) => Promise<{ currencyKey: string; amount: number }[]>;
+			upsert: (args: {
+				where: { saveId_currencyKey: { saveId: string; currencyKey: string } };
+				create: { saveId: string; currencyKey: string; amount: number };
+				update: { amount: { increment: number } };
+			}) => Promise<unknown>;
+			update: (args: { where: { saveId_currencyKey: { saveId: string; currencyKey: string } }; data: { amount: number } }) => Promise<unknown>;
 		};
 		incrementalHeroTraining: {
 			upsert: (args: {

@@ -6,5 +6,8 @@ export default defineConfig({
 	plugins: [
 		tailwindcss(),
 		sveltekit()
-	]
+	],
+	optimizeDeps: {
+		include: ['radix-icons-svelte']
+	}
 });

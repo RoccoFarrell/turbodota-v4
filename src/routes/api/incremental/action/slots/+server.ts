@@ -43,16 +43,26 @@ export const DELETE: RequestHandler = async (event) => {
 	}
 	const { saveId: resolvedSaveId } = await resolveIncrementalSave(event, { saveId: body.saveId });
 
-	await prisma.incrementalActionSlot.deleteMany({
-		where: { saveId: resolvedSaveId, slotIndex }
-	});
+	const now = new Date();
 
-	// If clearing slot 0, also clear legacy table
-	if (slotIndex === 0) {
-		await prisma.incrementalActionState.deleteMany({
-			where: { saveId: resolvedSaveId }
+	await prisma.$transaction(async (tx) => {
+		await tx.incrementalActionSlot.deleteMany({
+			where: { saveId: resolvedSaveId, slotIndex }
 		});
-	}
+
+		// If clearing slot 0, also clear legacy table
+		if (slotIndex === 0) {
+			await tx.incrementalActionState.deleteMany({
+				where: { saveId: resolvedSaveId }
+			});
+		}
+
+		// Close any open history session for this slot
+		await tx.incrementalActionHistory.updateMany({
+			where: { saveId: resolvedSaveId, slotIndex, endedAt: null },
+			data: { endedAt: now }
+		});
+	});
 
 	return json({ saveId: resolvedSaveId, cleared: slotIndex });
 };

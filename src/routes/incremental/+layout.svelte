@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { LayoutData } from './$types';
 	import { page } from '$app/stores';
 	import { onMount, onDestroy, getContext } from 'svelte';
 	import { Dialog, Portal } from '@skeletonlabs/skeleton-svelte';
@@ -7,9 +8,30 @@
 	import type { CatchUpResult } from '$lib/incremental/stores/action-slots.svelte';
 
 	interface Props {
+		data: LayoutData;
 		children?: import('svelte').Snippet;
 	}
-	let { children }: Props = $props();
+	let { data, children }: Props = $props();
+
+	// ---- Refresh matches button ----
+	let refreshingMatches = $state(false);
+	let matchesRefreshedAt = $state<number | null>(null);
+	const REFRESH_FEEDBACK_MS = 2500;
+
+	async function refreshMatches() {
+		const accountId = data.accountId;
+		if (!accountId || refreshingMatches) return;
+		refreshingMatches = true;
+		try {
+			await fetch(`/api/updateMatchesForUser/${accountId}`, { method: 'GET' });
+			matchesRefreshedAt = Date.now();
+			setTimeout(() => {
+				matchesRefreshedAt = null;
+			}, REFRESH_FEEDBACK_MS);
+		} finally {
+			refreshingMatches = false;
+		}
+	}
 
 	const layoutHeroes = getContext<Array<{ id: number; localized_name: string }>>('heroes') ?? [];
 
@@ -28,6 +50,9 @@
 		{ label: 'Lineups', path: '/incremental/lineup' },
 		{ label: 'Run (Map)', path: '/incremental/run' },
 		{ label: 'Talents', path: '/incremental/talents' },
+		{ label: 'Inventory', path: '/incremental/inventory' },
+		{ label: 'Quests', path: '/incremental/quests' },
+		{ label: 'History', path: '/incremental/history' },
 		{ label: 'Atlas', path: '/incremental/atlas' }
 	];
 
@@ -122,26 +147,47 @@
 	});
 </script>
 
-<div class="w-full flex flex-col min-h-0">
+<div class="w-full h-full flex flex-col min-h-0">
 	<nav class="shrink-0 border-b border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-800/80 px-3 py-2 flex flex-wrap items-center gap-1 sm:gap-2">
-		{#each incrementalNav as item}
-			<a
-				href={item.path}
-				class="rounded-md px-3 py-1.5 text-sm font-medium transition-colors {isActive(item.path)
-					? 'bg-primary text-primary-foreground'
-					: 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100'}"
-			>
-				{item.label}
-			</a>
-		{/each}
+		<div class="flex items-center gap-1 sm:gap-2">
+			{#each incrementalNav as item}
+				<a
+					href={item.path}
+					class="rounded-md px-3 py-1.5 text-sm font-medium transition-colors {isActive(item.path)
+						? 'bg-primary text-primary-foreground'
+						: 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100'}"
+				>
+					{item.label}
+				</a>
+			{/each}
+		</div>
+		{#if data.accountId != null}
+			<div class="ml-auto flex items-center">
+				<button
+					type="button"
+					onclick={refreshMatches}
+					disabled={refreshingMatches}
+					class="rounded-md px-3 py-1.5 text-sm font-medium transition-colors text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100 disabled:opacity-60 disabled:pointer-events-none"
+					title="Fetch latest Dota 2 matches from OpenDota"
+				>
+					{#if refreshingMatches}
+						Refreshing…
+					{:else if matchesRefreshedAt != null && Date.now() - matchesRefreshedAt < REFRESH_FEEDBACK_MS}
+						Updated
+					{:else}
+						Refresh matches
+					{/if}
+				</button>
+			</div>
+		{/if}
 	</nav>
-	<main class="flex-1 min-h-0 {slots.length > 0 && !isTrainingPage ? 'pb-16' : ''}">
+	<main class="flex-1 min-h-0 overflow-y-auto">
 		{@render children?.()}
 	</main>
 
-	<!-- Sticky bottom bar: active action slots (hidden on training page) -->
+	<!-- Bottom bar: active action slots (in-flow so it doesn't cover nav; hidden on training page) -->
 	{#if slots.length > 0 && !isTrainingPage}
-		<div class="fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 dark:border-gray-700 bg-gray-50/95 dark:bg-gray-900/95 backdrop-blur-sm px-4 py-2">
+		<div class="shrink-0 border-t border-gray-200 dark:border-gray-700 bg-gray-50/95 dark:bg-gray-900/95 backdrop-blur-sm px-4 py-2">
 			<div class="max-w-3xl mx-auto flex items-center gap-4">
 				{#each slots as slot}
 					<div class="flex-1 min-w-0">

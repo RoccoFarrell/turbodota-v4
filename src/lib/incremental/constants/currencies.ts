@@ -10,6 +10,8 @@ export interface CurrencyDef {
 	id: string;
 	name: string;
 	description: string;
+	/** Emoji or character used as the currency icon in the inventory grid. */
+	icon: string;
 	/** Where this currency can be earned (for UI/tooltips). */
 	sources: CurrencySource[];
 }
@@ -20,24 +22,28 @@ export const CURRENCIES: Record<string, CurrencyDef> = {
 		id: 'essence',
 		name: 'Essence',
 		description: 'Earned by mining in the idle game. Spend to convert Dota 2 wins into roster heroes.',
+		icon: '💎',
 		sources: ['idle']
 	},
 	loot_coins: {
 		id: 'loot_coins',
 		name: 'Loot Coins',
 		description: 'Earned by winning Dota 2 games on heroes already on your roster. Used for loot rolls and item systems.',
+		icon: '🪙',
 		sources: ['dota2']
 	},
 	gold: {
 		id: 'gold',
 		name: 'Gold',
 		description: 'Earned from idle activities, incremental battles, or Dota 2. Used for shops and upgrades.',
+		icon: '💰',
 		sources: ['idle', 'battle', 'dota2']
 	},
 	wood: {
 		id: 'wood',
 		name: 'Wood',
 		description: 'Earned from idle or battles. Used for building upgrades and crafting.',
+		icon: '🪵',
 		sources: ['idle', 'battle']
 	}
 };

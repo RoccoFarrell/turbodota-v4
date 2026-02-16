@@ -33,20 +33,6 @@
 		"moduleResolution": "bundler",
 		"allowImportingTsExtensions": true,
 		"types": ["vitest/globals"],
-		"paths": {
-			"$mocks": [
-				"./src/mocks"
-			],
-			"$mocks/*": [
-				"./src/mocks/*"
-			],
-			"$lib": [
-				"./src/lib"
-			],
-			"$lib/*": [
-				"./src/lib/*"
-			]
-		},
 		"outDir": "dist",
 		"lib": ["esnext", "dom"],
 		"allowArbitraryExtensions": true

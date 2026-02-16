@@ -124,5 +124,15 @@
 			<p class="text-sm font-medium text-gray-900 dark:text-gray-100">Atlas</p>
 			<p class="text-xs text-gray-500 dark:text-gray-400">Hero reference</p>
 		</a>
+		<a href="/incremental/inventory" class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 p-4 hover:border-primary transition-colors text-center">
+			<div class="text-2xl mb-1">🎒</div>
+			<p class="text-sm font-medium text-gray-900 dark:text-gray-100">Inventory</p>
+			<p class="text-xs text-gray-500 dark:text-gray-400">Items & currencies</p>
+		</a>
+		<a href="/incremental/quests" class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 p-4 hover:border-primary transition-colors text-center">
+			<div class="text-2xl mb-1">📜</div>
+			<p class="text-sm font-medium text-gray-900 dark:text-gray-100">Quests</p>
+			<p class="text-xs text-gray-500 dark:text-gray-400">Daily quests & rewards</p>
+		</a>
 	</section>
 </div>

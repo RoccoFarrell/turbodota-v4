@@ -604,13 +604,12 @@ enum IncrementalNodeType {
   BASE
 }
 
-// One save = one "game slot" (essence, roster, action state, lineups). User can have multiple saves.
-// Currencies and items will move to Bank (see docs/incremental/BANK_SYSTEM.md) in a future migration.
+// One save = one "game slot" (roster, action state, lineups). User can have multiple saves.
+// Currencies live in IncrementalBankCurrency; items in IncrementalBankItem (see BANK_SYSTEM.md).
 model IncrementalSave {
   id        String   @id @default(cuid())
   userId    String
   name      String? // e.g. "Main", "Alt" – optional label
-  essence   Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -624,8 +623,48 @@ model IncrementalSave {
   heroModifications IncrementalSaveHeroModification[]
   talentNodes       IncrementalTalentNode[]
   upgrades          IncrementalUpgrade[]
+  bankCurrencies    IncrementalBankCurrency[]
+  bankItems         IncrementalBankItem[]
+  saveQuests        IncrementalSaveQuest[]
+  actionHistory     IncrementalActionHistory[]
 
   @@index([userId])
+}
+
+// Bank: per-save currency balances (essence, loot_coins, gold, wood, …)
+model IncrementalBankCurrency {
+  id          String @id @default(cuid())
+  saveId      String
+  currencyKey String // e.g. "essence", "loot_coins", "gold", "wood"
+  amount      Int    @default(0)
+
+  save IncrementalSave @relation(fields: [saveId], references: [id], onDelete: Cascade)
+
+  @@unique([saveId, currencyKey])
+  @@index([saveId])
+}
+
+// Bank: per-save item inventory (stackable consumables and materials)
+model IncrementalBankItem {
+  id        String @id @default(cuid())
+  saveId    String
+  itemDefId String // e.g. "arcane_rune"; references item-definitions.ts
+  quantity  Int    @default(0)
+
+  save IncrementalSave @relation(fields: [saveId], references: [id], onDelete: Cascade)
+
+  @@unique([saveId, itemDefId])
+  @@index([saveId])
+}
+
+// Track which matches have already granted an Arcane Rune (prevent double-grant)
+model IncrementalRuneGrantedMatch {
+  id         Int    @id @default(autoincrement())
+  matchId    BigInt
+  account_id Int
+
+  @@unique([matchId, account_id])
+  @@index([account_id])
 }
 
 model IncrementalLineup {
@@ -831,4 +870,43 @@ model IncrementalSaveHeroModification {
   @@unique([saveId, heroId, kind, key])
   @@index([saveId])
   @@index([saveId, heroId])
+}
+
+// Per-save quest state: when the current period started, claim count, and last claim time.
+// One row per (save, quest). When a quest is first assigned, startedAt is set; when claimed, startedAt is reset to now and claimCount incremented.
+model IncrementalSaveQuest {
+  id         String   @id @default(cuid())
+  saveId     String
+  questId    String // e.g. "last_hits_1k"; references quest-definitions.ts
+  startedAt DateTime // when the current quest period started (assigned or after last claim)
+  claimCount Int      @default(0) // how many times this quest has been claimed on this save
+  claimedAt  DateTime? // last claim timestamp (null until first claim)
+
+  save IncrementalSave @relation(fields: [saveId], references: [id], onDelete: Cascade)
+
+  @@unique([saveId, questId])
+  @@index([saveId])
+}
+
+// Session-based action history: one row per continuous stretch of an action on a slot.
+// Open sessions have endedAt = null. Closed when the slot is cleared or action changes.
+// Item-granted sessions are created already closed (startedAt = endedAt).
+// Enables: total time tracking, hero levels, leaderboards, mid-season recalc.
+model IncrementalActionHistory {
+  id            String    @id @default(cuid())
+  saveId        String
+  slotIndex     Int // which action slot (0, 1, 2, ...)
+  actionType    String // "mining" | "training"
+  actionHeroId  Int? // for training: which hero
+  actionStatKey String? // for training: which stat (e.g. armor)
+  completions   Int       @default(0) // accumulated completions during this session
+  source        String    @default("idle") // "idle" | "item"
+  itemId        String? // when source = "item": which item was used
+  startedAt     DateTime  @default(now())
+  endedAt       DateTime? // null while session is open; set when action stops or changes
+
+  save IncrementalSave @relation(fields: [saveId], references: [id], onDelete: Cascade)
+
+  @@index([saveId, endedAt]) // find open sessions quickly
+  @@index([saveId, actionType, actionHeroId, actionStatKey])
 }

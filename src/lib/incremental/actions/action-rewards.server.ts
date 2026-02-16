@@ -1,11 +1,13 @@
 /**
  * Server-only reward application. Uses DB (getUpgradeLevel) so must not run in browser.
+ * Mining rewards go through the Bank (IncrementalBankCurrency); training writes to IncrementalHeroTraining.
  */
 
 import { getUpgradeLevel } from '../upgrades/upgrade-service';
 import { getRewardMultiplier } from '../stats/upgrade-formulas';
 import type { ActionId, ActionParams, RewardContext } from './action-definitions';
 import { TRAINING_STAT_KEYS, type TrainingStatKey } from './constants';
+import { addBankCurrency, type BankTx } from '../bank/bank.service.server';
 
 function isValidStatKey(key: unknown): key is TrainingStatKey {
 	return typeof key === 'string' && (TRAINING_STAT_KEYS as readonly string[]).includes(key);
@@ -28,15 +30,7 @@ export async function applyRewards(
 		const multiplier = getRewardMultiplier('mining', miningLevel);
 		const amount = completions * baseEssencePerStrike * multiplier;
 
-		const save = await ctx.tx.incrementalSave.findUnique({
-			where: { id: ctx.saveId },
-			select: { essence: true }
-		});
-		if (!save) throw new Error('Save not found');
-		await ctx.tx.incrementalSave.update({
-			where: { id: ctx.saveId },
-			data: { essence: (save.essence ?? 0) + amount }
-		});
+		await addBankCurrency(ctx.saveId, 'essence', amount, ctx.tx as unknown as BankTx);
 		return;
 	}
 

@@ -10,6 +10,7 @@ import prisma from '$lib/server/prisma';
 export interface ResolvedSave {
 	saveId: string;
 	userId: string;
+	/** @deprecated Read essence from Bank via getBankBalance(saveId, 'essence') instead. */
 	essence: number;
 }
 
@@ -17,6 +18,9 @@ export interface ResolvedSave {
  * Get save for incremental APIs. Requires auth.
  * - If saveId is provided (query or body), load it and verify save.userId === session.userId.
  * - Otherwise, get the first save for the user, or create one if none exist.
+ *
+ * Note: `essence` in the return value is always 0 – callers should use the Bank service
+ * (`getBankBalance(saveId, 'essence')`) for actual balances.
  */
 export async function resolveIncrementalSave(
 	event: RequestEvent,
@@ -31,24 +35,24 @@ export async function resolveIncrementalSave(
 	if (saveId) {
 		const save = await prisma.incrementalSave.findUnique({
 			where: { id: saveId },
-			select: { id: true, userId: true, essence: true }
+			select: { id: true, userId: true }
 		});
 		if (!save) error(404, 'Save not found');
 		if (save.userId !== userId) error(403, 'Forbidden');
-		return { saveId: save.id, userId: save.userId, essence: save.essence ?? 0 };
+		return { saveId: save.id, userId: save.userId, essence: 0 };
 	}
 
 	// No saveId: use first save or create one
 	let save = await prisma.incrementalSave.findFirst({
 		where: { userId },
-		select: { id: true, userId: true, essence: true },
+		select: { id: true, userId: true },
 		orderBy: { createdAt: 'asc' }
 	});
 	if (!save) {
 		save = await prisma.incrementalSave.create({
 			data: { userId },
-			select: { id: true, userId: true, essence: true }
+			select: { id: true, userId: true }
 		});
 	}
-	return { saveId: save.id, userId: save.userId, essence: save.essence ?? 0 };
+	return { saveId: save.id, userId: save.userId, essence: 0 };
 }

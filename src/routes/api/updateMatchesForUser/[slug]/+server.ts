@@ -7,6 +7,7 @@ import {
 	MATCH_CUTOFF_START_TIME,
 	RECENT_MATCH_DAYS
 } from '$lib/constants/matches';
+import { grantRunesForNewMatches } from '$lib/incremental/bank/grant-runes.server';
 
 /** OpenDota may cap results per request; we paginate to get all matches in the date window. */
 const OPENDOTA_MATCHES_PAGE_SIZE = 500;
@@ -318,6 +319,15 @@ export const GET: RequestHandler = async ({ params, url, setHeaders }) => {
 				console.log(`result_dotaUser: ${JSON.stringify(result_dotaUser)}`);
 			}
 
+		}
+
+		// Grant Arcane Runes for newly written turbo/ranked matches
+		if (!chunkInsertFail && matchStats.length > 0) {
+			try {
+				await grantRunesForNewMatches(account_id, matchStats);
+			} catch (e) {
+				console.error(`[updateMatchesForUser][${account_id}] Error granting runes:`, e);
+			}
 		}
 
 		//after updates, if d_diff, query entire DB for full time range + matches added from the d_diff

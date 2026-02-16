@@ -5,6 +5,7 @@
 
 import prisma from '$lib/server/prisma';
 import { getUpgradeCostForNextLevel } from '../stats/upgrade-formulas';
+import { getBankBalance, deductBankCurrency, type BankTx } from '../bank/bank.service.server';
 
 /**
  * Get upgrade level for a save and upgrade type.
@@ -56,23 +57,13 @@ export async function canAffordUpgrade(
 }
 
 /**
- * Purchase an upgrade (increment level and deduct cost).
+ * Purchase an upgrade (increment level and deduct cost from Bank).
  * Must be called within a transaction.
  */
 export async function purchaseUpgrade(
 	saveId: string,
 	upgradeType: string,
 	tx: {
-		incrementalSave: {
-			findUnique: (args: {
-				where: { id: string };
-				select: { essence: true };
-			}) => Promise<{ essence: number | null } | null>;
-			update: (args: {
-				where: { id: string };
-				data: { essence: number };
-			}) => Promise<unknown>;
-		};
 		incrementalUpgrade: {
 			findUnique: (args: {
 				where: { saveId_upgradeType: { saveId: string; upgradeType: string } };
@@ -83,26 +74,13 @@ export async function purchaseUpgrade(
 				update: { level: { increment: number } };
 			}) => Promise<{ level: number }>;
 		};
-	}
+	} & Record<string, unknown>
 ): Promise<{ newLevel: number; cost: number }> {
 	const currentLevel = await getUpgradeLevel(saveId, upgradeType);
 	const cost = getUpgradeCostForNextLevel(upgradeType, currentLevel);
 
-	// Check if save has enough essence
-	const save = await tx.incrementalSave.findUnique({
-		where: { id: saveId },
-		select: { essence: true }
-	});
-	if (!save) throw new Error('Save not found');
-	if ((save.essence ?? 0) < cost) {
-		throw new Error(`Insufficient Essence: need ${cost}, have ${save.essence ?? 0}`);
-	}
-
-	// Deduct cost
-	await tx.incrementalSave.update({
-		where: { id: saveId },
-		data: { essence: (save.essence ?? 0) - cost }
-	});
+	// Deduct cost from Bank (throws if insufficient)
+	await deductBankCurrency(saveId, 'essence', cost, tx as unknown as BankTx);
 
 	// Increment upgrade level
 	const result = await tx.incrementalUpgrade.upsert({

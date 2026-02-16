@@ -3,13 +3,14 @@ import type { RequestHandler } from '@sveltejs/kit';
 import prisma from '$lib/server/prisma';
 import { CONVERT_WIN_ESSENCE_COST } from '$lib/incremental/actions';
 import { resolveIncrementalSave } from '$lib/server/incremental-save';
+import { getBankBalance, deductBankCurrency, type BankTx } from '$lib/incremental/bank/bank.service.server';
 
 /** Player slot: 0-4 radiant, 128-132 dire */
 function isWin(player_slot: number, radiant_win: boolean): boolean {
 	return (radiant_win && player_slot < 128) || (!radiant_win && player_slot >= 128);
 }
 
-/** POST /api/incremental/roster/convert-win – body { saveId?, matchId }. Deduct Essence from save, add hero to that save's roster. */
+/** POST /api/incremental/roster/convert-win – body { saveId?, matchId }. Deduct Essence from Bank, add hero to roster. */
 export const POST: RequestHandler = async (event) => {
 	const { request } = event;
 	let body: { saveId?: string; matchId?: string | number };
@@ -34,11 +35,8 @@ export const POST: RequestHandler = async (event) => {
 	if (!match) error(400, 'Match not found or not yours');
 	if (!isWin(match.player_slot, match.radiant_win)) error(400, 'Only wins can be converted');
 
-	const [save, alreadyConverted, alreadyOnRoster] = await Promise.all([
-		prisma.incrementalSave.findUnique({
-			where: { id: saveId },
-			select: { essence: true }
-		}),
+	const [essence, alreadyConverted, alreadyOnRoster] = await Promise.all([
+		getBankBalance(saveId, 'essence'),
 		prisma.incrementalConvertedMatch.findUnique({
 			where: { saveId_matchId: { saveId, matchId } }
 		}),
@@ -47,17 +45,12 @@ export const POST: RequestHandler = async (event) => {
 		})
 	]);
 
-	if (!save) error(404, 'Save not found');
 	if (alreadyConverted) error(400, 'This win was already converted');
 	if (alreadyOnRoster) error(400, 'Hero already on roster');
-	const essence = save.essence ?? 0;
 	if (essence < CONVERT_WIN_ESSENCE_COST) error(400, 'Not enough Essence');
 
 	await prisma.$transaction(async (tx) => {
-		await tx.incrementalSave.update({
-			where: { id: saveId },
-			data: { essence: essence - CONVERT_WIN_ESSENCE_COST }
-		});
+		await deductBankCurrency(saveId, 'essence', CONVERT_WIN_ESSENCE_COST, tx as unknown as BankTx);
 		await tx.incrementalRosterHero.create({
 			data: { saveId, heroId: match.hero_id }
 		});
@@ -66,8 +59,8 @@ export const POST: RequestHandler = async (event) => {
 		});
 	});
 
-	const [newSave, roster] = await Promise.all([
-		prisma.incrementalSave.findUnique({ where: { id: saveId }, select: { essence: true } }),
+	const [newEssence, roster] = await Promise.all([
+		getBankBalance(saveId, 'essence'),
 		prisma.incrementalRosterHero.findMany({
 			where: { saveId },
 			select: { heroId: true },
@@ -76,7 +69,7 @@ export const POST: RequestHandler = async (event) => {
 	]);
 
 	return json({
-		essence: newSave?.essence ?? 0,
+		essence: newEssence,
 		saveId,
 		roster: roster.map((r) => r.heroId)
 	});

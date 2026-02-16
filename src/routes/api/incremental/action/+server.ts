@@ -80,7 +80,7 @@ export const POST: RequestHandler = async (event) => {
 			: {};
 
 	await prisma.$transaction(async (tx) => {
-		await applyRewards(actionId, params, completions, { saveId, tx });
+		await applyRewards(actionId, params, completions, { saveId, tx: tx as unknown as import('$lib/incremental/actions/action-definitions').RewardContext['tx'] });
 		// Write to multi-slot table
 		await tx.incrementalActionSlot.upsert({
 			where: { saveId_slotIndex: { saveId, slotIndex } },
@@ -122,15 +122,51 @@ export const POST: RequestHandler = async (event) => {
 				}
 			});
 		}
+		// Session-based action history: find or create open session, accumulate completions
+		const openSession = await tx.incrementalActionHistory.findFirst({
+			where: { saveId, slotIndex, endedAt: null, source: 'idle' },
+			select: { id: true, actionType: true, actionHeroId: true, actionStatKey: true }
+		});
+		const sameAction =
+			openSession &&
+			openSession.actionType === actionId &&
+			openSession.actionHeroId === (actionHeroId ?? null) &&
+			openSession.actionStatKey === (actionStatKey ?? null);
+		if (openSession && !sameAction) {
+			// Action changed: close the old session
+			await tx.incrementalActionHistory.update({
+				where: { id: openSession.id },
+				data: { endedAt: new Date(now) }
+			});
+		}
+		if (sameAction && completions > 0) {
+			// Same action: accumulate completions into existing session
+			await tx.incrementalActionHistory.update({
+				where: { id: openSession!.id },
+				data: { completions: { increment: completions } }
+			});
+		} else if (!sameAction) {
+			// New session (either no open session or action changed)
+			await tx.incrementalActionHistory.create({
+				data: {
+					saveId,
+					slotIndex,
+					actionType: actionId,
+					actionHeroId: actionHeroId ?? null,
+					actionStatKey: actionStatKey ?? null,
+					completions: Math.max(0, completions),
+					source: 'idle',
+					startedAt: new Date(now)
+				}
+			});
+		}
 	});
 
-	const save = await prisma.incrementalSave.findUnique({
-		where: { id: saveId },
-		select: { essence: true }
-	});
+	const { getBankBalance } = await import('$lib/incremental/bank/bank.service.server');
+	const essenceBalance = await getBankBalance(saveId, 'essence');
 
 	return json({
-		essence: save?.essence ?? 0,
+		essence: essenceBalance,
 		saveId,
 		slotIndex,
 		progress: newProgress,
