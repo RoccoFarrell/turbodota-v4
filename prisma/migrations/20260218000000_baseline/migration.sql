@@ -28,13 +28,15 @@ CREATE TYPE "IncrementalNodeType" AS ENUM ('COMBAT', 'ELITE', 'BOSS', 'SHOP', 'E
 -- CreateTable
 CREATE TABLE "User" (
     "id" TEXT NOT NULL,
+    "google_id" TEXT,
+    "steam_id" BIGINT,
+    "email" TEXT,
     "name" TEXT,
     "username" TEXT NOT NULL,
-    "account_id" INTEGER NOT NULL,
-    "steam_id" BIGINT,
-    "profile_url" TEXT,
     "avatar_url" TEXT,
+    "profile_url" TEXT,
     "roles" TEXT,
+    "account_id" INTEGER,
     "createdDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "lastUpdated" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -60,6 +62,8 @@ CREATE TABLE "DotaUser" (
     "newestMatch" TIMESTAMP(3),
     "oldestMatchID" BIGINT,
     "newestMatchID" BIGINT,
+    "display_name" TEXT,
+    "avatar_url" TEXT,
 
     CONSTRAINT "DotaUser_pkey" PRIMARY KEY ("account_id")
 );
@@ -307,22 +311,13 @@ CREATE TABLE "Item" (
 );
 
 -- CreateTable
-CREATE TABLE "Session" (
+CREATE TABLE "UserSession" (
     "id" TEXT NOT NULL,
-    "user_id" TEXT NOT NULL,
-    "active_expires" BIGINT NOT NULL,
-    "idle_expires" BIGINT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "expiresAt" TIMESTAMP(3) NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT "Session_pkey" PRIMARY KEY ("id")
-);
-
--- CreateTable
-CREATE TABLE "Key" (
-    "id" TEXT NOT NULL,
-    "hashed_password" TEXT,
-    "user_id" TEXT NOT NULL,
-
-    CONSTRAINT "Key_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "UserSession_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -499,9 +494,50 @@ CREATE TABLE "HeroDraw" (
 );
 
 -- CreateTable
-CREATE TABLE "IncrementalLineup" (
+CREATE TABLE "IncrementalSave" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
+    "account_id" INTEGER,
+    "name" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "IncrementalSave_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "IncrementalBankCurrency" (
+    "id" TEXT NOT NULL,
+    "saveId" TEXT NOT NULL,
+    "currencyKey" TEXT NOT NULL,
+    "amount" INTEGER NOT NULL DEFAULT 0,
+
+    CONSTRAINT "IncrementalBankCurrency_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "IncrementalBankItem" (
+    "id" TEXT NOT NULL,
+    "saveId" TEXT NOT NULL,
+    "itemDefId" TEXT NOT NULL,
+    "quantity" INTEGER NOT NULL DEFAULT 0,
+
+    CONSTRAINT "IncrementalBankItem_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "IncrementalRuneGrantedMatch" (
+    "id" SERIAL NOT NULL,
+    "matchId" BIGINT NOT NULL,
+    "account_id" INTEGER NOT NULL,
+
+    CONSTRAINT "IncrementalRuneGrantedMatch_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "IncrementalLineup" (
+    "id" TEXT NOT NULL,
+    "saveId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "heroIds" INTEGER[],
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -523,6 +559,7 @@ CREATE TABLE "IncrementalRun" (
     "gold" INTEGER NOT NULL DEFAULT 0,
     "heroHp" JSONB,
     "xpByHeroId" JSONB,
+    "nodeClearances" JSONB,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -540,6 +577,163 @@ CREATE TABLE "IncrementalMapNode" (
     "act" INTEGER,
 
     CONSTRAINT "IncrementalMapNode_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "IncrementalActionState" (
+    "id" TEXT NOT NULL,
+    "saveId" TEXT NOT NULL,
+    "actionType" TEXT NOT NULL,
+    "progress" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "lastTickAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "actionHeroId" INTEGER,
+    "actionStatKey" TEXT,
+
+    CONSTRAINT "IncrementalActionState_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "IncrementalActionSlot" (
+    "id" TEXT NOT NULL,
+    "saveId" TEXT NOT NULL,
+    "slotIndex" INTEGER NOT NULL,
+    "actionType" TEXT NOT NULL,
+    "progress" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "lastTickAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "actionHeroId" INTEGER,
+    "actionStatKey" TEXT,
+    "actionPartyHeroIds" INTEGER[] DEFAULT ARRAY[]::INTEGER[],
+
+    CONSTRAINT "IncrementalActionSlot_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "IncrementalRosterHero" (
+    "id" TEXT NOT NULL,
+    "saveId" TEXT NOT NULL,
+    "heroId" INTEGER NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "IncrementalRosterHero_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "IncrementalConvertedMatch" (
+    "id" TEXT NOT NULL,
+    "saveId" TEXT NOT NULL,
+    "matchId" BIGINT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "IncrementalConvertedMatch_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "IncrementalHeroTraining" (
+    "id" TEXT NOT NULL,
+    "saveId" TEXT NOT NULL,
+    "heroId" INTEGER NOT NULL,
+    "statKey" TEXT NOT NULL,
+    "value" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "IncrementalHeroTraining_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "IncrementalTalentNode" (
+    "id" TEXT NOT NULL,
+    "saveId" TEXT NOT NULL,
+    "nodeId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "IncrementalTalentNode_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "IncrementalUpgrade" (
+    "id" TEXT NOT NULL,
+    "saveId" TEXT NOT NULL,
+    "upgradeType" TEXT NOT NULL,
+    "level" INTEGER NOT NULL DEFAULT 0,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "IncrementalUpgrade_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "IncrementalHeroBaseStat" (
+    "heroId" INTEGER NOT NULL,
+    "localizedName" TEXT NOT NULL,
+    "primaryAttribute" TEXT NOT NULL,
+    "baseAttackInterval" DOUBLE PRECISION NOT NULL,
+    "baseAttackDamage" INTEGER NOT NULL,
+    "baseMaxHp" INTEGER NOT NULL,
+    "baseArmor" DOUBLE PRECISION NOT NULL,
+    "baseMagicResist" DOUBLE PRECISION NOT NULL,
+    "baseSpellInterval" DOUBLE PRECISION,
+    "abilityId1" TEXT NOT NULL,
+    "abilityId2" TEXT NOT NULL,
+    "updatedAt" TIMESTAMP(3) NOT NULL
+);
+
+-- CreateTable
+CREATE TABLE "IncrementalHeroAbility" (
+    "id" TEXT NOT NULL,
+    "abilityName" TEXT NOT NULL,
+    "description" TEXT,
+    "type" TEXT NOT NULL,
+    "trigger" TEXT NOT NULL,
+    "effect" TEXT NOT NULL,
+    "target" TEXT NOT NULL,
+    "damageType" TEXT,
+    "baseDamage" INTEGER,
+    "returnDamageRatio" DOUBLE PRECISION,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "IncrementalHeroAbility_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "IncrementalSaveHeroModification" (
+    "id" TEXT NOT NULL,
+    "saveId" TEXT NOT NULL,
+    "heroId" INTEGER NOT NULL,
+    "kind" TEXT NOT NULL,
+    "key" TEXT NOT NULL,
+    "valueJson" TEXT NOT NULL,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "IncrementalSaveHeroModification_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "IncrementalSaveQuest" (
+    "id" TEXT NOT NULL,
+    "saveId" TEXT NOT NULL,
+    "questId" TEXT NOT NULL,
+    "startedAt" TIMESTAMP(3) NOT NULL,
+    "claimCount" INTEGER NOT NULL DEFAULT 0,
+    "claimedAt" TIMESTAMP(3),
+
+    CONSTRAINT "IncrementalSaveQuest_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "IncrementalActionHistory" (
+    "id" TEXT NOT NULL,
+    "saveId" TEXT NOT NULL,
+    "slotIndex" INTEGER NOT NULL,
+    "actionType" TEXT NOT NULL,
+    "actionHeroId" INTEGER,
+    "actionStatKey" TEXT,
+    "completions" INTEGER NOT NULL DEFAULT 0,
+    "source" TEXT NOT NULL DEFAULT 'idle',
+    "itemId" TEXT,
+    "startedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "endedAt" TIMESTAMP(3),
+
+    CONSTRAINT "IncrementalActionHistory_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -570,13 +764,19 @@ CREATE TABLE "_RandomToSeason" (
 CREATE UNIQUE INDEX "User_id_key" ON "User"("id");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "User_google_id_key" ON "User"("google_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "User_steam_id_key" ON "User"("steam_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "User_username_key" ON "User"("username");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "User_account_id_key" ON "User"("account_id");
-
--- CreateIndex
-CREATE UNIQUE INDEX "User_steam_id_key" ON "User"("steam_id");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "UserPrefs_account_id_name_key" ON "UserPrefs"("account_id", "name");
@@ -603,16 +803,10 @@ CREATE UNIQUE INDEX "Turbotown_account_id_seasonID_key" ON "Turbotown"("account_
 CREATE UNIQUE INDEX "TurbotownMetric_turbotownID_label_key" ON "TurbotownMetric"("turbotownID", "label");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Session_id_key" ON "Session"("id");
+CREATE UNIQUE INDEX "UserSession_id_key" ON "UserSession"("id");
 
 -- CreateIndex
-CREATE INDEX "Session_user_id_idx" ON "Session"("user_id");
-
--- CreateIndex
-CREATE UNIQUE INDEX "Key_id_key" ON "Key"("id");
-
--- CreateIndex
-CREATE INDEX "Key_user_id_idx" ON "Key"("user_id");
+CREATE INDEX "UserSession_userId_idx" ON "UserSession"("userId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Hero_id_key" ON "Hero"("id");
@@ -660,7 +854,28 @@ CREATE INDEX "Card_heroId_idx" ON "Card"("heroId");
 CREATE UNIQUE INDEX "Deck_seasonId_name_key" ON "Deck"("seasonId", "name");
 
 -- CreateIndex
-CREATE INDEX "IncrementalLineup_userId_idx" ON "IncrementalLineup"("userId");
+CREATE INDEX "IncrementalSave_userId_idx" ON "IncrementalSave"("userId");
+
+-- CreateIndex
+CREATE INDEX "IncrementalBankCurrency_saveId_idx" ON "IncrementalBankCurrency"("saveId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "IncrementalBankCurrency_saveId_currencyKey_key" ON "IncrementalBankCurrency"("saveId", "currencyKey");
+
+-- CreateIndex
+CREATE INDEX "IncrementalBankItem_saveId_idx" ON "IncrementalBankItem"("saveId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "IncrementalBankItem_saveId_itemDefId_key" ON "IncrementalBankItem"("saveId", "itemDefId");
+
+-- CreateIndex
+CREATE INDEX "IncrementalRuneGrantedMatch_account_id_idx" ON "IncrementalRuneGrantedMatch"("account_id");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "IncrementalRuneGrantedMatch_matchId_account_id_key" ON "IncrementalRuneGrantedMatch"("matchId", "account_id");
+
+-- CreateIndex
+CREATE INDEX "IncrementalLineup_saveId_idx" ON "IncrementalLineup"("saveId");
 
 -- CreateIndex
 CREATE INDEX "IncrementalRun_userId_idx" ON "IncrementalRun"("userId");
@@ -672,6 +887,81 @@ CREATE INDEX "IncrementalRun_lineupId_idx" ON "IncrementalRun"("lineupId");
 CREATE INDEX "IncrementalMapNode_runId_idx" ON "IncrementalMapNode"("runId");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "IncrementalActionState_saveId_key" ON "IncrementalActionState"("saveId");
+
+-- CreateIndex
+CREATE INDEX "IncrementalActionState_saveId_idx" ON "IncrementalActionState"("saveId");
+
+-- CreateIndex
+CREATE INDEX "IncrementalActionSlot_saveId_idx" ON "IncrementalActionSlot"("saveId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "IncrementalActionSlot_saveId_slotIndex_key" ON "IncrementalActionSlot"("saveId", "slotIndex");
+
+-- CreateIndex
+CREATE INDEX "IncrementalRosterHero_saveId_idx" ON "IncrementalRosterHero"("saveId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "IncrementalRosterHero_saveId_heroId_key" ON "IncrementalRosterHero"("saveId", "heroId");
+
+-- CreateIndex
+CREATE INDEX "IncrementalConvertedMatch_saveId_idx" ON "IncrementalConvertedMatch"("saveId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "IncrementalConvertedMatch_saveId_matchId_key" ON "IncrementalConvertedMatch"("saveId", "matchId");
+
+-- CreateIndex
+CREATE INDEX "IncrementalHeroTraining_saveId_idx" ON "IncrementalHeroTraining"("saveId");
+
+-- CreateIndex
+CREATE INDEX "IncrementalHeroTraining_saveId_heroId_idx" ON "IncrementalHeroTraining"("saveId", "heroId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "IncrementalHeroTraining_saveId_heroId_statKey_key" ON "IncrementalHeroTraining"("saveId", "heroId", "statKey");
+
+-- CreateIndex
+CREATE INDEX "IncrementalTalentNode_saveId_idx" ON "IncrementalTalentNode"("saveId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "IncrementalTalentNode_saveId_nodeId_key" ON "IncrementalTalentNode"("saveId", "nodeId");
+
+-- CreateIndex
+CREATE INDEX "IncrementalUpgrade_saveId_idx" ON "IncrementalUpgrade"("saveId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "IncrementalUpgrade_saveId_upgradeType_key" ON "IncrementalUpgrade"("saveId", "upgradeType");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "IncrementalHeroBaseStat_heroId_key" ON "IncrementalHeroBaseStat"("heroId");
+
+-- CreateIndex
+CREATE INDEX "IncrementalHeroBaseStat_heroId_idx" ON "IncrementalHeroBaseStat"("heroId");
+
+-- CreateIndex
+CREATE INDEX "IncrementalHeroAbility_id_idx" ON "IncrementalHeroAbility"("id");
+
+-- CreateIndex
+CREATE INDEX "IncrementalSaveHeroModification_saveId_idx" ON "IncrementalSaveHeroModification"("saveId");
+
+-- CreateIndex
+CREATE INDEX "IncrementalSaveHeroModification_saveId_heroId_idx" ON "IncrementalSaveHeroModification"("saveId", "heroId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "IncrementalSaveHeroModification_saveId_heroId_kind_key_key" ON "IncrementalSaveHeroModification"("saveId", "heroId", "kind", "key");
+
+-- CreateIndex
+CREATE INDEX "IncrementalSaveQuest_saveId_idx" ON "IncrementalSaveQuest"("saveId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "IncrementalSaveQuest_saveId_questId_key" ON "IncrementalSaveQuest"("saveId", "questId");
+
+-- CreateIndex
+CREATE INDEX "IncrementalActionHistory_saveId_endedAt_idx" ON "IncrementalActionHistory"("saveId", "endedAt");
+
+-- CreateIndex
+CREATE INDEX "IncrementalActionHistory_saveId_actionType_actionHeroId_act_idx" ON "IncrementalActionHistory"("saveId", "actionType", "actionHeroId", "actionStatKey");
+
+-- CreateIndex
 CREATE INDEX "_DotaUserToLeague_B_index" ON "_DotaUserToLeague"("B");
 
 -- CreateIndex
@@ -681,7 +971,7 @@ CREATE INDEX "_DotaUserToSeason_B_index" ON "_DotaUserToSeason"("B");
 CREATE INDEX "_RandomToSeason_B_index" ON "_RandomToSeason"("B");
 
 -- AddForeignKey
-ALTER TABLE "User" ADD CONSTRAINT "User_account_id_fkey" FOREIGN KEY ("account_id") REFERENCES "DotaUser"("account_id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "User" ADD CONSTRAINT "User_account_id_fkey" FOREIGN KEY ("account_id") REFERENCES "DotaUser"("account_id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "UserPrefs" ADD CONSTRAINT "UserPrefs_account_id_fkey" FOREIGN KEY ("account_id") REFERENCES "User"("account_id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -735,10 +1025,7 @@ ALTER TABLE "TurbotownAction" ADD CONSTRAINT "TurbotownAction_turbotownID_fkey" 
 ALTER TABLE "TurbotownAction" ADD CONSTRAINT "TurbotownAction_turbotownDestinationID_fkey" FOREIGN KEY ("turbotownDestinationID") REFERENCES "Turbotown"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Session" ADD CONSTRAINT "Session_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "Key" ADD CONSTRAINT "Key_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "UserSession" ADD CONSTRAINT "UserSession_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "FriendshipMMR" ADD CONSTRAINT "FriendshipMMR_match_id_fkey" FOREIGN KEY ("match_id") REFERENCES "MatchDetail"("match_id") ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -798,7 +1085,16 @@ ALTER TABLE "HeroDraw" ADD CONSTRAINT "HeroDraw_seasonUserId_fkey" FOREIGN KEY (
 ALTER TABLE "HeroDraw" ADD CONSTRAINT "HeroDraw_cardId_fkey" FOREIGN KEY ("cardId") REFERENCES "Card"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "IncrementalLineup" ADD CONSTRAINT "IncrementalLineup_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "IncrementalSave" ADD CONSTRAINT "IncrementalSave_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "IncrementalBankCurrency" ADD CONSTRAINT "IncrementalBankCurrency_saveId_fkey" FOREIGN KEY ("saveId") REFERENCES "IncrementalSave"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "IncrementalBankItem" ADD CONSTRAINT "IncrementalBankItem_saveId_fkey" FOREIGN KEY ("saveId") REFERENCES "IncrementalSave"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "IncrementalLineup" ADD CONSTRAINT "IncrementalLineup_saveId_fkey" FOREIGN KEY ("saveId") REFERENCES "IncrementalSave"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "IncrementalRun" ADD CONSTRAINT "IncrementalRun_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -808,6 +1104,36 @@ ALTER TABLE "IncrementalRun" ADD CONSTRAINT "IncrementalRun_lineupId_fkey" FOREI
 
 -- AddForeignKey
 ALTER TABLE "IncrementalMapNode" ADD CONSTRAINT "IncrementalMapNode_runId_fkey" FOREIGN KEY ("runId") REFERENCES "IncrementalRun"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "IncrementalActionState" ADD CONSTRAINT "IncrementalActionState_saveId_fkey" FOREIGN KEY ("saveId") REFERENCES "IncrementalSave"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "IncrementalActionSlot" ADD CONSTRAINT "IncrementalActionSlot_saveId_fkey" FOREIGN KEY ("saveId") REFERENCES "IncrementalSave"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "IncrementalRosterHero" ADD CONSTRAINT "IncrementalRosterHero_saveId_fkey" FOREIGN KEY ("saveId") REFERENCES "IncrementalSave"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "IncrementalConvertedMatch" ADD CONSTRAINT "IncrementalConvertedMatch_saveId_fkey" FOREIGN KEY ("saveId") REFERENCES "IncrementalSave"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "IncrementalHeroTraining" ADD CONSTRAINT "IncrementalHeroTraining_saveId_fkey" FOREIGN KEY ("saveId") REFERENCES "IncrementalSave"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "IncrementalTalentNode" ADD CONSTRAINT "IncrementalTalentNode_saveId_fkey" FOREIGN KEY ("saveId") REFERENCES "IncrementalSave"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "IncrementalUpgrade" ADD CONSTRAINT "IncrementalUpgrade_saveId_fkey" FOREIGN KEY ("saveId") REFERENCES "IncrementalSave"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "IncrementalSaveHeroModification" ADD CONSTRAINT "IncrementalSaveHeroModification_saveId_fkey" FOREIGN KEY ("saveId") REFERENCES "IncrementalSave"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "IncrementalSaveQuest" ADD CONSTRAINT "IncrementalSaveQuest_saveId_fkey" FOREIGN KEY ("saveId") REFERENCES "IncrementalSave"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "IncrementalActionHistory" ADD CONSTRAINT "IncrementalActionHistory_saveId_fkey" FOREIGN KEY ("saveId") REFERENCES "IncrementalSave"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "_DotaUserToLeague" ADD CONSTRAINT "_DotaUserToLeague_A_fkey" FOREIGN KEY ("A") REFERENCES "DotaUser"("account_id") ON DELETE CASCADE ON UPDATE CASCADE;

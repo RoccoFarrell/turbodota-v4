@@ -18,7 +18,27 @@
       "Bash(cmd /c:*)",
       "Bash(powershell -ExecutionPolicy Bypass -Command \"& { [System.IO.File]::ReadAllText\\(''C:\\\\Users\\\\bosto\\\\Documents\\\\code\\\\turbodota-v4\\\\node_modules\\\\@flaticon\\\\flaticon-uicons\\\\css\\\\bold\\\\all.css''\\) | Out-Null; Write-Host ''OK'' }\")",
       "Bash(powershell -ExecutionPolicy Bypass -Command \"& { [regex]::Matches\\([System.IO.File]::ReadAllText\\(''C:\\\\Users\\\\bosto\\\\Documents\\\\code\\\\turbodota-v4\\\\node_modules\\\\@flaticon\\\\flaticon-uicons\\\\css\\\\bold\\\\all.css''\\), ''fi-br-[a-z0-9-]+''\\) | Where-Object { ''weight'',''sport'',''train'',''gym'',''dumb'',''barbell'',''kettle'',''muscle'',''exercise'',''workout'',''lifting'',''sword'',''shield'',''battle'',''hero'',''rpg'',''star'',''level'',''power'',''strength'',''magic'',''arrow'',''run'' | ForEach-Object { if \\($args[0].Value -match $_\\) { return $true } }; $false } | Select-Object -ExpandProperty Value | Sort-Object -Unique }\")",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(taskkill:*)",
+      "Bash(npm run check:*)",
+      "Bash(npx svelte-check:*)",
+      "Bash(npx tsc:*)",
+      "Bash(Select-String:*)",
+      "Bash(python -c:*)",
+      "Bash(npx prisma migrate dev:*)",
+      "Bash(dir:*)",
+      "Bash(npx prisma migrate diff:*)",
+      "Bash(powershell -NoProfile -Command \"\n$migrationsPath = ''C:\\\\Users\\\\bosto\\\\Documents\\\\code\\\\turbodota-v4\\\\prisma\\\\migrations''\n$keepName = ''20260218000000_baseline''\n$dirs = Get-ChildItem -Path $migrationsPath -Directory\nforeach \\($dir in $dirs\\) {\n    if \\($dir.Name -ne $keepName\\) {\n        Remove-Item -Path $dir.FullName -Recurse -Force\n        Write-Host ''Deleted:'' $dir.Name\n    } else {\n        Write-Host ''Kept:'' $dir.Name\n    }\n}\n\")",
+      "Bash(npx prisma migrate resolve:*)",
+      "Bash(powershell -NoProfile -Command \"Get-Command psql -ErrorAction SilentlyContinue; Get-ChildItem ''C:\\\\Program Files\\\\PostgreSQL'' -ErrorAction SilentlyContinue | Select-Object Name\")",
+      "Bash(powershell -NoProfile -Command \"Get-ChildItem ''C:\\\\Users\\\\bosto\\\\Documents\\\\code\\\\turbodota-v4\\\\prisma\\\\migrations'' | Select-Object Name, PSIsContainer\")",
+      "Bash(powershell -NoProfile -Command \"Get-Content ''C:\\\\Users\\\\bosto\\\\Documents\\\\code\\\\turbodota-v4\\\\prisma\\\\migrations\\\\20260218165915_verify_clean\\\\migration.sql''\")",
+      "Bash(powershell -NoProfile -Command \"Remove-Item -Path ''C:\\\\Users\\\\bosto\\\\Documents\\\\code\\\\turbodota-v4\\\\prisma\\\\migrations\\\\20260218165915_verify_clean'' -Recurse -Force; Write-Host ''Cleaned up empty test migration.''\")",
+      "Bash(powershell -NoProfile -Command \"Select-String -Path ''C:\\\\Users\\\\bosto\\\\Documents\\\\code\\\\turbodota-v4\\\\prisma\\\\schema.prisma'' -Pattern ''IncrementalBankCurrency|amount|balance'' -Context 0,2\")",
+      "Bash(npm run test:*)",
+      "Bash(git rm:*)",
+      "Bash(npx vitest:*)",
+      "Bash(tee:*)"
     ]
   }
 }

@@ -26,7 +26,8 @@ export const GET: RequestHandler = async (event) => {
 			progress: s.progress,
 			lastTickAt: s.lastTickAt.getTime(),
 			actionHeroId: s.actionHeroId,
-			actionStatKey: s.actionStatKey
+			actionStatKey: s.actionStatKey,
+			actionPartyHeroIds: s.actionPartyHeroIds
 		}))
 	});
 };

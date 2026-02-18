@@ -4,7 +4,7 @@
  * Uses Svelte 5 runes ($state) via .svelte.ts module.
  */
 
-import { getDurationSec } from '$lib/incremental/actions';
+import { getDurationSec, formatSlotLabel } from '$lib/incremental/actions';
 
 export interface SlotState {
 	slotIndex: number;
@@ -13,6 +13,7 @@ export interface SlotState {
 	lastTickAt: number;
 	actionHeroId: number | null;
 	actionStatKey: string | null;
+	partyHeroIds: number[];
 }
 
 export interface CatchUpResult {
@@ -21,11 +22,11 @@ export interface CatchUpResult {
 	/** Per-slot summaries of what happened */
 	slotResults: {
 		actionLabel: string;
-		essenceEarned: number;
+		currenciesEarned: Record<string, number>;
 	}[];
-	/** Total essence earned while away */
-	totalEssenceEarned: number;
-	/** New essence balance */
+	/** Total currencies earned while away, keyed by currencyKey */
+	totalCurrenciesEarned: Record<string, number>;
+	/** New essence balance (kept for balance display) */
 	newEssence: number;
 }
 
@@ -57,6 +58,21 @@ export function setEssence(v: number) { essence = v; }
 export function setSlots(v: SlotState[]) { slots = v; }
 export function setMaxSlots(v: number) { maxSlots = v; }
 export function setSaveId(v: string | null) { saveId = v; }
+
+// ---- Hero busy tracking ----
+
+/**
+ * Returns a Set of all hero IDs currently "busy" across all active slots.
+ * A hero is busy if they are the training hero (actionHeroId) or a scavenging party member (partyHeroIds).
+ */
+export function getBusyHeroIds(): Set<number> {
+	const busy = new Set<number>();
+	for (const slot of slots) {
+		if (slot.actionHeroId != null) busy.add(slot.actionHeroId);
+		for (const id of slot.partyHeroIds) busy.add(id);
+	}
+	return busy;
+}
 
 // ---- Data fetching ----
 
@@ -98,20 +114,21 @@ export async function fetchSlots(): Promise<void> {
 	if (res.ok) {
 		const data = await res.json();
 		maxSlots = data.maxSlots ?? 1;
-		slots = (data.slots ?? []).map((s: SlotState) => ({
-			slotIndex: s.slotIndex,
-			actionType: s.actionType,
-			progress: s.progress,
-			lastTickAt: s.lastTickAt,
-			actionHeroId: s.actionHeroId,
-			actionStatKey: s.actionStatKey
+		slots = (data.slots ?? []).map((s: Record<string, unknown>) => ({
+			slotIndex: s.slotIndex as number,
+			actionType: s.actionType as string,
+			progress: s.progress as number,
+			lastTickAt: s.lastTickAt as number,
+			actionHeroId: (s.actionHeroId ?? null) as number | null,
+			actionStatKey: (s.actionStatKey ?? null) as string | null,
+			partyHeroIds: (s.actionPartyHeroIds as number[]) ?? []
 		}));
 	}
 }
 
 // ---- Tick logic ----
 
-async function tickSlot(slot: SlotState): Promise<{ essenceEarned: number } | null> {
+async function tickSlot(slot: SlotState): Promise<{ currenciesEarned: Record<string, number> } | null> {
 	const now = Date.now();
 	const body: Record<string, unknown> = {
 		saveId,
@@ -123,6 +140,9 @@ async function tickSlot(slot: SlotState): Promise<{ essenceEarned: number } | nu
 	if (slot.actionType === 'training' && slot.actionHeroId != null && slot.actionStatKey != null) {
 		body.actionHeroId = slot.actionHeroId;
 		body.actionStatKey = slot.actionStatKey;
+	}
+	if (slot.partyHeroIds.length > 0) {
+		body.actionPartyHeroIds = slot.partyHeroIds;
 	}
 	const res = await fetch('/api/incremental/action', {
 		method: 'POST',
@@ -140,7 +160,7 @@ async function tickSlot(slot: SlotState): Promise<{ essenceEarned: number } | nu
 			lastTickAt: data.lastTickAt ?? now
 		};
 	}
-	return { essenceEarned: data.essenceEarned ?? 0 };
+	return { currenciesEarned: (data.currenciesEarned as Record<string, number>) ?? {} };
 }
 
 function clientTick(): void {
@@ -165,45 +185,45 @@ function clientTick(): void {
 // ---- Catch-up after visibility change ----
 
 /** Tick all active slots with the server to catch up after being away. */
-export async function catchUpAllSlots(heroNameFn: (id: number) => string, statLabelFn: (key: string) => string): Promise<CatchUpResult | null> {
+export async function catchUpAllSlots(
+	heroNameFn: (id: number) => string,
+	statLabelFn: (key: string) => string
+): Promise<CatchUpResult | null> {
 	if (slots.length === 0 || !saveId) return null;
 
 	const now = Date.now();
-	// Find the oldest lastTickAt to determine how long we were away
 	const oldestTick = Math.min(...slots.map((s) => s.lastTickAt));
 	const awaySeconds = (now - oldestTick) / 1000;
 
 	const slotResults: CatchUpResult['slotResults'] = [];
-	let totalEssenceEarned = 0;
+	const totalCurrenciesEarned: Record<string, number> = {};
 
 	for (const slot of slots) {
 		const result = await tickSlot(slot);
-		const earned = result?.essenceEarned ?? 0;
-		totalEssenceEarned += earned;
-
-		let actionLabel = 'Mining';
-		if (slot.actionType === 'training' && slot.actionHeroId != null && slot.actionStatKey) {
-			actionLabel = `Training ${heroNameFn(slot.actionHeroId)} \u2013 ${statLabelFn(slot.actionStatKey)}`;
+		const currencies = result?.currenciesEarned ?? {};
+		for (const [k, v] of Object.entries(currencies)) {
+			totalCurrenciesEarned[k] = (totalCurrenciesEarned[k] ?? 0) + v;
 		}
-
-		slotResults.push({ actionLabel, essenceEarned: earned });
+		const actionLabel = formatSlotLabel(slot, { heroName: heroNameFn, statLabel: statLabelFn });
+		slotResults.push({ actionLabel, currenciesEarned: currencies });
 	}
 
 	return {
 		awaySeconds,
 		slotResults,
-		totalEssenceEarned,
+		totalCurrenciesEarned,
 		newEssence: essence
 	};
 }
 
-// ---- Slot assignment (used by training page) ----
+// ---- Slot assignment ----
 
 export async function assignSlot(
 	slotIndex: number,
 	actionType: string,
 	heroId?: number,
-	statKey?: string
+	statKey?: string,
+	partyHeroIds?: number[]
 ): Promise<boolean> {
 	const now = Date.now();
 	const body: Record<string, unknown> = {
@@ -216,6 +236,9 @@ export async function assignSlot(
 	if (actionType === 'training' && heroId != null && statKey != null) {
 		body.actionHeroId = heroId;
 		body.actionStatKey = statKey;
+	}
+	if (partyHeroIds && partyHeroIds.length > 0) {
+		body.actionPartyHeroIds = partyHeroIds;
 	}
 	const res = await fetch('/api/incremental/action', {
 		method: 'POST',
@@ -231,7 +254,8 @@ export async function assignSlot(
 		progress: data.progress ?? 0,
 		lastTickAt: data.lastTickAt ?? now,
 		actionHeroId: data.actionHeroId ?? null,
-		actionStatKey: data.actionStatKey ?? null
+		actionStatKey: data.actionStatKey ?? null,
+		partyHeroIds: (data.actionPartyHeroIds as number[]) ?? []
 	};
 	const idx = slots.findIndex((s) => s.slotIndex === slotIndex);
 	if (idx !== -1) {
@@ -290,8 +314,6 @@ export function pauseTicking(): void {
 /** Resume ticking (e.g. when page visible again). */
 export function resumeTicking(): void {
 	isRunning = true;
-	// Reset lastTickAt to now so we don't get a huge client-side jump
-	// (the server catch-up handles the actual rewards)
 	const now = Date.now();
 	for (const slot of slots) {
 		slot.lastTickAt = now;

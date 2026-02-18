@@ -737,14 +737,15 @@ model IncrementalActionState {
 
 // Multi-slot action system: each save can have multiple concurrent action slots
 model IncrementalActionSlot {
-  id            String   @id @default(cuid())
-  saveId        String
-  slotIndex     Int // 0, 1, 2, ... (0 = default slot, always available)
-  actionType    String // "mining", "training", or future actions
-  progress      Float    @default(0) // 0..1 within current completion
-  lastTickAt    DateTime @default(now())
-  actionHeroId  Int? // when actionType = training: which hero
-  actionStatKey String? // when actionType = training: which stat
+  id                 String   @id @default(cuid())
+  saveId             String
+  slotIndex          Int // 0, 1, 2, ... (0 = default slot, always available)
+  actionType         String // "mining", "woodcutting", "training", or future actions
+  progress           Float    @default(0) // 0..1 within current completion
+  lastTickAt         DateTime @default(now())
+  actionHeroId       Int? // when actionType = training: which hero
+  actionStatKey      String? // when actionType = training: which stat
+  actionPartyHeroIds Int[]    @default([]) // scavenging party companions
 
   save IncrementalSave @relation(fields: [saveId], references: [id], onDelete: Cascade)
 

@@ -5,10 +5,13 @@
 import { describe, it, expect } from 'vitest';
 import { createBattleState } from './battle-state';
 import { tick } from './battle-loop';
+import { getHeroDef } from './test-fixtures';
+
+const withDefs = { getHeroDef };
 
 describe('battle-loop', () => {
 	it('simulation: tick until result is win or lose, no infinite loop', () => {
-		let state = createBattleState([99, 25, 50], 'wolf_pack');
+		let state = createBattleState([99, 25, 50], 'wolf_pack', withDefs);
 		const dt = 0.1;
 		let steps = 0;
 		const maxSteps = 5000;
@@ -22,7 +25,7 @@ describe('battle-loop', () => {
 	});
 
 	it('tick with focusChange: timers reset and 2s cooldown blocks immediate second change', () => {
-		let state = createBattleState([99, 25, 50], 'wolf_pack');
+		let state = createBattleState([99, 25, 50], 'wolf_pack', withDefs);
 		state = tick(state, 0.1, { focusChange: 1 });
 		expect(state.focusedHeroIndex).toBe(1);
 		// Previous focus hero's timers were reset then advanceTimers ran, so 0.1
@@ -38,7 +41,7 @@ describe('battle-loop', () => {
 	});
 
 	it('tick 10s without focusChange: focusedHeroIndex cycles (auto-rotation)', () => {
-		let state = createBattleState([99, 25, 50], 'wolf_pack');
+		let state = createBattleState([99, 25, 50], 'wolf_pack', withDefs);
 		expect(state.focusedHeroIndex).toBe(0);
 		// Run 10s worth of ticks
 		for (let t = 0; t < 100; t++) {
@@ -55,7 +58,7 @@ describe('battle-loop', () => {
 	});
 
 	it('tick with targetChange: sets targetIndex clamped to valid range', () => {
-		let state = createBattleState([25], 'wolf_pack');
+		let state = createBattleState([25], 'wolf_pack', withDefs);
 		state = tick(state, 0, { targetChange: 2 });
 		expect(state.targetIndex).toBe(2);
 		state = tick(state, 0, { targetChange: 10 });

@@ -5,6 +5,16 @@
 import { describe, it, expect, vi } from 'vitest';
 import { startRun, advanceRun, type RunServiceDb, type RunRecord } from './run-service';
 import { createLineup, createRun, type IncrementalDb } from '../data/lineup';
+import type { HeroDef } from '../types';
+
+/** Inline hero defs for run-service tests (avoids circular-import issue with engine/test-fixtures). */
+const heroDefs: HeroDef[] = [
+	{ heroId: 99, primaryAttribute: 'str', baseAttackInterval: 1.2, baseAttackDamage: 24, baseMaxHp: 150, baseArmor: 4, baseMagicResist: 0.25, baseSpellInterval: null, abilityIds: ['bristleback_return'] },
+	{ heroId: 25, primaryAttribute: 'int', baseAttackInterval: 1.4, baseAttackDamage: 21, baseMaxHp: 100, baseArmor: 1, baseMagicResist: 0.25, baseSpellInterval: 10, abilityIds: ['laguna_blade'] },
+	{ heroId: 50, primaryAttribute: 'universal', baseAttackInterval: 1.2, baseAttackDamage: 22, baseMaxHp: 120, baseArmor: 2, baseMagicResist: 0.25, baseSpellInterval: 8, abilityIds: ['poison_touch'] }
+];
+const heroById = new Map(heroDefs.map((h) => [h.heroId, h]));
+function getHeroDef(heroId: number): HeroDef | undefined { return heroById.get(heroId); }
 
 describe('run-service', () => {
 	it('startRun creates run with map and returns run state', async () => {
@@ -159,7 +169,7 @@ describe('run-service', () => {
 		const nextId = firstState!.nextNodeIds[0];
 		expect(nextId).toBeDefined();
 
-		const advanceResult = await advanceRun(db, run.id, 'u1', nextId);
+		const advanceResult = await advanceRun(db, run.id, 'u1', nextId, { getHeroDef });
 		expect(advanceResult.runState.currentNodeId).toBe(nextId);
 		// First advance: we moved to second node (still combat). So encounter should be present
 		expect(advanceResult.encounter).toBeDefined();

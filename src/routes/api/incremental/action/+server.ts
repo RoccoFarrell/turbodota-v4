@@ -2,18 +2,20 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
 import prisma from '$lib/server/prisma';
 import { advanceIdleTimer } from '$lib/incremental/actions/idle-timer';
-import { getActionDef, MINING_ACTION_ID, TRAINING_ACTION_ID } from '$lib/incremental/actions/action-definitions';
+import { getActionDef, TRAINING_ACTION_ID } from '$lib/incremental/actions/action-definitions';
 import { applyRewards } from '$lib/incremental/actions/action-rewards.server';
-import { TRAINING_STAT_KEYS, type TrainingStatKey } from '$lib/incremental/actions/constants';
+import { TRAINING_STAT_KEYS, SCAVENGING_PARTY_YIELD_BONUS, SCAVENGING_PARTY_MAX_SIZE, type TrainingStatKey } from '$lib/incremental/actions/constants';
+import { getAffinityRateModifier } from '$lib/incremental/actions/hero-affinity';
 import { resolveIncrementalSave } from '$lib/server/incremental-save';
 import { getRateModifier } from '$lib/incremental/actions/talent-rate-modifier';
 import { getMaxSlots } from '$lib/incremental/actions/slot-helpers';
+import { getBankBalance } from '$lib/incremental/bank/bank.service.server';
 
 function isValidStatKey(key: unknown): key is TrainingStatKey {
 	return typeof key === 'string' && (TRAINING_STAT_KEYS as readonly string[]).includes(key);
 }
 
-/** POST /api/incremental/action – tick or set action for a slot. Body: { saveId?, slotIndex?, lastTickAt, progress?, actionType?, actionHeroId?, actionStatKey? } */
+/** POST /api/incremental/action – tick or set action for a slot. */
 export const POST: RequestHandler = async (event) => {
 	const { request } = event;
 	let body: {
@@ -24,6 +26,7 @@ export const POST: RequestHandler = async (event) => {
 		actionType?: string;
 		actionHeroId?: number;
 		actionStatKey?: string;
+		actionPartyHeroIds?: number[];
 	};
 	try {
 		body = await request.json();
@@ -38,18 +41,28 @@ export const POST: RequestHandler = async (event) => {
 		error(400, `Invalid slot index ${slotIndex}. You have ${maxSlots} slot(s) available.`);
 	}
 
+	// Registry lookup — returns 400 for unknown action types
+	const actionDef = getActionDef(body.actionType ?? '');
+	if (!actionDef) {
+		error(400, `Unknown action type: ${body.actionType}`);
+	}
+	const actionId = actionDef.id;
+
 	const now = Date.now();
 	const lastTickAt = typeof body.lastTickAt === 'number' ? body.lastTickAt : now;
 	const progress = typeof body.progress === 'number' ? Math.max(0, Math.min(1, body.progress)) : 0;
-	const actionId =
-		body.actionType === TRAINING_ACTION_ID ? TRAINING_ACTION_ID : MINING_ACTION_ID;
-	const actionHeroId = actionId === TRAINING_ACTION_ID ? body.actionHeroId : null;
-	const actionStatKey =
-		actionId === TRAINING_ACTION_ID && isValidStatKey(body.actionStatKey)
-			? body.actionStatKey
-			: null;
 
-	if (actionId === TRAINING_ACTION_ID) {
+	// ---- Per-category validation and modifier computation ----
+	let actionHeroId: number | null = null;
+	let actionStatKey: string | null = null;
+	let partyHeroIds: number[] = [];
+	let rateModifier = 1;
+	let rewardMultiplier = 1;
+
+	if (actionDef.category === 'training') {
+		actionHeroId = typeof body.actionHeroId === 'number' ? body.actionHeroId : null;
+		actionStatKey = isValidStatKey(body.actionStatKey) ? body.actionStatKey : null;
+
 		if (typeof actionHeroId !== 'number' || !isValidStatKey(actionStatKey)) {
 			error(400, 'Training requires actionHeroId (number) and actionStatKey (valid stat key)');
 		}
@@ -60,12 +73,64 @@ export const POST: RequestHandler = async (event) => {
 		if (!roster.some((r) => r.heroId === actionHeroId)) {
 			error(400, 'Hero is not on your roster');
 		}
+
+		// Talent rate modifier
+		const talentModifier = await getRateModifier(saveId, actionId, actionStatKey);
+
+		// Affinity modifier: query hero's primary attribute
+		const hero = await prisma.hero.findUnique({ where: { id: actionHeroId! }, select: { primary_attr: true } });
+		const affinityModifier = hero?.primary_attr && isValidStatKey(actionStatKey)
+			? getAffinityRateModifier(hero.primary_attr, actionStatKey)
+			: 1;
+
+		rateModifier = talentModifier * affinityModifier;
+
+	} else {
+		// Scavenging category (mining, woodcutting, future)
+		const talentModifier = await getRateModifier(saveId, actionId, null);
+		rateModifier = talentModifier;
+
+		// Validate and clamp party hero IDs
+		if (Array.isArray(body.actionPartyHeroIds) && body.actionPartyHeroIds.length > 0) {
+			const rawParty = body.actionPartyHeroIds.filter((id): id is number => typeof id === 'number');
+			const clamped = rawParty.slice(0, SCAVENGING_PARTY_MAX_SIZE);
+
+			if (clamped.length > 0) {
+				const roster = await prisma.incrementalRosterHero.findMany({
+					where: { saveId },
+					select: { heroId: true }
+				});
+				const rosterSet = new Set(roster.map((r) => r.heroId));
+				partyHeroIds = clamped.filter((id) => rosterSet.has(id));
+			}
+
+			rewardMultiplier = 1 + partyHeroIds.length * SCAVENGING_PARTY_YIELD_BONUS;
+		}
 	}
 
-	const def = getActionDef(actionId);
-	const durationPerCompletionSec = def?.durationPerCompletionSec ?? 5;
-	const rateModifier = await getRateModifier(saveId, actionId, actionStatKey);
+	// ---- Hero conflict check: ensure no hero is assigned to multiple slots ----
+	// Check other slots for the same hero (training heroId) or party members
+	const heroToCheck = actionHeroId;
+	const partyToCheck = partyHeroIds;
+	if (heroToCheck != null || partyToCheck.length > 0) {
+		const otherSlots = await prisma.incrementalActionSlot.findMany({
+			where: { saveId, slotIndex: { not: slotIndex } },
+			select: { actionHeroId: true, actionPartyHeroIds: true }
+		});
+		for (const other of otherSlots) {
+			if (heroToCheck != null && other.actionHeroId === heroToCheck) {
+				error(409, `Hero ${heroToCheck} is already assigned to another slot`);
+			}
+			for (const pid of partyToCheck) {
+				if (other.actionHeroId === pid || other.actionPartyHeroIds.includes(pid)) {
+					error(409, `Hero ${pid} is already assigned to another slot`);
+				}
+			}
+		}
+	}
 
+	// ---- Advance idle timer ----
+	const durationPerCompletionSec = actionDef.durationPerCompletionSec;
 	const { progress: newProgress, completions } = advanceIdleTimer({
 		progress,
 		lastTickAt,
@@ -74,14 +139,18 @@ export const POST: RequestHandler = async (event) => {
 		rateModifier
 	});
 
+	// ---- Build action params ----
 	const params: Record<string, unknown> =
-		actionId === TRAINING_ACTION_ID && actionHeroId != null && actionStatKey != null
+		actionDef.category === 'training' && actionHeroId != null && actionStatKey != null
 			? { heroId: actionHeroId, statKey: actionStatKey }
 			: {};
 
+	// ---- Apply rewards and persist ----
+	let currenciesEarned: Record<string, number> = {};
+
 	await prisma.$transaction(async (tx) => {
-		await applyRewards(actionId, params, completions, { saveId, tx: tx as unknown as import('$lib/incremental/actions/action-definitions').RewardContext['tx'] });
-		// Write to multi-slot table
+		currenciesEarned = await applyRewards(actionId, params, completions, { saveId, tx }, { rewardMultiplier });
+
 		await tx.incrementalActionSlot.upsert({
 			where: { saveId_slotIndex: { saveId, slotIndex } },
 			create: {
@@ -91,16 +160,19 @@ export const POST: RequestHandler = async (event) => {
 				progress: newProgress,
 				lastTickAt: new Date(now),
 				actionHeroId: actionHeroId ?? undefined,
-				actionStatKey: actionStatKey ?? undefined
+				actionStatKey: actionStatKey ?? undefined,
+				actionPartyHeroIds: partyHeroIds
 			},
 			update: {
 				actionType: actionId,
 				progress: newProgress,
 				lastTickAt: new Date(now),
 				actionHeroId: actionHeroId ?? null,
-				actionStatKey: actionStatKey ?? null
+				actionStatKey: actionStatKey ?? null,
+				actionPartyHeroIds: partyHeroIds
 			}
 		});
+
 		// Keep legacy table in sync for backward compat (slot 0 only)
 		if (slotIndex === 0) {
 			await tx.incrementalActionState.upsert({
@@ -122,7 +194,8 @@ export const POST: RequestHandler = async (event) => {
 				}
 			});
 		}
-		// Session-based action history: find or create open session, accumulate completions
+
+		// Session-based action history
 		const openSession = await tx.incrementalActionHistory.findFirst({
 			where: { saveId, slotIndex, endedAt: null, source: 'idle' },
 			select: { id: true, actionType: true, actionHeroId: true, actionStatKey: true }
@@ -133,20 +206,17 @@ export const POST: RequestHandler = async (event) => {
 			openSession.actionHeroId === (actionHeroId ?? null) &&
 			openSession.actionStatKey === (actionStatKey ?? null);
 		if (openSession && !sameAction) {
-			// Action changed: close the old session
 			await tx.incrementalActionHistory.update({
 				where: { id: openSession.id },
 				data: { endedAt: new Date(now) }
 			});
 		}
 		if (sameAction && completions > 0) {
-			// Same action: accumulate completions into existing session
 			await tx.incrementalActionHistory.update({
 				where: { id: openSession!.id },
 				data: { completions: { increment: completions } }
 			});
 		} else if (!sameAction) {
-			// New session (either no open session or action changed)
 			await tx.incrementalActionHistory.create({
 				data: {
 					saveId,
@@ -162,7 +232,6 @@ export const POST: RequestHandler = async (event) => {
 		}
 	});
 
-	const { getBankBalance } = await import('$lib/incremental/bank/bank.service.server');
 	const essenceBalance = await getBankBalance(saveId, 'essence');
 
 	return json({
@@ -171,9 +240,10 @@ export const POST: RequestHandler = async (event) => {
 		slotIndex,
 		progress: newProgress,
 		lastTickAt: now,
-		essenceEarned: actionId === MINING_ACTION_ID ? completions : 0,
+		currenciesEarned,
 		actionType: actionId,
 		actionHeroId: actionHeroId ?? null,
-		actionStatKey: actionStatKey ?? null
+		actionStatKey: actionStatKey ?? null,
+		actionPartyHeroIds: partyHeroIds
 	});
 };

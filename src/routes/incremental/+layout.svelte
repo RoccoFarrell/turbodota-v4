@@ -3,7 +3,8 @@
 	import { page } from '$app/stores';
 	import { onMount, onDestroy, getContext } from 'svelte';
 	import { Dialog, Portal } from '@skeletonlabs/skeleton-svelte';
-	import { TRAINING_BUILDINGS, MINING_ESSENCE_PER_STRIKE, type TrainingStatKey } from '$lib/incremental/actions';
+	import { TRAINING_BUILDINGS, type TrainingStatKey } from '$lib/incremental/actions';
+	import { formatSlotLabel } from '$lib/incremental/actions/action-definitions';
 	import * as actionStore from '$lib/incremental/stores/action-slots.svelte';
 	import type { CatchUpResult } from '$lib/incremental/stores/action-slots.svelte';
 
@@ -45,7 +46,8 @@
 
 	const incrementalNav = [
 		{ label: 'Dashboard', path: '/incremental' },
-		{ label: 'Training', path: '/incremental/training' },
+		{ label: 'Scavenging', path: '/incremental/scavenging' },
+		{ label: 'Barracks', path: '/incremental/barracks' },
 		{ label: 'Hero Tavern', path: '/incremental/tavern' },
 		{ label: 'Lineups', path: '/incremental/lineup' },
 		{ label: 'Run (Map)', path: '/incremental/run' },
@@ -64,16 +66,18 @@
 
 	// ---- Reactive bindings to the store ----
 	const slots = $derived(actionStore.getSlots());
-	const isTrainingPage = $derived($page.url.pathname === '/incremental/training');
+	// Hide bottom bar on slot-management pages (they have their own slot strip)
+	const isSlotManagementPage = $derived(
+		$page.url.pathname === '/incremental/scavenging' ||
+		$page.url.pathname === '/incremental/barracks' ||
+		$page.url.pathname.startsWith('/incremental/scavenging/') ||
+		$page.url.pathname.startsWith('/incremental/barracks/')
+	);
 
 	// ---- Display helpers ----
 
 	function slotLabel(slot: actionStore.SlotState): string {
-		if (slot.actionType === 'mining') return 'Mining';
-		if (slot.actionType === 'training' && slot.actionHeroId != null && slot.actionStatKey) {
-			return `${heroName(slot.actionHeroId)} \u2013 ${statLabel(slot.actionStatKey)}`;
-		}
-		return 'Training';
+		return formatSlotLabel(slot, { heroName, statLabel });
 	}
 
 	function slotProgress(slot: actionStore.SlotState): number {
@@ -97,34 +101,40 @@
 		return `${h}h ${m}m`;
 	}
 
+	function currencyLabel(key: string): string {
+		if (key === 'essence') return 'Essence';
+		if (key === 'wood') return 'Wood';
+		return key.replace(/_/g, ' ');
+	}
+
+	function currencyIcon(key: string): string {
+		if (key === 'essence') return '⛏️';
+		if (key === 'wood') return '🪵';
+		return '💰';
+	}
+
 	async function handleVisibilityChange() {
 		if (document.hidden) {
-			// Page is being hidden — record timestamp and pause client-side ticking
 			hiddenAt = Date.now();
 			actionStore.pauseTicking();
 		} else {
-			// Page is visible again
 			const wasHiddenAt = hiddenAt;
 			hiddenAt = null;
 
 			if (wasHiddenAt && slots.length > 0) {
 				const awayMs = Date.now() - wasHiddenAt;
 
-				// IMPORTANT: catch up with the server BEFORE resuming client ticks,
-				// because resumeTicking() resets lastTickAt to now.
 				if (awayMs > 5000) {
 					const result = await actionStore.catchUpAllSlots(heroName, statLabel);
-					if (result && (result.totalEssenceEarned > 0 || result.slotResults.length > 0)) {
+					if (result && Object.values(result.totalCurrenciesEarned).some((v) => v > 0)) {
 						catchUpResult = result;
 						showCatchUp = true;
 					}
 				} else {
-					// Short absence — catch up silently
 					await actionStore.catchUpAllSlots(heroName, statLabel);
 				}
 			}
 
-			// NOW resume client-side ticking (resets lastTickAt to now)
 			actionStore.resumeTicking();
 		}
 	}
@@ -185,8 +195,8 @@
 		{@render children?.()}
 	</main>
 
-	<!-- Bottom bar: active action slots (in-flow so it doesn't cover nav; hidden on training page) -->
-	{#if slots.length > 0 && !isTrainingPage}
+	<!-- Bottom bar: active action slots (hidden on slot-management pages that have their own strip) -->
+	{#if slots.length > 0 && !isSlotManagementPage}
 		<div class="shrink-0 border-t border-gray-200 dark:border-gray-700 bg-gray-50/95 dark:bg-gray-900/95 backdrop-blur-sm px-4 py-2">
 			<div class="max-w-3xl mx-auto flex items-center gap-4">
 				{#each slots as slot}
@@ -208,7 +218,7 @@
 					</div>
 				{/each}
 				<a
-					href="/incremental/training"
+					href="/incremental/scavenging"
 					class="shrink-0 text-xs text-primary hover:underline font-medium"
 				>
 					Manage
@@ -240,8 +250,16 @@
 						{#each catchUpResult.slotResults as result}
 							<div class="flex items-center justify-between rounded-lg bg-gray-50 dark:bg-gray-800 px-3 py-2">
 								<span class="text-sm font-medium text-gray-700 dark:text-gray-300">{result.actionLabel}</span>
-								{#if result.essenceEarned > 0}
-									<span class="text-sm font-semibold text-primary">+{result.essenceEarned} Essence</span>
+								{#if Object.keys(result.currenciesEarned).length > 0}
+									<div class="flex gap-2">
+										{#each Object.entries(result.currenciesEarned) as [key, amount]}
+											{#if amount > 0}
+												<span class="text-sm font-semibold text-primary">
+													{currencyIcon(key)} +{amount} {currencyLabel(key)}
+												</span>
+											{/if}
+										{/each}
+									</div>
 								{:else}
 									<span class="text-sm text-gray-400">Training applied</span>
 								{/if}
@@ -249,10 +267,16 @@
 						{/each}
 					</div>
 
-					{#if catchUpResult.totalEssenceEarned > 0}
-						<div class="text-center rounded-lg bg-primary/10 px-3 py-2">
-							<p class="text-sm text-gray-600 dark:text-gray-300">Total earned</p>
-							<p class="text-2xl font-bold text-primary">+{catchUpResult.totalEssenceEarned} Essence</p>
+					{#if Object.values(catchUpResult.totalCurrenciesEarned).some((v) => v > 0)}
+						<div class="rounded-lg bg-primary/10 px-3 py-2 space-y-1">
+							<p class="text-sm text-gray-600 dark:text-gray-300 text-center">Total earned</p>
+							{#each Object.entries(catchUpResult.totalCurrenciesEarned) as [key, amount]}
+								{#if amount > 0}
+									<p class="text-2xl font-bold text-primary text-center">
+										{currencyIcon(key)} +{amount} {currencyLabel(key)}
+									</p>
+								{/if}
+							{/each}
 						</div>
 					{/if}
 
