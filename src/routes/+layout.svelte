@@ -330,8 +330,8 @@
 							</div>
 							<!-- Logout -->
 							<form method="POST">
-								<button class="btn preset-tonal flex items-center space-x-2" formaction="/logout" type="submit">
-									<i class="fi fi-br-sign-out-alt"></i>
+								<button class="btn bg-red-950/50 hover:bg-red-900/60 text-red-300 border border-red-800/50" formaction="/logout" type="submit">
+									<span class="leading-[0]"><i class="fi fi-br-sign-out-alt"></i></span>
 									<span class="hidden sm:inline">Logout</span>
 								</button>
 							</form>
