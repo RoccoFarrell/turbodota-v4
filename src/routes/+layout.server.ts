@@ -123,13 +123,36 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 	}
 
 	const heroDescriptions = await getHeroDescriptions();
+
+	// Dota connection status for header indicator: connected = has account_id or Steam, last parsed match from DotaUser
+	let dotaAccountStatus: {
+		connected: boolean;
+		lastMatchesFetched: string | null;
+		lastMatchId: string | null;
+	} = {
+		connected: !!(user?.account_id ?? user?.steam_id),
+		lastMatchesFetched: null,
+		lastMatchId: null
+	};
+	if (user?.account_id) {
+		const dotaUser = await prisma.dotaUser.findUnique({
+			where: { account_id: user.account_id },
+			select: { lastUpdated: true, newestMatchID: true }
+		});
+		if (dotaUser) {
+			dotaAccountStatus.lastMatchesFetched = dotaUser.lastUpdated.toISOString();
+			dotaAccountStatus.lastMatchId = dotaUser.newestMatchID?.toString() ?? null;
+		}
+	}
+
 	return {
 		user,
 		session,
+		dotaAccountStatus,
 		heroDescriptions,
 		userPreferences,
 		league: {
-			leagueID: leagueAndSeasonsResult ? leagueAndSeasonsResult[0].id : null,
+			leagueID: leagueAndSeasonsResult?.[0]?.id ?? null,
 			seasonID: currentSeason?.id,
 			leagueAndSeasonsResult,
 			currentSeason,

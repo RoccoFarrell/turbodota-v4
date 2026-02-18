@@ -11,7 +11,14 @@
       "Bash(node --version:*)",
       "Bash(node:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git -C /c/Users/bosto/Documents/code/turbodota-v4 status)",
+      "WebFetch(domain:www.skeleton.dev)",
+      "Bash(powershell -Command:*)",
+      "Bash(cmd /c:*)",
+      "Bash(powershell -ExecutionPolicy Bypass -Command \"& { [System.IO.File]::ReadAllText\\(''C:\\\\Users\\\\bosto\\\\Documents\\\\code\\\\turbodota-v4\\\\node_modules\\\\@flaticon\\\\flaticon-uicons\\\\css\\\\bold\\\\all.css''\\) | Out-Null; Write-Host ''OK'' }\")",
+      "Bash(powershell -ExecutionPolicy Bypass -Command \"& { [regex]::Matches\\([System.IO.File]::ReadAllText\\(''C:\\\\Users\\\\bosto\\\\Documents\\\\code\\\\turbodota-v4\\\\node_modules\\\\@flaticon\\\\flaticon-uicons\\\\css\\\\bold\\\\all.css''\\), ''fi-br-[a-z0-9-]+''\\) | Where-Object { ''weight'',''sport'',''train'',''gym'',''dumb'',''barbell'',''kettle'',''muscle'',''exercise'',''workout'',''lifting'',''sword'',''shield'',''battle'',''hero'',''rpg'',''star'',''level'',''power'',''strength'',''magic'',''arrow'',''run'' | ForEach-Object { if \\($args[0].Value -match $_\\) { return $true } }; $false } | Select-Object -ExpandProperty Value | Sort-Object -Unique }\")",
+      "Bash(findstr:*)"
     ]
   }
 }

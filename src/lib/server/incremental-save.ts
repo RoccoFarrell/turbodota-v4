@@ -42,7 +42,8 @@ export async function resolveIncrementalSave(
 		});
 		if (!save) error(404, 'Save not found');
 		if (save.userId !== userId) error(403, 'Forbidden');
-		return { saveId: save.id, userId: save.userId, account_id: save.account_id, essence: 0 };
+		const account_id = await ensureSaveAccountId(save, user.account_id);
+		return { saveId: save.id, userId: save.userId, account_id, essence: 0 };
 	}
 
 	// No saveId: use first save or create one
@@ -61,5 +62,23 @@ export async function resolveIncrementalSave(
 			select: { id: true, userId: true, account_id: true }
 		});
 	}
-	return { saveId: save.id, userId: save.userId, account_id: save.account_id, essence: 0 };
+	const account_id = await ensureSaveAccountId(save, user.account_id);
+	return { saveId: save.id, userId: save.userId, account_id, essence: 0 };
+}
+
+/**
+ * If the save has no account_id but the user has one (e.g. set on profile), use it and persist to the save.
+ * Returns the effective account_id for the save.
+ */
+async function ensureSaveAccountId(
+	save: { id: string; account_id: number | null },
+	userAccountId: number | null
+): Promise<number | null> {
+	if (save.account_id != null) return save.account_id;
+	if (userAccountId == null) return null;
+	await prisma.incrementalSave.update({
+		where: { id: save.id },
+		data: { account_id: userAccountId }
+	});
+	return userAccountId;
 }

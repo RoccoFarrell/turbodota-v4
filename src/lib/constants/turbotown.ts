@@ -1,4 +1,4 @@
-export const constant_townVersion: string = "5.1"
+export const constant_townVersion: string = "6.0"
 export const constant_patchLink: string ="dotadeck-launch"
 export const constant_questXP: number = 100
 export const constant_questGold: number = 100

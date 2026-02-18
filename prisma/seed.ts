@@ -1,8 +1,7 @@
 /**
  * Seeds the dev database with one user (Rocco) and "Dev Test League".
  * Also uploads incremental game balance data from data/heroes_base_stats.csv and data/hero_abilities.csv.
- * Order matters: DotaUser → User → Key (Lucia Steam) → League.
- * The Key is required so Steam login (auth.useKey('steam', steamid)) works.
+ * Order matters: DotaUser → User → League.
  */
 import 'dotenv/config';
 import * as fs from 'fs';
@@ -31,7 +30,7 @@ async function main() {
 		update: {}
 	});
 
-	// 2. User (Lucia auth user; id = steam_id string for Steam login)
+	// 2. User (dev user; id = steam_id string for Steam login)
 	await prisma.user.upsert({
 		where: { account_id: 65110965 },
 		create: {
@@ -50,18 +49,7 @@ async function main() {
 		update: {}
 	});
 
-	// 3. Lucia Key for Steam (required for auth.useKey('steam', steamid); id = "providerId:providerUserId")
-	await prisma.key.upsert({
-		where: { id: 'steam:76561198025376693' },
-		create: {
-			id: 'steam:76561198025376693',
-			user_id: '76561198025376693',
-			hashed_password: null
-		},
-		update: {}
-	});
-
-	// 4. Dev Test League (creator = this user, member = their DotaUser)
+	// 3. Dev Test League (creator = this user, member = their DotaUser)
 	const existing = await prisma.league.findFirst({ where: { name: 'Dev Test League' } });
 	if (existing) {
 		await prisma.league.update({
@@ -80,8 +68,46 @@ async function main() {
 		});
 	}
 
-	// 5. Incremental game: hero base stats and abilities from CSVs
+	// 4. Incremental game: hero base stats and abilities from CSVs
 	await seedIncrementalHeroData(prisma);
+
+	// 5. Hero table from OpenDota (same as GET /api/getHeroes?forceUpdate=true)
+	await syncHeroesFromOpenDota(prisma);
+}
+
+/** Fetch heroes from OpenDota and upsert into Hero table. Runs during seed so reset works without the app server. */
+async function syncHeroesFromOpenDota(prisma: PrismaClient) {
+	const chunkSize = 10;
+	try {
+		const raw = await fetch('https://api.opendota.com/api/heroes', {
+			method: 'get',
+			headers: { 'Content-Type': 'application/json' }
+		}).then((r) => r.json() as Promise<{ id: number; name: string; localized_name: string; primary_attr: string; attack_type: string; roles?: string[]; legs?: number }[]>);
+		const heroes = raw.map((h) => ({
+			id: h.id,
+			name: h.name,
+			localized_name: h.localized_name,
+			primary_attr: h.primary_attr,
+			attack_type: h.attack_type,
+			roles: JSON.stringify(h.roles ?? []),
+			legs: h.legs ?? null
+		}));
+		for (let i = 0; i < heroes.length; i += chunkSize) {
+			const chunk = heroes.slice(i, i + chunkSize);
+			await prisma.$transaction(
+				chunk.map((hero) =>
+					prisma.hero.upsert({
+						where: { id: hero.id },
+						update: hero,
+						create: hero
+					})
+				)
+			);
+		}
+		console.log(`[seed] Heroes synced from OpenDota (${heroes.length} heroes).`);
+	} catch (e) {
+		console.warn('[seed] Could not sync heroes from OpenDota:', (e as Error).message);
+	}
 }
 
 function parseCsv(content: string): string[][] {
@@ -276,21 +302,6 @@ async function seedIncrementalHeroData(prisma: PrismaClient) {
 
 main()
 	.then(async () => {
-		// Populate Hero table from OpenDota (same as GET /api/getHeroes?forceUpdate=true)
-		const origin = process.env.SITE_ORIGIN ?? process.env.ORIGIN ?? 'http://localhost:5173';
-		const url = `${origin}/api/getHeroes?forceUpdate=true`;
-		try {
-			const res = await fetch(url);
-			if (res.ok) {
-				const data = await res.json();
-				console.log(`[seed] Heroes synced from OpenDota (${data.allHeroes?.length ?? 0} heroes).`);
-			} else {
-				console.warn(`[seed] GET ${url} returned ${res.status}. Start the app and run the seed again, or visit that URL to sync heroes.`);
-			}
-		} catch (e) {
-			console.warn('[seed] Could not fetch /api/getHeroes?forceUpdate=true:', (e as Error).message);
-			console.warn('Start the dev server (npm run dev) and run "npx prisma db seed" again, or visit /api/getHeroes?forceUpdate=true in the browser to populate heroes.');
-		}
 		await prisma.$disconnect();
 	})
 	.catch(async (e) => {

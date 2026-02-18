@@ -23,6 +23,7 @@ A **separate** game concept from the card-battler: an incremental/idle-style gam
 | [ENCOUNTERS_AND_MAP.md](./ENCOUNTERS_AND_MAP.md) | Encounter model and run encounter order (graph = source of truth) |
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | Code layout, data models, timer engine, API surface |
 | [DEVELOPMENT_ROADMAP.md](./DEVELOPMENT_ROADMAP.md) | Phased implementation plan; short, testable chunks |
+| [TODO.md](./TODO.md) | Backlog: run history, run levels, onboarding, profile/search |
 | [OPEN_QUESTIONS.md](./OPEN_QUESTIONS.md) | Resolved decisions and open questions |
 | [phase-0/](./phase-0/) | Phase 0: [PHASE_0_PENDING.md](./phase-0/PHASE_0_PENDING.md), [PHASE_0_COMPLETE.md](./phase-0/PHASE_0_COMPLETE.md) |
 | [phase-1/](./phase-1/) | Phase 1 completion: [PHASE_1_COMPLETE.md](./phase-1/PHASE_1_COMPLETE.md) |

@@ -6,7 +6,7 @@
 	import { getContext, setContext } from 'svelte';
 
 	import { dev } from '$app/environment';
-	import { beforeNavigate } from '$app/navigation';
+	import { beforeNavigate, invalidateAll } from '$app/navigation';
 	import { navigating, page } from '$app/stores';
 	import { browser } from '$app/environment';
 
@@ -104,6 +104,42 @@
 
 	let user: User | null = data.user || null;
 	let session: UserSession | null = data.session || null;
+
+	const REFRESH_COOLDOWN_MS = 5000;
+
+	let matchRefreshLoading = $state(false);
+	let lastRefreshCompletedAt = $state<number>(0);
+
+	async function refreshMatches() {
+		const accountId = user?.account_id;
+		if (!accountId || matchRefreshLoading) return;
+
+		const now = Date.now();
+		if (lastRefreshCompletedAt > 0 && now - lastRefreshCompletedAt < REFRESH_COOLDOWN_MS) {
+			const remainingMs = REFRESH_COOLDOWN_MS - (now - lastRefreshCompletedAt);
+			const secondsRemaining = Math.ceil(remainingMs / 1000);
+			toaster.warning({
+				title: 'Rate limit',
+				description: `Please wait ${secondsRemaining} second${secondsRemaining === 1 ? '' : 's'} before refreshing matches again.`
+			});
+			return;
+		}
+
+		matchRefreshLoading = true;
+		try {
+			const res = await fetch(`/api/updateMatchesForUser/${accountId}`, { method: 'GET' });
+			if (res.ok) {
+				lastRefreshCompletedAt = Date.now();
+				await invalidateAll();
+				toaster.success({
+					title: 'Matches refreshed',
+					description: 'Your match data has been updated.'
+				});
+			}
+		} finally {
+			matchRefreshLoading = false;
+		}
+	}
 
 	// For backwards compatibility with components expecting old Lucia session structure
 	// Transform to match old { user: {...} } structure
@@ -303,6 +339,56 @@
 				<AppBar.Trail>
 					<div class="flex items-center space-x-3 mr-4">
 						{#if user}
+							<!-- Profile link with Dota connection status (click = refresh when connected) -->
+							<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+							<div
+								class="flex items-center gap-2 p-1.5 rounded-full text-surface-300 text-xs min-w-0 {data.dotaAccountStatus?.connected && !matchRefreshLoading
+									? 'hover:bg-surface-500/30 transition-colors cursor-pointer'
+									: ''}"
+								role={data.dotaAccountStatus?.connected ? 'button' : undefined}
+								tabindex={data.dotaAccountStatus?.connected ? 0 : undefined}
+								onclick={data.dotaAccountStatus?.connected ? refreshMatches : undefined}
+								onkeydown={data.dotaAccountStatus?.connected
+									? (e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), refreshMatches())
+									: undefined}
+							>
+								<a href="/profile" class="shrink-0" aria-label="Profile" onclick={(e) => e.stopPropagation()}>
+									<span
+										class="w-3 h-3 rounded-full block {matchRefreshLoading
+											? 'bg-amber-500 animate-pulse'
+											: data.dotaAccountStatus?.connected
+												? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]'
+												: 'bg-surface-500'}"
+										aria-hidden="true"
+									></span>
+								</a>
+								<span class="flex flex-col leading-tight min-w-0">
+									{#if matchRefreshLoading}
+										<span class="text-amber-400">Refreshing matches…</span>
+									{:else if data.dotaAccountStatus?.connected}
+										<span>Last Match Parsed</span>
+										<span class="text-surface-400">
+											{data.dotaAccountStatus?.lastMatchesFetched
+												? new Date(data.dotaAccountStatus.lastMatchesFetched).toLocaleString()
+												: '—'}
+											{#if data.dotaAccountStatus?.lastMatchId}
+												{' · '}
+												<a
+													href={`https://dotabuff.com/matches/${data.dotaAccountStatus.lastMatchId}`}
+													target="_blank"
+													rel="noopener noreferrer"
+													class="text-primary-400 hover:underline"
+													onclick={(e) => e.stopPropagation()}
+												>
+													Match {data.dotaAccountStatus.lastMatchId}
+												</a>
+											{/if}
+										</span>
+									{:else}
+										<a href="/profile" class="text-surface-300 hover:text-surface-100" onclick={(e) => e.stopPropagation()}>Connect Dota in profile</a>
+									{/if}
+								</span>
+							</div>
 							<!-- Notifications -->
 							{#if !$page.url.pathname.includes('herostats')}
 								<a href="/feed" class="h-10 w-10" aria-label="Notifications">
@@ -316,18 +402,6 @@
 									</div>
 								</a>
 							{/if}
-							<!-- User Info -->
-							<div class="flex items-center space-x-3">
-								{#if user.avatar_url}
-									<img src={user.avatar_url} alt="Avatar" class="w-8 h-8 rounded-full" />
-								{/if}
-								<div class="hidden md:flex flex-col text-right leading-tight">
-									<p class="font-bold text-sm">{user.username}</p>
-									{#if user.email}
-										<p class="text-xs text-surface-400">{user.email}</p>
-									{/if}
-								</div>
-							</div>
 							<!-- Logout -->
 							<form method="POST">
 								<button class="btn bg-red-950/50 hover:bg-red-900/60 text-red-300 border border-red-800/50" formaction="/logout" type="submit">
@@ -361,7 +435,7 @@
 	{#snippet sidebarLeft()}
 		<!-- Insert the list: -->
 		<div class="border-r-1 border-surface-500 h-full flex flex-col justify-between w-full" id="sidebarLeft">
-			<Navigation {session} />
+			<Navigation session={legacySession} />
 			<div class="flex flex-col items-center w-full justify-center bottom-0 relative">
 				<div class="p-2 flex flex-col justify-center items-center">
 					<a href={`/blog/${constant_patchLink}`}>
