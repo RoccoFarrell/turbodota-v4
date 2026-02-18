@@ -13,25 +13,25 @@ function authLineup(lineup: { save?: { userId: string } | null }, sessionUserId:
 
 /** GET /api/incremental/lineups/[id] – get lineup (own only, via save) */
 export const GET: RequestHandler<{ id: string }> = async ({ params, locals }) => {
-	const session = await locals.auth.validate();
-	if (!session) error(401, 'Unauthorized');
+	const user = locals.user;
+	if (!user) error(401, 'Unauthorized');
 	const lineup = await prisma.incrementalLineup.findUnique({
 		where: { id: params.id },
 		include: { save: { select: { userId: true } } }
 	});
-	authLineup(lineup, session.user.userId);
+	authLineup(lineup, user.id);
 	return json(lineup);
 };
 
 /** PATCH /api/incremental/lineups/[id] – update name or heroIds */
 export const PATCH: RequestHandler<{ id: string }> = async ({ params, request, locals }) => {
-	const session = await locals.auth.validate();
-	if (!session) error(401, 'Unauthorized');
+	const user = locals.user;
+	if (!user) error(401, 'Unauthorized');
 	const lineup = await prisma.incrementalLineup.findUnique({
 		where: { id: params.id },
 		include: { save: { select: { userId: true } } }
 	});
-	authLineup(lineup, session.user.userId);
+	authLineup(lineup, user.id);
 	let body: { name?: string; heroIds?: number[] };
 	try {
 		body = await request.json();
@@ -75,13 +75,13 @@ export const PATCH: RequestHandler<{ id: string }> = async ({ params, request, l
 
 /** DELETE /api/incremental/lineups/[id] – only when lineup has no active run. */
 export const DELETE: RequestHandler<{ id: string }> = async ({ params, locals }) => {
-	const session = await locals.auth.validate();
-	if (!session) error(401, 'Unauthorized');
+	const user = locals.user;
+	if (!user) error(401, 'Unauthorized');
 	const lineup = await prisma.incrementalLineup.findUnique({
 		where: { id: params.id },
 		include: { save: { select: { userId: true } } }
 	});
-	authLineup(lineup, session.user.userId);
+	authLineup(lineup, user.id);
 	const activeRun = await prisma.incrementalRun.findFirst({
 		where: { lineupId: params.id, status: 'ACTIVE' }
 	});

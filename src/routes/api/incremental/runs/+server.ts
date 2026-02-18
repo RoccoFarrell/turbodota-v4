@@ -5,10 +5,10 @@ import { startRun, type RunServiceDb } from '$lib/incremental/run/run-service';
 
 /** GET /api/incremental/runs – list current user's runs (most recent first). */
 export const GET: RequestHandler = async ({ locals }) => {
-	const session = await locals.auth.validate();
-	if (!session) error(401, 'Unauthorized');
+	const user = locals.user;
+	if (!user) error(401, 'Unauthorized');
 	const runs = await prisma.incrementalRun.findMany({
-		where: { userId: session.user.userId },
+		where: { userId: user.id },
 		orderBy: { startedAt: 'desc' },
 		select: { id: true, status: true, startedAt: true }
 	});
@@ -17,9 +17,9 @@ export const GET: RequestHandler = async ({ locals }) => {
 
 /** POST /api/incremental/runs – start run. Body: { lineupId, seed? } */
 export const POST: RequestHandler = async ({ request, locals }) => {
-	const session = await locals.auth.validate();
-	if (!session) error(401, 'Unauthorized');
-	const userId = session.user.userId;
+	const user = locals.user;
+	if (!user) error(401, 'Unauthorized');
+	const userId = user.id;
 	let body: { lineupId?: string; seed?: string };
 	try {
 		body = await request.json();

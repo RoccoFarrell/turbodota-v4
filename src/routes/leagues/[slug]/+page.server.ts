@@ -1,4 +1,3 @@
-import { auth } from '$lib/server/lucia';
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import prisma from '$lib/server/prisma';
@@ -18,8 +17,8 @@ function sleep(ms: number): Promise<void> {
 
 export const load: PageServerLoad = async ({ locals, parent }) => {
 	const parentData = await parent();
-	const session = await locals.auth.validate();
-	if (!session) {
+	const user = locals.user;
+	if (!user) {
 		redirect(302, '/');
 	}
 
@@ -84,8 +83,8 @@ export const load: PageServerLoad = async ({ locals, parent }) => {
 
 export const actions: Actions = {
 	addLeagueMembers: async ({ request, locals, params }) => {
-		const session = await locals.auth.validate();
-		if (!session || !session.user.roles?.includes('dev')) return fail(403, { message: 'Not an admin' });
+		const user = locals.user;
+		if (!user || !user.roles?.includes('dev')) return fail(403, { message: 'Not an admin' });
 
 		const leagueID = parseInt(params.slug, 10);
 		if (Number.isNaN(leagueID)) return fail(400, { message: 'Invalid league' });
@@ -133,8 +132,8 @@ export const actions: Actions = {
 	},
 
 	removeLeagueMember: async ({ request, locals, params }) => {
-		const session = await locals.auth.validate();
-		if (!session || !session.user.roles?.includes('dev')) return fail(403, { message: 'Not an admin' });
+		const user = locals.user;
+		if (!user || !user.roles?.includes('dev')) return fail(403, { message: 'Not an admin' });
 
 		const leagueID = parseInt(params.slug, 10);
 		if (Number.isNaN(leagueID)) return fail(400, { message: 'Invalid league' });
@@ -160,9 +159,9 @@ export const actions: Actions = {
 	},
 
 	createSeason: async ({ request, locals }) => {
-		const session = await locals.auth.validate();
+		const user = locals.user;
 
-		if (!session || !session.user.roles.includes('dev')) return fail(400, { message: 'Not an admin' });
+		if (!user || !user.roles?.includes('dev')) return fail(400, { message: 'Not an admin' });
 
 		const formData = await request.formData()
 

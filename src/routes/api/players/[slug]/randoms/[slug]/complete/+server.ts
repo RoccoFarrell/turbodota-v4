@@ -1,5 +1,4 @@
 import type { RequestHandler } from '@sveltejs/kit';
-import { auth } from '$lib/server/lucia';
 import prisma from '$lib/server/prisma';
 import winOrLoss from '$lib/helpers/winOrLoss';
 import dayjs from 'dayjs';
@@ -14,7 +13,7 @@ BigInt.prototype.toJSON = function (): number {
 };
 
 export const POST: RequestHandler = async ({ request, params, url, locals, fetch }) => {
-	const session = await locals.auth.validate();
+	const user = locals.user;
 
 	let requestData = await request.json();
 	let { random } = requestData;
@@ -24,10 +23,9 @@ export const POST: RequestHandler = async ({ request, params, url, locals, fetch
 
 	console.log(`[/random/complete] account_id: ${account_id}, randomID: ${randomID}`);
 
-	if (session) {
-		//console.log(`[/random/complete] session in API call: `, JSON.stringify(session), `params.slug: `, params.slug);
+	if (user) {
 		//reject the call if the user is not authenticated
-		if (account_id !== session.user.account_id)
+		if (account_id !== user.account_id)
 			return new Response(JSON.stringify({ success: false, status: 'unauthorized' }), { status: 401 });
 
 		console.log('ready to check if random was completed');

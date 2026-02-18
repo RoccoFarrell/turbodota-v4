@@ -13,12 +13,17 @@ import { GAME_MODE_TURBO, GAME_MODES_RANKED, MATCH_CUTOFF_START_TIME } from '$li
  * Uses IncrementalSaveQuest for startedAt and claimCount. Creates a row per quest on first use with startedAt = now (when first assigned).
  */
 export const GET: RequestHandler = async (event) => {
-	const session = await event.locals.auth.validate();
-	if (!session) error(401, 'Unauthorized');
+	const user = event.locals.user;
+	if (!user) error(401, 'Unauthorized');
 
-	const accountId = session.user.account_id;
 	const saveIdParam = event.url.searchParams.get('saveId') ?? undefined;
-	const { saveId } = await resolveIncrementalSave(event, { saveId: saveIdParam });
+	const save = await resolveIncrementalSave(event, { saveId: saveIdParam });
+
+	// Use account_id from the save (per-save tracking)
+	const accountId = save.account_id;
+	if (!accountId) {
+		error(400, 'This save has no Dota account ID set. Please set one in your profile or save settings.');
+	}
 
 	const progress = await getQuestProgress(accountId);
 	const progressMap = new Map(progress.map((p) => [p.questId, p]));
@@ -26,7 +31,7 @@ export const GET: RequestHandler = async (event) => {
 	let saveQuestMap = new Map(
 		(
 			await prisma.incrementalSaveQuest.findMany({
-				where: { saveId },
+				where: { saveId: save.saveId },
 				select: { questId: true, startedAt: true, claimCount: true }
 			})
 		).map((r) => [r.questId, r] as const)
@@ -40,7 +45,7 @@ export const GET: RequestHandler = async (event) => {
 		const now = new Date();
 		await prisma.incrementalSaveQuest.createMany({
 			data: missingQuestIds.map((questId) => ({
-				saveId,
+				saveId: save.saveId,
 				questId,
 				startedAt: now,
 				claimCount: 0
@@ -49,7 +54,7 @@ export const GET: RequestHandler = async (event) => {
 		saveQuestMap = new Map(
 			(
 				await prisma.incrementalSaveQuest.findMany({
-					where: { saveId },
+					where: { saveId: save.saveId },
 					select: { questId: true, startedAt: true, claimCount: true }
 				})
 			).map((r) => [r.questId, r] as const)
@@ -112,5 +117,5 @@ export const GET: RequestHandler = async (event) => {
 		};
 	});
 
-	return json({ quests, saveId });
+	return json({ quests, saveId: save.saveId });
 };

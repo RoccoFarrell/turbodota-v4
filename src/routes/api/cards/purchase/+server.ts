@@ -2,8 +2,8 @@ import { json } from '@sveltejs/kit';
 import prisma from '$lib/server/prisma';
 
 export async function POST({ request, locals }) {
-    const session = await locals.auth.validate();
-    if (!session) {
+    const authUser = locals.user;
+    if (!authUser) {
         return new Response('Unauthorized', { status: 401 });
     }
 
@@ -11,7 +11,7 @@ export async function POST({ request, locals }) {
 
     try {
         const user = await prisma.user.findUnique({
-            where: { id: session.user.userId },
+            where: { id: authUser.id },
             include: { 
                 dotaDeckGames: {
                     where: { status: 'ACTIVE' },

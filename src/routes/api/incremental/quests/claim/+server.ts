@@ -14,8 +14,8 @@ import { addBankCurrency, addBankItem, type BankTx } from '$lib/incremental/bank
  * Quests are repeatable: increments claimCount, progress resets.
  */
 export const POST: RequestHandler = async (event) => {
-	const session = await event.locals.auth.validate();
-	if (!session) error(401, 'Unauthorized');
+	const user = event.locals.user;
+	if (!user) error(401, 'Unauthorized');
 
 	let body: { saveId?: string; questId?: string };
 	try {
@@ -30,13 +30,16 @@ export const POST: RequestHandler = async (event) => {
 	const questDef = getQuestDef(questId);
 	if (!questDef) error(400, `Unknown quest: ${questId}`);
 
-	const { saveId } = await resolveIncrementalSave(event, { saveId: body.saveId });
-	const accountId = session.user.account_id;
+	const save = await resolveIncrementalSave(event, { saveId: body.saveId });
+	const accountId = save.account_id;
+	if (!accountId) {
+		error(400, 'This save has no Dota account ID set. Please set one in your profile or save settings.');
+	}
 
 	// Load current save-quest row (may not exist if they never loaded the quests page)
 	const now = new Date();
 	const existing = await prisma.incrementalSaveQuest.findUnique({
-		where: { saveId_questId: { saveId, questId } },
+		where: { saveId_questId: { saveId: save.saveId, questId } },
 		select: { claimCount: true }
 	});
 	const claimCount = existing?.claimCount ?? 0;
@@ -54,9 +57,9 @@ export const POST: RequestHandler = async (event) => {
 	// Claim in a transaction: upsert save quest (reset period start, increment claim) + grant reward
 	await prisma.$transaction(async (tx) => {
 		await tx.incrementalSaveQuest.upsert({
-			where: { saveId_questId: { saveId, questId } },
+			where: { saveId_questId: { saveId: save.saveId, questId } },
 			create: {
-				saveId,
+				saveId: save.saveId,
 				questId,
 				startedAt: now,
 				claimCount: 1,
@@ -71,7 +74,7 @@ export const POST: RequestHandler = async (event) => {
 
 		if (questDef.reward?.currency) {
 			await addBankCurrency(
-				saveId,
+				save.saveId,
 				questDef.reward.currency.key,
 				questDef.reward.currency.amount,
 				tx as unknown as BankTx
@@ -79,7 +82,7 @@ export const POST: RequestHandler = async (event) => {
 		}
 		if (questDef.reward?.item) {
 			await addBankItem(
-				saveId,
+				save.saveId,
 				questDef.reward.item.itemId,
 				questDef.reward.item.quantity,
 				tx as unknown as BankTx
@@ -87,5 +90,5 @@ export const POST: RequestHandler = async (event) => {
 		}
 	});
 
-	return json({ success: true, questId, saveId });
+	return json({ success: true, questId, saveId: save.saveId });
 };

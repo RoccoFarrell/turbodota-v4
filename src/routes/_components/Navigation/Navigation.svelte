@@ -1,13 +1,13 @@
 <script lang="ts">
-	import type { Session } from 'lucia';
+	import type { User } from '@prisma/client';
 
 	import { page } from '$app/stores';
 	import { dev } from '$app/environment';
 
-	import steam_logo from '$lib/assets/steam_logo.png';
 	import TurboTownDark from '$lib/assets/turbotown_dark_noText.png'
+
 	interface Props {
-		session: Session | null;
+		session: { user: User } | null;
 	}
 
 	let { session }: Props = $props();
@@ -138,25 +138,6 @@
 					<p class={$page.url.pathname === '/admin/register' ? 'font-bold' : ''}>Register</p></a
 				>
 			</li>
-		{/if}
-		<hr class="border-t-4!" />
-		<!-- Steam Login-->
-		{#if !session || !session.user}
-			<li>
-				<a class="" href="/api/auth/steam" data-sveltekit-preload-data="tap">
-					<span><img class="w-6 ml-1.5" alt="steamlogo" src={steam_logo} /></span>
-					<span>Login</span>
-				</a>
-			</li>
-		{:else}
-			<form method="POST">
-				<li class="flex items-center justify-start">
-					<button class="btn w-full flex justify-center items-center space-x-4" formaction="/logout" type="submit">
-						<i class="fi fi-br-sign-out-alt text-slate-500"></i>
-						<p>Logout</p>
-					</button>
-				</li>
-			</form>
 		{/if}
 	</ul>
 </nav>

@@ -14,14 +14,14 @@ import { IncrementalRunStatus } from '@prisma/client';
  * Returns runState so client can navigate to map.
  */
 export const POST: RequestHandler<{ runId: string }> = async ({ params, locals }) => {
-	const session = await locals.auth.validate();
-	if (!session) error(401, 'Unauthorized');
+	const user = locals.user;
+	if (!user) error(401, 'Unauthorized');
 	const runId = params.runId;
 	const run = await prisma.incrementalRun.findUnique({
 		where: { id: runId },
 		select: { userId: true, lineupId: true, currentNodeId: true, nodeClearances: true }
 	});
-	if (!run || run.userId !== session.user.userId) error(404, 'Run not found');
+	if (!run || run.userId !== user.id) error(404, 'Run not found');
 
 	const cached = getCachedBattle(runId);
 	if (!cached) error(400, 'No active battle to complete');
@@ -35,7 +35,7 @@ export const POST: RequestHandler<{ runId: string }> = async ({ params, locals }
 	});
 	const defs = await getHeroDefsFromDb(lineup?.saveId ?? null);
 
-	await advanceRun(prisma as unknown as RunServiceDb, runId, session.user.userId, pendingNodeId, {
+	await advanceRun(prisma as unknown as RunServiceDb, runId, user.id, pendingNodeId, {
 		getHeroDef: defs.getHeroDef
 	});
 

@@ -1,5 +1,4 @@
 import type { RequestHandler } from '@sveltejs/kit';
-import { auth } from "$lib/server/lucia";
 import prisma from '$lib/server/prisma';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -31,11 +30,11 @@ export const GET: RequestHandler = async ({ params, url, locals }) => {
 };
 
 export const POST: RequestHandler = async ({ request, params, url, locals }) => {
-    const session = await locals.auth.validate();
+    const user = locals.user;
 
-    console.log(`session in API call: `, JSON.stringify(session), `params.slug: `, params.slug)
+    console.log(`user in API call: `, JSON.stringify(user), `params.slug: `, params.slug)
     //reject the call if the user is not authenticated
-    if(!session || params.slug?.toString() !== session.user.account_id.toString()) return new Response(JSON.stringify({"status": "unauthorized"}),{status: 401})
+    if(!user || params.slug?.toString() !== user.account_id?.toString()) return new Response(JSON.stringify({"status": "unauthorized"}),{status: 401})
     
     console.log(`params: ${JSON.stringify(params)}`)
 

@@ -1,4 +1,3 @@
-import { auth } from '$lib/server/lucia';
 import { fail, redirect, json } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import type { User } from '@prisma/client';
@@ -8,8 +7,8 @@ import prisma from '$lib/server/prisma';
 
 export const load: PageServerLoad = async ({ locals, parent }) => {
 	const parentData = await parent();
-	const session = await locals.auth.validate();
-	if (!session) {
+	const user = locals.user;
+	if (!user) {
 		redirect(302, '/');
 	}
 
@@ -20,9 +19,9 @@ export const load: PageServerLoad = async ({ locals, parent }) => {
 
 export const actions: Actions = {
 	createLeague: async ({ request, locals }) => {
-		const session = await locals.auth.validate();
+		const user = locals.user;
 
-		if (!session || !session.user.roles.includes('dev')) return fail(400, { message: 'Not an admin' });
+		if (!user || !user.roles?.includes('dev')) return fail(400, { message: 'Not an admin' });
 		const { leagueName, dotaUsersList } = Object.fromEntries(await request.formData()) as Record<string, string>;
 
 		try {
@@ -57,7 +56,7 @@ export const actions: Actions = {
 
 			//add user creating league to league
 			createdUserList.push({
-				account_id: session.user.account_id,
+				account_id: user.account_id!,
 				lastUpdated: new Date()
 			})
 
@@ -70,7 +69,7 @@ export const actions: Actions = {
 				data: {
 					name: leagueName,
 					lastUpdated: new Date(),
-					creatorID: session.user.account_id,
+					creatorID: user.account_id!,
 					members: {
 						connectOrCreate: createdUserList.map((user) => {
 							return {

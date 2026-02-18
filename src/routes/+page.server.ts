@@ -1,4 +1,3 @@
-import { auth } from '$lib/server/lucia';
 import { fail, redirect, json } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import type { TurbotownMetric, TurbotownItem, User } from '@prisma/client';

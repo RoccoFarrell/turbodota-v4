@@ -18,13 +18,13 @@ export const GET: RequestHandler = async (event) => {
 	const { saveId: resolvedSaveId } = await resolveIncrementalSave(event, { saveId });
 	const lineups = await getLineupsBySaveId(prisma as unknown as IncrementalDb, resolvedSaveId);
 
-	const session = await event.locals.auth.validate();
+	const user = event.locals.user;
 	let lineupsWithRuns = lineups;
-	if (session && lineups.length > 0) {
+	if (user && lineups.length > 0) {
 		const lineupIds = lineups.map((l) => l.id);
 		const activeRuns = await prisma.incrementalRun.findMany({
 			where: {
-				userId: session.user.userId,
+				userId: user.id,
 				lineupId: { in: lineupIds },
 				status: 'ACTIVE'
 			},

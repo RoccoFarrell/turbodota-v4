@@ -3,8 +3,8 @@ import prisma from '$lib/server/prisma';
 import { error } from '@sveltejs/kit';
 
 export async function POST({ locals }) {
-    const session = await locals.auth.validate();
-    if (!session) {
+    const user = locals.user;
+    if (!user) {
         error(401, 'Unauthorized');
     }
 
@@ -14,7 +14,7 @@ export async function POST({ locals }) {
             // Complete any active games
             await tx.dotaDeckGame.updateMany({
                 where: {
-                    userId: session.user.userId,
+                    userId: user.id,
                     status: 'ACTIVE'
                 },
                 data: {
@@ -26,7 +26,7 @@ export async function POST({ locals }) {
             // Create new game
             await tx.dotaDeckGame.create({
                 data: {
-                    userId: session.user.userId,
+                    userId: user.id,
                     gold: 10, // Starting gold
                     score: 0,
                     status: 'ACTIVE'

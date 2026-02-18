@@ -17,11 +17,14 @@ function gameModeLabel(game_mode: number): 'Turbo' | 'Ranked' | 'Other' {
 
 /** GET /api/incremental/roster/eligible-wins – last 10 games with flags for UI. Query: saveId (optional). */
 export const GET: RequestHandler = async (event) => {
-	const session = await event.locals.auth.validate();
-	if (!session) return new Response(null, { status: 401 });
+	const user = event.locals.user;
+	if (!user) return new Response(null, { status: 401 });
 	const saveId = event.url.searchParams.get('saveId') ?? undefined;
-	const { saveId: resolvedSaveId } = await resolveIncrementalSave(event, { saveId });
-	const accountId = session.user.account_id;
+	const save = await resolveIncrementalSave(event, { saveId });
+	const accountId = save.account_id;
+	if (!accountId) {
+		return new Response('This save has no Dota account ID set', { status: 400 });
+	}
 
 	const [matches, converted, roster, heroes] = await Promise.all([
 		prisma.match.findMany({
@@ -31,11 +34,11 @@ export const GET: RequestHandler = async (event) => {
 			select: { match_id: true, hero_id: true, player_slot: true, radiant_win: true, start_time: true, game_mode: true }
 		}),
 		prisma.incrementalConvertedMatch.findMany({
-			where: { saveId: resolvedSaveId },
+			where: { saveId: save.saveId },
 			select: { matchId: true }
 		}),
 		prisma.incrementalRosterHero.findMany({
-			where: { saveId: resolvedSaveId },
+			where: { saveId: save.saveId },
 			select: { heroId: true }
 		}),
 		prisma.hero.findMany({ select: { id: true, localized_name: true } })
@@ -70,6 +73,6 @@ export const GET: RequestHandler = async (event) => {
 	return json({
 		recentMatches,
 		eligibleWins,
-		saveId: resolvedSaveId
+		saveId: save.saveId
 	});
 };

@@ -1,11 +1,10 @@
 import type { RequestHandler } from '@sveltejs/kit';
-import { auth } from '$lib/server/lucia';
 import prisma from '$lib/server/prisma';
 import dayjs from 'dayjs';
 
 //constants
 import { constant_questGold, constant_questXP } from '$lib/constants/turbotown';
-import type { Session } from 'lucia';
+import type { User } from '@prisma/client';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unreachable code error
@@ -21,29 +20,21 @@ export const POST: RequestHandler = async ({ request, params, url, locals }) => 
 
 	//read request data
 	let randomRequestBody = await request.json();
-	let session: Session | null;
-	if (randomRequestBody.session) {
-		console.log('[random create] - found session in request body, skipping locals auth validate');
-		session = randomRequestBody.session;
-	} else {
-		console.log('[random create] - session wasnt found in request body, validating auth locally');
-		session = await locals.auth.validate();
-	}
+	const user = locals.user;
 
-	console.log('[random create] - locals auth validate: ', dayjs().diff(tx_startTime, 'millisecond'));
+	console.log('[random create] - auth check: ', dayjs().diff(tx_startTime, 'millisecond'));
 
 	console.log(
-		`[/api/random/${params.slug}/create] session in API call: `,
-		JSON.stringify(session),
+		`[/api/random/${params.slug}/create] user: `,
+		JSON.stringify(user),
 		`params.slug: `,
 		params.slug
 	);
-	//reject the call if the user is not authenticated
 
 	let randomCreateResult;
 
-	if (session && session.user) {
-		if (params.slug?.toString() !== session.user.account_id.toString())
+	if (user) {
+		if (params.slug?.toString() !== user.account_id?.toString())
 			return new Response(JSON.stringify({ status: 'unauthorized' }), { status: 401 });
 
 		console.log(`params: ${JSON.stringify(params)}`);
@@ -98,43 +89,43 @@ export const POST: RequestHandler = async ({ request, params, url, locals }) => 
 
 		if (season && season.turbotowns.length > 0) {
 			if (season.turbotowns[0].quests.length < 3) {
-				randomCreateResult = await prisma.random.create({
-					data: {
-						account_id: session.user.account_id,
-						active: true,
-						status: 'active',
-						date: new Date(),
-						availableHeroes: randomRequestBody.availableHeroes.toString(),
-						bannedHeroes: randomRequestBody.bannedHeroes.toString(),
-						selectedRoles: randomRequestBody.selectedRoles.toString(),
-						expectedGold: randomRequestBody.expectedGold,
-						modifierAmount: randomRequestBody.modifierAmount,
-						modifierTotal: randomRequestBody.modifierTotal,
-						randomedHero: randomRequestBody.randomedHero,
-						seasons: {
-							connect: { id: season.id }
-						},
-						quests: {
-							create: {
-								turbotownID: season.turbotowns[0].id,
-								questSlot: randomRequestBody.questSlot,
-								type: 'random',
-								active: true,
-								status: 'active',
-								xp: constant_questXP,
-								gold: constant_questGold,
-								createdDate: new Date()
-							}
-						}
-					}
-				});
-			} else {
-				return new Response(JSON.stringify({ status: 'already have 3 quests, try refreshing' }), { status: 401 });
-			}
-		} else {
 			randomCreateResult = await prisma.random.create({
 				data: {
-					account_id: session.user.account_id,
+					account_id: user.account_id!,
+					active: true,
+					status: 'active',
+					date: new Date(),
+					availableHeroes: randomRequestBody.availableHeroes.toString(),
+					bannedHeroes: randomRequestBody.bannedHeroes.toString(),
+					selectedRoles: randomRequestBody.selectedRoles.toString(),
+					expectedGold: randomRequestBody.expectedGold,
+					modifierAmount: randomRequestBody.modifierAmount,
+					modifierTotal: randomRequestBody.modifierTotal,
+					randomedHero: randomRequestBody.randomedHero,
+					seasons: {
+						connect: { id: season.id }
+					},
+					quests: {
+						create: {
+							turbotownID: season.turbotowns[0].id,
+							questSlot: randomRequestBody.questSlot,
+							type: 'random',
+							active: true,
+							status: 'active',
+							xp: constant_questXP,
+							gold: constant_questGold,
+							createdDate: new Date()
+						}
+					}
+				}
+			});
+		} else {
+			return new Response(JSON.stringify({ status: 'already have 3 quests, try refreshing' }), { status: 401 });
+		}
+	} else {
+		randomCreateResult = await prisma.random.create({
+			data: {
+				account_id: user.account_id!,
 					active: true,
 					status: 'active',
 					date: new Date(),

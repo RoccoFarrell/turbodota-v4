@@ -9,7 +9,7 @@ export const config = {
 
 export const load: PageServerLoad = async ({ params, locals, url, setHeaders, fetch }) => {
 	//session info
-	const session = await locals.auth.validate()
+	const user = locals.user;
 
 	//get mmr data
 	const getMMR = async () => {

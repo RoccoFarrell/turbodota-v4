@@ -14,24 +14,32 @@ datasource db {
 // user models
 model User {
   id           String      @id @unique
+
+  // Auth identifiers
+  google_id    String?     @unique  // Google OAuth sub (subject identifier)
+  steam_id     BigInt?     @unique  // Steam ID (from Steam OpenID)
+
+  // Display info
+  email        String?     @unique  // from Google or manual entry
   name         String?
   username     String      @unique
-  account_id   Int         @unique
-  steam_id     BigInt?     @unique
-  profile_url  String?
   avatar_url   String?
+  profile_url  String?
   roles        String?
-  createdDate  DateTime    @default(now())
-  lastUpdated  DateTime    @default(now())
-  key          Key[]
-  auth_session Session[]
-  randoms      Random[]
-  user_prefs   UserPrefs[]
-  leagues      League[]
-  //player_match_details PlayersMatchDetail[]
+
+  // Dota account (kept for non-incremental features like turbotown, leagues, random, dotadeck)
+  account_id   Int?        @unique
   dota_user    DotaUser?   @relation(fields: [account_id], references: [account_id])
 
-  //matches      Match[]
+  // Timestamps
+  createdDate  DateTime    @default(now())
+  lastUpdated  DateTime    @default(now())
+
+  // Relations
+  sessions         UserSession[]
+  randoms          Random[]
+  user_prefs       UserPrefs[]
+  leagues          League[]
   Turbotown        Turbotown[]
   userCards        UserCard[]
   dotaDeckGames    DotaDeckGame[]
@@ -321,24 +329,16 @@ model Item {
   TurbotownItem     TurbotownItem[]
 }
 
-model Session {
-  id             String @id @unique
-  user_id        String
-  active_expires BigInt
-  idle_expires   BigInt
-  user           User   @relation(fields: [user_id], references: [id], onDelete: Cascade)
+// New session model for custom session management (replacing Lucia)
+model UserSession {
+  id        String   @id @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 
-  @@index([user_id])
-}
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-model Key {
-  id              String  @id @unique
-  hashed_password String?
-  user_id         String
-  // primary_key     Boolean
-  user            User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
-
-  @@index([user_id])
+  @@index([userId])
 }
 
 model Hero {
@@ -607,11 +607,12 @@ enum IncrementalNodeType {
 // One save = one "game slot" (roster, action state, lineups). User can have multiple saves.
 // Currencies live in IncrementalBankCurrency; items in IncrementalBankItem (see BANK_SYSTEM.md).
 model IncrementalSave {
-  id        String   @id @default(cuid())
-  userId    String
-  name      String? // e.g. "Main", "Alt" – optional label
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String   @id @default(cuid())
+  userId     String
+  account_id Int? // Per-save Dota account (can differ from User.account_id)
+  name       String? // e.g. "Main", "Alt" – optional label
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   user              User                              @relation(fields: [userId], references: [id], onDelete: Cascade)
   actionState       IncrementalActionState?

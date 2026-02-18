@@ -3,8 +3,8 @@ import prisma from '$lib/server/prisma';
 import { error } from '@sveltejs/kit';
 
 export async function POST({ request, locals }) {
-    const session = await locals.auth.validate();
-    if (!session) {
+    const user = locals.user;
+    if (!user) {
         error(401, 'Unauthorized');
     }
 

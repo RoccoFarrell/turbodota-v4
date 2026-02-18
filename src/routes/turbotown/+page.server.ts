@@ -19,11 +19,11 @@ export const actions: Actions = {
 	useObserver: async ({ request, locals, fetch }) => {
 		let tx_startTime = dayjs();
 		console.log('[observer] received useObserver post in turbotown page server, starting auth validate');
-		const session = await locals.auth.validate();
+		const user = locals.user;
 		let authValidate_endTime = dayjs().diff(tx_startTime, 'millisecond');
 		console.log(`[observer] authValidate took: ${authValidate_endTime}`)
 
-		if (!session){
+		if (!user){
 			console.log('[observer] form failing: , ', dayjs().diff(tx_startTime, 'millisecond'))
 			return fail(400, { message: 'Not logged in, cannot use item' });
 		} 
@@ -39,7 +39,7 @@ export const actions: Actions = {
 		//console.log('turbotownID: ', (turbotownID))
 		//console.log('random hero select:', hero);
 
-		console.log('[observer page.server.ts] user trying to use item', session.user.account_id);
+		console.log('[observer page.server.ts] user trying to use item', user.account_id);
 		try {
 			let tx_result = await prisma.$transaction(
 				async (tx) => {
@@ -64,18 +64,17 @@ export const actions: Actions = {
 						console.log(`[observer] delete item end: ${dayjs().diff(tx_startTime, 'millisecond')}`)
 
 						if (!sender) {
-							throw new Error(`${session.user.account_id} failed to delete item!`);
-						}
+						throw new Error(`${user.account_id} failed to delete item!`);
+					}
 
-						// 3. Enter the selected random hero into the quest slot
-						let questData = {
-							...questStore,
-							availableHeroes: questStore.availableHeroes.map((hero: Hero) => hero.id),
-							bannedHeroes: questStore.bannedHeroes.map((hero: Hero) => hero.id),
-							randomedHero: questStore.randomedHero.id,
-							questSlot: questStoreSlot,
-							session
-						};
+					// 3. Enter the selected random hero into the quest slot
+					let questData = {
+						...questStore,
+						availableHeroes: questStore.availableHeroes.map((hero: Hero) => hero.id),
+						bannedHeroes: questStore.bannedHeroes.map((hero: Hero) => hero.id),
+						randomedHero: questStore.randomedHero.id,
+						questSlot: questStoreSlot
+					};
 
 						//fairly certain the calls to prisma.xx inside transaction is locking the DB
 						/*
@@ -93,9 +92,9 @@ export const actions: Actions = {
 						console.log(`[observer] random create start: ${dayjs().diff(tx_startTime, 'millisecond')}`)
 
 						//new method
-						let randomCreateResponse = await tx.random.create({
-							data: {
-								account_id: session.user.account_id,
+					let randomCreateResponse = await tx.random.create({
+						data: {
+							account_id: user.account_id!,
 								active: true,
 								status: 'active',
 								date: new Date(),
@@ -171,7 +170,7 @@ export const actions: Actions = {
 
 							return { itemUseResponse, executionTime };
 						} else {
-							throw new Error(`${session.user.account_id} could not find active observer item or create random`);
+							throw new Error(`${user.account_id} could not find active observer item or create random`);
 						}
 					} else {
 						//add else-ifs for other items as they are developed
@@ -194,8 +193,8 @@ export const actions: Actions = {
 	},
 	useLinkens: async ({ request, locals, fetch }) => {
 		console.log('received useLinkens post in turbotown page server');
-		const session = await locals.auth.validate();
-		if (!session) return fail(400, { message: 'Not logged in, cannot use item' });
+		const user = locals.user;
+		if (!user) return fail(400, { message: 'Not logged in, cannot use item' });
 		const formData = await request.formData();
 
 		let turbotownID = parseInt(formData.get('turbotownID')?.toString() || '-1');
@@ -221,7 +220,7 @@ export const actions: Actions = {
 					});
 
 					if (!sender) {
-						throw new Error(`${session.user.account_id} failed to delete item!`);
+						throw new Error(`${user.account_id} failed to delete item!`);
 					}
 
 					// 3. Check if the user that is receiving the buff already has a Linken's Sphere buff applied
@@ -238,7 +237,7 @@ export const actions: Actions = {
 					})
 
 					if (statusActive) {
-						throw new Error(`${session.user.account_id} already has a Linken's Sphere buff applied!`);
+						throw new Error(`${user.account_id} already has a Linken's Sphere buff applied!`);
 					}
 
 					// 4. add the status to the receiving user
@@ -264,7 +263,7 @@ export const actions: Actions = {
 					})
 
 					if (!statusResult) {
-						throw new Error(`${session.user.account_id} failed to add status to`, turbotownDestination.account_id);
+						throw new Error(`${user.account_id} failed to add status to`, turbotownDestination.account_id);
 					}
 
 					// let postBody = {
@@ -310,8 +309,8 @@ export const actions: Actions = {
 	},
 	useQuellingBlade: async ({ request, locals, fetch }) => {
 		console.log('received useQuellingBlade post in turbotown page server');
-		const session = await locals.auth.validate();
-		if (!session) return fail(400, { message: 'Not logged in, cannot use item' });
+		const user = locals.user;
+		if (!user) return fail(400, { message: 'Not logged in, cannot use item' });
 		const formData = await request.formData();
 
 		let turbotownID = parseInt(formData.get('turbotownID')?.toString() || '-1');
@@ -322,7 +321,7 @@ export const actions: Actions = {
 		console.log("inputQuestID", inputQuestID)
 		console.log("inputrandomID", inputrandomID)
 
-		console.log('[quelling blade page.server.ts] user trying to use item', session.user.account_id);
+		console.log('[quelling blade page.server.ts] user trying to use item', user.account_id);
 		try {
 			let tx_result = await prisma.$transaction(
 				async (tx) => {
@@ -347,7 +346,7 @@ export const actions: Actions = {
 						console.log('itemCheck for delete: ', sender);
 
 						if (!sender) {
-							throw new Error(`${session.user.account_id} failed to delete item!`);
+							throw new Error(`${user.account_id} failed to delete item!`);
 						}
 
 						// 3. Find the quest that is active and matches selected hero
@@ -409,12 +408,12 @@ export const actions: Actions = {
 
 							return { itemUseResponse, executionTime };
 						} else {
-							throw new Error(`${session.user.account_id} could not find active quelling blade item or delete quest`);
+							throw new Error(`${user.account_id} could not find active quelling blade item or delete quest`);
 						}
 						//}
 					}
 					else {
-						throw new Error(`${session.user.account_id} failed to find random!`);
+						throw new Error(`${user.account_id} failed to find random!`);
 					}
 				},
 				{
@@ -434,8 +433,8 @@ export const actions: Actions = {
 	},
 	addFakeMatch: async ({ request, locals }) => {
 		console.log('received createFakeMatch post in turbotown page server');
-		const session = await locals.auth.validate();
-		if (!session) return fail(400, { message: 'Not logged in, cannot use item' });
+		const user = locals.user;
+		if (!user) return fail(400, { message: 'Not logged in, cannot use item' });
 		const formData = await request.formData();
 		let account_id: number = parseInt(formData.get('account_id')?.toString() || '-1');
 		let heroID: number = parseInt(formData.get('heroID')?.toString() || '-1');
@@ -452,7 +451,7 @@ export const actions: Actions = {
 		let winVal: boolean = false;
 		if (win === '1') winVal = true;
 
-		console.log('[admin] - user trying to add fake match', session.user.account_id);
+		console.log('[admin] - user trying to add fake match', user.account_id);
 		let fakeMatch = {
 			match_id: parseInt('999999' + Math.floor(Math.random() * 9999)),
 			account_id: account_id,

@@ -18,10 +18,13 @@ export const POST: RequestHandler = async (event) => {
 		error(404, 'Not found');
 	}
 
-	const session = await event.locals.auth.validate();
-	if (!session) error(401, 'Unauthorized');
+	const user = event.locals.user;
+	if (!user) error(401, 'Unauthorized');
 
-	const accountId = session.user.account_id;
+	const accountId = user.account_id;
+	if (!accountId) {
+		error(400, 'No Dota account ID set. Please set one in your profile.');
+	}
 
 	let body: { count?: number } = {};
 	try {

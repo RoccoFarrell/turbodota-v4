@@ -2,11 +2,11 @@ import prisma from '$lib/server/prisma';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
-    const session = await locals.auth.validate();
-    if (!session) return { cards: [], score: 0, gold: 0 };
+    const authUser = locals.user;
+    if (!authUser) return { cards: [], score: 0, gold: 0 };
 
     const user = await prisma.user.findUnique({
-        where: { id: session.user.userId },
+        where: { id: authUser.id },
         include: {
             userCards: {
                 include: {
@@ -31,7 +31,7 @@ export const load: PageServerLoad = async ({ locals }) => {
     if (!user?.dotaDeckGames.length) {
         await prisma.dotaDeckGame.create({
             data: {
-                userId: session.user.userId
+                userId: authUser.id
             }
         });
     }

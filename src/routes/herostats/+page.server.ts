@@ -14,8 +14,7 @@ export const config = {
 
 export const load: PageServerLoad = async ({ params, locals, url, setHeaders }) => {
 	//session info
-	const session = await locals.auth.validate()
-	let user = null;
+	const user = locals.user;
 
 	// if (!session) {
 	// 	throw error(401, 'Unauthorized')

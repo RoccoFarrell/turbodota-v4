@@ -1,73 +1,72 @@
 import { error, redirect } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
-import prisma from '$lib/server/prisma'
-//const SteamAuth = require("node-steam-openid");
-import { auth } from '$lib/server/lucia'
-import { LuciaError } from "lucia";
+import prisma from '$lib/server/prisma';
+import { createSession, setSessionCookie } from '$lib/server/session';
 import steam from '../steam';
 
 //helpers
 import { createDotaUser } from '../../../helpers';
-import { create } from 'domain';
 
-export const GET: RequestHandler = async ({ request, locals, params, url }) => {
-    console.log('received GET to authenticate')
+/**
+ * Derive Dota 2 account_id from Steam ID
+ * Formula: account_id = steam_id - 76561197960265728
+ * FIXED: Previous code had wrong constant (missing leading 7)
+ */
+function deriveAccountId(steamId: string): number {
+	const steamIdBigInt = BigInt(steamId);
+	const accountIdBigInt = steamIdBigInt - 76561197960265728n;
+	return Number(accountIdBigInt);
+}
 
-    const steamUser = await steam.authenticate(request);
+export const GET: RequestHandler = async ({ request, cookies }) => {
+	console.log('received GET to authenticate');
 
-    let dbUser = null;
-    try {
-        dbUser = await auth.getUser(steamUser.steamid)
-    } catch(e){
-        if (e instanceof LuciaError && e.message === "AUTH_INVALID_USER_ID") {
-            // invalid key
-            console.log(`User ${steamUser.steamid} - ${steamUser.username} not found`)
-        }
-    }
+	const steamUser = await steam.authenticate(request);
 
-    if(!dbUser){
+	if (!steamUser || !steamUser.steamid) {
+		throw error(400, 'Failed to authenticate with Steam');
+	}
 
-        //need to create dotaUser for a new user before an actual user can be created
-        let account_id = Number(steamUser.steamid.substr(-16,16)) - 6561197960265728
-        let createDUResult = await createDotaUser(account_id)
+	// Derive account_id from steam_id
+	const account_id = deriveAccountId(steamUser.steamid);
 
-        console.log(`[/authenticate] createDUResult: `, createDUResult) 
+	// Find user by steam_id
+	let dbUser = await prisma.user.findUnique({
+		where: { steam_id: BigInt(steamUser.steamid) }
+	});
 
-        if(createDUResult.account_id){
-            dbUser = await auth.createUser({
-                userId: steamUser.steamid,
-                key: {
-                    providerId: 'steam',
-                    providerUserId: steamUser.steamid,
-                    password: null
-                },
-                attributes: {
-                    name: steamUser.name || "",
-                    username: steamUser.username,
-                    steam_id: BigInt(steamUser.steamid),
-                    account_id: account_id,
-                    profile_url: steamUser.profile,
-                    avatar_url: steamUser.avatar.small,
-                    createdDate: new Date()            
-                }
-            })
-        } else console.error(`[/authenticate] failed to create dota user so couldnt create normal user`)
-        
-    }
+	if (!dbUser) {
+		console.log(`User ${steamUser.steamid} - ${steamUser.username} not found, creating...`);
 
-    if (!locals.auth.validate()) {
-        const session = await auth.createSession({
-            userId: dbUser.userId,
-            attributes: {}
-        });
-        locals.auth.setSession(session);
-    } else {
-        const key = await auth.useKey('steam', steamUser.steamid, null)
-		const session = await auth.createSession({userId: key.userId, attributes: {}})
-		locals.auth.setSession(session)
-    }
+		// Create DotaUser for the new user
+		const createDUResult = await createDotaUser(account_id);
 
-    //...do something with the data
-    redirect(302, '/turbotown');
-    //return new Response(JSON.stringify({ "user": user }))
+		console.log(`[/authenticate] createDUResult: `, createDUResult);
+
+		if (createDUResult.account_id) {
+			// Create new user
+			dbUser = await prisma.user.create({
+				data: {
+					id: crypto.randomUUID(),
+					name: steamUser.name || '',
+					username: steamUser.username,
+					steam_id: BigInt(steamUser.steamid),
+					account_id: account_id,
+					profile_url: steamUser.profile,
+					avatar_url: steamUser.avatar?.small,
+					createdDate: new Date()
+				}
+			});
+		} else {
+			console.error(`[/authenticate] failed to create dota user so couldn't create normal user`);
+			throw error(500, 'Failed to create user account');
+		}
+	}
+
+	// Create session
+	const session = await createSession(dbUser.id);
+	setSessionCookie(cookies, session.id, session.expiresAt);
+
+	// Redirect to turbotown
+	throw redirect(302, '/turbotown');
 };

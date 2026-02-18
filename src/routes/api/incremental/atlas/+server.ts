@@ -40,8 +40,8 @@ export type AtlasHeroRow = {
 
 /** GET /api/incremental/atlas – all heroes with base stats and abilities for Atlas view */
 export const GET: RequestHandler = async ({ locals }) => {
-	const session = await locals.auth.validate();
-	if (!session) error(401, 'Unauthorized');
+	const user = locals.user;
+	if (!user) error(401, 'Unauthorized');
 
 	const baseStats = await prisma.incrementalHeroBaseStat.findMany({
 		orderBy: { heroId: 'asc' }

@@ -17,13 +17,14 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 		return { allHeroes };
 	};
 
-	const session = await locals.auth.validate();
+	const user = locals.user;
+	const session = locals.session;
 	console.log(`session: ${session}`);
 
 	//get user prefs if user is logged in
 	let userPreferences = [];
-	if (session && session.user) {
-		const prefsResponse = await fetch(`${url.origin}/api/preferences/${session.user.account_id}`, {
+	if (user && user.account_id) {
+		const prefsResponse = await fetch(`${url.origin}/api/preferences/${user.account_id}`, {
 			method: 'GET',
 			headers: {
 				'content-type': 'application/json'
@@ -48,14 +49,14 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 			Get season info
 		*/
 
-	if (session) {
+	if (user && user.account_id) {
 		getLeague_startTime = dayjs().diff(tx_startTime, 'millisecond');
 
 		leagueAndSeasonsResult = await prisma.league.findMany({
 			where: {
 				members: {
 					some: {
-						account_id: session.user.account_id
+						account_id: user.account_id
 					}
 				}
 			},
@@ -123,6 +124,7 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 
 	const heroDescriptions = await getHeroDescriptions();
 	return {
+		user,
 		session,
 		heroDescriptions,
 		userPreferences,

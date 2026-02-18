@@ -5,12 +5,12 @@ import prisma from '$lib/server/prisma';
 const MATCH_REFRESH_STALE_MINUTES = 30;
 
 export const load: LayoutServerLoad = async ({ locals, url }) => {
-	const session = await locals.auth.validate();
-	if (!session?.user?.account_id) {
+	const user = locals.user;
+	if (!user?.account_id) {
 		return {};
 	}
 
-	const accountId = session.user.account_id;
+	const accountId = user.account_id;
 	const dotaUser = await prisma.dotaUser.findUnique({
 		where: { account_id: accountId },
 		select: { lastUpdated: true }

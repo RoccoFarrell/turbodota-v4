@@ -1,15 +1,15 @@
-import { auth } from '$lib/server/lucia'
-import { redirect } from '@sveltejs/kit'
-import type { RequestHandler } from './$types'
+import { invalidateSession, deleteSessionCookie } from '$lib/server/session';
+import { redirect } from '@sveltejs/kit';
+import type { RequestHandler } from './$types';
 
-export const POST: RequestHandler = async ({ locals }) => {
-	const session = await locals.auth.validate()
+export const POST: RequestHandler = async ({ locals, cookies }) => {
+	const session = locals.session;
 	if (!session) {
-		redirect(302, '/');
+		throw redirect(302, '/');
 	}
 
-	await auth.invalidateSession(session.sessionId)
-	locals.auth.setSession(null)
+	await invalidateSession(session.id);
+	deleteSessionCookie(cookies);
 
-	redirect(302, '/');
-}
+	throw redirect(302, '/');
+};

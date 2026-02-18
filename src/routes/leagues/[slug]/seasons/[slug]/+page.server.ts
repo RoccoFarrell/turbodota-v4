@@ -9,8 +9,8 @@ import { calculateRandomLeaderboard, calculateTownLeaderboard } from '$lib/helpe
 
 export const load: PageServerLoad = async ({ locals, parent, params }) => {
 	const parentData = await parent();
-	const session = await locals.auth.validate();
-	if (!session) {
+	const user = locals.user;
+	if (!user) {
 		redirect(302, '/');
 	}
 
@@ -55,12 +55,12 @@ export const load: PageServerLoad = async ({ locals, parent, params }) => {
 	let quests: QuestWithRandom[] = [];
 	let questChecks: any = null;
 
-	if (session && session.user) {
+	if (user) {
 		leagueAndSeasonsResult = await prisma.league.findMany({
 			where: {
 				members: {
 					some: {
-						account_id: session.user.account_id
+						account_id: user.account_id!
 					}
 				}
 			},
@@ -146,7 +146,7 @@ export const load: PageServerLoad = async ({ locals, parent, params }) => {
 
 export const actions: Actions = {
 	updateSeasonRandoms: async ({ request, locals, url }) => {
-		const session = await locals.auth.validate();
+		const user = locals.user;
 		const formData = await request.formData();
 		console.log('FORM DATA: ', formData);
 
@@ -157,7 +157,7 @@ export const actions: Actions = {
 
 		console.log(`[updateSeasonRandoms] FOUND ${randomsList.length} randoms to add to season ${seasonID}`);
 
-		if (session?.user?.roles.includes('dev')) {
+		if (user?.roles?.includes('dev')) {
 			let randomUpdateResult = await prisma.season.update({
 				where: {
 					id: seasonID

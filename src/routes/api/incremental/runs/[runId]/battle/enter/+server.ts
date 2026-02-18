@@ -16,8 +16,8 @@ export const POST: RequestHandler<{ runId: string }> = async ({
 	request,
 	locals
 }) => {
-	const session = await locals.auth.validate();
-	if (!session) error(401, 'Unauthorized');
+	const user = locals.user;
+	if (!user) error(401, 'Unauthorized');
 	const runId = params.runId;
 	let body: { nextNodeId?: string };
 	try {
@@ -32,7 +32,7 @@ export const POST: RequestHandler<{ runId: string }> = async ({
 			where: { id: runId },
 			select: { lineupId: true, userId: true }
 		});
-		if (!run || run.userId !== session.user.userId) error(404, 'Run not found');
+		if (!run || run.userId !== user.id) error(404, 'Run not found');
 		const lineup = await prisma.incrementalLineup.findUnique({
 			where: { id: run.lineupId },
 			select: { saveId: true, heroIds: true }
@@ -42,7 +42,7 @@ export const POST: RequestHandler<{ runId: string }> = async ({
 		const encounter = await createEncounterForNode(
 			prisma as unknown as RunServiceDb,
 			runId,
-			session.user.userId,
+			user.id,
 			nextNodeId.trim(),
 			{ getHeroDef: defs.getHeroDef }
 		);

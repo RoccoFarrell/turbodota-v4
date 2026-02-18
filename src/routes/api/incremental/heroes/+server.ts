@@ -7,8 +7,8 @@ import { getHeroDefsFromDb } from '$lib/server/incremental-hero-resolver';
  * Query: saveId – if provided, returned hero defs include training (effective stats).
  */
 export const GET: RequestHandler = async ({ locals, url }) => {
-	const session = await locals.auth.validate();
-	if (!session) error(401, 'Unauthorized');
+	const user = locals.user;
+	if (!user) error(401, 'Unauthorized');
 	const saveId = url.searchParams.get('saveId')?.trim() || null;
 	const { heroes, heroNames, getAbilityDef } = await getHeroDefsFromDb(saveId);
 	const abilityIds = [...new Set(heroes.flatMap((h) => h.abilityIds).filter(Boolean))];

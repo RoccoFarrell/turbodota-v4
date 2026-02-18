@@ -6,18 +6,18 @@ import { fail, redirect, json, error } from '@sveltejs/kit';
 import { MATCH_CUTOFF_START_TIME } from '$lib/constants/matches';
 
 export const load: PageServerLoad = async ({ locals }) => {
-	const session = await locals.auth.validate();
-	if (!session) return { status: 401 };
+	const authUser = locals.user;
+	if (!authUser) return { status: 401 };
 
 	// Get user data
 	const user = await prisma.user.findUnique({
-		where: { id: session.user.userId }
+		where: { id: authUser.id }
 	});
 
-	console.log("Loading for account:", session.user.account_id);
+	console.log("Loading for account:", authUser.account_id);
 	const seasonUser = await prisma.seasonUser.findFirst({
 		where: {
-			accountId: session.user.account_id,
+			accountId: authUser.account_id!,
 			season: {
 				active: true
 			}
@@ -44,7 +44,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	// Get recent matches (site-wide cutoff: no matches before 2026-01-01)
 	const recentMatches = await prisma.match.findMany({
 		where: {
-			account_id: session.user.account_id,
+			account_id: authUser.account_id!,
 			start_time: { gte: MATCH_CUTOFF_START_TIME }
 		},
 		orderBy: {
@@ -123,8 +123,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 export const actions: Actions = {
 	addFakeMatch: async ({ request, locals }) => {
 		console.log('received createFakeMatch post in turbotown page server');
-		const session = await locals.auth.validate();
-		if (!session) return fail(400, { message: 'Not logged in, cannot use item' });
+		const authUser = locals.user;
+		if (!authUser) return fail(400, { message: 'Not logged in, cannot use item' });
 		const formData = await request.formData();
 		let account_id: number = parseInt(formData.get('account_id')?.toString() || '-1');
 		let heroID: number = parseInt(formData.get('heroID')?.toString() || '-1');
@@ -142,7 +142,7 @@ export const actions: Actions = {
 		let winVal: boolean = false;
 		if (win === '1') winVal = true;
 
-		console.log('[admin] - user trying to add fake match', session.user.account_id);
+		console.log('[admin] - user trying to add fake match', authUser.account_id);
 		let fakeMatch = {
 			match_id: fakeMatchID,
 			account_id: account_id,

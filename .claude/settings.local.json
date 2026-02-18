@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(npx prisma generate:*)",
+      "Bash(npm run dev)",
+      "Bash(bash \"C:/Users/bosto/.claude/statusline-command.sh\")",
+      "Bash(STATUSLINE_JSON='{\"model\":{\"display_name\":\"Claude Haiku 4.5\"}}' node:*)",
+      "Bash(echo:*)",
+      "Bash(bash --version:*)",
+      "Bash(node --version:*)",
+      "Bash(node:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
+    ]
+  }
+}

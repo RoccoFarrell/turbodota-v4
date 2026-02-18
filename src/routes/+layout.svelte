@@ -18,8 +18,7 @@
 
 	//types
 	import type { PageData } from './$types';
-	import type { Session } from 'lucia';
-	import type { Hero } from '@prisma/client';
+	import type { User, UserSession, Hero } from '@prisma/client';
 
 	//props - must be declared before use in Svelte 5
 	interface Props {
@@ -103,10 +102,15 @@
 		console.log('root data: ', data);
 	}
 
-	let session: Session | null = data.session || null;
+	let user: User | null = data.user || null;
+	let session: UserSession | null = data.session || null;
+
+	// For backwards compatibility with components expecting old Lucia session structure
+	// Transform to match old { user: {...} } structure
+	const legacySession = user ? { user } : null;
 
 	//set session in context for components
-	setContext('session', session);
+	setContext('session', legacySession);
 	setContext('userPreferences', data.userPreferences);
 	setContext('openDotaDown', false);
 
@@ -297,28 +301,57 @@
 				</AppBar.Headline>
 
 				<AppBar.Trail>
-					<div class="flex justify-around space-x-8 items-center mr-8">
-						{#key data.session}
-							<div class={"h-full m-auto grid grid-cols-2"}>
-								{#if data.session && !$page.url.pathname.includes('herostats')}
-									<div class="flex justify-center items-center">
-										<a href="/feed" class="h-10 w-10" aria-label="Notifications">
-											<div class="relative inline-block mt-2">
-												<span class="vibrating badge-icon bg-primary-500 absolute -top-2 right-0 z-50"
-													><p class="inline text-amber-500 font-bold"></p></span
-												>
-												<button class="hover:bg-amber-500/50 rounded-full w-10 h-10" aria-label="Notifications">
-													<i class="fi fi-rr-bell text-xl h-10 w-10"></i>
-												</button>
-											</div>
-										</a>
+					<div class="flex items-center space-x-3 mr-4">
+						{#if user}
+							<!-- Notifications -->
+							{#if !$page.url.pathname.includes('herostats')}
+								<a href="/feed" class="h-10 w-10" aria-label="Notifications">
+									<div class="relative inline-block mt-2">
+										<span class="vibrating badge-icon bg-primary-500 absolute -top-2 right-0 z-50"
+											><p class="inline text-amber-500 font-bold"></p></span
+										>
+										<button class="hover:bg-amber-500/50 rounded-full w-10 h-10" aria-label="Notifications">
+											<i class="fi fi-rr-bell text-xl h-10 w-10"></i>
+										</button>
 									</div>
-									<div class="m-auto h-full text-center">
-										Welcome <p class="font-bold text-red-400">{`${data.session.user.username}`}</p>
-									</div>
+								</a>
+							{/if}
+							<!-- User Info -->
+							<div class="flex items-center space-x-3">
+								{#if user.avatar_url}
+									<img src={user.avatar_url} alt="Avatar" class="w-8 h-8 rounded-full" />
 								{/if}
+								<div class="hidden md:flex flex-col text-right leading-tight">
+									<p class="font-bold text-sm">{user.username}</p>
+									{#if user.email}
+										<p class="text-xs text-surface-400">{user.email}</p>
+									{/if}
+								</div>
 							</div>
-						{/key}
+							<!-- Logout -->
+							<form method="POST">
+								<button class="btn preset-tonal flex items-center space-x-2" formaction="/logout" type="submit">
+									<i class="fi fi-br-sign-out-alt"></i>
+									<span class="hidden sm:inline">Logout</span>
+								</button>
+							</form>
+						{:else}
+							<!-- Google Login -->
+							<a class="btn preset-filled-primary-500 flex items-center space-x-2" href="/api/auth/google" data-sveltekit-preload-data="off">
+								<svg class="w-5 h-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+									<path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+									<path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+									<path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+									<path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+								</svg>
+								<span class="hidden sm:inline">Sign in with Google</span>
+							</a>
+							<!-- Steam Login -->
+							<a class="btn preset-tonal flex items-center space-x-2" href="/api/auth/steam" data-sveltekit-preload-data="tap">
+								<img class="w-5 h-5" alt="Steam logo" src={steam_logo} />
+								<span class="hidden sm:inline">Sign in with Steam</span>
+							</a>
+						{/if}
 					</div>
 				</AppBar.Trail>
 			</AppBar.Toolbar>

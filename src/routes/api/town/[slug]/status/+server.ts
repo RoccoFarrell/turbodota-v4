@@ -14,15 +14,14 @@ export const GET: RequestHandler = async ({ params, url }) => {
 };
 
 export const POST: RequestHandler = async ({ request, params, url, locals }) => {
-    const session = await locals.auth.validate();
+    const user = locals.user;
 
     let statusValues = await request.json();
     let statusResult: any = null;
     let turbotown: any = null;
-    if (session && session.user) {
-        //console.log(`session: `, JSON.stringify(session))
+    if (user) {
         //reject the call if the user is not authenticated
-        if (params.slug?.toString() !== session.user.account_id.toString())
+        if (params.slug?.toString() !== user.account_id?.toString())
             return new Response(JSON.stringify({ status: 'unauthorized' }), { status: 401 });
 
         //console.log(`params: ${JSON.stringify(params)}`);

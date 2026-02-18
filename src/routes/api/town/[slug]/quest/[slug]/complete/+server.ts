@@ -1,5 +1,4 @@
 import type { RequestHandler } from '@sveltejs/kit';
-import { auth } from '$lib/server/lucia';
 import prisma from '$lib/server/prisma';
 import winOrLoss from '$lib/helpers/winOrLoss';
 import dayjs from 'dayjs';
@@ -22,35 +21,23 @@ BigInt.prototype.toJSON = function (): number {
 };
 
 export const POST: RequestHandler = async ({ request, params, url, locals, fetch }) => {
-	const session = await locals.auth.validate();
+	const user = locals.user;
 
 	let requestData = await request.json();
-
-	// console.log(
-	// 	`[/quest/complete] session in API call: `,
-	// 	JSON.stringify(session),
-	// 	`params.slug: `,
-	// 	params,
-	// 	`request.url: `,
-	// 	url
-	// );
-	//reject the call if the user is not authenticated
 
 	let account_id: number = parseInt(url.pathname.split('/api/town/')[1].split('/quest')[0]);
 	let questID: number = parseInt(params.slug || '0');
 
 	console.log('[/quest/complete] account_id, questID: ', account_id, questID);
-	if (session) {
-		if (account_id !== session.user.account_id)
+	if (user) {
+		if (account_id !== user.account_id)
 			return new Response(JSON.stringify({ status: 'unauthorized' }), { status: 401 });
 
 		console.log(
 			`\n-----------\n[api/town/${account_id}/quest/${questID}/complete] account_id: ${account_id}, questID: ${questID}\n-------------\n`
 		);
 
-		//console.log('[api/town/${account_id}/quest/${questID}/complete] requestData: ', requestData);
-
-		console.log(`[api/town/${account_id}/quest/${questID}/complete] - checking random for: ${session.user.account_id}`);
+		console.log(`[api/town/${account_id}/quest/${questID}/complete] - checking random for: ${user.account_id}`);
 
 		let randomStatusComplete: boolean = false;
 		let completedRandom: Random | null = null;
@@ -61,7 +48,7 @@ export const POST: RequestHandler = async ({ request, params, url, locals, fetch
 
 		if (completedQuest.random.status === 'active') {
 			const response = await fetch(
-				`/api/players/${session.user.account_id}/randoms/${completedQuest.random.id}/complete`,
+				`/api/players/${user.account_id}/randoms/${completedQuest.random.id}/complete`,
 				{
 					method: 'POST',
 					headers: {

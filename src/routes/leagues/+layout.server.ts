@@ -5,8 +5,8 @@ import prisma from '$lib/server/prisma';
 
 export const load: LayoutServerLoad = async ({ locals, url, parent }) => {
 	const parentData = await parent();
-	const session = await locals.auth.validate();
-	if (!session) {
+	const user = locals.user;
+	if (!user) {
 		redirect(302, '/');
 	}
 

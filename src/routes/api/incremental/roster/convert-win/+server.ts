@@ -19,10 +19,11 @@ export const POST: RequestHandler = async (event) => {
 	} catch {
 		error(400, 'Invalid JSON');
 	}
-	const { saveId } = await resolveIncrementalSave(event, { saveId: body.saveId });
-	const session = await event.locals.auth.validate();
-	if (!session) error(401, 'Unauthorized');
-	const accountId = session.user.account_id;
+	const save = await resolveIncrementalSave(event, { saveId: body.saveId });
+	const accountId = save.account_id;
+	if (!accountId) {
+		error(400, 'This save has no Dota account ID set. Please set one in your profile or save settings.');
+	}
 
 	const matchIdRaw = body.matchId;
 	if (matchIdRaw === undefined || matchIdRaw === null) error(400, 'matchId is required');
@@ -36,12 +37,12 @@ export const POST: RequestHandler = async (event) => {
 	if (!isWin(match.player_slot, match.radiant_win)) error(400, 'Only wins can be converted');
 
 	const [essence, alreadyConverted, alreadyOnRoster] = await Promise.all([
-		getBankBalance(saveId, 'essence'),
+		getBankBalance(save.saveId, 'essence'),
 		prisma.incrementalConvertedMatch.findUnique({
-			where: { saveId_matchId: { saveId, matchId } }
+			where: { saveId_matchId: { saveId: save.saveId, matchId } }
 		}),
 		prisma.incrementalRosterHero.findUnique({
-			where: { saveId_heroId: { saveId, heroId: match.hero_id } }
+			where: { saveId_heroId: { saveId: save.saveId, heroId: match.hero_id } }
 		})
 	]);
 
@@ -50,19 +51,19 @@ export const POST: RequestHandler = async (event) => {
 	if (essence < CONVERT_WIN_ESSENCE_COST) error(400, 'Not enough Essence');
 
 	await prisma.$transaction(async (tx) => {
-		await deductBankCurrency(saveId, 'essence', CONVERT_WIN_ESSENCE_COST, tx as unknown as BankTx);
+		await deductBankCurrency(save.saveId, 'essence', CONVERT_WIN_ESSENCE_COST, tx as unknown as BankTx);
 		await tx.incrementalRosterHero.create({
-			data: { saveId, heroId: match.hero_id }
+			data: { saveId: save.saveId, heroId: match.hero_id }
 		});
 		await tx.incrementalConvertedMatch.create({
-			data: { saveId, matchId }
+			data: { saveId: save.saveId, matchId }
 		});
 	});
 
 	const [newEssence, roster] = await Promise.all([
-		getBankBalance(saveId, 'essence'),
+		getBankBalance(save.saveId, 'essence'),
 		prisma.incrementalRosterHero.findMany({
-			where: { saveId },
+			where: { saveId: save.saveId },
 			select: { heroId: true },
 			orderBy: { createdAt: 'asc' }
 		})
@@ -70,7 +71,7 @@ export const POST: RequestHandler = async (event) => {
 
 	return json({
 		essence: newEssence,
-		saveId,
+		saveId: save.saveId,
 		roster: roster.map((r) => r.heroId)
 	});
 };

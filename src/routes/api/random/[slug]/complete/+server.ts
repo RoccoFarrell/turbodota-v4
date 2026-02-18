@@ -1,5 +1,4 @@
 import type { RequestHandler } from '@sveltejs/kit';
-import { auth } from '$lib/server/lucia';
 import prisma from '$lib/server/prisma';
 import winOrLoss from '$lib/helpers/winOrLoss';
 
@@ -13,14 +12,14 @@ BigInt.prototype.toJSON = function (): number {
 
 //old
 export const POST: RequestHandler = async ({ request, params, url, locals }) => {
-	//const session = await locals.auth.validate();
+	const user = locals.user;
 
     let requestData = await request.json();
-    let { completedRandom, completedMatch, session } = requestData
+    let { completedRandom, completedMatch } = requestData
 
-	console.log(`session in API call: `, JSON.stringify(session), `params.slug: `, params.slug);
+	console.log(`user in API call: `, JSON.stringify(user), `params.slug: `, params.slug);
 	//reject the call if the user is not authenticated
-	if (params.slug?.toString() !== session.user.account_id.toString())
+	if (!user || params.slug?.toString() !== user.account_id?.toString())
 		return new Response(JSON.stringify({ status: 'unauthorized' }), { status: 401 });
 
 	console.log(`params: ${JSON.stringify(params)}`);

@@ -4,8 +4,8 @@ import type { RequestHandler } from './$types';
 import { DOTADECK } from '$lib/constants/dotadeck';
 
 export const GET: RequestHandler = async ({ locals }) => {
-    const session = await locals.auth.validate();
-    if (!session) return json({ success: false, error: 'Not authenticated' });
+    const user = locals.user;
+    if (!user) return json({ success: false, error: 'Not authenticated' });
 
     // Get all users in the active season
     const seasonUsers = await prisma.seasonUser.findMany({

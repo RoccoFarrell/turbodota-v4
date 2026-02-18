@@ -16,9 +16,7 @@ BigInt.prototype.toJSON = function (): number {
 export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => {
 	let tx_startTime = dayjs()
 	const parentData = await parent();
-	const session = await locals.auth.validate();
-	//console.log('[turbotown page.server] - session in page server: ', session);
-	//if (session) throw redirect(302, "/");
+	const user = locals.user;
 
 	//get static list of items
 	const items = await prisma.item.findMany();
@@ -30,7 +28,7 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 					{
 						// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 						// @ts-ignore: Unreachable code error
-						account_id: session.user.account_id,
+						account_id: user?.account_id!,
 						seasons: {
 							some: {
 								id: seasonID
@@ -115,10 +113,10 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 	// let updateMatches_startTime: number = -1;
 	// let updateMatches_endTime: number = -1;
 
-	if (session && session.user) {
+	if (user) {
 		/* Get raw match data for user */
 		updateMatches_startTime = dayjs().diff(tx_startTime, "millisecond")
-		const response = await fetch(`/api/updateMatchesForUser/${session.user.account_id}`, {
+		const response = await fetch(`/api/updateMatchesForUser/${user.account_id}`, {
 			method: 'GET'
 		});
 
@@ -143,7 +141,7 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 			currentTown = await prisma.turbotown.findFirst({
 				where: {
 					AND: [
-						{ account_id: session.user.account_id },
+						{ account_id: user.account_id! },
 						{
 							season: {
 								id: parentData.league.currentSeason.id
@@ -177,8 +175,8 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 		//console.log(`[turbotown page.server.ts] - current town: `, currentTown);
 
 		if (!currentTown) {
-			console.log(`[turbotown page.server.ts] - creating town for: ${session.user.account_id}`);
-			const response = await fetch(`/api/town/${session.user.account_id}/create`, {
+			console.log(`[turbotown page.server.ts] - creating town for: ${user.account_id}`);
+			const response = await fetch(`/api/town/${user.account_id}/create`, {
 				method: 'POST'
 			});
 			//console.log('create town response: ', response);
@@ -199,7 +197,7 @@ export const load: LayoutServerLoad = async ({ locals, parent, url, fetch }) => 
 			.map(async (quest, i) => {
 				//console.log('checking quest ', quest.id);
 				if (i > 0) await new Promise((resolve) => setTimeout(resolve, 100 * i));
-				const questCompleteResponse = await fetch(`/api/town/${session.user.account_id}/quest/${quest.id}/complete`, {
+				const questCompleteResponse = await fetch(`/api/town/${user.account_id}/quest/${quest.id}/complete`, {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json'

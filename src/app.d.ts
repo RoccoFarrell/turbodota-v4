@@ -1,10 +1,11 @@
-import type { PrismaClient } from '@prisma/client';
+import type { PrismaClient, User, UserSession } from '@prisma/client';
 
 declare global {
 	namespace App {
 		// interface Error {}
 		interface Locals {
-			auth: import('lucia').AuthRequest;
+			user: User | null;
+			session: UserSession | null;
 		}
 		// interface PageData {}
 		// interface Platform {}
@@ -16,33 +17,8 @@ declare global {
             'on:click_outside'?: CompositionEventHandler<T>;
         }
     }
-	
+
 	var __prisma: PrismaClient;
-
-	/// <reference types="lucia" />
-	namespace Lucia {
-		type Auth = import('$lib/server/lucia').Auth;
-		type DatabaseUserAttributes = {
-			username: string;
-			name: string;
-			account_id: number;
-			createdDate: Date;
-			profile_url?: string;
-			avatar_url?: string;
-			account_id: number;
-			steam_id?: BigInt;
-			roles?: string;
-
-		};
-		type DatabaseSessionAttributes = {};
-	}
-
-	interface Locals {
-		validate: import('lucia/sveltekit').Validate;
-		validateUser: import('lucia/sveltekit').ValidateUser;
-		setSession: import('lucia/sveltekit').SetSession;
-		auth: import('lucia').AuthRequest;
-	}
 
 	interface Match {
 		id: number;

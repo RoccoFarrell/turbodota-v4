@@ -15,8 +15,8 @@ function sleep(ms: number): Promise<void> {
  * Slug = league id. Dev role required.
  */
 export const POST: RequestHandler = async ({ params, locals, url }) => {
-	const session = await locals.auth.validate();
-	if (!session || !session.user.roles?.includes('dev')) {
+	const user = locals.user;
+	if (!user || !user.roles?.includes('dev')) {
 		return json({ ok: false, error: 'Forbidden' }, { status: 403 });
 	}
 

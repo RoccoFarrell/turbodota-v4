@@ -9,15 +9,15 @@ import {
 
 /** GET /api/incremental/runs/[runId]/map – run state + all map nodes + lineup (for roster quick edit). */
 export const GET: RequestHandler<{ runId: string }> = async ({ params, locals }) => {
-	const session = await locals.auth.validate();
-	if (!session) error(401, 'Unauthorized');
+	const user = locals.user;
+	if (!user) error(401, 'Unauthorized');
 	const runId = params.runId;
 	const run = await prisma.incrementalRun.findUnique({
 		where: { id: runId },
 		select: { userId: true, lineupId: true, heroHp: true, status: true }
 	});
 	if (!run) error(404, 'Run not found');
-	if (run.userId !== session.user.userId) error(403, 'Forbidden');
+	if (run.userId !== user.id) error(403, 'Forbidden');
 	const lineup = await prisma.incrementalLineup.findUnique({
 		where: { id: run.lineupId },
 		select: { heroIds: true }

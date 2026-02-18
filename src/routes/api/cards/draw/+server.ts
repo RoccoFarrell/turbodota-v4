@@ -3,8 +3,8 @@ import prisma from '$lib/server/prisma';
 import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = async ({ request, locals }) => {
-    const session = await locals.auth.validate();
-    if (!session) return json({ success: false, error: 'Not authenticated' });
+    const user = locals.user;
+    if (!user) return json({ success: false, error: 'Not authenticated' });
     
     const { seasonUserId } = await request.json();
     

@@ -5,9 +5,9 @@ import { getBankBalance } from '$lib/incremental/bank/bank.service.server';
 
 /** GET /api/incremental/saves – list current user's saves (with essence from Bank) */
 export const GET: RequestHandler = async (event) => {
-	const session = await event.locals.auth.validate();
-	if (!session) error(401, 'Unauthorized');
-	const userId = session.user.userId;
+	const user = event.locals.user;
+	if (!user) error(401, 'Unauthorized');
+	const userId = user.id;
 	const saves = await prisma.incrementalSave.findMany({
 		where: { userId },
 		select: { id: true, name: true, createdAt: true },
@@ -25,9 +25,9 @@ export const GET: RequestHandler = async (event) => {
 
 /** POST /api/incremental/saves – create a new save. Body: { name? } */
 export const POST: RequestHandler = async (event) => {
-	const session = await event.locals.auth.validate();
-	if (!session) error(401, 'Unauthorized');
-	const userId = session.user.userId;
+	const user = event.locals.user;
+	if (!user) error(401, 'Unauthorized');
+	const userId = user.id;
 	let body: { name?: string };
 	try {
 		body = await event.request.json();

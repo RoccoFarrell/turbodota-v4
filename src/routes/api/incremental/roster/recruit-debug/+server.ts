@@ -21,8 +21,8 @@ export const POST: RequestHandler = async (event) => {
 	}
 
 	const { saveId } = await resolveIncrementalSave(event, { saveId: body.saveId });
-	const session = await event.locals.auth.validate();
-	if (!session) error(401, 'Unauthorized');
+	const user = event.locals.user;
+	if (!user) error(401, 'Unauthorized');
 
 	const heroId = body.heroId;
 	if (heroId == null || typeof heroId !== 'number') error(400, 'heroId is required');

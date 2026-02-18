@@ -21,11 +21,14 @@ function isWin(player_slot: number, radiant_win: boolean): boolean {
  * hero, date, win/loss, and quest-relevant stats.
  */
 export const GET: RequestHandler = async (event) => {
-	const session = await event.locals.auth.validate();
-	if (!session) error(401, 'Unauthorized');
+	const user = event.locals.user;
+	if (!user) error(401, 'Unauthorized');
 
-	await resolveIncrementalSave(event, { saveId: event.url.searchParams.get('saveId') ?? undefined });
-	const accountId = session.user.account_id;
+	const save = await resolveIncrementalSave(event, { saveId: event.url.searchParams.get('saveId') ?? undefined });
+	const accountId = save.account_id;
+	if (!accountId) {
+		error(400, 'This save has no Dota account ID set. Please set one in your profile or save settings.');
+	}
 
 	const limit = Math.min(20, Math.max(1, parseInt(event.url.searchParams.get('limit') ?? '5', 10) || 5));
 

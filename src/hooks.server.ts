@@ -1,15 +1,24 @@
-// import { handleHooks } from "@lucia-auth/sveltekit"
-import { auth } from '$lib/server/lucia'
-import type { Handle } from '@sveltejs/kit'
-// import { sequence } from "@sveltejs/kit/hooks"
+import { getSessionId, validateSession } from '$lib/server/session';
+import type { Handle } from '@sveltejs/kit';
 
 export const handle: Handle = async ({ event, resolve }) => {
-	//might need this to force ISR rerender to fix multiple username issue
-	//if(event.url) console.log(event.url)
-	event.locals.auth = auth.handleRequest(event)
+	// Get session ID from cookies
+	const sessionId = getSessionId(event.cookies);
 
-	// const session = await event.locals.auth.validate()
-	// event.locals.session = session;
-	// console.log(`session in hooks: `, session)
-	return await resolve(event)
-}
+	if (sessionId) {
+		// Validate and possibly extend the session
+		const result = await validateSession(sessionId);
+		if (result) {
+			event.locals.user = result.user;
+			event.locals.session = result.session;
+		} else {
+			event.locals.user = null;
+			event.locals.session = null;
+		}
+	} else {
+		event.locals.user = null;
+		event.locals.session = null;
+	}
+
+	return await resolve(event);
+};

@@ -1,5 +1,4 @@
 import type { Actions, PageServerLoad } from './$types';
-import { auth } from '$lib/server/lucia';
 import prisma from '$lib/server/prisma';
 import type { Prisma, Turbotown, Season } from '@prisma/client';
 import { error, fail, redirect } from '@sveltejs/kit';
@@ -15,9 +14,8 @@ BigInt.prototype.toJSON = function (): number {
 
 export const load: PageServerLoad = async ({ locals, parent, url, fetch }) => {
 	const parentData = await parent();
-	const session = await locals.auth.validate();
-	console.log('[random page.server] - session in page server: ', session)
-	//if (session) throw redirect(302, "/");
+	const user = locals.user;
+	console.log('[random page.server] - user in page server: ', user)
 
 	async function getRandomsForUser(seasonID: number) {
 		return await prisma.random.findMany({
@@ -26,7 +24,7 @@ export const load: PageServerLoad = async ({ locals, parent, url, fetch }) => {
 					{
 						// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 						// @ts-ignore: Unreachable code error
-						account_id: session.user.account_id,
+						account_id: user.account_id!,
 						seasons: {
 							some: {
 								id: seasonID
@@ -65,7 +63,7 @@ export const load: PageServerLoad = async ({ locals, parent, url, fetch }) => {
 	let currentSeasonLeaderboard: any = [];
 	let currentTown: Turbotown | null = null;
 
-	if (session && session.user) {
+	if (user) {
 		/* 
 			Get season info
 		*/
@@ -74,7 +72,7 @@ export const load: PageServerLoad = async ({ locals, parent, url, fetch }) => {
 			where: {
 				members: {
 					some: {
-						account_id: session.user.account_id
+						account_id: user.account_id!
 					}
 				}
 			},
@@ -133,7 +131,7 @@ export const load: PageServerLoad = async ({ locals, parent, url, fetch }) => {
 			currentTown = await prisma.turbotown.findFirst({
 				where: {
 					AND: [
-						{ account_id: session.user.account_id },
+						{ account_id: user.account_id! },
 						{
 							season: {
 								id: currentSeason.id
@@ -147,8 +145,8 @@ export const load: PageServerLoad = async ({ locals, parent, url, fetch }) => {
 		console.log(`[random page.server.ts] - current town: `, currentTown)
 
 		if(!currentTown){
-			console.log(`[random page.server.ts] - creating town for: ${session.user.account_id}`)
-			const response = await fetch(`/api/town/${session.user.account_id}/create`, {
+			console.log(`[random page.server.ts] - creating town for: ${user.account_id!}`)
+			const response = await fetch(`/api/town/${user.account_id!}/create`, {
 				method: 'POST'
 			});
 			//console.log("create town response: ", response)
@@ -163,7 +161,7 @@ export const load: PageServerLoad = async ({ locals, parent, url, fetch }) => {
 
 		console.log(`active random length: ${randomsForUser.filter((random) => random.active).length}`);
 
-		const response = await fetch(`/api/updateMatchesForUser/${session.user.account_id}`, {
+		const response = await fetch(`/api/updateMatchesForUser/${user.account_id!}`, {
 			method: 'GET'
 		});
 
@@ -221,15 +219,14 @@ export const load: PageServerLoad = async ({ locals, parent, url, fetch }) => {
 				});
 
 			if (filteredMatchData.length > 0) {
-				let completeResponse = await fetch(`/api/random/${session.user.account_id}/complete`, {
+				let completeResponse = await fetch(`/api/random/${user.account_id!}/complete`, {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json'
 					},
 					body: JSON.stringify({
 						completedRandom: activeRandoms[0],
-						completedMatch: filteredMatchData[0],
-						session: session
+						completedMatch: filteredMatchData[0]
 					})
 				});
 				let completeResponseData = await completeResponse.json();

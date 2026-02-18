@@ -5,12 +5,12 @@ import { getRunState, type MapRunDb } from '$lib/incremental/data/run-map';
 
 /** GET /api/incremental/runs/[runId] – run + map state (current node, next nodes). Own only. */
 export const GET: RequestHandler<{ runId: string }> = async ({ params, locals }) => {
-	const session = await locals.auth.validate();
-	if (!session) error(401, 'Unauthorized');
+	const user = locals.user;
+	if (!user) error(401, 'Unauthorized');
 	const runId = params.runId;
 	const run = await prisma.incrementalRun.findUnique({ where: { id: runId } });
 	if (!run) error(404, 'Run not found');
-	if (run.userId !== session.user.userId) error(403, 'Forbidden');
+	if (run.userId !== user.id) error(403, 'Forbidden');
 	const runState = await getRunState(prisma as unknown as MapRunDb, runId);
 	if (!runState) error(404, 'Run state not found');
 	return json(runState);
@@ -18,15 +18,15 @@ export const GET: RequestHandler<{ runId: string }> = async ({ params, locals })
 
 /** PATCH /api/incremental/runs/[runId] – body { heroHp?: number[] | null }. Update run HP (e.g. heal). Own only. */
 export const PATCH: RequestHandler<{ runId: string }> = async ({ params, request, locals }) => {
-	const session = await locals.auth.validate();
-	if (!session) error(401, 'Unauthorized');
+	const user = locals.user;
+	if (!user) error(401, 'Unauthorized');
 	const runId = params.runId;
 	const run = await prisma.incrementalRun.findUnique({
 		where: { id: runId },
 		select: { userId: true, status: true, lineupId: true }
 	});
 	if (!run) error(404, 'Run not found');
-	if (run.userId !== session.user.userId) error(403, 'Forbidden');
+	if (run.userId !== user.id) error(403, 'Forbidden');
 	if (run.status !== 'ACTIVE') error(400, 'Run is not active');
 	let body: { heroHp?: number[] | null };
 	try {
