@@ -46,6 +46,7 @@
 		Array<{ id: string; saveId: string; name: string; heroIds: number[]; activeRun: ActiveRunSummary | null }>
 	>([]);
 	let rosterHeroIds = $state<number[]>([]);
+	let trainingByHero = $state<Record<number, Record<string, number>>>({});
 	let startingRunId = $state<string | null>(null);
 	let cancellingRunId = $state<string | null>(null);
 	let deletingLineupId = $state<string | null>(null);
@@ -97,9 +98,22 @@
 		}
 	}
 
+	async function fetchTraining() {
+		if (!saveId) return;
+		const res = await fetch(`/api/incremental/training${saveParam()}`);
+		if (res.ok) {
+			const data = await res.json();
+			const byHero: Record<number, Record<string, number>> = {};
+			for (const row of data.training ?? []) {
+				if (!byHero[row.heroId]) byHero[row.heroId] = {};
+				byHero[row.heroId][row.statKey] = row.value;
+			}
+			trainingByHero = byHero;
+		}
+	}
+
 	async function refresh() {
-		await fetchLineups();
-		await fetchRoster();
+		await Promise.all([fetchLineups(), fetchRoster(), fetchTraining()]);
 	}
 
 	async function startRun(lineupId: string) {
@@ -172,30 +186,32 @@
 	onMount(() => {
 		(async () => {
 			await ensureSave();
-			await fetchHeroes();
-			await fetchLineups();
-			await fetchRoster();
+			await Promise.all([fetchHeroes(), fetchTraining(), fetchLineups(), fetchRoster()]);
 		})();
 	});
 </script>
 
-<div class="max-w-2xl mx-auto p-6 space-y-8">
+<div class="max-w-5xl mx-auto p-6 space-y-6">
+	<!-- Header -->
 	<div class="flex items-center justify-between gap-4">
-		<h1 class="text-2xl font-bold text-gray-800 dark:text-gray-200">Lineups</h1>
+		<div>
+			<h1 class="text-2xl font-bold text-gray-100">Lineups</h1>
+			<p class="text-sm text-gray-500 mt-0.5">Manage your hero teams for atlas runs</p>
+		</div>
 		<a
 			href="/incremental/lineup/new"
-			class="rounded bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+			class="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-500 transition-colors shadow-lg shadow-emerald-900/30"
 		>
-			New lineup
+			+ New lineup
 		</a>
 	</div>
 
 	{#if saves.length > 1}
-		<section class="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 p-3">
-			<label for="lineup-save" class="text-sm font-medium text-gray-500 dark:text-gray-400">Save</label>
+		<section class="rounded-xl border border-gray-700 bg-gray-900/80 p-3">
+			<label for="lineup-save" class="text-sm font-medium text-gray-400">Save</label>
 			<select
 				id="lineup-save"
-				class="mt-1 block w-full rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-gray-900 dark:text-gray-100"
+				class="mt-1 block w-full rounded-lg border border-gray-600 bg-gray-800 px-3 py-2 text-gray-100"
 				bind:value={saveId}
 				onchange={refresh}
 			>
@@ -206,17 +222,19 @@
 		</section>
 	{/if}
 
-	<section class="space-y-3">
+	<section class="space-y-4">
 		{#if lineups.length === 0}
-			<p class="text-gray-600 dark:text-gray-400">
-				No lineups yet. Create one with 1–5 heroes from your roster.
-			</p>
-			<a
-				href="/incremental/lineup/new"
-				class="mt-3 inline-block text-sm text-primary hover:underline"
-			>
-				Create your first lineup →
-			</a>
+			<div class="rounded-xl border-2 border-dashed border-gray-700 bg-gray-900/50 p-8 text-center">
+				<p class="text-gray-400 mb-3">
+					No lineups yet. Create a team of 1-5 heroes from your roster.
+				</p>
+				<a
+					href="/incremental/lineup/new"
+					class="inline-block rounded-lg bg-emerald-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-emerald-500 transition-colors"
+				>
+					Create your first lineup
+				</a>
+			</div>
 		{:else}
 			{#each lineups as lineup}
 				<LineupCard
@@ -229,6 +247,8 @@
 					activeRun={lineup.activeRun}
 					getHeroDef={getHeroDef}
 					getAbilityDef={getAbilityDef}
+					abilityDefs={heroesFromApi.abilityDefs}
+					{trainingByHero}
 					onDelete={() => deleteLineup(lineup.id)}
 					onStartRun={() => startRun(lineup.id)}
 					onCancelRun={cancelRun}
@@ -242,7 +262,7 @@
 		{/if}
 	</section>
 
-	<p class="text-sm text-gray-500 dark:text-gray-400">
+	<p class="text-sm text-gray-500">
 		<a href="/incremental" class="text-primary hover:underline">← Back to Incremental</a>
 	</p>
 </div>
