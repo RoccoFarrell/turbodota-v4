@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount, getContext } from 'svelte';
+	import { fade } from 'svelte/transition';
 	import { toaster } from '$lib/toaster';
 	import {
 		TRAINING_BUILDINGS,
@@ -10,6 +11,7 @@
 	import BarracksBuildingCard from '$lib/incremental/components/BarracksBuildingCard.svelte';
 	import * as actionStore from '$lib/incremental/stores/action-slots.svelte';
 	import type { HeroDef, AbilityDef } from '$lib/incremental/types';
+	import { getArcaneRuneQty, formatTrainingRuneToast } from '$lib/incremental/items/rune-apply-helpers';
 
 	const layoutHeroes = getContext<Array<{ id: number; localized_name: string }>>('heroes') ?? [];
 
@@ -37,6 +39,9 @@
 	// ---- Local state ----
 	let rosterHeroIds = $state<number[]>([]);
 	let trainingValues = $state<Record<number, Record<string, number>>>({});
+	let arcaneRuneQty = $state(0);
+	let runeApplyMode = $state(false);
+	let applyingRune = $state(false);
 
 	// ---- Shared store bindings ----
 	const saveId = $derived(actionStore.getSaveId());
@@ -69,6 +74,15 @@
 				map[t.heroId][t.statKey] = t.value;
 			}
 			trainingValues = map;
+		}
+	}
+
+	async function fetchBank() {
+		if (!saveId) return;
+		const res = await fetch(`/api/incremental/bank${saveParam()}`);
+		if (res.ok) {
+			const data = await res.json();
+			arcaneRuneQty = getArcaneRuneQty(data.inventory ?? []);
 		}
 	}
 
@@ -109,6 +123,53 @@
 		await actionStore.clearSlot(slotIndex);
 	}
 
+	function cancelRuneApply() {
+		runeApplyMode = false;
+	}
+
+	function handleKeydown(e: KeyboardEvent) {
+		if (e.key === 'Escape' && runeApplyMode) {
+			cancelRuneApply();
+		}
+	}
+
+	async function handleRuneApplyTraining(targetStatKey: TrainingStatKey, heroId: number) {
+		if (applyingRune || !saveId) return;
+		applyingRune = true;
+		try {
+			const res = await fetch('/api/incremental/items/use', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					saveId,
+					itemId: 'arcane_rune',
+					targetType: 'training',
+					targetHeroId: heroId,
+					targetStatKey
+				})
+			});
+			if (res.ok) {
+				const data = await res.json();
+				const toast = formatTrainingRuneToast(
+					data.completions ?? 0,
+					TRAINING_BUILDINGS[targetStatKey].name,
+					heroName(heroId),
+					data.newTrainingValue ?? 0
+				);
+				toaster.success({ ...toast, duration: 8000 });
+				await Promise.all([fetchBank(), fetchTraining()]);
+			} else {
+				const err = await res.json().catch(() => null);
+				toaster.error({ title: err?.message ?? 'Failed to apply rune' });
+			}
+		} catch {
+			toaster.error({ title: 'Failed to apply rune' });
+		} finally {
+			applyingRune = false;
+			runeApplyMode = false;
+		}
+	}
+
 	// fetchHeroes doesn't need saveId — fetch immediately on mount.
 	onMount(() => { fetchHeroes(); });
 
@@ -119,16 +180,30 @@
 		if (!saveId) return;
 		fetchRoster();
 		fetchTraining();
+		fetchBank();
 		const interval = setInterval(fetchTraining, 2000);
 		return () => clearInterval(interval);
 	});
 </script>
+
+<svelte:window onkeydown={handleKeydown} />
 
 <div class="max-w-6xl mx-auto p-6">
 	<div class="flex items-center justify-between mb-6">
 		<div>
 			<h1 class="text-2xl font-bold text-gray-800 dark:text-gray-200">The Barracks</h1>
 			<p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Train your heroes to strengthen them for battle</p>
+		</div>
+		<!-- Rune button -->
+		<div class="flex items-center gap-4 text-sm">
+			<button
+				type="button"
+				disabled={arcaneRuneQty === 0}
+				onclick={() => { runeApplyMode = true; }}
+				class="rounded-lg bg-amber-500/15 border border-amber-500/30 px-3 py-1.5 text-sm font-medium text-amber-400 hover:bg-amber-500/25 transition-colors disabled:opacity-40"
+			>
+				✨ {arcaneRuneQty} Arcane Rune{arcaneRuneQty !== 1 ? 's' : ''}
+			</button>
 		</div>
 	</div>
 
@@ -198,8 +273,37 @@
 					onAssign={handleAssign}
 					onClear={handleClearSlot}
 					{busyHeroIds}
+					{runeApplyMode}
+					onRuneApply={handleRuneApplyTraining}
+					{applyingRune}
 				/>
 			{/each}
 		</div>
 	{/if}
 </div>
+
+<!-- Rune Apply Mode Overlay -->
+{#if runeApplyMode}
+	<!-- svelte-ignore a11y_no_static_element_interactions -->
+	<div
+		class="fixed inset-0 z-40 bg-black/50"
+		transition:fade={{ duration: 200 }}
+		onclick={cancelRuneApply}
+		onkeydown={() => {}}
+	></div>
+	<div
+		class="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 rounded-lg bg-gray-900 border border-amber-500/40 px-4 py-2 shadow-lg"
+		transition:fade={{ duration: 200 }}
+	>
+		<span class="text-sm text-amber-400 font-medium">
+			{applyingRune ? 'Applying rune...' : 'Click a building to apply Arcane Rune'}
+		</span>
+		<button
+			type="button"
+			onclick={cancelRuneApply}
+			class="rounded px-2 py-1 text-xs text-gray-400 hover:text-gray-200 border border-gray-600 hover:border-gray-500 transition-colors"
+		>
+			Cancel
+		</button>
+	</div>
+{/if}

@@ -1,9 +1,11 @@
 <script lang="ts">
+	import { slide } from 'svelte/transition';
 	import { TRAINING_BUILDINGS, type TrainingStatKey } from '$lib/incremental/actions/constants';
 	import { getStatAffinityAttr } from '$lib/incremental/actions/hero-affinity';
 	import type { SlotState } from '$lib/incremental/stores/action-slots.svelte';
 	import type { HeroDef } from '$lib/incremental/types';
 	import HeroPickerDropdown from './HeroPickerDropdown.svelte';
+	import { shouldAutoApply } from '$lib/incremental/items/rune-apply-helpers';
 
 	interface Props {
 		statKey: TrainingStatKey;
@@ -19,6 +21,9 @@
 		onAssign: (statKey: TrainingStatKey, heroId: number) => void;
 		onClear: (slotIndex: number) => void;
 		busyHeroIds?: Set<number>;
+		runeApplyMode?: boolean;
+		onRuneApply?: (statKey: TrainingStatKey, heroId: number) => void;
+		applyingRune?: boolean;
 	}
 
 	let {
@@ -34,7 +39,10 @@
 		isRunning,
 		onAssign,
 		onClear,
-		busyHeroIds = new Set()
+		busyHeroIds = new Set(),
+		runeApplyMode = false,
+		onRuneApply,
+		applyingRune = false
 	}: Props = $props();
 
 	const building = $derived(TRAINING_BUILDINGS[statKey]);
@@ -51,6 +59,10 @@
 	let selectedHeroId = $state<number | null>(null);
 	let showPicker = $state(false);
 
+	// Rune apply: hero picker sub-state (for buildings without active slot)
+	let runePickerOpen = $state(false);
+	let runeSelectedHeroId = $state<number | null>(null);
+
 	function handleTrain() {
 		if (selectedHeroId == null || !hasFreeSlot) return;
 		onAssign(statKey, selectedHeroId);
@@ -61,9 +73,48 @@
 	function handleHeroSelect(heroId: number | null) {
 		selectedHeroId = heroId;
 	}
+
+	function handleRuneCardClick() {
+		if (!runeApplyMode || applyingRune || !onRuneApply) return;
+
+		const auto = shouldAutoApply(activeSlot);
+		if (auto.autoApply && auto.heroId != null) {
+			onRuneApply(statKey, auto.heroId);
+		} else {
+			runePickerOpen = true;
+		}
+	}
+
+	function handleRuneHeroSelect(heroId: number | null) {
+		runeSelectedHeroId = heroId;
+	}
+
+	function confirmRuneApply() {
+		if (runeSelectedHeroId == null || !onRuneApply) return;
+		onRuneApply(statKey, runeSelectedHeroId);
+		runeSelectedHeroId = null;
+		runePickerOpen = false;
+	}
+
+	// Reset rune picker when apply mode is exited
+	$effect(() => {
+		if (!runeApplyMode) {
+			runePickerOpen = false;
+			runeSelectedHeroId = null;
+		}
+	});
 </script>
 
-<div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/60 overflow-hidden">
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div
+	class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/60 relative
+		{runeApplyMode ? 'z-50 cursor-pointer' : 'overflow-hidden'}"
+	onclick={handleRuneCardClick}
+	onkeydown={(e) => { if (runeApplyMode && e.key === 'Enter') handleRuneCardClick(); }}
+>
+	{#if runeApplyMode}
+		<div class="absolute -inset-px rounded-xl ring-2 ring-amber-400 animate-pulse pointer-events-none z-10"></div>
+	{/if}
 	<!-- Header -->
 	<div class="px-4 pt-4 pb-3 border-b border-gray-100 dark:border-gray-700">
 		<div class="flex items-center gap-2">
@@ -80,7 +131,7 @@
 		</div>
 	</div>
 
-	<div class="p-4 space-y-3">
+	<div class="p-4 space-y-3" class:pointer-events-none={runeApplyMode && !runePickerOpen}>
 		<!-- Active slot display -->
 		{#if activeSlot}
 			{@const prog = slotDisplayProgress(activeSlot)}
@@ -167,4 +218,44 @@
 			{/if}
 		{/if}
 	</div>
+
+	<!-- Rune Apply: Hero picker for buildings without active slot -->
+	{#if runeApplyMode && runePickerOpen}
+		<!-- svelte-ignore a11y_click_events_have_key_events -->
+		<div
+			class="p-4 border-t border-amber-500/30 bg-amber-500/5"
+			transition:slide={{ duration: 200 }}
+			onclick={(e) => e.stopPropagation()}
+		>
+			<p class="text-xs text-amber-400 font-medium mb-2">Select hero for rune</p>
+			<HeroPickerDropdown
+				{rosterHeroIds}
+				{getHeroDef}
+				{heroName}
+				{trainingValues}
+				targetStatKey={statKey}
+				value={runeSelectedHeroId}
+				onSelect={handleRuneHeroSelect}
+				{busyHeroIds}
+			/>
+			<button
+				type="button"
+				onclick={confirmRuneApply}
+				disabled={runeSelectedHeroId == null || applyingRune}
+				class="mt-2 w-full rounded-lg py-2 text-sm font-medium transition-colors
+					{runeSelectedHeroId != null && !applyingRune
+						? 'bg-amber-500 text-gray-900 hover:bg-amber-400'
+						: 'bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed'}"
+			>
+				{applyingRune ? 'Applying...' : '✨ Apply Rune'}
+			</button>
+		</div>
+	{/if}
+
+	<!-- Applying indicator for auto-apply -->
+	{#if runeApplyMode && applyingRune && activeSlot}
+		<div class="p-3 border-t border-amber-500/30 bg-amber-500/5 text-center">
+			<span class="text-sm text-amber-400 font-medium">Applying...</span>
+		</div>
+	{/if}
 </div>

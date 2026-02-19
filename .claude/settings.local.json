@@ -38,7 +38,8 @@
       "Bash(npm run test:*)",
       "Bash(git rm:*)",
       "Bash(npx vitest:*)",
-      "Bash(tee:*)"
+      "Bash(tee:*)",
+      "Bash(npx vite build)"
     ]
   }
 }

@@ -2,6 +2,7 @@
 	import { SCAVENGING_PARTY_MAX_SIZE, SCAVENGING_PARTY_YIELD_BONUS } from '$lib/incremental/actions/constants';
 	import type { ActionDef } from '$lib/incremental/actions/action-definitions';
 	import type { SlotState } from '$lib/incremental/stores/action-slots.svelte';
+	import { runeTargetClasses } from '$lib/incremental/items/rune-apply-helpers';
 
 	interface Props {
 		actionDef: ActionDef;
@@ -15,6 +16,10 @@
 		onAssign: (actionType: string, partyHeroIds: number[]) => void;
 		onClear: (slotIndex: number) => void;
 		busyHeroIds?: Set<number>;
+		runeApplyMode?: boolean;
+		isRuneTarget?: boolean;
+		onRuneApply?: () => void;
+		applyingRune?: boolean;
 	}
 
 	let {
@@ -28,7 +33,11 @@
 		isRunning,
 		onAssign,
 		onClear,
-		busyHeroIds = new Set()
+		busyHeroIds = new Set(),
+		runeApplyMode = false,
+		isRuneTarget = false,
+		onRuneApply,
+		applyingRune = false
 	}: Props = $props();
 
 	/** Active slot for this action type. */
@@ -65,7 +74,15 @@
 	);
 </script>
 
-<div class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/60 overflow-hidden">
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div
+	class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/60 relative {runeApplyMode && isRuneTarget ? '' : 'overflow-hidden'} {runeTargetClasses(runeApplyMode, isRuneTarget)}"
+	onclick={() => { if (runeApplyMode && isRuneTarget && onRuneApply && !applyingRune) onRuneApply(); }}
+	onkeydown={(e) => { if (runeApplyMode && isRuneTarget && e.key === 'Enter' && onRuneApply && !applyingRune) onRuneApply(); }}
+>
+	{#if runeApplyMode && isRuneTarget}
+		<div class="absolute -inset-px rounded-xl ring-2 ring-amber-400 animate-pulse pointer-events-none z-10"></div>
+	{/if}
 	<!-- Header -->
 	<div class="px-4 pt-4 pb-3 border-b border-gray-100 dark:border-gray-700">
 		<div class="flex items-center justify-between gap-2">
@@ -88,7 +105,7 @@
 		</div>
 	</div>
 
-	<div class="p-4 space-y-3">
+	<div class="p-4 space-y-3" class:pointer-events-none={runeApplyMode}>
 		<!-- Active slot display -->
 		{#if activeSlot}
 			{@const prog = slotDisplayProgress(activeSlot)}

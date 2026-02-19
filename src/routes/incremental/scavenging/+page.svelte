@@ -1,10 +1,12 @@
 <script lang="ts">
 	import { getContext } from 'svelte';
+	import { fade } from 'svelte/transition';
 	import { toaster } from '$lib/toaster';
-	import { SCAVENGING_ACTION_DEFS } from '$lib/incremental/actions/action-definitions';
+	import { SCAVENGING_ACTION_DEFS, MINING_ACTION_ID } from '$lib/incremental/actions/action-definitions';
 	import ActionSlotBar from '$lib/incremental/components/ActionSlotBar.svelte';
 	import ScavengingResourceCard from '$lib/incremental/components/ScavengingResourceCard.svelte';
 	import * as actionStore from '$lib/incremental/stores/action-slots.svelte';
+	import { getArcaneRuneQty, formatMiningRuneToast } from '$lib/incremental/items/rune-apply-helpers';
 
 	const layoutHeroes = getContext<Array<{ id: number; localized_name: string }>>('heroes') ?? [];
 
@@ -19,6 +21,9 @@
 	// ---- Local state ----
 	let rosterHeroIds = $state<number[]>([]);
 	let woodBalance = $state(0);
+	let arcaneRuneQty = $state(0);
+	let runeApplyMode = $state(false);
+	let applyingRune = $state(false);
 
 	function saveParam() {
 		return saveId ? `?saveId=${encodeURIComponent(saveId)}` : '';
@@ -39,6 +44,7 @@
 		if (res.ok) {
 			const data = await res.json();
 			woodBalance = data.currencies?.wood ?? data.wood ?? 0;
+			arcaneRuneQty = getArcaneRuneQty(data.inventory ?? []);
 		}
 	}
 
@@ -69,6 +75,42 @@
 		await actionStore.clearSlot(slotIndex);
 	}
 
+	function cancelRuneApply() {
+		runeApplyMode = false;
+	}
+
+	function handleKeydown(e: KeyboardEvent) {
+		if (e.key === 'Escape' && runeApplyMode) {
+			cancelRuneApply();
+		}
+	}
+
+	async function handleRuneApplyMining() {
+		if (applyingRune || !saveId) return;
+		applyingRune = true;
+		try {
+			const res = await fetch('/api/incremental/items/use', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ saveId, itemId: 'arcane_rune', targetType: 'mining' })
+			});
+			if (res.ok) {
+				const data = await res.json();
+				const toast = formatMiningRuneToast(data.completions ?? 0);
+				toaster.success({ ...toast, duration: 8000 });
+				await fetchWood();
+			} else {
+				const err = await res.json().catch(() => null);
+				toaster.error({ title: err?.message ?? 'Failed to apply rune' });
+			}
+		} catch {
+			toaster.error({ title: 'Failed to apply rune' });
+		} finally {
+			applyingRune = false;
+			runeApplyMode = false;
+		}
+	}
+
 	// saveId is set by the layout's onMount, which runs AFTER the page's onMount.
 	// Use $effect to fetch roster/wood whenever saveId becomes available.
 	$effect(() => {
@@ -78,13 +120,15 @@
 	});
 </script>
 
+<svelte:window onkeydown={handleKeydown} />
+
 <div class="max-w-4xl mx-auto p-6">
 	<div class="flex items-center justify-between mb-6">
 		<div>
 			<h1 class="text-2xl font-bold text-gray-800 dark:text-gray-200">Scavenging</h1>
 			<p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Collect resources to power your heroes</p>
 		</div>
-		<!-- Resource balances -->
+		<!-- Resource balances + Rune button -->
 		<div class="flex items-center gap-4 text-sm">
 			<div class="flex items-center gap-1.5">
 				<span>⛏️</span>
@@ -96,6 +140,14 @@
 				<span class="font-semibold text-gray-900 dark:text-gray-100">{woodBalance}</span>
 				<span class="text-gray-500 dark:text-gray-400">Wood</span>
 			</div>
+			<button
+				type="button"
+				disabled={arcaneRuneQty === 0}
+				onclick={() => { runeApplyMode = true; }}
+				class="rounded-lg bg-amber-500/15 border border-amber-500/30 px-3 py-1.5 text-sm font-medium text-amber-400 hover:bg-amber-500/25 transition-colors disabled:opacity-40"
+			>
+				✨ {arcaneRuneQty} Arcane Rune{arcaneRuneQty !== 1 ? 's' : ''}
+			</button>
 		</div>
 	</div>
 
@@ -153,7 +205,37 @@
 				onAssign={handleAssign}
 				onClear={handleClear}
 				{busyHeroIds}
+				{runeApplyMode}
+				isRuneTarget={actionDef.id === MINING_ACTION_ID}
+				onRuneApply={handleRuneApplyMining}
+				{applyingRune}
 			/>
 		{/each}
 	</div>
 </div>
+
+<!-- Rune Apply Mode Overlay -->
+{#if runeApplyMode}
+	<!-- svelte-ignore a11y_no_static_element_interactions -->
+	<div
+		class="fixed inset-0 z-40 bg-black/50"
+		transition:fade={{ duration: 200 }}
+		onclick={cancelRuneApply}
+		onkeydown={() => {}}
+	></div>
+	<div
+		class="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 rounded-lg bg-gray-900 border border-amber-500/40 px-4 py-2 shadow-lg"
+		transition:fade={{ duration: 200 }}
+	>
+		<span class="text-sm text-amber-400 font-medium">
+			{applyingRune ? 'Applying rune...' : 'Click a target to apply Arcane Rune'}
+		</span>
+		<button
+			type="button"
+			onclick={cancelRuneApply}
+			class="rounded px-2 py-1 text-xs text-gray-400 hover:text-gray-200 border border-gray-600 hover:border-gray-500 transition-colors"
+		>
+			Cancel
+		</button>
+	</div>
+{/if}

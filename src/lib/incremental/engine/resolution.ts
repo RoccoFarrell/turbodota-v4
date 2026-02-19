@@ -81,7 +81,7 @@ export function resolveAutoAttack(
 	const def = defs?.getHeroDef?.(hero.heroId) ?? getHeroDef(hero.heroId);
 	if (!def) return state;
 
-	const interval = attackInterval(def.baseAttackInterval, 0);
+	const interval = attackInterval(def.baseAttackInterval, def.attackSpeed ?? 0);
 	if (hero.attackTimer < interval) return state;
 
 	if (state.enemy.length === 0) return state;
@@ -175,7 +175,7 @@ export function resolveSpell(
 	const def = defs?.getHeroDef?.(hero.heroId) ?? getHeroDef(hero.heroId);
 	if (!def || def.baseSpellInterval == null) return state;
 
-	const interval = spellInterval(def.baseSpellInterval, 0);
+	const interval = spellInterval(def.baseSpellInterval, def.spellHaste ?? 0);
 	if (hero.spellTimer < interval) return state;
 
 	const getAb = defs?.getAbilityDef ?? getAbilityDef;
@@ -230,7 +230,7 @@ export function resolveSpell(
 			let rawSpellDamage: number | undefined;
 			const damageType: DamageType = ability.damageType ?? DamageTypeConst.PURE;
 			if (ability.baseDamage != null && ability.baseDamage > 0) {
-				rawSpellDamage = spellDamage(ability.baseDamage, 0);
+				rawSpellDamage = spellDamage(ability.baseDamage, def.spellPower ?? 0);
 				const damageAfterPenalty = nonFocusTargetPenalty(
 					rawSpellDamage,
 					isTargetEnemyFrontLiner

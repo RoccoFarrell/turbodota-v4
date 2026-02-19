@@ -72,7 +72,7 @@ export function tick(
 		if (!h || h.currentHp <= 0) continue;
 		const d = getHeroDefFrom(s, h.heroId, defs);
 		if (!d) continue;
-		const attackInt = attackInterval(d.baseAttackInterval, 0);
+		const attackInt = attackInterval(d.baseAttackInterval, d.attackSpeed ?? 0);
 		if (h.attackTimer >= attackInt) {
 			s = resolveAutoAttack(s, i, defs);
 		}
@@ -86,7 +86,7 @@ export function tick(
 	if (hero && hero.currentHp > 0) {
 		const def = getHeroDefFrom(s, hero.heroId, defs);
 		if (def?.baseSpellInterval != null) {
-			const spellInt = spellInterval(def.baseSpellInterval, 0);
+			const spellInt = spellInterval(def.baseSpellInterval, def.spellHaste ?? 0);
 			const heroAfter = s.player[focusIdx];
 			if (heroAfter && heroAfter.spellTimer >= spellInt) {
 				s = resolveSpell(s, focusIdx, defs);

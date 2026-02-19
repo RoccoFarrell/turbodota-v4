@@ -76,6 +76,9 @@ export async function getHeroDefsFromDb(saveId?: string | null): Promise<{
 		const baseAttackDamage = b.baseAttackDamage + (tr?.get('attack_damage') ?? 0);
 		const baseArmor = b.baseArmor + (tr?.get('armor') ?? 0);
 		const baseMagicResist = b.baseMagicResist + (tr?.get('magic_resist') ?? 0);
+		const attackSpeed = tr?.get('attack_speed') ?? 0;
+		const spellPower = tr?.get('spell_power') ?? 0;
+		const spellHaste = tr?.get('spell_haste') ?? 0;
 		const abilityIds = [b.abilityId1, b.abilityId2].filter(Boolean);
 		return {
 			heroId: b.heroId,
@@ -86,7 +89,10 @@ export async function getHeroDefsFromDb(saveId?: string | null): Promise<{
 			baseArmor: baseArmor,
 			baseMagicResist: baseMagicResist,
 			baseSpellInterval: b.baseSpellInterval,
-			abilityIds
+			abilityIds,
+			attackSpeed,
+			spellPower,
+			spellHaste
 		};
 	});
 

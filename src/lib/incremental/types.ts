@@ -53,6 +53,9 @@ export interface HeroDef {
 	baseMagicResist: number; // 0–1 (e.g. 0.25 = 25%); reduces magical damage
 	baseSpellInterval: number | null; // seconds; null if passive-only
 	abilityIds: string[]; // length 1 now, up to 3 later
+	attackSpeed?: number; // from training; reduces attack interval
+	spellPower?: number; // from training; adds flat spell damage
+	spellHaste?: number; // from training; reduces spell interval
 }
 
 /** Ability definition: active (timer) or passive (on-event). Spells can deal physical, magical, or pure damage. */
