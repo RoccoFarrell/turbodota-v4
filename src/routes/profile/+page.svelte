@@ -16,8 +16,15 @@
 	let editingUsername = $state(false);
 	let usernameInput = $state(data.user.username);
 
+	let editingAccountId = $state(false);
+	let accountIdInput = $state(data.user.account_id?.toString() ?? '');
+
 	$effect(() => {
 		usernameInput = data.user.username;
+	});
+
+	$effect(() => {
+		accountIdInput = data.user.account_id?.toString() ?? '';
 	});
 
 	function formatNum(n: number | null): string {
@@ -197,6 +204,12 @@
 					{#if data.user.account_id}
 						<span class="inline-flex items-center gap-1.5 py-[0.2rem] px-2.5 rounded-full text-xs font-bold tracking-[0.05em] uppercase bg-[rgb(20_10_5)] border border-[rgb(80_50_20/0.5)] text-[rgb(180_150_90)]">
 							ID: {data.user.account_id}
+							<button
+								class="ml-0.5 text-[rgb(180_150_90)] hover:text-(--gold) cursor-pointer transition-colors duration-150"
+								onclick={() => { editingAccountId = true; document.querySelector('#linked-accounts')?.scrollIntoView({ behavior: 'smooth' }); }}
+							>
+								<i class="fi fi-rr-pencil text-[10px] leading-none"></i>
+							</button>
 						</span>
 					{/if}
 					{#if !data.user.steam_id && !data.user.google_id}
@@ -370,7 +383,7 @@
 	</div>
 
 	<!-- ── ACCOUNT LINKS ──────────────────────────────── -->
-	<div class="panel reveal reveal-5">
+	<div id="linked-accounts" class="panel reveal reveal-5">
 		<div class="text-xs font-extrabold tracking-[0.14em] uppercase text-(--text-muted) px-5 pt-4 pb-2 flex items-center gap-2 after:content-[''] after:flex-1 after:h-px after:bg-linear-to-r after:from-(--card-border) after:to-transparent">
 			Linked Accounts
 		</div>
@@ -408,22 +421,61 @@
 			</div>
 
 			<!-- Dota Account ID -->
-			{#if !data.user.account_id}
-				<div class="flex-[1_1_200px] bg-[rgb(14_9_5)] border border-(--card-border) rounded-lg px-4 py-3.5 flex flex-col items-start gap-2.5">
-					<div class="text-sm font-semibold text-(--text-warm)">Dota 2 Account ID</div>
-					<form method="POST" action="?/setAccountId" use:enhance class="flex gap-2 w-full">
+			<div class="flex-[1_1_200px] bg-[rgb(14_9_5)] border border-(--card-border) rounded-lg px-4 py-3.5 flex flex-col items-start gap-2.5">
+				<div class="flex items-center gap-3 w-full">
+					<div class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm {data.user.account_id ? 'bg-[rgb(5_46_22/0.6)] text-green-300' : 'bg-[rgb(30_18_8/0.6)] text-(--text-muted)'}">
+						<i class="fi fi-rr-gamepad leading-none"></i>
+					</div>
+					<div class="flex-1 min-w-0">
+						<div class="text-sm font-semibold text-(--text-warm)">Dota 2 Account ID</div>
+						{#if data.user.account_id && !editingAccountId}
+							<div class="text-sm text-(--text-muted)">{data.user.account_id}</div>
+						{/if}
+					</div>
+					{#if data.user.account_id && !editingAccountId}
+						<button
+							class="bg-[rgb(40_24_10/0.8)] border border-(--gold-dim) text-(--gold) rounded-md px-2.5 py-1 text-xs cursor-pointer transition-all duration-150 flex items-center gap-1.5 hover:bg-(--gold-glow) hover:border-(--gold)"
+							onclick={() => (editingAccountId = true)}
+						>
+							<i class="fi fi-rr-pencil text-xs leading-none"></i>
+							Edit
+						</button>
+					{/if}
+				</div>
+				{#if !data.user.account_id || editingAccountId}
+					<form
+						method="POST"
+						action="?/setAccountId"
+						class="flex gap-2 w-full"
+						use:enhance={() => {
+							return async ({ result, update }) => {
+								await update();
+								if (result.type === 'success') editingAccountId = false;
+							};
+						}}
+					>
 						<input
 							type="number"
 							name="account_id"
 							placeholder="e.g. 123456789"
+							value={accountIdInput}
 							class="flex-1 bg-[rgb(20_12_6)] border border-(--card-border) text-(--text-warm) rounded-md px-2.5 py-1.5 text-sm [font-family:inherit] outline-none min-w-0"
 						/>
 						<button type="submit" class="bg-(--gold) text-[rgb(10_6_2)] rounded-md px-3 py-[0.35rem] text-sm font-bold cursor-pointer [font-family:inherit] hover:opacity-85">
 							Save
 						</button>
+						{#if editingAccountId}
+							<button
+								type="button"
+								class="bg-[rgb(30_15_8)] border border-(--card-border) text-(--text-muted) rounded-md px-3 py-[0.35rem] text-sm cursor-pointer [font-family:inherit] hover:text-(--text-warm)"
+								onclick={() => { editingAccountId = false; accountIdInput = data.user.account_id?.toString() ?? ''; }}
+							>
+								Cancel
+							</button>
+						{/if}
 					</form>
-				</div>
-			{/if}
+				{/if}
+			</div>
 		</div>
 	</div>
 

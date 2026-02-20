@@ -16,19 +16,25 @@ export interface ActionDef {
 	durationPerCompletionSec: number;
 	/** Optional rate modifier source (e.g. from talents); default 1. */
 	rateModifier?: number;
-	/** Emoji icon for UI display. */
+	/** Path to SVG icon (game-icons.net) for UI display. */
 	icon: string;
 	/** Human-readable label for this action. */
 	label: string;
 	/** Category: scavenging (resource collection) or training (hero stat improvement). */
 	category: 'scavenging' | 'training';
+	/** If true, the action is shown but not yet available (teaser). */
+	disabled?: boolean;
+	/** Tailwind text-* color class for the icon. */
+	color?: string;
 }
+
+const GI = '/game-icons/ffffff/transparent/1x1';
 
 /** All registered actions. Add new actions here; rewards are applied in action-rewards.server.ts. */
 const ACTIONS: ActionDef[] = [
-	{ id: 'mining', durationPerCompletionSec: 3, icon: '⛏️', label: 'Mining', category: 'scavenging' },
-	{ id: 'woodcutting', durationPerCompletionSec: 3, icon: '🪵', label: 'Woodcutting', category: 'scavenging' },
-	{ id: 'training', durationPerCompletionSec: 5, icon: '🏋️', label: 'Training', category: 'training' }
+	{ id: 'mining', durationPerCompletionSec: 3, icon: `${GI}/lorc/mining.svg`, label: 'Mining', category: 'scavenging', color: 'text-purple-400' },
+	{ id: 'woodcutting', durationPerCompletionSec: 3, icon: `${GI}/lorc/wood-axe.svg`, label: 'Woodcutting', category: 'scavenging', color: 'text-orange-400', disabled: true },
+	{ id: 'training', durationPerCompletionSec: 5, icon: `${GI}/lorc/muscle-up.svg`, label: 'Training', category: 'training', color: 'text-amber-400' }
 ];
 
 const byId = new Map(ACTIONS.map((a) => [a.id, a]));

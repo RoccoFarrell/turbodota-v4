@@ -79,4 +79,43 @@ describe('battle-state', () => {
 		expect(skullLord).toBeDefined();
 		expect(skullLord?.spellTimer).toBe(0);
 	});
+
+	/** Level 1 (default): enemy stats are unchanged from base defs. */
+	it('level 1 does not scale enemy stats', () => {
+		const state = createBattleState([99, 25, 50], 'wolf_pack', { ...withDefs, level: 1 });
+		const large = state.enemy.find((e) => e.enemyDefId === 'large_wolf')!;
+		expect(large.currentHp).toBe(700);
+		expect(large.maxHp).toBe(700);
+		expect(large.attackDamage).toBe(4);
+		expect(state.level).toBe(1);
+	});
+
+	/** Level 2: enemy HP and damage are doubled. */
+	it('level 2 doubles enemy HP and damage', () => {
+		const state = createBattleState([99, 25, 50], 'wolf_pack', { ...withDefs, level: 2 });
+		const large = state.enemy.find((e) => e.enemyDefId === 'large_wolf')!;
+		expect(large.currentHp).toBe(1400);
+		expect(large.maxHp).toBe(1400);
+		expect(large.attackDamage).toBe(8);
+		const small = state.enemy.find((e) => e.enemyDefId === 'small_wolf')!;
+		expect(small.currentHp).toBe(500);
+		expect(small.attackDamage).toBe(4);
+		expect(state.level).toBe(2);
+	});
+
+	/** Level 3: enemy stats are 4x. */
+	it('level 3 quadruples enemy stats', () => {
+		const state = createBattleState([99, 25, 50], 'wolf_pack', { ...withDefs, level: 3 });
+		const large = state.enemy.find((e) => e.enemyDefId === 'large_wolf')!;
+		expect(large.currentHp).toBe(2800);
+		expect(large.attackDamage).toBe(16);
+		expect(state.level).toBe(3);
+	});
+
+	/** Level scaling does NOT affect player heroes. */
+	it('level scaling does not affect player hero HP', () => {
+		const state1 = createBattleState([99], 'wolf_pack', { ...withDefs, level: 1 });
+		const state5 = createBattleState([99], 'wolf_pack', { ...withDefs, level: 5 });
+		expect(state1.player[0].maxHp).toBe(state5.player[0].maxHp);
+	});
 });

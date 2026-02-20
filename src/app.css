@@ -155,30 +155,24 @@ body {
 	display: inline-block;
 }
 
-/* Spell icons: 9 cols × 6 rows, 16×16 px each. Bottom-right 3×3 blank. --spell-x, --spell-y are 0-based col/row. */
-.spell-icon {
-	background-image: url('/spell_icons.png');
-	background-repeat: no-repeat;
+/*
+ * Game-icon (gi): renders a game-icons.net SVG as a mask so the icon
+ * takes on `currentColor` (set via Tailwind text-* classes).
+ * Usage: <span class="gi w-4 h-4 text-amber-400" style="--gi: url(/game-icons/...)"></span>
+ */
+.gi {
 	display: inline-block;
-	width: 32px;
-	height: 32px;
+	background-color: currentColor;
+	-webkit-mask-image: var(--gi);
+	mask-image: var(--gi);
+	-webkit-mask-size: contain;
+	mask-size: contain;
+	-webkit-mask-repeat: no-repeat;
+	mask-repeat: no-repeat;
+	-webkit-mask-position: center;
+	mask-position: center;
+	vertical-align: middle;
 	flex-shrink: 0;
-	/* Sheet 144×96 scaled 2× → 288×192; one cell = 32×32 in scaled space */
-	background-size: 288px 192px;
-	background-position: calc(-32px * var(--spell-x, 0)) calc(-32px * var(--spell-y, 0));
-	image-rendering: pixelated;
-	image-rendering: -moz-crisp-edges;
-	image-rendering: crisp-edges;
-	border: 2px solid hsl(var(--primary));
-	border-radius: 6px;
-}
-.spell-icon--sm {
-	width: 20px;
-	height: 20px;
-	background-size: 180px 120px;
-	background-position: calc(-20px * var(--spell-x, 0)) calc(-20px * var(--spell-y, 0));
-	border-width: 1px;
-	border-radius: 4px;
 }
 
 /* Sprite sheet utility class - use with CSS variables for frame positioning */

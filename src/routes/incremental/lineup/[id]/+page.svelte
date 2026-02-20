@@ -204,7 +204,7 @@
 			const runId = data.runId ?? data.runState?.runId;
 			if (runId) {
 				toaster.success({ title: 'Run started' });
-				goto(`/incremental/run/${runId}`);
+				goto(`/incremental/darkrift/${runId}`);
 			} else {
 				toaster.error({ title: 'Start run failed', description: 'No run ID returned' });
 			}

@@ -4,31 +4,7 @@ Backlog and near-term improvements for the incremental game. See [DEVELOPMENT_RO
 
 ---
 
-## 1. Run history feature
-
-**Goal:** Let players view completed runs (past runs, outcomes, stats).
-
-- [ ] Persist completed run summaries (e.g. run id, level, outcome, duration, rewards).
-- [ ] Add API endpoint(s) to list/filter run history for the current user.
-- [ ] Add UI (e.g. under Map/Run or a dedicated “Run history” section) to browse and inspect completed runs.
-
-**Relevant:** Run/encounter flow in `src/lib/incremental/run/`, save/load in `src/lib/server/incremental-save.ts`, API under `src/routes/api/incremental/`.
-
----
-
-## 2. Run levels (1, 2, 3, 4) with scaled enemies
-
-**Goal:** Introduce run levels; scale difficulty by level. Initial implementation: double all enemy stats per level.
-
-- [ ] Extend run structure to include a `level` (e.g. 1–4). Decide where it’s stored (run config, DB, or both).
-- [ ] When resolving encounters, apply a level multiplier to all enemy stats (e.g. `multiplier = 2^(level - 1)` so level 1 = 1x, 2 = 2x, 3 = 4x, 4 = 8x, or a simpler “double per level”).
-- [ ] Wire level selection into run start (UI + API) and ensure battle engine uses scaled stats.
-
-**Relevant:** Run types and encounter resolution in `src/lib/incremental/run/`, battle/encounter data in `src/lib/incremental/engine/` and encounter definitions.
-
----
-
-## 3. User onboarding journey
+## 1. User onboarding journey
 
 **Goal:** Guided first-time experience (e.g. mine → recruit → train → lineup → run + rewards).
 
@@ -41,7 +17,7 @@ Backlog and near-term improvements for the incremental game. See [DEVELOPMENT_RO
 
 ---
 
-## 4. Profile: reorganize and add user search
+## 2. Profile: reorganize and add user search
 
 **Goal:** Reorganize profile features and add a way to search for users in the UI.
 
@@ -53,4 +29,29 @@ Backlog and near-term improvements for the incremental game. See [DEVELOPMENT_RO
 
 ---
 
-*Last updated: 2025-02-18*
+## 3. Profile: edit linked Dota ID
+
+**Goal:** Let users view and edit the Dota account ID tied to their profile.
+
+- [x] Add a section in the profile page showing the currently linked Dota ID.
+- [x] Add an edit control (inline edit or modal) to update the Dota ID.
+- [x] Add/update API endpoint to persist the changed Dota ID.
+- [x] Validate the input (numeric, reasonable length) before saving.
+
+**Relevant:** `src/routes/profile/+page.svelte`, `src/routes/profile/+page.server.ts`, user model in `prisma/schema.prisma`.
+
+---
+
+## 4. Attack speed scaling redesign
+
+**Goal:** Replace linear attack speed formula with exponential decay so heroes approach (but never exceed) 5 attacks/sec, taking ~1 week of training to reach the cap.
+
+- [ ] Update `attackInterval` in `src/lib/incremental/stats/formulas.ts` with exponential decay formula and new constants (`MIN_ATTACK_INTERVAL`, `ATTACK_SPEED_TAU`).
+- [ ] Update tests in `src/lib/incremental/stats/formulas.test.ts` to cover new formula behavior (asymptote, calibration at 1-day/3-day/7-day, AGI affinity bonus, hard floor).
+- [ ] Verify downstream callers (`battle-loop.ts`, `resolution.ts`, `lineup-stats.ts`) work correctly with the new formula.
+
+**Relevant:** [attack-speed-scaling-redesign.md](./attack-speed-scaling-redesign.md) for the full plan.
+
+---
+
+*Last updated: 2026-02-20*

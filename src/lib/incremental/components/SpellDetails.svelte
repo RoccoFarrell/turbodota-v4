@@ -6,8 +6,9 @@
 		humanizeTarget,
 		humanizeEffect,
 		damageTypeColor,
-		spellIconStyle
+		getAbilityIconPath
 	} from './spell-details-utils';
+	import { STAT_PILL_ICONS } from './game-icons';
 
 	// ── Props ──
 	interface Props {
@@ -39,12 +40,12 @@
 				<div class="spell-card__body">
 					<!-- Row 1: Icon + Name + Type badge -->
 					<div class="spell-card__header">
-						<div
-							class="spell-icon spell-icon--sm spell-card__icon"
-							style={spellIconStyle(ability.id)}
-							title={abilityDisplayName(ability)}
+						<span
+							class="spell-card__icon gi"
+							style="--gi: url({getAbilityIconPath(ability)})"
 							aria-hidden="true"
-						></div>
+							title={abilityDisplayName(ability)}
+						></span>
 						<div class="spell-card__title-group">
 							<h4 class="spell-card__name">{abilityDisplayName(ability)}</h4>
 							<span
@@ -66,19 +67,14 @@
 					<div class="spell-card__stats">
 						<!-- Trigger -->
 						<span class="spell-stat" title="Trigger condition">
-							<svg class="spell-stat__icon" viewBox="0 0 16 16" fill="currentColor">
-								<path d="M8 1a.5.5 0 0 1 .5.5v5.793l3.854 3.853a.5.5 0 0 1-.708.708l-4-4A.5.5 0 0 1 7.5 7.5v-6A.5.5 0 0 1 8 1z"/>
-								<path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/>
-							</svg>
+							<span class="spell-stat__icon gi" style="--gi: url({STAT_PILL_ICONS.trigger})"></span>
 							{humanizeTrigger(ability.trigger)}
 						</span>
 
 						<!-- Target -->
 						{#if humanizeTarget(ability.target)}
 							<span class="spell-stat" title="Target">
-								<svg class="spell-stat__icon" viewBox="0 0 16 16" fill="currentColor">
-									<path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm0 1a7 7 0 1 1 0 14A7 7 0 0 1 8 1zm0 2a5 5 0 1 0 0 10A5 5 0 0 0 8 3zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6zm0 2a1 1 0 1 0 0 2 1 1 0 0 0 0-2z"/>
-								</svg>
+								<span class="spell-stat__icon gi" style="--gi: url({STAT_PILL_ICONS.target})"></span>
 								{humanizeTarget(ability.target)}
 							</span>
 						{/if}
@@ -86,9 +82,7 @@
 						<!-- Damage type + base damage -->
 						{#if ability.damageType}
 							<span class="spell-stat {damageTypeColor(ability.damageType)}" title="Damage type">
-								<svg class="spell-stat__icon" viewBox="0 0 16 16" fill="currentColor">
-									<path d="M8 16c3.314 0 6-2.686 6-6s-6-10-6-10S2 6.686 2 10s2.686 6 6 6zm0-1c-2.76 0-5-2.24-5-5s5-9 5-9 5 6.24 5 9-2.24 5-5 5z"/>
-								</svg>
+								<span class="spell-stat__icon gi" style="--gi: url({STAT_PILL_ICONS.damage})"></span>
 								{damageTypeLabel(ability.damageType)}
 								{#if ability.baseDamage != null}
 									<span class="spell-stat__value">{ability.baseDamage}</span>
@@ -99,10 +93,7 @@
 						<!-- Return damage (passives) -->
 						{#if ability.returnDamageRatio != null}
 							<span class="spell-stat spell-dmg--physical" title="Damage reflected back to attacker">
-								<svg class="spell-stat__icon" viewBox="0 0 16 16" fill="currentColor">
-									<path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 1 1 .908-.418A6 6 0 1 1 8 2v1z"/>
-									<path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
-								</svg>
+								<span class="spell-stat__icon gi" style="--gi: url({STAT_PILL_ICONS.reflect})"></span>
 								Reflects {Math.round(ability.returnDamageRatio * 100)}%
 							</span>
 						{/if}
@@ -110,9 +101,7 @@
 						<!-- Effect -->
 						{#if humanizeEffect(ability.effect)}
 							<span class="spell-stat spell-stat--effect" title="Special effect">
-								<svg class="spell-stat__icon" viewBox="0 0 16 16" fill="currentColor">
-									<path d="M5.52.359A.5.5 0 0 1 6 0h4a.5.5 0 0 1 .474.658L8.694 6H12.5a.5.5 0 0 1 .395.807l-7 9a.5.5 0 0 1-.873-.454L6.823 9.5H3.5a.5.5 0 0 1-.48-.641l2.5-8.5z"/>
-								</svg>
+								<span class="spell-stat__icon gi" style="--gi: url({STAT_PILL_ICONS.effect})"></span>
 								{humanizeEffect(ability.effect)}
 							</span>
 						{/if}
@@ -120,9 +109,7 @@
 						<!-- Status effect on hit -->
 						{#if ability.statusEffectOnHit}
 							<span class="spell-stat spell-stat--status" title="Applies status effect">
-								<svg class="spell-stat__icon" viewBox="0 0 16 16" fill="currentColor">
-									<path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zM7 6.5C7 7.328 6.552 8 6 8s-1-.672-1-1.5S5.448 5 6 5s1 .672 1 1.5zm4 0c0 .828-.448 1.5-1 1.5s-1-.672-1-1.5S9.448 5 10 5s1 .672 1 1.5zM4.884 12.632a.5.5 0 0 1-.17-.921C5.728 11.118 6.8 10.5 8 10.5s2.272.618 3.286 1.211a.5.5 0 0 1-.572.822C9.8 12.032 8.9 11.5 8 11.5s-1.8.532-2.714 1.033a.5.5 0 0 1-.402.1z"/>
-								</svg>
+								<span class="spell-stat__icon gi" style="--gi: url({STAT_PILL_ICONS.statusEffect})"></span>
 								{ability.statusEffectOnHit.statusEffectId.replace(/_/g, ' ')} ({ability.statusEffectOnHit.duration}s)
 							</span>
 						{/if}
@@ -203,7 +190,16 @@
 	}
 
 	.spell-card__icon {
+		width: 20px;
+		height: 20px;
 		flex-shrink: 0;
+		border: 1px solid rgba(75, 85, 99, 0.6);
+		border-radius: 4px;
+		padding: 1px;
+		color: #93c5fd; /* blue-300 — default ability icon color */
+	}
+	.spell-card--passive .spell-card__icon {
+		color: #fcd34d; /* amber-300 */
 	}
 	/* Override the border color in tavern theme */
 	.spell-details--tavern .spell-card__icon {
@@ -293,7 +289,8 @@
 		width: 10px;
 		height: 10px;
 		flex-shrink: 0;
-		opacity: 0.6;
+		opacity: 0.7;
+		color: inherit;
 	}
 
 	.spell-stat__value {

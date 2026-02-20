@@ -18,7 +18,7 @@ export interface ItemDef {
 	id: string;
 	name: string;
 	description: string;
-	/** Emoji or character used as the item icon in the inventory grid. */
+	/** Path to SVG icon (game-icons.net) for display in inventory. */
 	icon: string;
 	/** How the item is used. Drives the use-item API logic. */
 	usageType: ItemUsageType;
@@ -35,7 +35,7 @@ export const ITEM_DEFINITIONS: Record<string, ItemDef> = {
 		name: 'Arcane Rune',
 		description:
 			'Grants 1 hour of instant progress to a mining or training action. Earned by playing ranked or turbo Dota 2 games.',
-		icon: '✨',
+		icon: '/game-icons/ffffff/transparent/1x1/delapouite/sparkles.svg',
 		usageType: 'idle_instant_1h',
 		applicableTargets: ['mining', 'training'],
 		stackable: true

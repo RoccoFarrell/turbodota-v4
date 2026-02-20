@@ -39,7 +39,12 @@
       "Bash(git rm:*)",
       "Bash(npx vitest:*)",
       "Bash(tee:*)",
-      "Bash(npx vite build)"
+      "Bash(npx vite build)",
+      "Bash(timeout 15 npx vite build:*)",
+      "Bash(npm run build)",
+      "Bash(npx vite build:*)",
+      "Bash(ls:*)",
+      "Bash(git mv:*)"
     ]
   }
 }

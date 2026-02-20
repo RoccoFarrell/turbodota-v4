@@ -8,6 +8,7 @@
 	} from '$lib/incremental/actions';
 	import ActionSlotBar from '$lib/incremental/components/ActionSlotBar.svelte';
 	import * as actionStore from '$lib/incremental/stores/action-slots.svelte';
+	import { gi } from '$lib/incremental/components/game-icons';
 
 	const layoutHeroes = getContext<Array<{ id: number; localized_name: string }>>('heroes') ?? [];
 
@@ -95,42 +96,42 @@
 	<!-- Quick Links -->
 	<section class="grid grid-cols-2 sm:grid-cols-3 gap-3">
 		<a href="/incremental/training" class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 p-4 hover:border-primary transition-colors text-center">
-			<div class="text-2xl mb-1">⛏️</div>
+			<div class="mb-1 flex justify-center"><span class="gi w-7 h-7 text-amber-400" style="--gi: url({gi('lorc', 'mining')})"></span></div>
 			<p class="text-sm font-medium text-gray-900 dark:text-gray-100">Training</p>
 			<p class="text-xs text-gray-500 dark:text-gray-400">Mine & train heroes</p>
 		</a>
 		<a href="/incremental/tavern" class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 p-4 hover:border-primary transition-colors text-center">
-			<div class="text-2xl mb-1">🍺</div>
+			<div class="mb-1 flex justify-center"><span class="gi w-7 h-7 text-amber-500" style="--gi: url({gi('delapouite', 'tavern-sign')})"></span></div>
 			<p class="text-sm font-medium text-gray-900 dark:text-gray-100">Tavern</p>
 			<p class="text-xs text-gray-500 dark:text-gray-400">Recruit heroes</p>
 		</a>
 		<a href="/incremental/lineup" class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 p-4 hover:border-primary transition-colors text-center">
-			<div class="text-2xl mb-1">📋</div>
+			<div class="mb-1 flex justify-center"><span class="gi w-7 h-7 text-emerald-400" style="--gi: url({gi('delapouite', 'checklist')})"></span></div>
 			<p class="text-sm font-medium text-gray-900 dark:text-gray-100">Lineups</p>
 			<p class="text-xs text-gray-500 dark:text-gray-400">Build your team</p>
 		</a>
-		<a href="/incremental/run" class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 p-4 hover:border-primary transition-colors text-center">
-			<div class="text-2xl mb-1">🗺️</div>
-			<p class="text-sm font-medium text-gray-900 dark:text-gray-100">Run</p>
+		<a href="/incremental/darkrift" class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 p-4 hover:border-primary transition-colors text-center">
+			<div class="mb-1 flex justify-center"><span class="gi w-7 h-7 text-violet-400" style="--gi: url({gi('lorc', 'magic-portal')})"></span></div>
+			<p class="text-sm font-medium text-gray-900 dark:text-gray-100">Dark Rift</p>
 			<p class="text-xs text-gray-500 dark:text-gray-400">Start a dungeon</p>
 		</a>
 		<a href="/incremental/talents" class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 p-4 hover:border-primary transition-colors text-center">
-			<div class="text-2xl mb-1">🌳</div>
+			<div class="mb-1 flex justify-center"><span class="gi w-7 h-7 text-sky-400" style="--gi: url({gi('delapouite', 'skills')})"></span></div>
 			<p class="text-sm font-medium text-gray-900 dark:text-gray-100">Talents</p>
 			<p class="text-xs text-gray-500 dark:text-gray-400">Skill tree</p>
 		</a>
 		<a href="/incremental/atlas" class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 p-4 hover:border-primary transition-colors text-center">
-			<div class="text-2xl mb-1">📖</div>
+			<div class="mb-1 flex justify-center"><span class="gi w-7 h-7 text-cyan-400" style="--gi: url({gi('delapouite', 'atlas')})"></span></div>
 			<p class="text-sm font-medium text-gray-900 dark:text-gray-100">Atlas</p>
 			<p class="text-xs text-gray-500 dark:text-gray-400">Hero reference</p>
 		</a>
 		<a href="/incremental/inventory" class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 p-4 hover:border-primary transition-colors text-center">
-			<div class="text-2xl mb-1">🎒</div>
+			<div class="mb-1 flex justify-center"><span class="gi w-7 h-7 text-orange-400" style="--gi: url({gi('delapouite', 'backpack')})"></span></div>
 			<p class="text-sm font-medium text-gray-900 dark:text-gray-100">Inventory</p>
 			<p class="text-xs text-gray-500 dark:text-gray-400">Items & currencies</p>
 		</a>
 		<a href="/incremental/quests" class="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 p-4 hover:border-primary transition-colors text-center">
-			<div class="text-2xl mb-1">📜</div>
+			<div class="mb-1 flex justify-center"><span class="gi w-7 h-7 text-yellow-400" style="--gi: url({gi('lorc', 'scroll-unfurled')})"></span></div>
 			<p class="text-sm font-medium text-gray-900 dark:text-gray-100">Quests</p>
 			<p class="text-xs text-gray-500 dark:text-gray-400">Daily quests & rewards</p>
 		</a>

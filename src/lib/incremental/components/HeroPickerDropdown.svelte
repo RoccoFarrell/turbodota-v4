@@ -122,7 +122,7 @@
 
 	{#if affinityAttr}
 		<p class="text-xs text-amber-600 dark:text-amber-400">
-			⚡ {ATTR_LABELS[affinityAttr] ?? affinityAttr.toUpperCase()} heroes train this stat +25% faster
+			<span class="gi w-3.5 h-3.5 text-amber-400" style="--gi: url(/game-icons/ffffff/transparent/1x1/lorc/power-lightning.svg)"></span> {ATTR_LABELS[affinityAttr] ?? affinityAttr.toUpperCase()} heroes train this stat +25% faster
 		</p>
 	{/if}
 
@@ -155,7 +155,7 @@
 					{heroName(heroId)}
 				</span>
 				{#if affinity}
-					<span class="text-xs" title="Affinity: trains this stat 25% faster">⚡</span>
+					<span class="gi w-3 h-3 text-amber-400" style="--gi: url(/game-icons/ffffff/transparent/1x1/lorc/power-lightning.svg)" title="Affinity: trains this stat 25% faster"></span>
 				{/if}
 				{#if attr}
 					<span

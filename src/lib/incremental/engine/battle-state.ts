@@ -1,5 +1,6 @@
 import type { BattleState, HeroInstance, HeroDef, EnemyInstance } from '../types';
 import { getHeroDef as getHeroDefConst, getEncounterDef, getEnemyDef } from '../constants';
+import { scaleEnemyStat } from '../run/level-scaling';
 
 /** Used so the first focus change is allowed (elapsedTime - lastFocusChangeAt >= 2 at start). */
 const FOCUS_CHANGE_COOLDOWN = 2;
@@ -13,6 +14,8 @@ export interface CreateBattleStateOptions {
 	initialHeroHp?: number[];
 	/** When set, use this instead of constants (e.g. hero defs from DB). */
 	getHeroDef?: (heroId: number) => HeroDef | undefined;
+	/** Dark Rift level (default 1). Enemy hp and damage scale by 2^(level-1). */
+	level?: number;
 }
 
 /**
@@ -57,6 +60,7 @@ export function createBattleState(
 		throw new Error(`Unknown encounter id: ${encounterId}`);
 	}
 
+	const level = options?.level ?? 1;
 	const enemy: EnemyInstance[] = [];
 	for (const entry of encounter.enemies) {
 		const def = getEnemyDef(entry.enemyDefId);
@@ -64,12 +68,15 @@ export function createBattleState(
 			throw new Error(`Unknown enemy def id: ${entry.enemyDefId}`);
 		}
 		const count = entry.count ?? 1;
+		const scaledHp = scaleEnemyStat(def.hp, level);
+		const scaledDamage = scaleEnemyStat(def.damage, level);
 		for (let i = 0; i < count; i++) {
 			const instance: EnemyInstance = {
 				enemyDefId: def.id,
-				currentHp: def.hp,
-				maxHp: def.hp,
+				currentHp: scaledHp,
+				maxHp: scaledHp,
 				attackTimer: 0,
+				attackDamage: scaledDamage,
 				buffs: []
 			};
 			if (def.summonAbility) {
@@ -92,6 +99,7 @@ export function createBattleState(
 		lastFocusChangeAt,
 		elapsedTime,
 		result: null,
-		combatLog: []
+		combatLog: [],
+		level
 	};
 }

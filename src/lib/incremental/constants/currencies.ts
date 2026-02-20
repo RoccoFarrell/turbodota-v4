@@ -10,11 +10,13 @@ export interface CurrencyDef {
 	id: string;
 	name: string;
 	description: string;
-	/** Emoji or character used as the currency icon in the inventory grid. */
+	/** Path to SVG icon (game-icons.net) for inventory display. */
 	icon: string;
 	/** Where this currency can be earned (for UI/tooltips). */
 	sources: CurrencySource[];
 }
+
+const GI = '/game-icons/ffffff/transparent/1x1';
 
 /** All known currencies. Add new entries here; Bank can store any key. */
 export const CURRENCIES: Record<string, CurrencyDef> = {
@@ -22,28 +24,28 @@ export const CURRENCIES: Record<string, CurrencyDef> = {
 		id: 'essence',
 		name: 'Essence',
 		description: 'Earned by mining in the idle game. Spend to convert Dota 2 wins into roster heroes.',
-		icon: '💎',
+		icon: `${GI}/lorc/gems.svg`,
 		sources: ['idle']
 	},
 	loot_coins: {
 		id: 'loot_coins',
 		name: 'Loot Coins',
 		description: 'Earned by winning Dota 2 games on heroes already on your roster. Used for loot rolls and item systems.',
-		icon: '🪙',
+		icon: `${GI}/delapouite/two-coins.svg`,
 		sources: ['dota2']
 	},
 	gold: {
 		id: 'gold',
 		name: 'Gold',
 		description: 'Earned from idle activities, incremental battles, or Dota 2. Used for shops and upgrades.',
-		icon: '💰',
+		icon: `${GI}/delapouite/gold-stack.svg`,
 		sources: ['idle', 'battle', 'dota2']
 	},
 	wood: {
 		id: 'wood',
 		name: 'Wood',
 		description: 'Earned from idle or battles. Used for building upgrades and crafting.',
-		icon: '🪵',
+		icon: `${GI}/delapouite/log.svg`,
 		sources: ['idle', 'battle']
 	}
 };

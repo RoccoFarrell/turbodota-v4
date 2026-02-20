@@ -11,22 +11,8 @@
 	import type { TrainingStatKey } from '$lib/incremental/actions/constants';
 	import { computeLineupStats, type HeroCombatStats } from '$lib/incremental/stats/lineup-stats';
 
-	// Spell icon grid (9×6) for small spell badges – same hash as HeroCard
-	const SPELL_ICONS: [number, number][] = [
-		[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0], [7, 0], [8, 0],
-		[0, 1], [1, 1], [2, 1], [3, 1], [4, 1], [5, 1], [6, 1], [7, 1], [8, 1],
-		[0, 2], [1, 2], [2, 2], [3, 2], [4, 2], [5, 2], [6, 2], [7, 2], [8, 2],
-		[0, 3], [1, 3], [2, 3], [3, 3], [4, 3], [5, 3],
-		[0, 4], [1, 4], [2, 4], [3, 4], [4, 4], [5, 4],
-		[0, 5], [1, 5], [2, 5], [3, 5], [4, 5], [5, 5]
-	];
-	const NUM_SPELL_ICONS = SPELL_ICONS.length;
-	function spellIconStyle(abilityId: string): string {
-		let h = 0;
-		for (let i = 0; i < abilityId.length; i++) h = (h * 31 + abilityId.charCodeAt(i)) >>> 0;
-		const [x, y] = SPELL_ICONS[h % NUM_SPELL_ICONS];
-		return `--spell-x: ${x}; --spell-y: ${y};`;
-	}
+	import { abilityIconPath } from './game-icons';
+
 	function abilityDisplayName(ability: AbilityDef | undefined): string {
 		if (!ability) return '';
 		return ability.abilityName ?? ability.effect?.replace(/_/g, ' ') ?? ability.id.replace(/_/g, ' ');
@@ -328,7 +314,7 @@
 					{#if activeRun}
 						{@const ar = activeRun}
 						<a
-							href="/incremental/run/{ar.runId}"
+							href="/incremental/darkrift/{ar.runId}"
 							class="rounded-md border border-gray-600 bg-gray-800 px-2.5 py-1 text-xs font-medium text-gray-300 hover:bg-gray-700 hover:text-gray-100 transition-colors"
 						>
 							View run
@@ -460,10 +446,9 @@
 									{#each def.abilityIds as abilityId}
 										{@const ability = getAbilityDef(abilityId)}
 										<span
-											class="spell-icon spell-icon--sm shrink-0"
-											style={spellIconStyle(abilityId)}
+											class="gi w-5 h-5 shrink-0 rounded border border-gray-600 p-px text-blue-300"
+											style="--gi: url({abilityIconPath(abilityId, ability?.effect)})"
 											title={abilityDisplayName(ability)}
-											aria-label={abilityDisplayName(ability) || abilityId}
 										></span>
 									{/each}
 								</div>

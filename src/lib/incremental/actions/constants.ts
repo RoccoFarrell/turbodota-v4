@@ -41,12 +41,14 @@ export const TRAINING_STAT_KEYS = [
 export type TrainingStatKey = (typeof TRAINING_STAT_KEYS)[number];
 
 /** Building name, short description, and icon per stat (Dota 2 themed). */
-export const TRAINING_BUILDINGS: Record<TrainingStatKey, { name: string; description: string; icon: string }> = {
-	hp: { name: 'Barracks', description: 'Increases max HP', icon: '🏰' },
-	attack_damage: { name: 'Weapon Smithy', description: 'Increases attack damage', icon: '⚔️' },
-	spell_power: { name: 'Arcane Sanctum', description: 'Increases spell damage', icon: '🔮' },
-	attack_speed: { name: 'Swift Forge', description: 'Increases attack speed', icon: '⚡' },
-	spell_haste: { name: 'Cooldown Grotto', description: 'Increases spell cast speed', icon: '🌀' },
-	armor: { name: 'Blacksmith', description: 'Increases armor', icon: '🛡️' },
-	magic_resist: { name: 'Cloak Pavilion', description: 'Increases magic resistance', icon: '🧿' }
+import { TRAINING_ICONS } from '$lib/incremental/components/game-icons';
+
+export const TRAINING_BUILDINGS: Record<TrainingStatKey, { name: string; description: string; icon: string; color: string }> = {
+	hp:           { name: 'Barracks',       description: 'Increases max HP',             icon: TRAINING_ICONS.hp,           color: 'text-red-400' },
+	attack_damage:{ name: 'Weapon Smithy',  description: 'Increases attack damage',       icon: TRAINING_ICONS.attack_damage, color: 'text-orange-400' },
+	spell_power:  { name: 'Arcane Sanctum', description: 'Increases spell damage',        icon: TRAINING_ICONS.spell_power,   color: 'text-violet-400' },
+	attack_speed: { name: 'Swift Forge',    description: 'Increases attack speed',        icon: TRAINING_ICONS.attack_speed,  color: 'text-green-400' },
+	spell_haste:  { name: 'Cooldown Grotto',description: 'Increases spell cast speed',    icon: TRAINING_ICONS.spell_haste,   color: 'text-cyan-400' },
+	armor:        { name: 'Blacksmith',     description: 'Increases armor',               icon: TRAINING_ICONS.armor,         color: 'text-yellow-400' },
+	magic_resist: { name: 'Cloak Pavilion', description: 'Increases magic resistance',    icon: TRAINING_ICONS.magic_resist,  color: 'text-blue-400' },
 };

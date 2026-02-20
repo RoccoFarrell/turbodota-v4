@@ -5,8 +5,7 @@ import {
 	humanizeTarget,
 	humanizeEffect,
 	damageTypeColor,
-	spellIconStyle,
-	SPELL_ICONS
+	getAbilityIconPath
 } from './spell-details-utils';
 import type { AbilityDef } from '$lib/incremental/types';
 
@@ -93,26 +92,25 @@ describe('damageTypeColor', () => {
 	});
 });
 
-describe('spellIconStyle', () => {
-	it('returns a CSS custom property string', () => {
-		const style = spellIconStyle('antimage_1');
-		expect(style).toMatch(/^--spell-x: \d+; --spell-y: \d+;$/);
+describe('getAbilityIconPath', () => {
+	it('returns an SVG path string for a string ability id', () => {
+		const path = getAbilityIconPath('antimage_1');
+		expect(path).toMatch(/^\/game-icons\/.*\.svg$/);
 	});
 
 	it('produces consistent output for the same id', () => {
-		expect(spellIconStyle('lina_1')).toBe(spellIconStyle('lina_1'));
+		expect(getAbilityIconPath('lina_1')).toBe(getAbilityIconPath('lina_1'));
 	});
 
-	it('stays within valid icon bounds', () => {
-		const ids = ['a', 'bb', 'ccc', 'antimage_1', 'crystal_maiden_2', 'zeus_ultimate'];
-		for (const id of ids) {
-			const style = spellIconStyle(id);
-			const match = style.match(/--spell-x: (\d+); --spell-y: (\d+);/);
-			expect(match).not.toBeNull();
-			const x = parseInt(match![1]);
-			const y = parseInt(match![2]);
-			const valid = SPELL_ICONS.some(([sx, sy]) => sx === x && sy === y);
-			expect(valid, `(${x}, ${y}) from id "${id}" should be a valid icon position`).toBe(true);
-		}
+	it('returns effect-specific icon for known effects', () => {
+		const a = makeAbility({ id: 'cm_1', type: 'active', trigger: 'timer', effect: 'stun' });
+		const path = getAbilityIconPath(a);
+		expect(path).toContain('knocked-out-stars');
+	});
+
+	it('returns a pool icon for abilities without known effects', () => {
+		const a = makeAbility({ id: 'generic_spell', type: 'active', trigger: 'timer' });
+		const path = getAbilityIconPath(a);
+		expect(path).toMatch(/^\/game-icons\/.*\.svg$/);
 	});
 });

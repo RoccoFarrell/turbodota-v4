@@ -82,21 +82,10 @@
 	const scale = $derived(iconScale ?? (variant === 'compact' ? 'scale-75' : variant === 'short' || variant === 'roster' ? 'scale-150' : ''));
 
 	// Spell icon position from Atlas (9×6 grid, 45 valid icons)
-	const SPELL_ICONS: [number, number][] = [
-		[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0], [7, 0], [8, 0],
-		[0, 1], [1, 1], [2, 1], [3, 1], [4, 1], [5, 1], [6, 1], [7, 1], [8, 1],
-		[0, 2], [1, 2], [2, 2], [3, 2], [4, 2], [5, 2], [6, 2], [7, 2], [8, 2],
-		[0, 3], [1, 3], [2, 3], [3, 3], [4, 3], [5, 3],
-		[0, 4], [1, 4], [2, 4], [3, 4], [4, 4], [5, 4],
-		[0, 5], [1, 5], [2, 5], [3, 5], [4, 5], [5, 5]
-	];
-	const NUM_SPELL_ICONS = SPELL_ICONS.length;
+	import { abilityIconPath } from './game-icons';
 
-	function spellIconStyle(ability: HeroCardAbility): string {
-		let h = 0;
-		for (let i = 0; i < ability.id.length; i++) h = (h * 31 + ability.id.charCodeAt(i)) >>> 0;
-		const [x, y] = SPELL_ICONS[h % NUM_SPELL_ICONS];
-		return `--spell-x: ${x}; --spell-y: ${y};`;
+	function getAbilityIcon(ability: HeroCardAbility): string {
+		return abilityIconPath(ability.id, ability.effect);
 	}
 
 	function formatStatDisplay(value: number | null | undefined): string {
@@ -307,12 +296,12 @@
 						<div
 							class="rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50/50 dark:bg-gray-800/30 p-3 flex gap-3 min-w-0"
 						>
-							<div
-								class="spell-icon shrink-0"
-								style={spellIconStyle(ability)}
+							<span
+								class="gi w-8 h-8 shrink-0 rounded-md border border-gray-200 dark:border-gray-600 p-0.5 text-blue-300"
+								style="--gi: url({getAbilityIcon(ability)})"
 								title={abilityDisplayName(ability)}
 								aria-hidden="true"
-							></div>
+							></span>
 							<div class="min-w-0 flex-1">
 								<h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
 									{abilityDisplayName(ability)}

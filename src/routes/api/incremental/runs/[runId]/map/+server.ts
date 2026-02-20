@@ -14,7 +14,7 @@ export const GET: RequestHandler<{ runId: string }> = async ({ params, locals })
 	const runId = params.runId;
 	const run = await prisma.incrementalRun.findUnique({
 		where: { id: runId },
-		select: { userId: true, lineupId: true, heroHp: true, status: true }
+		select: { userId: true, lineupId: true, heroHp: true, status: true, level: true }
 	});
 	if (!run) error(404, 'Run not found');
 	if (run.userId !== user.id) error(403, 'Forbidden');
@@ -32,5 +32,5 @@ export const GET: RequestHandler<{ runId: string }> = async ({ params, locals })
 		lineup && run.status === 'ACTIVE'
 			? { lineupId: run.lineupId, heroIds: lineup.heroIds, heroHp: run.heroHp }
 			: null;
-	return json({ runState, nodes, lineup: lineupForEdit });
+	return json({ runState, nodes, lineup: lineupForEdit, level: run.level ?? 1 });
 };

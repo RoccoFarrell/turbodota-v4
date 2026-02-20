@@ -68,7 +68,7 @@
 					<span class="text-xs font-medium px-1.5 py-0.5 rounded bg-primary/10 text-primary">{upgradeLevel}</span>
 				{/if}
 				{#if isLocked}
-					<span class="text-xs text-gray-400">🔒 Locked</span>
+					<span class="text-xs text-gray-400 inline-flex items-center gap-1"><span class="gi w-3 h-3 text-gray-500" style="--gi: url(/game-icons/ffffff/transparent/1x1/lorc/padlock.svg)"></span> Locked</span>
 				{/if}
 			</div>
 			<p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{description}</p>

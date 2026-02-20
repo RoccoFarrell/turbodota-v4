@@ -131,22 +131,24 @@
 		<!-- Resource balances + Rune button -->
 		<div class="flex items-center gap-4 text-sm">
 			<div class="flex items-center gap-1.5">
-				<span>⛏️</span>
+				<span class="gi w-4 h-4 text-purple-400" style="--gi: url(/game-icons/ffffff/transparent/1x1/lorc/gems.svg)"></span>
 				<span class="font-semibold text-gray-900 dark:text-gray-100">{essence}</span>
 				<span class="text-gray-500 dark:text-gray-400">Essence</span>
 			</div>
+			<!-- Wood hidden until lumber is implemented
 			<div class="flex items-center gap-1.5">
-				<span>🪵</span>
+				<span class="gi w-4 h-4 text-orange-400" style="--gi: url(/game-icons/ffffff/transparent/1x1/delapouite/log.svg)"></span>
 				<span class="font-semibold text-gray-900 dark:text-gray-100">{woodBalance}</span>
 				<span class="text-gray-500 dark:text-gray-400">Wood</span>
 			</div>
+			-->
 			<button
 				type="button"
 				disabled={arcaneRuneQty === 0}
 				onclick={() => { runeApplyMode = true; }}
 				class="rounded-lg bg-amber-500/15 border border-amber-500/30 px-3 py-1.5 text-sm font-medium text-amber-400 hover:bg-amber-500/25 transition-colors disabled:opacity-40"
 			>
-				✨ {arcaneRuneQty} Arcane Rune{arcaneRuneQty !== 1 ? 's' : ''}
+				<span class="gi inline w-4 h-4 text-amber-400" style="--gi: url(/game-icons/ffffff/transparent/1x1/delapouite/sparkles.svg)"></span> {arcaneRuneQty} Arcane Rune{arcaneRuneQty !== 1 ? 's' : ''}
 			</button>
 		</div>
 	</div>

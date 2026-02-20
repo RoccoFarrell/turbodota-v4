@@ -75,6 +75,11 @@ npx prisma migrate dev --name <descriptive_name>
 ```
 Never use only `prisma db push` for tracked changes. Never manually edit applied migration files. See `.cursorrules` for full migration policy.
 
+## Frontend Conventions
+
+- Always use Skeleton UI v4 (`@skeletonlabs/skeleton-svelte`), Tailwind CSS v4, and Svelte 5 for all components and styling
+- Always write automated tests (Vitest + `@testing-library/svelte`) for new frontend features
+
 ## Key Conventions
 
 - Path aliases: `$lib` → `src/lib`, `$mocks` → `src/mocks`

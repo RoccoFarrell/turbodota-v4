@@ -38,7 +38,7 @@
 		<div class="flex items-center justify-between gap-2">
 			<div class="flex items-center gap-2">
 				<span class="text-xs font-medium text-gray-400 dark:text-gray-500 uppercase">{slotLabel}</span>
-				<span class="text-sm text-gray-400 dark:text-gray-500">🔒 Unlock in Talent Tree</span>
+				<span class="text-sm text-gray-400 dark:text-gray-500 inline-flex items-center gap-1"><span class="gi w-3.5 h-3.5 text-gray-500" style="--gi: url(/game-icons/ffffff/transparent/1x1/lorc/padlock.svg)"></span> Unlock in Talent Tree</span>
 			</div>
 		</div>
 	</div>

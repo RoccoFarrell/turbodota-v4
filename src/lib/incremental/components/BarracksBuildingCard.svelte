@@ -2,6 +2,7 @@
 	import { slide } from 'svelte/transition';
 	import { TRAINING_BUILDINGS, type TrainingStatKey } from '$lib/incremental/actions/constants';
 	import { getStatAffinityAttr } from '$lib/incremental/actions/hero-affinity';
+	import { MISC_ICONS } from '$lib/incremental/components/game-icons';
 	import type { SlotState } from '$lib/incremental/stores/action-slots.svelte';
 	import type { HeroDef } from '$lib/incremental/types';
 	import HeroPickerDropdown from './HeroPickerDropdown.svelte';
@@ -118,7 +119,7 @@
 	<!-- Header -->
 	<div class="px-4 pt-4 pb-3 border-b border-gray-100 dark:border-gray-700">
 		<div class="flex items-center gap-2">
-			<span class="text-2xl" aria-hidden="true">{building.icon}</span>
+			<span class="gi w-7 h-7 {building.color}" style="--gi: url({building.icon})" aria-hidden="true"></span>
 			<div>
 				<h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">{building.name}</h3>
 				<p class="text-xs text-gray-500 dark:text-gray-400">
@@ -247,7 +248,7 @@
 						? 'bg-amber-500 text-gray-900 hover:bg-amber-400'
 						: 'bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed'}"
 			>
-				{applyingRune ? 'Applying...' : '✨ Apply Rune'}
+				{#if applyingRune}Applying...{:else}<span class="gi w-4 h-4 text-amber-400" style="--gi: url({MISC_ICONS.sparkle})"></span> Apply Rune{/if}
 			</button>
 		</div>
 	{/if}

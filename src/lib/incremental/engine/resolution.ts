@@ -13,6 +13,7 @@ import type {
 import type { DamageType } from '../types';
 import { DamageType as DamageTypeConst } from '../types';
 import { getHeroDef, getEnemyDef, getAbilityDef, getStatusEffectDef } from '../constants';
+import { scaleEnemyStat } from '../run/level-scaling';
 import type { AbilityDef } from '../types';
 
 const COMBAT_LOG_MAX = 200;
@@ -350,7 +351,7 @@ export function resolveEnemyActions(state: BattleState, defs?: BattleDefsProvide
 			heroDef?.baseArmor ?? 0,
 			heroDef?.baseMagicResist ?? 0
 		);
-		const rawDamage = def.damage;
+		const rawDamage = enemy.attackDamage ?? def.damage;
 		const finalDamage = applyDamageByType(rawDamage, DamageTypeConst.PHYSICAL, heroArmorMr);
 
 		const attackLog: CombatLogEntry = {
@@ -435,11 +436,15 @@ export function resolveEnemySummons(
 		const summonedDef = getEnemyDef(def.summonAbility.enemyDefId);
 		if (!summonedDef) continue;
 
+		const level = next.level ?? 1;
+		const scaledHp = scaleEnemyStat(summonedDef.hp, level);
+		const scaledDmg = scaleEnemyStat(summonedDef.damage, level);
 		const newEnemy: EnemyInstance = {
 			enemyDefId: summonedDef.id,
-			currentHp: summonedDef.hp,
-			maxHp: summonedDef.hp,
+			currentHp: scaledHp,
+			maxHp: scaledHp,
 			attackTimer: 0,
+			attackDamage: scaledDmg,
 			buffs: []
 		};
 

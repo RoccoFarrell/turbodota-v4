@@ -28,7 +28,7 @@ describe('run-service', () => {
 				findUnique: async (args) => {
 					const row = lineupStore.find((l) => l.id === args.where.id);
 					if (!row) return null;
-					return { id: row.id, heroIds: row.heroIds, save: { userId: row.userId } };
+					return { id: row.id, saveId: 'save_1', heroIds: row.heroIds, save: { userId: row.userId } };
 				}
 			},
 			incrementalRun: {
@@ -42,9 +42,10 @@ describe('run-service', () => {
 						status: args.data.status ?? 'ACTIVE',
 						currentNodeId: args.data.currentNodeId,
 						startedAt: new Date(),
-						seed: args.data.seed ?? null
+						seed: args.data.seed ?? null,
+						level: args.data.level ?? 1
 					};
-					runs.set(id, { id, userId: run.userId, lineupId: run.lineupId, status: run.status, currentNodeId: run.currentNodeId });
+					runs.set(id, { id, userId: run.userId, lineupId: run.lineupId, status: run.status, currentNodeId: run.currentNodeId, level: run.level });
 					return run;
 				},
 				findUnique: async (args) => runs.get(args.where.id) ?? null,
@@ -73,7 +74,8 @@ describe('run-service', () => {
 					const n = nodes.get(args.where.id);
 					if (!n) return null;
 					return { id: args.where.id, ...n };
-				}
+				},
+				findMany: async () => []
 			}
 		};
 
@@ -128,10 +130,23 @@ describe('run-service', () => {
 
 		const db: RunServiceDb = {
 			incrementalLineup: {
-				findUnique: async (args) => lineupStore.find((l) => l.id === args.where.id) ?? null
+				findUnique: async (args) => {
+					const row = lineupStore.find((l) => l.id === args.where.id);
+					if (!row) return null;
+					return { id: row.id, saveId: 'save_1', heroIds: row.heroIds, save: { userId: row.userId } };
+				}
 			},
 			incrementalRun: {
-				create: lineupDb.incrementalRun.create as RunServiceDb['incrementalRun']['create'],
+				create: async (args) => ({
+					id: `run_${Date.now()}`,
+					userId: args.data.userId,
+					lineupId: args.data.lineupId,
+					status: args.data.status ?? 'ACTIVE',
+					currentNodeId: args.data.currentNodeId,
+					startedAt: new Date(),
+					seed: args.data.seed ?? null,
+					level: args.data.level ?? 1
+				}),
 				findUnique: async (args) => runs.get(args.where.id) ?? null,
 				update: async (args) => {
 					const r = runs.get(args.where.id);
@@ -158,7 +173,8 @@ describe('run-service', () => {
 					const n = nodes.get(args.where.id);
 					if (!n) return null;
 					return { id: args.where.id, ...n };
-				}
+				},
+				findMany: async () => []
 			}
 		};
 
@@ -189,15 +205,15 @@ describe('run-service', () => {
 				findUnique: async (args) => {
 					const row = lineupStore.find((l) => l.id === args.where.id);
 					if (!row) return null;
-					return { id: row.id, heroIds: row.heroIds, save: { userId: row.userId } };
+					return { id: row.id, saveId: 'save_1', heroIds: row.heroIds, save: { userId: row.userId } };
 				}
 			},
 			incrementalRun: {
-				create: async () => ({ id: 'r1', userId: 'u', lineupId: 'l1', status: 'ACTIVE', currentNodeId: '', startedAt: new Date(), seed: null }),
+				create: async () => ({ id: 'r1', userId: 'u', lineupId: 'l1', status: 'ACTIVE', currentNodeId: '', startedAt: new Date(), seed: null, level: 1 }),
 				findUnique: async (args) => runs.get(args.where.id) ?? null,
 				update: async () => {}
 			},
-			incrementalMapNode: { createMany: async () => {}, findUnique: async () => null }
+			incrementalMapNode: { createMany: async () => {}, findUnique: async () => null, findMany: async () => [] }
 		};
 		await expect(startRun(db, 'user_2', 'l1')).rejects.toThrow('Lineup does not belong to user');
 		lineupStore.push({ id: 'l2', userId: 'user_1', name: 'Empty', heroIds: [] });
@@ -214,7 +230,7 @@ describe('run-service', () => {
 		const db: RunServiceDb = {
 			incrementalLineup: { findUnique: async (args) => lineupStore.find((l) => l.id === args.where.id) ?? null },
 			incrementalRun: {
-				create: async () => ({ id: 'r1', userId: 'u1', lineupId: 'l1', status: 'ACTIVE', currentNodeId: 'n1', startedAt: new Date(), seed: null }),
+				create: async () => ({ id: 'r1', userId: 'u1', lineupId: 'l1', status: 'ACTIVE', currentNodeId: 'n1', startedAt: new Date(), seed: null, level: 1 }),
 				findUnique: async (args) => runs.get(args.where.id) ?? null,
 				update: async () => {}
 			},
@@ -223,7 +239,8 @@ describe('run-service', () => {
 				findUnique: async (args) => {
 					const n = nodes.get(args.where.id);
 					return n ? { id: args.where.id, ...n } : null;
-				}
+				},
+				findMany: async () => []
 			}
 		};
 		await expect(advanceRun(db, 'r1', 'u1', 'invalid_node')).rejects.toThrow('Invalid next node');

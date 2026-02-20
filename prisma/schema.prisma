@@ -691,6 +691,7 @@ model IncrementalRun {
   startedAt      DateTime             @default(now())
   finishedAt     DateTime?
   seed           String? // optional for reproducible maps
+  level          Int                  @default(1) // Dark Rift level: enemy stats scale by 2^(level-1)
   gold           Int                  @default(0)
   heroHp         Json? // number[] HP per lineup index after last encounter; null = full HP (e.g. after base)
   xpByHeroId     Json? // Record<string, number> heroId -> XP

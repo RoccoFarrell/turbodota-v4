@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { getStatusEffectDef } from '$lib/incremental/constants';
 	import type { BuffProp } from './BattleCard.svelte';
+	import { STATUS_ICONS } from './game-icons';
 
 	interface Props {
 		buff: BuffProp;
@@ -44,11 +45,11 @@
 		return 'bg-blue-600';
 	});
 
-	const icon = $derived.by(() => {
-		if (def?.stun) return '⏸';
-		if (def?.tickDamage) return '☠';
-		if (def?.healPerSecond) return '💚';
-		return '⚡';
+	const iconSrc = $derived.by(() => {
+		if (def?.stun) return STATUS_ICONS.stun;
+		if (def?.tickDamage) return STATUS_ICONS.poison;
+		if (def?.healPerSecond) return STATUS_ICONS.heal;
+		return STATUS_ICONS.generic;
 	});
 
 	// Calculate remaining time percentage for circular timer (0-100, where 100 = full duration remaining)
@@ -118,9 +119,8 @@
 	</svg>
 	
 	<!-- Badge background -->
-	<div class="absolute inset-0 rounded-full {badgeColor} flex items-center justify-center text-white font-bold shadow-lg"
-		style="font-size: {size * 0.4}px;">
-		{icon}
+	<div class="absolute inset-0 rounded-full {badgeColor} flex items-center justify-center text-white font-bold shadow-lg">
+		<span class="gi" style="--gi: url({iconSrc}); width: {size * 0.55}px; height: {size * 0.55}px;"></span>
 	</div>
 
 	<!-- Duration text overlay -->

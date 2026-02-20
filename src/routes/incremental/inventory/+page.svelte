@@ -259,8 +259,8 @@
 									: 'border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800 hover:border-gray-400 dark:hover:border-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700'}"
 								onclick={() => selectCurrency(slot)}
 							>
-								<span class="absolute inset-0 flex items-center justify-center text-3xl select-none" aria-hidden="true">
-									{slot.def.icon}
+								<span class="absolute inset-0 flex items-center justify-center select-none" aria-hidden="true">
+									<span class="gi w-8 h-8 text-amber-400" style="--gi: url({slot.def.icon})"></span>
 								</span>
 								<span
 									class="absolute bottom-0.5 right-0.5 min-w-5 rounded bg-black/70 px-1 py-0.5 text-center text-xs font-bold text-white shadow"
@@ -295,8 +295,8 @@
 									: 'border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800 hover:border-gray-400 dark:hover:border-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700'}"
 								onclick={() => selectItem(slot)}
 							>
-								<span class="absolute inset-0 flex items-center justify-center text-3xl select-none" aria-hidden="true">
-									{slot.def.icon}
+								<span class="absolute inset-0 flex items-center justify-center select-none" aria-hidden="true">
+									<span class="gi w-8 h-8 text-amber-400" style="--gi: url({slot.def.icon})"></span>
 								</span>
 								{#if slot.quantity > 1}
 									<span
@@ -327,9 +327,9 @@
 				<div class="p-4 flex flex-col h-full">
 					<div class="flex items-center gap-3 mb-3">
 						<div
-							class="w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-2xl shrink-0"
+							class="w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center shrink-0 p-2"
 						>
-							{selectedSlot.def.icon}
+							<span class="gi w-8 h-8 text-amber-400" style="--gi: url({selectedSlot.def.icon})"></span>
 						</div>
 						<div class="min-w-0">
 							<h3 class="text-base font-semibold text-gray-900 dark:text-gray-100 truncate">

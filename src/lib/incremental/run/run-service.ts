@@ -20,6 +20,7 @@ export interface RunRecord {
 	lineupId: string;
 	status: string;
 	currentNodeId: string;
+	level?: number;
 	heroHp?: number[] | null;
 	gold?: number;
 	xpByHeroId?: Record<string, number> | null;
@@ -48,6 +49,7 @@ export interface RunServiceDb extends Omit<MapRunDb, 'incrementalRun'> {
 				currentNodeId: string;
 				status?: string;
 				seed?: string | null;
+				level?: number;
 			};
 		}) => Promise<{
 			id: string;
@@ -57,6 +59,7 @@ export interface RunServiceDb extends Omit<MapRunDb, 'incrementalRun'> {
 			currentNodeId: string;
 			startedAt: Date;
 			seed: string | null;
+			level: number;
 		}>;
 	};
 }
@@ -84,7 +87,7 @@ export async function startRun(
 	db: RunServiceDb,
 	userId: string,
 	lineupId: string,
-	options?: { seed?: string }
+	options?: { seed?: string; level?: number }
 ): Promise<StartRunResult> {
 	const lineup = await db.incrementalLineup.findUnique({
 		where: { id: lineupId },
@@ -96,13 +99,15 @@ export async function startRun(
 		throw new Error(`Lineup must have ${MIN_HEROES}–${MAX_HEROES} heroes`);
 	}
 
+	const level = options?.level ?? 1;
 	const run = await db.incrementalRun.create({
 		data: {
 			userId,
 			lineupId,
 			currentNodeId: PLACEHOLDER_NODE_ID,
 			status: 'ACTIVE',
-			seed: options?.seed ?? null
+			seed: options?.seed ?? null,
+			level
 		}
 	});
 
@@ -170,7 +175,8 @@ export async function advanceRun(
 				: undefined;
 		const battleState = createBattleState(lineup.heroIds, newNode.encounterId, {
 			initialHeroHp,
-			getHeroDef: options?.getHeroDef
+			getHeroDef: options?.getHeroDef,
+			level: run.level ?? 1
 		});
 		result.encounter = {
 			encounterId: newNode.encounterId,
@@ -222,7 +228,8 @@ export async function createEncounterForNode(
 			: undefined;
 	const battleState = createBattleState(lineup.heroIds, newNode.encounterId, {
 		initialHeroHp,
-		getHeroDef: options?.getHeroDef
+		getHeroDef: options?.getHeroDef,
+		level: run.level ?? 1
 	});
 	return {
 		encounterId: newNode.encounterId,

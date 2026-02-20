@@ -12,6 +12,7 @@ export interface MapRunDb {
 			id: string;
 			status: string;
 			currentNodeId: string;
+			level?: number;
 			heroHp?: number[] | null;
 			nodeClearances?: unknown;
 		} | null>;
@@ -106,7 +107,8 @@ export async function getRunState(db: MapRunDb, runId: string): Promise<RunState
 		currentNodeId: run.currentNodeId,
 		currentNodeType: currentNode?.nodeType,
 		nextNodeIds: currentNode?.nextNodeIds ?? [],
-		nodeClearances
+		nodeClearances,
+		level: run.level ?? 1
 	};
 }
 

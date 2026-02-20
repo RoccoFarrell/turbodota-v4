@@ -10,17 +10,18 @@ export const GET: RequestHandler = async ({ locals }) => {
 	const runs = await prisma.incrementalRun.findMany({
 		where: { userId: user.id },
 		orderBy: { startedAt: 'desc' },
-		select: { id: true, status: true, startedAt: true }
+		select: { id: true, status: true, startedAt: true, level: true }
 	});
 	return json({ runs });
 };
 
-/** POST /api/incremental/runs – start run. Body: { lineupId, seed? } */
+/** POST /api/incremental/runs – start run. Body: { lineupId, seed?, level? }
+ *  When level is omitted, auto-advances to highestWonLevel + 1. */
 export const POST: RequestHandler = async ({ request, locals }) => {
 	const user = locals.user;
 	if (!user) error(401, 'Unauthorized');
 	const userId = user.id;
-	let body: { lineupId?: string; seed?: string };
+	let body: { lineupId?: string; seed?: string; level?: number };
 	try {
 		body = await request.json();
 	} catch {
@@ -29,11 +30,21 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	const lineupId = body.lineupId;
 	if (typeof lineupId !== 'string' || !lineupId.trim()) error(400, 'lineupId is required');
 	try {
+		// Auto-determine level: highest won level + 1 (unless client explicitly sets it)
+		let level = body.level;
+		if (level == null) {
+			const wonRuns = await prisma.incrementalRun.findMany({
+				where: { userId, status: 'WON' },
+				select: { level: true }
+			});
+			const highestWon = wonRuns.reduce((max, r) => Math.max(max, r.level ?? 1), 0);
+			level = highestWon + 1;
+		}
 		const result = await startRun(
 			prisma as unknown as RunServiceDb,
 			userId,
 			lineupId.trim(),
-			{ seed: body.seed }
+			{ seed: body.seed, level }
 		);
 		return json(result);
 	} catch (e) {

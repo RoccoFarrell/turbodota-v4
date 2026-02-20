@@ -11,6 +11,8 @@
 	} from '$lib/incremental/actions';
 	import type { HeroDef, AbilityDef } from '$lib/incremental/types';
 	import { attackInterval, spellInterval } from '$lib/incremental/stats/formulas';
+	import { computeHeroCombatStats } from '$lib/incremental/stats/lineup-stats';
+	import { formatDuration, timeAgo } from '$lib/incremental/stats/format-helpers';
 	import SpellDetails from '$lib/incremental/components/SpellDetails.svelte';
 
 	const layoutHeroes =
@@ -102,6 +104,24 @@
 		selectedHeroId != null ? (trainingValues[selectedHeroId] ?? {}) : {}
 	);
 
+	// DPS computed from existing lineup-stats utility
+	const selectedCombatStats = $derived(
+		selectedDef
+			? computeHeroCombatStats(selectedDef, heroesFromApi.abilityDefs, selectedTraining)
+			: null
+	);
+
+	// Training history for selected hero
+	type TrainingSession = {
+		statKey: string;
+		completions: number;
+		startedAt: string;
+		endedAt: string;
+	};
+	let trainingHistory = $state<TrainingSession[]>([]);
+	let trainingHistoryLoading = $state(false);
+	let trainingHistoryHeroId = $state<number | null>(null);
+
 	const ATTR_CHIPS: Array<{
 		key: string;
 		label: string;
@@ -131,6 +151,9 @@
 
 	function selectHero(hid: number) {
 		selectedHeroId = selectedHeroId === hid ? null : hid;
+		if (selectedHeroId != null) {
+			fetchTrainingHistory(selectedHeroId);
+		}
 	}
 
 	function attrOf(hid: number): string {
@@ -214,6 +237,23 @@
 				heroNames: data.heroNames ?? [],
 				abilityDefs: data.abilityDefs ?? {}
 			};
+		}
+	}
+
+	async function fetchTrainingHistory(heroId: number) {
+		if (!saveId) return;
+		trainingHistoryLoading = true;
+		trainingHistoryHeroId = heroId;
+		try {
+			const params = new URLSearchParams({ heroId: String(heroId) });
+			if (saveId) params.set('saveId', saveId);
+			const res = await fetch(`/api/incremental/training/history?${params}`);
+			if (res.ok && trainingHistoryHeroId === heroId) {
+				const data = await res.json();
+				trainingHistory = data.sessions ?? [];
+			}
+		} finally {
+			if (trainingHistoryHeroId === heroId) trainingHistoryLoading = false;
 		}
 	}
 
@@ -726,6 +766,36 @@
 									{/if}
 								</div>
 
+								<!-- DPS strip -->
+								{#if selectedCombatStats}
+									<div class="mt-3 pt-3 border-t border-amber-900/20">
+										<div class="flex items-center gap-4">
+											<div class="dps-cell">
+												<span class="dps-label">Auto</span>
+												<span class="dps-value text-amber-400">{selectedCombatStats.autoDps.toFixed(1)}</span>
+											</div>
+											{#if selectedCombatStats.spellDps > 0}
+												<div class="dps-cell">
+													<span class="dps-label">Spell</span>
+													<span class="dps-value text-sky-400">{selectedCombatStats.spellDps.toFixed(1)}</span>
+												</div>
+											{/if}
+											<div class="dps-cell">
+												<span class="dps-label">Total DPS</span>
+												<span class="dps-value text-stone-100 font-bold">{selectedCombatStats.totalDps.toFixed(1)}</span>
+											</div>
+										</div>
+										<!-- DPS proportion bar -->
+										{#if selectedCombatStats.totalDps > 0}
+											{@const autoPct = (selectedCombatStats.autoDps / selectedCombatStats.totalDps) * 100}
+											<div class="mt-1.5 h-1.5 rounded-full overflow-hidden bg-stone-800 flex">
+												<div class="bg-amber-500/70 transition-all" style="width:{autoPct}%"></div>
+												<div class="bg-sky-500/70 flex-1"></div>
+											</div>
+										{/if}
+									</div>
+								{/if}
+
 								<!-- Abilities -->
 								{#if selectedDef.abilityIds?.length}
 									{@const selectedAbilities = selectedDef.abilityIds.map((aid) => getAbilityDef(aid))}
@@ -736,6 +806,62 @@
 											Abilities
 										</p>
 										<SpellDetails abilities={selectedAbilities} theme="tavern" />
+									</div>
+								{/if}
+
+								<!-- Training History -->
+								{@const trainedStats = Object.entries(selectedTraining).filter(([, v]) => v > 0)}
+								{#if trainedStats.length > 0}
+									<div class="mt-3 pt-3 border-t border-amber-900/20">
+										<p class="text-[11px] uppercase tracking-wide text-stone-600 mb-2">
+											Training History
+										</p>
+
+										<!-- Summary table -->
+										<div class="space-y-1">
+											{#each trainedStats as [statKey, value]}
+												{@const building = TRAINING_BUILDINGS[statKey as TrainingStatKey]}
+												{@const sessionsForStat = trainingHistory.filter((s) => s.statKey === statKey)}
+												{@const totalTimeSec = sessionsForStat.reduce((sum, s) => {
+													const start = new Date(s.startedAt).getTime();
+													const end = new Date(s.endedAt).getTime();
+													return sum + (end - start) / 1000;
+												}, 0)}
+												<div class="flex items-center gap-2 text-sm">
+													{#if building}
+														<span class="gi w-4 h-4 shrink-0 {building.color} opacity-70" style="--gi: url({building.icon})"></span>
+													{/if}
+													<span class="text-stone-400 flex-1 min-w-0 truncate">{building?.name ?? statKey}</span>
+													<span class="text-emerald-400 font-medium tabular-nums">+{formatStat(value)}</span>
+													{#if totalTimeSec > 0}
+														<span class="text-stone-600 text-xs tabular-nums">{formatDuration(totalTimeSec)}</span>
+													{/if}
+												</div>
+											{/each}
+										</div>
+
+										<!-- Recent sessions (collapsible) -->
+										{#if trainingHistoryLoading}
+											<p class="mt-2 text-xs text-stone-600">Loading sessions...</p>
+										{:else if trainingHistory.length > 0}
+											<details class="mt-2">
+												<summary class="text-xs text-stone-500 cursor-pointer hover:text-stone-400 select-none">
+													Recent sessions ({trainingHistory.length})
+												</summary>
+												<div class="mt-1.5 space-y-0.5">
+													{#each trainingHistory as session}
+														{@const building = TRAINING_BUILDINGS[session.statKey as TrainingStatKey]}
+														{@const durSec = (new Date(session.endedAt).getTime() - new Date(session.startedAt).getTime()) / 1000}
+														<div class="flex items-center gap-2 text-xs py-0.5">
+															<span class="text-stone-600 w-20 shrink-0 tabular-nums">{timeAgo(session.endedAt)}</span>
+															<span class="text-stone-400 flex-1 min-w-0 truncate">{building?.name ?? session.statKey}</span>
+															<span class="text-emerald-400 tabular-nums">+{session.completions}</span>
+															<span class="text-stone-600 tabular-nums">{formatDuration(durSec)}</span>
+														</div>
+													{/each}
+												</div>
+											</details>
+										{/if}
 									</div>
 								{/if}
 							{:else}
@@ -915,5 +1041,24 @@
 		border: 1px solid rgba(120, 80, 30, 0.2);
 		background: #1e1812;
 		padding: 1rem;
+	}
+
+	/* ── DPS display cells ── */
+	.dps-cell {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0;
+	}
+	.dps-label {
+		font-size: 10px;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		color: rgba(168, 162, 158, 0.6);
+	}
+	.dps-value {
+		font-size: 1rem;
+		font-variant-numeric: tabular-nums;
+		line-height: 1.2;
 	}
 </style>

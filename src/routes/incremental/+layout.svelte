@@ -14,26 +14,6 @@
 	}
 	let { data, children }: Props = $props();
 
-	// ---- Refresh matches button ----
-	let refreshingMatches = $state(false);
-	let matchesRefreshedAt = $state<number | null>(null);
-	const REFRESH_FEEDBACK_MS = 2500;
-
-	async function refreshMatches() {
-		const accountId = data.accountId;
-		if (!accountId || refreshingMatches) return;
-		refreshingMatches = true;
-		try {
-			await fetch(`/api/updateMatchesForUser/${accountId}`, { method: 'GET' });
-			matchesRefreshedAt = Date.now();
-			setTimeout(() => {
-				matchesRefreshedAt = null;
-			}, REFRESH_FEEDBACK_MS);
-		} finally {
-			refreshingMatches = false;
-		}
-	}
-
 	const layoutHeroes = getContext<Array<{ id: number; localized_name: string }>>('heroes') ?? [];
 
 	function heroName(heroId: number): string {
@@ -42,26 +22,6 @@
 
 	function statLabel(statKey: string): string {
 		return TRAINING_BUILDINGS[statKey as TrainingStatKey]?.name ?? statKey;
-	}
-
-	const incrementalNav = [
-		{ label: 'Dashboard', path: '/incremental' },
-		{ label: 'Scavenging', path: '/incremental/scavenging' },
-		{ label: 'Barracks', path: '/incremental/barracks' },
-		{ label: 'Hero Tavern', path: '/incremental/tavern' },
-		{ label: 'Lineups', path: '/incremental/lineup' },
-		{ label: 'Run (Map)', path: '/incremental/run' },
-		{ label: 'Talents', path: '/incremental/talents' },
-		{ label: 'Inventory', path: '/incremental/inventory' },
-		{ label: 'Quests', path: '/incremental/quests' },
-		{ label: 'History', path: '/incremental/history' },
-		{ label: 'Atlas', path: '/incremental/atlas' }
-	];
-
-	function isActive(path: string): boolean {
-		const p = $page.url.pathname;
-		if (path === '/incremental') return p === '/incremental';
-		return p === path || p.startsWith(path + '/');
 	}
 
 	// ---- Reactive bindings to the store ----
@@ -73,7 +33,6 @@
 		$page.url.pathname.startsWith('/incremental/scavenging/') ||
 		$page.url.pathname.startsWith('/incremental/barracks/')
 	);
-
 	// ---- Display helpers ----
 
 	function slotLabel(slot: actionStore.SlotState): string {
@@ -107,10 +66,10 @@
 		return key.replace(/_/g, ' ');
 	}
 
+	import { getCurrencyDef } from '$lib/incremental/constants/currencies';
+
 	function currencyIcon(key: string): string {
-		if (key === 'essence') return '⛏️';
-		if (key === 'wood') return '🪵';
-		return '💰';
+		return getCurrencyDef(key)?.icon ?? '/game-icons/ffffff/transparent/1x1/delapouite/gold-stack.svg';
 	}
 
 	async function handleVisibilityChange() {
@@ -158,39 +117,6 @@
 </script>
 
 <div class="w-full h-full flex flex-col min-h-0">
-	<nav class="shrink-0 border-b border-gray-200 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-800/80 px-3 py-2 flex flex-wrap items-center gap-1 sm:gap-2">
-		<div class="flex items-center gap-1 sm:gap-2">
-			{#each incrementalNav as item}
-				<a
-					href={item.path}
-					class="rounded-md px-3 py-1.5 text-sm font-medium transition-colors {isActive(item.path)
-						? 'bg-primary text-primary-foreground'
-						: 'text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100'}"
-				>
-					{item.label}
-				</a>
-			{/each}
-		</div>
-		{#if data.accountId != null}
-			<div class="ml-auto flex items-center">
-				<button
-					type="button"
-					onclick={refreshMatches}
-					disabled={refreshingMatches}
-					class="rounded-md px-3 py-1.5 text-sm font-medium transition-colors text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100 disabled:opacity-60 disabled:pointer-events-none"
-					title="Fetch latest Dota 2 matches from OpenDota"
-				>
-					{#if refreshingMatches}
-						Refreshing…
-					{:else if matchesRefreshedAt != null && Date.now() - matchesRefreshedAt < REFRESH_FEEDBACK_MS}
-						Updated
-					{:else}
-						Refresh matches
-					{/if}
-				</button>
-			</div>
-		{/if}
-	</nav>
 	<main class="flex-1 min-h-0 overflow-y-auto">
 		{@render children?.()}
 	</main>
@@ -255,7 +181,7 @@
 										{#each Object.entries(result.currenciesEarned) as [key, amount]}
 											{#if amount > 0}
 												<span class="text-sm font-semibold text-primary">
-													{currencyIcon(key)} +{amount} {currencyLabel(key)}
+													<span class="gi inline w-4 h-4 text-amber-400" style="--gi: url({currencyIcon(key)})"></span> +{amount} {currencyLabel(key)}
 												</span>
 											{/if}
 										{/each}
@@ -273,7 +199,7 @@
 							{#each Object.entries(catchUpResult.totalCurrenciesEarned) as [key, amount]}
 								{#if amount > 0}
 									<p class="text-2xl font-bold text-primary text-center">
-										{currencyIcon(key)} +{amount} {currencyLabel(key)}
+										<span class="gi inline w-4 h-4 text-amber-400" style="--gi: url({currencyIcon(key)})"></span> +{amount} {currencyLabel(key)}
 									</p>
 								{/if}
 							{/each}

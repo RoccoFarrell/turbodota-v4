@@ -150,6 +150,8 @@ export interface EnemyInstance {
 	currentHp: number;
 	maxHp: number;
 	attackTimer: number;
+	/** Scaled attack damage for this instance (overrides def.damage when set, e.g. for Dark Rift level scaling). */
+	attackDamage?: number;
 	spellTimer?: number;
 	buffs?: Buff[];
 	/** Index into active abilities for round-robin casting (when enemies have spells). */
@@ -211,6 +213,8 @@ export interface BattleState {
 	combatLog?: CombatLogEntry[];
 	/** Spell rotation: lastCastAbilityIndex per player index (source of truth so rotation persists). */
 	lastSpellAbilityIndexByPlayer?: number[];
+	/** Dark Rift level (1-based). Used to scale summoned enemies mid-battle. */
+	level?: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -245,4 +249,6 @@ export interface RunState {
 	nextNodeIds: string[];
 	/** How each cleared node was completed (outcome, duration, etc.). */
 	nodeClearances?: Record<string, NodeClearance>;
+	/** Dark Rift level (1-based). */
+	level?: number;
 }

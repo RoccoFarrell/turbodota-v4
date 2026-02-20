@@ -76,7 +76,7 @@
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
-	class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/60 relative {runeApplyMode && isRuneTarget ? '' : 'overflow-hidden'} {runeTargetClasses(runeApplyMode, isRuneTarget)}"
+	class="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/60 relative {runeApplyMode && isRuneTarget ? '' : 'overflow-hidden'} {runeTargetClasses(runeApplyMode, isRuneTarget)} {actionDef.disabled ? 'opacity-50 pointer-events-none select-none' : ''}"
 	onclick={() => { if (runeApplyMode && isRuneTarget && onRuneApply && !applyingRune) onRuneApply(); }}
 	onkeydown={(e) => { if (runeApplyMode && isRuneTarget && e.key === 'Enter' && onRuneApply && !applyingRune) onRuneApply(); }}
 >
@@ -87,7 +87,7 @@
 	<div class="px-4 pt-4 pb-3 border-b border-gray-100 dark:border-gray-700">
 		<div class="flex items-center justify-between gap-2">
 			<div class="flex items-center gap-2">
-				<span class="text-2xl" aria-hidden="true">{actionDef.icon}</span>
+				<span class="gi w-7 h-7 {actionDef.color ?? 'text-gray-200'}" style="--gi: url({actionDef.icon})" aria-hidden="true"></span>
 				<div>
 					<h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">
 						{actionDef.id === 'mining' ? 'Essence Mine' : actionDef.id === 'woodcutting' ? 'Lumber Camp' : actionDef.label}
@@ -97,7 +97,9 @@
 					</p>
 				</div>
 			</div>
-			{#if activeSlot && activePartyBonus > 0}
+			{#if actionDef.disabled}
+				<span class="text-xs font-medium text-gray-400 dark:text-gray-500 shrink-0 italic">Coming Soon</span>
+			{:else if activeSlot && activePartyBonus > 0}
 				<span class="text-xs font-medium text-green-600 dark:text-green-400 shrink-0">
 					+{Math.round(activePartyBonus * 100)}% yield
 				</span>
@@ -106,8 +108,12 @@
 	</div>
 
 	<div class="p-4 space-y-3" class:pointer-events-none={runeApplyMode}>
+		{#if actionDef.disabled}
+			<p class="text-sm text-gray-400 dark:text-gray-500 italic text-center py-2">
+				This resource is not yet available.
+			</p>
 		<!-- Active slot display -->
-		{#if activeSlot}
+		{:else if activeSlot}
 			{@const prog = slotDisplayProgress(activeSlot)}
 			{@const next = slotNextIn(activeSlot)}
 			<div class="space-y-1.5">

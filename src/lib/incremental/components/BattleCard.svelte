@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { getStatusEffectDef } from '$lib/incremental/constants';
 	import SpriteSheetAnimation from '$lib/components/SpriteSheetAnimation.svelte';
+	import { MISC_ICONS, TRAINING_ICONS, STATUS_ICONS } from './game-icons';
 
 	/**
 	 * Shared battle card for heroes and enemies: name, icon, health bar, armor/MR badges,
@@ -286,8 +287,8 @@
 				class:opacity-60={isStunned}
 			>
 				{#if isStunned}
-					<div class="absolute inset-0 flex items-center justify-center z-1 text-amber-400 text-[10px] font-bold">
-						⏸ Stunned — timers paused
+					<div class="absolute inset-0 flex items-center justify-center z-1 text-amber-400 text-[10px] font-bold gap-1">
+						<span class="gi w-3 h-3 text-amber-400" style="--gi: url({STATUS_ICONS.stun})"></span> Stunned — timers paused
 					</div>
 				{/if}
 				<div class="flex items-center gap-1 {isStunned ? 'pointer-events-none' : ''}">
@@ -307,7 +308,7 @@
 			{#if hasSpells}
 				<div class="mt-2 border-t border-gray-600 pt-1.5 {isStunned ? 'opacity-70' : ''}">
 					{#if isStunned}
-						<p class="text-[10px] text-amber-400 font-medium mb-1">⏸ Spells paused (stunned)</p>
+						<p class="text-[10px] text-amber-400 font-medium mb-1 flex items-center gap-1"><span class="gi w-3 h-3 text-amber-400" style="--gi: url({STATUS_ICONS.stun})"></span> Spells paused (stunned)</p>
 					{/if}
 					<p class="text-[10px] font-semibold text-blue-400 uppercase tracking-wide mb-1.5">Spells</p>
 					{#if (spellInfo?.abilities?.length ?? 0) > 0}
@@ -365,19 +366,19 @@
 			<!-- Enemy stats: Atk Dmg, Atk Spd, Armor, MR, DPS -->
 			<div class="space-y-1 text-xs">
 				<div class="flex items-center justify-between">
-					<span class="text-gray-400">⚔️ Atk Dmg:</span>
+					<span class="text-gray-400 inline-flex items-center gap-1"><span class="gi w-3 h-3 text-amber-400" style="--gi: url({MISC_ICONS.crossedSwords})"></span> Atk Dmg:</span>
 					<span class="font-medium text-amber-400">{enemyAttackDamage} dmg</span>
 				</div>
 				<div class="flex items-center justify-between">
-					<span class="text-gray-400">⏱️ Atk Spd:</span>
+					<span class="text-gray-400 inline-flex items-center gap-1"><span class="gi w-3 h-3 text-gray-400" style="--gi: url({MISC_ICONS.timer})"></span> Atk Spd:</span>
 					<span class="font-medium text-gray-300">{enemyAttackInterval.toFixed(1)}s</span>
 				</div>
 				<div class="flex items-center justify-between">
-					<span class="text-gray-400">🛡 Armor:</span>
+					<span class="text-gray-400 inline-flex items-center gap-1"><span class="gi w-3 h-3 text-gray-400" style="--gi: url({TRAINING_ICONS.armor})"></span> Armor:</span>
 					<span class="font-medium text-gray-300">{armor}</span>
 				</div>
 				<div class="flex items-center justify-between">
-					<span class="text-gray-400">✨ MR:</span>
+					<span class="text-gray-400 inline-flex items-center gap-1"><span class="gi w-3 h-3 text-blue-400" style="--gi: url({MISC_ICONS.magicResist})"></span> MR:</span>
 					<span class="font-medium text-gray-300">{mrPercent}%</span>
 				</div>
 				<div class="flex items-center justify-between border-t border-gray-600 pt-1 mt-1">
@@ -392,8 +393,8 @@
 				class:opacity-60={isStunned}
 			>
 				{#if isStunned}
-					<div class="absolute inset-0 flex items-center justify-center z-1 text-amber-400 text-[10px] font-bold">
-						⏸ Stunned — attack paused
+					<div class="absolute inset-0 flex items-center justify-center z-1 text-amber-400 text-[10px] font-bold gap-1">
+						<span class="gi w-3 h-3 text-amber-400" style="--gi: url({STATUS_ICONS.stun})"></span> Stunned — attack paused
 					</div>
 				{/if}
 				<div class="flex items-center gap-1 {isStunned ? 'pointer-events-none' : ''}">
