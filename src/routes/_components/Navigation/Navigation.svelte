@@ -125,15 +125,31 @@
 	<!-- ── DOTA 2 ──────────────────────── -->
 	<div class="section-header mt-1 {sectionHeader}">Dota 2</div>
 
-	<a href="/dotadeck" data-sveltekit-preload-data="tap" class={navLink} class:is-active={isActive('/dotadeck')}>
-		<i class="fi fi-rr-playing-cards nav-icon text-amber-400 w-4 text-center text-sm leading-none"></i>
-		<span>DotaDeck</span>
-	</a>
+	{#if session?.user}
+		<a href="/dotadeck" data-sveltekit-preload-data="tap" class={navLink} class:is-active={isActive('/dotadeck')}>
+			<i class="fi fi-rr-playing-cards nav-icon text-amber-400 w-4 text-center text-sm leading-none"></i>
+			<span>DotaDeck</span>
+		</a>
+	{:else}
+		<span class="{navLink} opacity-40 !cursor-not-allowed hover:!bg-transparent hover:!text-slate-400 hover:!border-l-transparent" title="Login required">
+			<i class="fi fi-rr-playing-cards nav-icon text-amber-400/40 w-4 text-center text-sm leading-none"></i>
+			<span>DotaDeck</span>
+			<i class="fi fi-br-lock text-[0.6rem] ml-auto text-slate-600"></i>
+		</span>
+	{/if}
 
-	<a href="/leagues" data-sveltekit-preload-data="tap" class={navLink} class:is-active={isActive('/leagues')}>
-		<i class="fi fi-br-users-alt nav-icon text-teal-400 w-4 text-center text-sm leading-none"></i>
-		<span>Leagues</span>
-	</a>
+	{#if session?.user}
+		<a href="/leagues" data-sveltekit-preload-data="tap" class={navLink} class:is-active={isActive('/leagues')}>
+			<i class="fi fi-br-users-alt nav-icon text-teal-400 w-4 text-center text-sm leading-none"></i>
+			<span>Leagues</span>
+		</a>
+	{:else}
+		<span class="{navLink} opacity-40 !cursor-not-allowed hover:!bg-transparent hover:!text-slate-400 hover:!border-l-transparent" title="Login required">
+			<i class="fi fi-br-users-alt nav-icon text-teal-400/40 w-4 text-center text-sm leading-none"></i>
+			<span>Leagues</span>
+			<i class="fi fi-br-lock text-[0.6rem] ml-auto text-slate-600"></i>
+		</span>
+	{/if}
 
 	{#if isPrivileged}
 		<a href="/herostats" data-sveltekit-preload-data="tap" class={navLink} class:is-active={isActive('/herostats')}>
@@ -172,7 +188,7 @@
 						<span class="bg-linear-to-r from-red-400 to-amber-400 bg-clip-text text-transparent">{route.label}</span>
 						<i class="fi fi-br-angle-right ml-auto text-[0.6rem] text-red-700/60 group-hover:text-red-500/80 transition-colors"></i>
 					</a>
-				{:else}
+				{:else if session?.user}
 					<a
 						href={route.path}
 						data-sveltekit-preload-data="tap"
