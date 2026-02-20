@@ -8,7 +8,6 @@ export const load: PageServerLoad = async ({ locals }) => {
 		redirect(302, '/incremental');
 	}
 	return {
-		isAuthenticated: !!user,
-		hasAccount: !!user?.account_id
+		isAuthenticated: !!user
 	};
 };
