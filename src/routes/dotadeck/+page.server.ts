@@ -7,7 +7,9 @@ import { MATCH_CUTOFF_START_TIME } from '$lib/constants/matches';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const authUser = locals.user;
-	if (!authUser) return { status: 401 };
+	if (!authUser) {
+		redirect(302, '/');
+	}
 
 	// Get user data
 	const user = await prisma.user.findUnique({
