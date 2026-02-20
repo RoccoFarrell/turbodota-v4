@@ -1,3 +1,4 @@
+import { redirect } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';
 import prisma from '$lib/server/prisma';
 
@@ -7,7 +8,10 @@ const MATCH_REFRESH_STALE_MINUTES = 30;
 export const load: LayoutServerLoad = async ({ locals, url }) => {
 	const user = locals.user;
 	if (!user?.account_id) {
-		return {};
+		if (url.pathname === '/incremental/welcome') {
+			return {};
+		}
+		redirect(302, '/incremental/welcome');
 	}
 
 	const accountId = user.account_id;
