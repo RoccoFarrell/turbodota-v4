@@ -448,7 +448,7 @@
 					</a>
 
 					<p class="text-sm italic text-slate-300 dark:text-surface-400 text-center">
-						Dota 2 is a trademark of Valve Corporation
+						Dota 2 is a trademark of Valve Corporation. TurboDota is an independent companion app, not affiliated with Valve.
 					</p>
 				</div>
 				{#if openDotaDown}

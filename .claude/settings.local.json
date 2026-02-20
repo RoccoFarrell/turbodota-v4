@@ -44,7 +44,8 @@
       "Bash(npm run build)",
       "Bash(npx vite build:*)",
       "Bash(ls:*)",
-      "Bash(git mv:*)"
+      "Bash(git mv:*)",
+      "Bash(npx prisma db seed:*)"
     ]
   }
 }
