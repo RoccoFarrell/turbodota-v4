@@ -6,6 +6,7 @@ import { Prisma } from '@prisma/client';
 
 //import { createDotaUser } from '../api/helpers';
 import { calculateRandomLeaderboard, calculateTownLeaderboard } from '$lib/helpers/leaderboardFromSeason';
+import { computeDarkRiftLeaderboard, type DarkRiftLeaderboardRow } from '$lib/server/league-leaderboard';
 
 export const load: PageServerLoad = async ({ locals, parent, params }) => {
 	const parentData = await parent();
@@ -54,6 +55,8 @@ export const load: PageServerLoad = async ({ locals, parent, params }) => {
 	let currentTown: TownWithIncludes | null = null;
 	let quests: QuestWithRandom[] = [];
 	let questChecks: any = null;
+
+	let darkRiftLeaderboard: DarkRiftLeaderboardRow[] = [];
 
 	if (user) {
 		leagueAndSeasonsResult = await prisma.league.findMany({
@@ -124,6 +127,14 @@ export const load: PageServerLoad = async ({ locals, parent, params }) => {
 				leagueAndSeasonsResult[0].members
 			);
 		} else console.error('could not load season leaderboard in server');
+
+		// Compute Dark Rift leaderboard if this is a darkrift season
+		if (currentSeason && currentSeason.type === 'darkrift' && leagueAndSeasonsResult?.[0]) {
+			darkRiftLeaderboard = await computeDarkRiftLeaderboard(
+				{ members: leagueAndSeasonsResult[0].members },
+				{ startDate: currentSeason.startDate, endDate: currentSeason.endDate }
+			);
+		}
 	}
 	return {
 		...parentData,
@@ -140,7 +151,8 @@ export const load: PageServerLoad = async ({ locals, parent, params }) => {
 		},
 		random: {
 			allRandoms
-		}
+		},
+		darkRiftLeaderboard
 	};
 };
 

@@ -8,6 +8,7 @@
 	//components
 	import SeasonHeaderCard from './SeasonHeaderCard.svelte';
 	import SeasonLeaderboard from './SeasonLeaderboard.svelte';
+	import DarkRiftLeaderboard from './DarkRiftLeaderboard.svelte';
 
 	//SVELTE
 	import { enhance } from '$app/forms';
@@ -119,7 +120,9 @@
 			</div> -->
 			<SeasonHeaderCard data={data}></SeasonHeaderCard>
 			<div class="flex flex-col space-y-4 justify-center items-center border border-secondary-500/10 rounded-xl">
-				{#if data.league.currentSeason && data.league.currentSeason.turbotowns}
+				{#if data.league.currentSeason?.type === 'darkrift'}
+					<DarkRiftLeaderboard leaderboard={data.darkRiftLeaderboard} />
+				{:else if data.league.currentSeason && data.league.currentSeason.turbotowns}
 					<SeasonLeaderboard
 						turbotowns={data.league.currentSeason.turbotowns}
 						members={data.league.leagueAndSeasonsResult[0].members}
