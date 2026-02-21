@@ -24,8 +24,17 @@ export const SCAVENGING_PARTY_YIELD_BONUS = 0.25;
 /** Maximum number of companion heroes in a scavenging party. */
 export const SCAVENGING_PARTY_MAX_SIZE = 2;
 
-/** Essence cost to convert one win from last 10 games into a roster hero. */
-export const CONVERT_WIN_ESSENCE_COST = 10;
+/**
+ * Recruit cost curve: free first hero, power-curve ramp to 5 000 by hero 20, then flat.
+ * Formula: cost(rosterSize) = round(65 × rosterSize^1.5), capped at 5 000.
+ *
+ * @param rosterSize  Number of heroes already on the roster (0 = first recruit is free).
+ */
+export function getRecruitCost(rosterSize: number): number {
+	if (rosterSize <= 0) return 0;
+	if (rosterSize >= 19) return 5_000;
+	return Math.round(65 * Math.pow(rosterSize, 1.5));
+}
 
 /** All trainable stat keys (seven buildings). */
 export const TRAINING_STAT_KEYS = [

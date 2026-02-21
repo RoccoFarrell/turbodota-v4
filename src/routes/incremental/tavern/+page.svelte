@@ -5,7 +5,7 @@
 	import { toaster } from '$lib/toaster';
 	import {
 		formatStat,
-		CONVERT_WIN_ESSENCE_COST,
+		getRecruitCost,
 		TRAINING_BUILDINGS,
 		type TrainingStatKey
 	} from '$lib/incremental/actions';
@@ -159,6 +159,8 @@
 	function attrOf(hid: number): string {
 		return getHeroDef(hid)?.primaryAttribute ?? 'universal';
 	}
+
+	const recruitCost = $derived(getRecruitCost(rosterHeroIds.length));
 
 	function matchFaded(m: RecentMatch): boolean {
 		return !m.win || m.alreadyRecruited || m.isDuplicateHero;
@@ -395,9 +397,13 @@
 					<span class="text-amber-300 font-medium">Ranked</span>
 					or
 					<span class="text-amber-300 font-medium">Turbo</span>, then spend
-					<span class="text-amber-300 font-medium"
-						>{CONVERT_WIN_ESSENCE_COST} Essence</span
-					>
+					{#if recruitCost === 0}
+						<span class="text-emerald-400 font-medium">free</span>
+					{:else}
+						<span class="text-amber-300 font-medium"
+							>{recruitCost.toLocaleString()} Essence</span
+						>
+					{/if}
 					to recruit them.
 				</p>
 
@@ -465,13 +471,15 @@
 									{#if m.eligible}
 										<button
 											class="recruit-btn"
-											disabled={essence < CONVERT_WIN_ESSENCE_COST ||
+											disabled={essence < recruitCost ||
 												convertingMatchId === m.matchId}
 											onclick={() => recruitHero(m.matchId)}
 										>
 											{convertingMatchId === m.matchId
 												? '...'
-												: `Recruit (${CONVERT_WIN_ESSENCE_COST})`}
+												: recruitCost === 0
+													? 'Recruit (Free)'
+													: `Recruit (${recruitCost.toLocaleString()})`}
 										</button>
 									{:else}
 										<span class="text-xs text-stone-600"

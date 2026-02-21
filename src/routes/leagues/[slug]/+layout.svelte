@@ -7,7 +7,7 @@
 	let breadcrumbs = $page.url.pathname.split('/');
 </script>
 
-<main class="relative min-h-screen w-full bg-gray-950">
+<main class="relative min-h-full w-full bg-gray-950">
 	<!-- Background atmosphere -->
 	<div class="pointer-events-none absolute inset-0">
 		<div class="absolute inset-0 bg-gradient-to-b from-gray-950 via-emerald-950/30 to-gray-950"></div>

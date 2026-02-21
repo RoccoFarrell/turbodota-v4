@@ -46,9 +46,9 @@ Backlog and near-term improvements for the incremental game. See [DEVELOPMENT_RO
 
 **Goal:** Replace linear attack speed formula with exponential decay so heroes approach (but never exceed) 5 attacks/sec, taking ~1 week of training to reach the cap.
 
-- [ ] Update `attackInterval` in `src/lib/incremental/stats/formulas.ts` with exponential decay formula and new constants (`MIN_ATTACK_INTERVAL`, `ATTACK_SPEED_TAU`).
-- [ ] Update tests in `src/lib/incremental/stats/formulas.test.ts` to cover new formula behavior (asymptote, calibration at 1-day/3-day/7-day, AGI affinity bonus, hard floor).
-- [ ] Verify downstream callers (`battle-loop.ts`, `resolution.ts`, `lineup-stats.ts`) work correctly with the new formula.
+- [x] Update `attackInterval` in `src/lib/incremental/stats/formulas.ts` with exponential decay formula and new constants (`MIN_ATTACK_INTERVAL`, `ATTACK_SPEED_TAU`).
+- [x] Update tests in `src/lib/incremental/stats/formulas.test.ts` to cover new formula behavior (asymptote, calibration at 1-day/3-day/7-day, AGI affinity bonus, hard floor).
+- [x] Verify downstream callers (`battle-loop.ts`, `resolution.ts`, `lineup-stats.ts`) work correctly with the new formula.
 
 **Relevant:** [attack-speed-scaling-redesign.md](./attack-speed-scaling-redesign.md) for the full plan.
 

@@ -628,7 +628,6 @@ model IncrementalSave {
   bankItems         IncrementalBankItem[]
   saveQuests        IncrementalSaveQuest[]
   actionHistory     IncrementalActionHistory[]
-
   @@index([userId])
 }
 
@@ -881,6 +880,7 @@ model IncrementalSaveQuest {
   id         String   @id @default(cuid())
   saveId     String
   questId    String // e.g. "last_hits_1k"; references quest-definitions.ts
+  type       String   @default("recurring") // "recurring" | "onboarding" | "one_time"
   startedAt DateTime // when the current quest period started (assigned or after last claim)
   claimCount Int      @default(0) // how many times this quest has been claimed on this save
   claimedAt  DateTime? // last claim timestamp (null until first claim)
@@ -889,6 +889,7 @@ model IncrementalSaveQuest {
 
   @@unique([saveId, questId])
   @@index([saveId])
+  @@index([saveId, type])
 }
 
 // Session-based action history: one row per continuous stretch of an action on a slot.
@@ -913,3 +914,4 @@ model IncrementalActionHistory {
   @@index([saveId, endedAt]) // find open sessions quickly
   @@index([saveId, actionType, actionHeroId, actionStatKey])
 }
+

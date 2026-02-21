@@ -458,7 +458,7 @@
 							type="number"
 							name="account_id"
 							placeholder="e.g. 123456789"
-							value={accountIdInput}
+							bind:value={accountIdInput}
 							class="flex-1 bg-[rgb(20_12_6)] border border-(--card-border) text-(--text-warm) rounded-md px-2.5 py-1.5 text-sm [font-family:inherit] outline-none min-w-0"
 						/>
 						<button type="submit" class="bg-(--gold) text-[rgb(10_6_2)] rounded-md px-3 py-[0.35rem] text-sm font-bold cursor-pointer [font-family:inherit] hover:opacity-85">
@@ -474,6 +474,11 @@
 							</button>
 						{/if}
 					</form>
+					{#if form && 'setAccountId' in form && form.setAccountId && 'error' in form.setAccountId}
+						<p class="text-sm text-red-300 mt-1">
+							{form.setAccountId.error}
+						</p>
+					{/if}
 				{/if}
 			</div>
 		</div>

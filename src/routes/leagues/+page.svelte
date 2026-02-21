@@ -67,9 +67,9 @@
 	let isAdmin = $derived(data.user?.roles?.includes('dev') ?? false);
 </script>
 
-<div class="min-h-screen relative">
+<div class="min-h-full w-full relative bg-gray-950">
 	<!-- Emerald glow background -->
-	<div class="fixed inset-0 -z-10 bg-gray-950">
+	<div class="pointer-events-none absolute inset-0">
 		<div class="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-emerald-500/5 rounded-full blur-3xl"></div>
 	</div>
 

@@ -3,14 +3,21 @@ import type { RequestHandler } from '@sveltejs/kit';
 import prisma from '$lib/server/prisma';
 import { resolveIncrementalSave } from '$lib/server/incremental-save';
 import { getQuestProgress } from '$lib/incremental/quests/quest-progress.server';
-import { QUEST_DEFINITIONS, rewardDescription } from '$lib/incremental/quests/quest-definitions';
+import { getOnboardingProgress } from '$lib/incremental/quests/onboarding-progress.server';
+import {
+	QUEST_DEFINITIONS,
+	ONBOARDING_DEFINITIONS,
+	rewardDescription,
+	type QuestDef,
+	type OnboardingDef
+} from '$lib/incremental/quests/quest-definitions';
 import { GAME_MODE_TURBO, GAME_MODES_RANKED, MATCH_CUTOFF_START_TIME } from '$lib/constants/matches';
 
 /**
  * GET /api/incremental/quests?saveId=...
  *
- * Returns all quest definitions with current progress and claim state for the given save.
- * Uses IncrementalSaveQuest for startedAt and claimCount. Creates a row per quest on first use with startedAt = now (when first assigned).
+ * Returns all quest definitions (recurring + onboarding) with current progress
+ * and claim state for the given save.
  */
 export const GET: RequestHandler = async (event) => {
 	const user = event.locals.user;
@@ -18,104 +25,154 @@ export const GET: RequestHandler = async (event) => {
 
 	const saveIdParam = event.url.searchParams.get('saveId') ?? undefined;
 	const save = await resolveIncrementalSave(event, { saveId: saveIdParam });
-
-	// Use account_id from the save (per-save tracking)
 	const accountId = save.account_id;
-	if (!accountId) {
-		error(400, 'This save has no Dota account ID set. Please set one in your profile or save settings.');
-	}
 
-	const progress = await getQuestProgress(accountId);
-	const progressMap = new Map(progress.map((p) => [p.questId, p]));
+	// ── 1. Fetch both progress sources in parallel ───────────────────────
+	const [recurringProgress, onboardingProgress] = await Promise.all([
+		accountId ? getQuestProgress(accountId) : Promise.resolve([]),
+		getOnboardingProgress(save.saveId)
+	]);
 
-	let saveQuestMap = new Map(
-		(
-			await prisma.incrementalSaveQuest.findMany({
-				where: { saveId: save.saveId },
-				select: { questId: true, startedAt: true, claimCount: true }
-			})
-		).map((r) => [r.questId, r] as const)
-	);
+	const recurringProgressMap = new Map(recurringProgress.map((p) => [p.questId, p]));
+	const onboardingProgressMap = new Map(onboardingProgress.map((p) => [p.questId, p]));
 
-	// Ensure a row exists for every quest (first assignment uses default start date)
-	const missingQuestIds = QUEST_DEFINITIONS.filter((def) => !saveQuestMap.has(def.id)).map(
-		(d) => d.id
-	);
-	if (missingQuestIds.length > 0) {
-		const now = new Date();
+	// ── 2. Load all save-quest rows in one query ─────────────────────────
+	const allSaveQuestRows = await prisma.incrementalSaveQuest.findMany({
+		where: { saveId: save.saveId },
+		select: { questId: true, type: true, startedAt: true, claimCount: true, claimedAt: true }
+	});
+	const saveQuestMap = new Map(allSaveQuestRows.map((r) => [r.questId, r]));
+
+	// ── 3. Ensure recurring rows exist (first-time initialization) ───────
+	const now = new Date();
+	const missingRecurringIds = QUEST_DEFINITIONS.filter(
+		(def) => !saveQuestMap.has(def.id)
+	).map((d) => d.id);
+
+	if (missingRecurringIds.length > 0) {
 		await prisma.incrementalSaveQuest.createMany({
-			data: missingQuestIds.map((questId) => ({
+			data: missingRecurringIds.map((questId) => ({
 				saveId: save.saveId,
 				questId,
+				type: 'recurring',
 				startedAt: now,
 				claimCount: 0
 			}))
 		});
-		saveQuestMap = new Map(
-			(
-				await prisma.incrementalSaveQuest.findMany({
-					where: { saveId: save.saveId },
-					select: { questId: true, startedAt: true, claimCount: true }
-				})
-			).map((r) => [r.questId, r] as const)
-		);
+		const fresh = await prisma.incrementalSaveQuest.findMany({
+			where: { saveId: save.saveId },
+			select: { questId: true, type: true, startedAt: true, claimCount: true, claimedAt: true }
+		});
+		for (const row of fresh) saveQuestMap.set(row.questId, row);
 	}
 
-	const cutoffSeconds = Number(MATCH_CUTOFF_START_TIME);
-	const minStartedUnix =
-		saveQuestMap.size > 0
-			? Math.min(
-					...[...saveQuestMap.values()].map((r) => Math.floor(r.startedAt.getTime() / 1000))
-				)
-			: 0;
-	const qualifyingMatches = await prisma.match.findMany({
-		where: {
-			account_id: accountId,
-			game_mode: { in: [GAME_MODE_TURBO, ...GAME_MODES_RANKED] },
-			start_time: { gte: BigInt(Math.max(cutoffSeconds, Math.floor(minStartedUnix))) }
-		},
-		select: { start_time: true, game_mode: true }
-	});
+	// ── 4. Build recurring quest response items ──────────────────────────
+	let qualifyingMatches: { start_time: bigint; game_mode: number }[] = [];
+	if (accountId) {
+		const saveQuestValues = [...saveQuestMap.values()];
+		const minStartedUnix =
+			saveQuestValues.length > 0
+				? Math.min(
+						...saveQuestValues.map((r) => Math.floor(r.startedAt.getTime() / 1000))
+					)
+				: 0;
+		const cutoffSeconds = Number(MATCH_CUTOFF_START_TIME);
+		qualifyingMatches = await prisma.match.findMany({
+			where: {
+				account_id: accountId,
+				game_mode: { in: [GAME_MODE_TURBO, ...GAME_MODES_RANKED] },
+				start_time: { gte: BigInt(Math.max(cutoffSeconds, minStartedUnix)) }
+			},
+			select: { start_time: true, game_mode: true }
+		});
+	}
 
-	const quests = QUEST_DEFINITIONS.map((def) => {
-		const prog = progressMap.get(def.id);
+	const recurringItems = QUEST_DEFINITIONS.map((def: QuestDef) => {
+		const prog = recurringProgressMap.get(def.id);
 		const rawTotal = prog?.current ?? 0;
-		const saveQuest = saveQuestMap.get(def.id)!;
-		const claimCount = saveQuest.claimCount;
-		const threshold = def.threshold;
-
-		const current = Math.max(0, rawTotal - threshold * claimCount);
-		const completed = current >= threshold;
-		const lastActivityAt = prog?.lastActivityAt ?? null;
-
-		const startedAt = saveQuest.startedAt;
+		const saveQuest = saveQuestMap.get(def.id);
+		const claimCount = saveQuest?.claimCount ?? 0;
+		const startedAt = saveQuest?.startedAt ?? now;
 		const startedAtUnix = Math.floor(startedAt.getTime() / 1000);
+
+		const current = Math.max(0, rawTotal - def.threshold * claimCount);
+		const completed = current >= def.threshold;
 
 		const matchesSinceStart = qualifyingMatches.filter(
 			(m) => Number(m.start_time) >= startedAtUnix
 		);
-		const turboMatchesSinceStart = matchesSinceStart.filter((m) => m.game_mode === GAME_MODE_TURBO).length;
-		const rankedMatchesSinceStart = matchesSinceStart.filter((m) =>
-			GAME_MODES_RANKED.includes(m.game_mode)
-		).length;
 
 		return {
 			id: def.id,
+			type: 'recurring' as const,
 			label: def.label,
+			description: null as string | null,
 			iconId: def.iconId ?? null,
-			statKey: def.statKey,
+			statKey: def.statKey as string | null,
 			current,
-			threshold,
+			threshold: def.threshold,
 			completed,
 			claimCount,
 			canClaim: completed,
-			lastActivityAt,
-			rewardDescription: rewardDescription(def),
+			lastActivityAt: prog?.lastActivityAt ?? null,
+			rewardDescription: rewardDescription(def.reward),
 			startedAt: startedAt.toISOString(),
-			turboMatchesSinceStart,
-			rankedMatchesSinceStart
+			turboMatchesSinceStart: matchesSinceStart.filter(
+				(m) => m.game_mode === GAME_MODE_TURBO
+			).length,
+			rankedMatchesSinceStart: matchesSinceStart.filter((m) =>
+				GAME_MODES_RANKED.includes(m.game_mode)
+			).length,
+			order: null as number | null,
+			locked: false,
+			navLink: null as string | null
 		};
 	});
 
-	return json({ quests, saveId: save.saveId });
+	// ── 5. Build onboarding quest response items (with sequential lock) ──
+	const claimedOnboardingIds = new Set(
+		ONBOARDING_DEFINITIONS.filter(
+			(def) => (saveQuestMap.get(def.id)?.claimCount ?? 0) > 0
+		).map((def) => def.id)
+	);
+
+	const onboardingItems = ONBOARDING_DEFINITIONS.map((def: OnboardingDef) => {
+		const prog = onboardingProgressMap.get(def.id);
+		const completed = prog?.completed ?? false;
+		const claimCount = saveQuestMap.get(def.id)?.claimCount ?? 0;
+		const alreadyClaimed = claimCount > 0;
+
+		// Sequential lock: locked if previous step not claimed AND this step not yet completed
+		const previousDef = ONBOARDING_DEFINITIONS.find((d) => d.order === def.order - 1);
+		const previousClaimed = previousDef ? claimedOnboardingIds.has(previousDef.id) : true;
+		const locked = !previousClaimed && !completed;
+		const canClaim = completed && !alreadyClaimed && !locked;
+
+		return {
+			id: def.id,
+			type: 'onboarding' as const,
+			label: def.label,
+			description: def.description as string | null,
+			iconId: def.iconId ?? null,
+			statKey: null as string | null,
+			current: prog?.current ?? 0,
+			threshold: 1,
+			completed,
+			claimCount,
+			canClaim,
+			lastActivityAt: null as number | null,
+			rewardDescription: rewardDescription(def.reward),
+			startedAt: null as string | null,
+			turboMatchesSinceStart: null as number | null,
+			rankedMatchesSinceStart: null as number | null,
+			order: def.order,
+			locked,
+			navLink: def.navLink as string | null
+		};
+	});
+
+	return json({
+		quests: [...onboardingItems, ...recurringItems],
+		saveId: save.saveId
+	});
 };

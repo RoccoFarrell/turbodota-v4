@@ -153,21 +153,9 @@
 		transform: translateY(-2px);
 	}
 
-	.cta-button-secondary {
-		background: rgba(255, 107, 53, 0.2);
-		color: #ff6b35;
-		border: 2px solid #ff6b35;
-	}
-
-	.cta-button-secondary:hover {
-		background: rgba(255, 107, 53, 0.3);
-		box-shadow: 0 0 30px rgba(255, 107, 53, 0.3);
-		transform: translateY(-2px);
-	}
-
 	.features-section {
 		position: relative;
-		padding: 3rem 2rem 4rem;
+		padding: 2rem 2rem 4rem;
 		max-width: 1200px;
 		margin: 0 auto;
 	}
@@ -299,9 +287,158 @@
 
 	.auth-cta-buttons {
 		display: flex;
-		gap: 1rem;
+		gap: 1.25rem;
 		justify-content: center;
 		flex-wrap: wrap;
+	}
+
+	/* ─── Rift Portal Auth Buttons (Homepage — larger) ─── */
+
+	.rift-auth {
+		position: relative;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.75rem;
+		padding: 0.75rem 1.5rem;
+		font-size: 0.8125rem;
+		font-weight: 700;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		text-decoration: none;
+		color: rgba(255, 255, 255, 0.9);
+		border-radius: 4px;
+		overflow: hidden;
+		cursor: pointer;
+		backdrop-filter: blur(10px);
+		transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+	}
+
+	/* Shimmer sweep */
+	.rift-auth::before {
+		content: '';
+		position: absolute;
+		top: 0;
+		left: -100%;
+		width: 100%;
+		height: 100%;
+		transition: left 0.5s ease;
+		pointer-events: none;
+	}
+
+	.rift-auth:hover::before {
+		left: 100%;
+	}
+
+	/* Corner rune bracket — top-left */
+	.rift-auth::after {
+		content: '';
+		position: absolute;
+		top: 4px;
+		left: 4px;
+		width: 8px;
+		height: 8px;
+		opacity: 0.35;
+		transition: opacity 0.3s ease;
+		pointer-events: none;
+	}
+
+	.rift-auth:hover::after {
+		opacity: 0.85;
+	}
+
+	.rift-auth__icon {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		flex-shrink: 0;
+		position: relative;
+		z-index: 1;
+	}
+
+	.rift-auth__sep {
+		width: 1px;
+		align-self: stretch;
+		min-height: 18px;
+		opacity: 0.3;
+		transition: opacity 0.3s ease;
+		position: relative;
+		z-index: 1;
+	}
+
+	.rift-auth:hover .rift-auth__sep {
+		opacity: 0.65;
+	}
+
+	.rift-auth__sep--cyan {
+		background: linear-gradient(180deg, transparent, rgba(0, 212, 255, 0.6), transparent);
+	}
+
+	.rift-auth__sep--orange {
+		background: linear-gradient(180deg, transparent, rgba(255, 107, 53, 0.6), transparent);
+	}
+
+	/* ── Google ── */
+
+	.rift-auth--google {
+		background: linear-gradient(135deg, rgba(0, 212, 255, 0.06) 0%, rgba(26, 15, 58, 0.7) 40%, rgba(10, 14, 39, 0.85) 100%);
+		border: 1px solid rgba(0, 212, 255, 0.25);
+		box-shadow: 0 0 12px rgba(0, 212, 255, 0.08);
+		animation: rift-breathe-cyan 6s ease-in-out infinite;
+	}
+
+	.rift-auth--google::before {
+		background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.12), transparent);
+	}
+
+	.rift-auth--google::after {
+		border-top: 1.5px solid rgba(0, 212, 255, 0.6);
+		border-left: 1.5px solid rgba(0, 212, 255, 0.6);
+	}
+
+	.rift-auth--google:hover {
+		border-color: rgba(0, 212, 255, 0.6);
+		box-shadow: 0 0 30px rgba(0, 212, 255, 0.3), inset 0 0 20px rgba(0, 212, 255, 0.06);
+		transform: translateY(-3px);
+		background: linear-gradient(135deg, rgba(0, 212, 255, 0.12) 0%, rgba(26, 15, 58, 0.85) 40%, rgba(10, 14, 39, 0.95) 100%);
+		animation: none;
+	}
+
+	/* ── Steam ── */
+
+	.rift-auth--steam {
+		background: linear-gradient(135deg, rgba(255, 107, 53, 0.05) 0%, rgba(26, 15, 58, 0.7) 40%, rgba(10, 14, 39, 0.85) 100%);
+		border: 1px solid rgba(255, 107, 53, 0.25);
+		box-shadow: 0 0 12px rgba(255, 107, 53, 0.06);
+		animation: rift-breathe-orange 7s ease-in-out infinite;
+	}
+
+	.rift-auth--steam::before {
+		background: linear-gradient(90deg, transparent, rgba(255, 107, 53, 0.12), transparent);
+	}
+
+	.rift-auth--steam::after {
+		border-top: 1.5px solid rgba(255, 107, 53, 0.6);
+		border-left: 1.5px solid rgba(255, 107, 53, 0.6);
+	}
+
+	.rift-auth--steam:hover {
+		border-color: rgba(255, 107, 53, 0.6);
+		box-shadow: 0 0 30px rgba(255, 107, 53, 0.25), inset 0 0 20px rgba(255, 107, 53, 0.05);
+		transform: translateY(-3px);
+		background: linear-gradient(135deg, rgba(255, 107, 53, 0.1) 0%, rgba(26, 15, 58, 0.85) 40%, rgba(10, 14, 39, 0.95) 100%);
+		animation: none;
+	}
+
+	/* Breathing glow */
+
+	@keyframes rift-breathe-cyan {
+		0%, 100% { box-shadow: 0 0 12px rgba(0, 212, 255, 0.08); }
+		50% { box-shadow: 0 0 20px rgba(0, 212, 255, 0.18); }
+	}
+
+	@keyframes rift-breathe-orange {
+		0%, 100% { box-shadow: 0 0 12px rgba(255, 107, 53, 0.06); }
+		50% { box-shadow: 0 0 18px rgba(255, 107, 53, 0.15); }
 	}
 
 </style>
@@ -416,11 +553,26 @@
 
 			{#if !user}
 				<div class="auth-cta-buttons">
-					<a href="/api/auth/google" class="cta-button cta-button-primary">
-						Sign in with Google
+					<a class="rift-auth rift-auth--google" href="/api/auth/google">
+						<span class="rift-auth__icon">
+							<svg class="w-5 h-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+								<path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+								<path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+								<path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+								<path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+							</svg>
+						</span>
+						<span class="rift-auth__sep rift-auth__sep--cyan"></span>
+						<span>Sign in with Google</span>
 					</a>
-					<a href="/api/auth/steam" class="cta-button cta-button-secondary">
-						Sign in with Steam
+					<a class="rift-auth rift-auth--steam" href="/api/auth/steam">
+						<span class="rift-auth__icon">
+							<svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+								<path d="M11.979 0C5.678 0 .511 4.86.022 10.945l6.432 2.658a3.387 3.387 0 0 1 1.912-.588c.063 0 .125.002.188.006l2.861-4.142V8.83c0-2.63 2.143-4.77 4.778-4.77 2.637 0 4.78 2.14 4.78 4.77 0 2.634-2.143 4.776-4.78 4.776h-.112l-4.076 2.91c0 .05.004.1.004.15 0 1.975-1.607 3.582-3.582 3.582-1.756 0-3.218-1.272-3.52-2.946L.453 14.194C1.886 19.809 6.466 24 11.979 24c6.627 0 12-5.373 12-12S18.606 0 11.979 0zM7.54 18.21l-1.473-.61c.262.543.714.985 1.3 1.2a2.388 2.388 0 0 0 3.085-1.397 2.374 2.374 0 0 0-.005-1.824 2.387 2.387 0 0 0-1.277-1.29 2.373 2.373 0 0 0-1.736-.052l1.523.63c.925.383 1.363 1.448.98 2.373-.385.925-1.448 1.363-2.373.98h-.024zm11.1-9.39a3.184 3.184 0 0 0-3.18-3.184 3.187 3.187 0 0 0-3.186 3.183 3.187 3.187 0 0 0 3.186 3.184 3.184 3.184 0 0 0 3.18-3.184zm-5.572-.01a2.394 2.394 0 0 1 2.39-2.393 2.397 2.397 0 0 1 2.395 2.394 2.397 2.397 0 0 1-2.395 2.393 2.394 2.394 0 0 1-2.39-2.393z"/>
+							</svg>
+						</span>
+						<span class="rift-auth__sep rift-auth__sep--orange"></span>
+						<span>Sign in with Steam</span>
 					</a>
 				</div>
 			{:else}

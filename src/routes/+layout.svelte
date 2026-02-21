@@ -411,19 +411,25 @@
 							</form>
 						{:else}
 							<!-- Google Login -->
-							<a class="btn preset-filled-primary-500 flex items-center space-x-2" href="/api/auth/google" data-sveltekit-preload-data="off">
-								<svg class="w-5 h-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-									<path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-									<path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-									<path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-									<path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-								</svg>
-								<span class="hidden sm:inline">Sign in with Google</span>
+							<a class="rift-auth rift-auth--google" href="/api/auth/google" data-sveltekit-preload-data="off">
+								<span class="rift-auth__icon">
+									<svg class="w-4 h-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+										<path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+										<path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+										<path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+										<path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+									</svg>
+								</span>
+								<span class="rift-auth__sep rift-auth__sep--cyan"></span>
+								<span class="hidden sm:inline">Sign In with Google</span>
 							</a>
 							<!-- Steam Login -->
-							<a class="btn preset-tonal flex items-center space-x-2" href="/api/auth/steam" data-sveltekit-preload-data="tap">
-								<img class="w-5 h-5" alt="Steam logo" src={steam_logo} />
-								<span class="hidden sm:inline">Sign in with Steam</span>
+							<a class="rift-auth rift-auth--steam" href="/api/auth/steam" data-sveltekit-preload-data="tap">
+								<span class="rift-auth__icon">
+									<img class="w-4 h-4" alt="Steam" src={steam_logo} />
+								</span>
+								<span class="rift-auth__sep rift-auth__sep--orange"></span>
+								<span class="hidden sm:inline">Sign In with Steam</span>
 							</a>
 						{/if}
 					</div>
@@ -447,7 +453,7 @@
 						</p>
 					</a>
 
-					<p class="text-sm italic text-slate-300 dark:text-surface-400 text-center">
+					<p class="text-xs italic text-slate-300 dark:text-surface-400 text-center">
 						Dota 2 is a trademark of Valve Corporation. TurboDota is an independent companion app, not affiliated with Valve.
 					</p>
 				</div>
@@ -492,3 +498,154 @@
 		<DeckView onClose={() => showDeckViewModal = false} />
 	</Dialog>
 {/if}
+
+<style>
+	/* ─── Rift Portal Auth Buttons (Navbar) ─── */
+
+	.rift-auth {
+		position: relative;
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.4375rem 0.875rem;
+		font-size: 0.6875rem;
+		font-weight: 700;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		text-decoration: none;
+		color: rgba(255, 255, 255, 0.88);
+		border-radius: 3px;
+		overflow: hidden;
+		cursor: pointer;
+		backdrop-filter: blur(8px);
+		transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+	}
+
+	/* Shimmer sweep */
+	.rift-auth::before {
+		content: '';
+		position: absolute;
+		top: 0;
+		left: -100%;
+		width: 100%;
+		height: 100%;
+		transition: left 0.5s ease;
+		pointer-events: none;
+	}
+
+	.rift-auth:hover::before {
+		left: 100%;
+	}
+
+	/* Corner rune bracket — top-left */
+	.rift-auth::after {
+		content: '';
+		position: absolute;
+		top: 3px;
+		left: 3px;
+		width: 6px;
+		height: 6px;
+		opacity: 0.35;
+		transition: opacity 0.3s ease;
+		pointer-events: none;
+	}
+
+	.rift-auth:hover::after {
+		opacity: 0.8;
+	}
+
+	.rift-auth__icon {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		flex-shrink: 0;
+		position: relative;
+		z-index: 1;
+	}
+
+	.rift-auth__sep {
+		width: 1px;
+		align-self: stretch;
+		min-height: 14px;
+		opacity: 0.3;
+		transition: opacity 0.3s ease;
+		position: relative;
+		z-index: 1;
+	}
+
+	.rift-auth:hover .rift-auth__sep {
+		opacity: 0.6;
+	}
+
+	.rift-auth__sep--cyan {
+		background: linear-gradient(180deg, transparent, rgba(0, 212, 255, 0.6), transparent);
+	}
+
+	.rift-auth__sep--orange {
+		background: linear-gradient(180deg, transparent, rgba(255, 107, 53, 0.6), transparent);
+	}
+
+	/* ── Google ── */
+
+	.rift-auth--google {
+		background: linear-gradient(135deg, rgba(0, 212, 255, 0.06) 0%, rgba(26, 15, 58, 0.7) 40%, rgba(10, 14, 39, 0.85) 100%);
+		border: 1px solid rgba(0, 212, 255, 0.25);
+		box-shadow: 0 0 10px rgba(0, 212, 255, 0.06);
+		animation: rift-breathe-cyan 6s ease-in-out infinite;
+	}
+
+	.rift-auth--google::before {
+		background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.12), transparent);
+	}
+
+	.rift-auth--google::after {
+		border-top: 1.5px solid rgba(0, 212, 255, 0.6);
+		border-left: 1.5px solid rgba(0, 212, 255, 0.6);
+	}
+
+	.rift-auth--google:hover {
+		border-color: rgba(0, 212, 255, 0.55);
+		box-shadow: 0 0 24px rgba(0, 212, 255, 0.25), inset 0 0 15px rgba(0, 212, 255, 0.05);
+		transform: translateY(-2px);
+		background: linear-gradient(135deg, rgba(0, 212, 255, 0.1) 0%, rgba(26, 15, 58, 0.8) 40%, rgba(10, 14, 39, 0.9) 100%);
+		animation: none;
+	}
+
+	/* ── Steam ── */
+
+	.rift-auth--steam {
+		background: linear-gradient(135deg, rgba(255, 107, 53, 0.05) 0%, rgba(26, 15, 58, 0.7) 40%, rgba(10, 14, 39, 0.85) 100%);
+		border: 1px solid rgba(255, 107, 53, 0.25);
+		box-shadow: 0 0 10px rgba(255, 107, 53, 0.04);
+		animation: rift-breathe-orange 7s ease-in-out infinite;
+	}
+
+	.rift-auth--steam::before {
+		background: linear-gradient(90deg, transparent, rgba(255, 107, 53, 0.12), transparent);
+	}
+
+	.rift-auth--steam::after {
+		border-top: 1.5px solid rgba(255, 107, 53, 0.6);
+		border-left: 1.5px solid rgba(255, 107, 53, 0.6);
+	}
+
+	.rift-auth--steam:hover {
+		border-color: rgba(255, 107, 53, 0.55);
+		box-shadow: 0 0 24px rgba(255, 107, 53, 0.2), inset 0 0 15px rgba(255, 107, 53, 0.04);
+		transform: translateY(-2px);
+		background: linear-gradient(135deg, rgba(255, 107, 53, 0.08) 0%, rgba(26, 15, 58, 0.8) 40%, rgba(10, 14, 39, 0.9) 100%);
+		animation: none;
+	}
+
+	/* Breathing glow */
+
+	@keyframes rift-breathe-cyan {
+		0%, 100% { box-shadow: 0 0 10px rgba(0, 212, 255, 0.06); }
+		50% { box-shadow: 0 0 16px rgba(0, 212, 255, 0.14); }
+	}
+
+	@keyframes rift-breathe-orange {
+		0%, 100% { box-shadow: 0 0 10px rgba(255, 107, 53, 0.04); }
+		50% { box-shadow: 0 0 14px rgba(255, 107, 53, 0.12); }
+	}
+</style>

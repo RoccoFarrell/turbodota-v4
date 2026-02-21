@@ -4,7 +4,10 @@ import prisma from '$lib/server/prisma';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.user) throw redirect(302, '/');
-	const user = locals.user;
+
+	// Re-fetch from DB so we always have the latest fields (e.g. after
+	// setAccountId updates account_id in the same request cycle).
+	const user = await prisma.user.findUniqueOrThrow({ where: { id: locals.user.id } });
 
 	// --- Incremental saves with currencies + roster ---
 	const rawSaves = await prisma.incrementalSave.findMany({
@@ -166,17 +169,17 @@ export const actions: Actions = {
 		const accountIdStr = data.get('account_id');
 
 		if (!accountIdStr || typeof accountIdStr !== 'string') {
-			return { success: false, error: 'Account ID is required' };
+			return fail(400, { setAccountId: { error: 'Account ID is required' } });
 		}
 
 		const account_id = parseInt(accountIdStr, 10);
 		if (isNaN(account_id) || account_id <= 0) {
-			return { success: false, error: 'Invalid account ID' };
+			return fail(400, { setAccountId: { error: 'Invalid account ID' } });
 		}
 
 		const existing = await prisma.user.findUnique({ where: { account_id } });
 		if (existing && existing.id !== locals.user.id) {
-			return { success: false, error: 'This account ID is already in use' };
+			return fail(400, { setAccountId: { error: 'This account ID is already in use' } });
 		}
 
 		// User.account_id is a FK → DotaUser.account_id.
@@ -192,6 +195,10 @@ export const actions: Actions = {
 			where: { id: locals.user.id },
 			data: { account_id }
 		});
+
+		// Update locals so the load function (which re-runs after the action)
+		// sees the new account_id instead of the stale pre-action value.
+		locals.user.account_id = account_id;
 
 		return { success: true };
 	}

@@ -1,7 +1,7 @@
 import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
 import prisma from '$lib/server/prisma';
-import { CONVERT_WIN_ESSENCE_COST } from '$lib/incremental/actions';
+import { getRecruitCost } from '$lib/incremental/actions';
 import { resolveIncrementalSave } from '$lib/server/incremental-save';
 import { getBankBalance, deductBankCurrency, type BankTx } from '$lib/incremental/bank/bank.service.server';
 
@@ -36,22 +36,25 @@ export const POST: RequestHandler = async (event) => {
 	if (!match) error(400, 'Match not found or not yours');
 	if (!isWin(match.player_slot, match.radiant_win)) error(400, 'Only wins can be converted');
 
-	const [essence, alreadyConverted, alreadyOnRoster] = await Promise.all([
+	const [essence, alreadyConverted, alreadyOnRoster, rosterCount] = await Promise.all([
 		getBankBalance(save.saveId, 'essence'),
 		prisma.incrementalConvertedMatch.findUnique({
 			where: { saveId_matchId: { saveId: save.saveId, matchId } }
 		}),
 		prisma.incrementalRosterHero.findUnique({
 			where: { saveId_heroId: { saveId: save.saveId, heroId: match.hero_id } }
-		})
+		}),
+		prisma.incrementalRosterHero.count({ where: { saveId: save.saveId } })
 	]);
+
+	const cost = getRecruitCost(rosterCount);
 
 	if (alreadyConverted) error(400, 'This win was already converted');
 	if (alreadyOnRoster) error(400, 'Hero already on roster');
-	if (essence < CONVERT_WIN_ESSENCE_COST) error(400, 'Not enough Essence');
+	if (essence < cost) error(400, `Not enough Essence (need ${cost})`);
 
 	await prisma.$transaction(async (tx) => {
-		await deductBankCurrency(save.saveId, 'essence', CONVERT_WIN_ESSENCE_COST, tx as unknown as BankTx);
+		await deductBankCurrency(save.saveId, 'essence', cost, tx as unknown as BankTx);
 		await tx.incrementalRosterHero.create({
 			data: { saveId: save.saveId, heroId: match.hero_id }
 		});

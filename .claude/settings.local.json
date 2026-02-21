@@ -45,7 +45,12 @@
       "Bash(npx vite build:*)",
       "Bash(ls:*)",
       "Bash(git mv:*)",
-      "Bash(npx prisma db seed:*)"
+      "Bash(npx prisma db seed:*)",
+      "Bash(grep:*)",
+      "Bash(PGPASSWORD='postgres' \"C:\\\\Program Files\\\\PostgreSQL\\\\18\\\\bin\\\\psql.exe\":*)",
+      "Bash(PGPASSWORD='postgres' \"C:\\\\Program Files\\\\PostgreSQL\\\\18\\\\bin\\\\psql.exe\" -h 127.0.0.1 -p 54322 -U postgres -d postgres -c \":*)",
+      "Bash(git diff:*)",
+      "Bash(npx svelte-kit sync:*)"
     ]
   }
 }
