@@ -1,4 +1,10 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+
+// Mock server-side imports that league-leaderboard.ts now pulls in
+vi.mock('$lib/server/prisma', () => ({ default: {} }));
+vi.mock('$lib/server/incremental-hero-resolver', () => ({ getHeroDefsFromDb: vi.fn() }));
+vi.mock('$lib/incremental/stats/lineup-stats', () => ({ computeLineupStats: vi.fn() }));
+
 import {
 	aggregateLeaderboard,
 	type WonRunRow,

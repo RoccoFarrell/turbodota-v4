@@ -1,7 +1,14 @@
 /**
- * Pure aggregation logic for the Dark Rift league leaderboard.
- * No database calls — accepts pre-fetched data and returns ranked rows.
+ * Dark Rift league leaderboard: pure aggregation + DB orchestrator.
+ *
+ * aggregateLeaderboard   — pure function, no DB
+ * computeDarkRiftLeaderboard — fetches data from Prisma and calls the pure function
  */
+
+import prisma from '$lib/server/prisma';
+import { getHeroDefsFromDb } from '$lib/server/incremental-hero-resolver';
+import { computeLineupStats } from '$lib/incremental/stats/lineup-stats';
+import type { AbilityDef } from '$lib/incremental/types';
 
 // ── Input types ─────────────────────────────────────────────────────────────
 
@@ -120,4 +127,144 @@ export function aggregateLeaderboard(
 		rank: idx + 1,
 		...entry
 	}));
+}
+
+// ── DB-facing types ────────────────────────────────────────────────────────
+
+/** Minimal league shape expected by the orchestrator. */
+export interface LeagueWithMembers {
+	members: { account_id: number; display_name: string | null; avatar_url: string | null }[];
+}
+
+/** Season date window (inclusive). */
+export interface SeasonWindow {
+	startDate: Date;
+	endDate: Date;
+}
+
+// ── Orchestrator ───────────────────────────────────────────────────────────
+
+/**
+ * Fetch data from the database and compute the Dark Rift leaderboard
+ * for a league's members within a season window.
+ */
+export async function computeDarkRiftLeaderboard(
+	league: LeagueWithMembers,
+	season: SeasonWindow
+): Promise<DarkRiftLeaderboardRow[]> {
+	const memberAccountIds = league.members.map((m) => m.account_id);
+	if (memberAccountIds.length === 0) return [];
+
+	// ── 1. Bridge DotaUser.account_id → User.id ─────────────────────────
+	const users = await prisma.user.findMany({
+		where: { account_id: { in: memberAccountIds } },
+		select: { id: true, account_id: true }
+	});
+
+	const userIds = users.map((u) => u.id);
+	if (userIds.length === 0) return [];
+
+	// account_id → userId lookup
+	const accountToUserId = new Map<number, string>();
+	for (const u of users) {
+		if (u.account_id != null) {
+			accountToUserId.set(u.account_id, u.id);
+		}
+	}
+
+	// ── 2. Fetch won runs in the season window ──────────────────────────
+	const wonRuns = await prisma.incrementalRun.findMany({
+		where: {
+			userId: { in: userIds },
+			status: 'WON',
+			startedAt: { gte: season.startDate, lte: season.endDate }
+		},
+		select: { userId: true, level: true, lineupId: true }
+	});
+
+	// ── 3. Build MemberInfo map (keyed by userId) ───────────────────────
+	const membersMap = new Map<string, MemberInfo>();
+	for (const m of league.members) {
+		const userId = accountToUserId.get(m.account_id);
+		if (userId) {
+			membersMap.set(userId, {
+				accountId: m.account_id,
+				displayName: m.display_name ?? `Player ${m.account_id}`,
+				avatarUrl: m.avatar_url
+			});
+		}
+	}
+
+	// ── 4. Identify the lineup for each user's deepest run ──────────────
+	const deepestRunByUser = new Map<string, WonRunRow>();
+	for (const run of wonRuns) {
+		const existing = deepestRunByUser.get(run.userId);
+		if (!existing || run.level > existing.level) {
+			deepestRunByUser.set(run.userId, run);
+		}
+	}
+
+	const neededLineupIds = [...new Set([...deepestRunByUser.values()].map((r) => r.lineupId))];
+
+	// ── 5. Fetch lineups with saveId ────────────────────────────────────
+	const lineups =
+		neededLineupIds.length > 0
+			? await prisma.incrementalLineup.findMany({
+					where: { id: { in: neededLineupIds } },
+					select: { id: true, saveId: true, heroIds: true }
+				})
+			: [];
+
+	// ── 6. Compute DPS per lineup ───────────────────────────────────────
+	// Group lineups by saveId so we only call getHeroDefsFromDb once per save
+	const lineupsBySaveId = new Map<string, typeof lineups>();
+	for (const l of lineups) {
+		const list = lineupsBySaveId.get(l.saveId);
+		if (list) {
+			list.push(l);
+		} else {
+			lineupsBySaveId.set(l.saveId, [l]);
+		}
+	}
+
+	const lineupDps = new Map<string, LineupDpsInfo>();
+
+	for (const [saveId, saveLineups] of lineupsBySaveId) {
+		try {
+			// getHeroDefsFromDb bakes training into base stats when saveId is passed
+			const { getHeroDef, getAbilityDef } = await getHeroDefsFromDb(saveId);
+
+			for (const lineup of saveLineups) {
+				// Build abilityDefs record from heroes' abilityIds
+				const abilityDefs: Record<string, AbilityDef> = {};
+				for (const heroId of lineup.heroIds) {
+					const def = getHeroDef(heroId);
+					if (def) {
+						for (const abilityId of def.abilityIds) {
+							const ab = getAbilityDef(abilityId);
+							if (ab) {
+								abilityDefs[abilityId] = ab;
+							}
+						}
+					}
+				}
+
+				// Do NOT pass trainingByHero — training is already baked into HeroDefs
+				const stats = computeLineupStats(lineup.heroIds, getHeroDef, abilityDefs);
+
+				lineupDps.set(lineup.id, {
+					totalDps: stats.totalDps,
+					heroIds: lineup.heroIds
+				});
+			}
+		} catch {
+			// If save/lineup was deleted, fall back to DPS=0 for all lineups in this save
+			for (const lineup of saveLineups) {
+				lineupDps.set(lineup.id, { totalDps: 0, heroIds: lineup.heroIds });
+			}
+		}
+	}
+
+	// ── 7. Aggregate and return ─────────────────────────────────────────
+	return aggregateLeaderboard(wonRuns, membersMap, lineupDps);
 }
