@@ -11,7 +11,7 @@
 		/** Increment to trigger a data re-fetch (e.g. after external mutations). */
 		refreshKey?: number;
 	}
-	const { compact = false, refreshKey = 0 }: Props = $props();
+	let { compact = false, refreshKey = 0 }: Props = $props();
 
 	const layoutHeroes = getContext<Array<{ id: number; localized_name: string }>>('heroes') ?? [];
 
