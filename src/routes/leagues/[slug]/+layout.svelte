@@ -2,77 +2,108 @@
 	import { page } from '$app/stores';
 	import dayjs from 'dayjs';
 
-	//console.log('leagues slug layout data:', data);
-
-	import Trophy_light from '$lib/assets/trophy_light.png';
 	let { data, children } = $props();
 
-	//console.log($page.url);
 	let breadcrumbs = $page.url.pathname.split('/');
-	//console.log(`breadcrumbs length: `, breadcrumbs);
 </script>
 
-<main class="w-full">
+<main class="relative min-h-screen w-full bg-gray-950">
+	<!-- Background atmosphere -->
+	<div class="pointer-events-none absolute inset-0">
+		<div class="absolute inset-0 bg-gradient-to-b from-gray-950 via-emerald-950/30 to-gray-950"></div>
+		<div
+			class="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-emerald-600/8 rounded-full blur-[120px]"
+		></div>
+	</div>
+
+	<!-- Sticky header -->
 	<div
-		class="fixed lg:w-[calc(100%-256px)] w-full rounded-b-xl border-b border-primary-500 shadow-xl flex justify-around items-center p-4 z-50 bg-surface-800"
+		class="sticky top-0 z-50 w-full rounded-b-xl border-b border-emerald-500/20 bg-gray-900/80 backdrop-blur-sm shadow-lg shadow-emerald-900/10"
 	>
-		<ol class="flex items-center gap-4 xl:w-1/3 md:w-3/4 w-full">
-			<li>
-				<a class="opacity-60 hover:opacity-100 hover:underline" href="/leagues">Leagues</a>
-			</li>
-			<li class="opacity-50" aria-hidden="true">&rsaquo;</li>
-			{#if breadcrumbs.length > 3}
-				<li class="max-w-[200px]">
-					<a class="opacity-60 hover:opacity-100 hover:underline" href="/leagues/{data.selectedLeague.id}">
-						<p class="text-amber-500 font-bold truncate hover:text-primary-400">
-							{data.selectedLeague.name}
-						</p>
+		<div class="flex items-center justify-between px-6 py-4">
+			<!-- Breadcrumbs -->
+			<ol class="flex items-center gap-3 xl:w-1/3 md:w-3/4 w-full min-w-0">
+				<li>
+					<a
+						class="text-sm text-gray-400 transition-colors hover:text-emerald-300 hover:underline"
+						href="/leagues"
+					>
+						Leagues
 					</a>
 				</li>
-			{:else}
-				<li class="max-w-[200px]">
-					<p class="text-amber-500 font-bold truncate">{data.selectedLeague.name}</p>
-				</li>
-			{/if}
-
-			{#if $page.url.pathname.includes('/seasons')}
-				<li class="opacity-50" aria-hidden="true">&rsaquo;</li>
-				{#if breadcrumbs.length === 4}
-					<li>Seasons</li>
-				{:else if breadcrumbs.length === 5}
-					<li>
-						<a class="opacity-60 hover:opacity-100 hover:underline" href={`/leagues/${data.selectedLeague.id}/seasons`}>Seasons</a>
+				<li class="text-gray-600" aria-hidden="true">&rsaquo;</li>
+				{#if breadcrumbs.length > 3}
+					<li class="max-w-[200px] min-w-0">
+						<a
+							class="block transition-colors hover:underline"
+							href="/leagues/{data.selectedLeague.id}"
+						>
+							<p
+								class="truncate font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-200 to-emerald-400 hover:from-emerald-100 hover:to-emerald-300"
+							>
+								{data.selectedLeague.name}
+							</p>
+						</a>
+					</li>
+				{:else}
+					<li class="max-w-[200px] min-w-0">
+						<p
+							class="truncate font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-200 to-emerald-400"
+						>
+							{data.selectedLeague.name}
+						</p>
 					</li>
 				{/if}
-			{/if}
-			<!-- <li>{data.selectedLeague.id}</li> -->
-		</ol>
-		<!-- <div class="flex justify-center items-center space-x-4">
-			<img src={Trophy_light} class="w-10 h-10" alt="leagues page" />
-			<h4 class="h4 text-amber-500 animate-pulse">{data.selectedLeague.name}</h4>
-		</div> -->
 
-		<div class="flex justify-between items-center w-1/2 max-lg:hidden">
-			<div class="text-sm">
-				Commissioner: <p class="inline font-semibold text-primary-500">
-					{data.selectedLeague.creator.username}
-				</p>
-			</div>
-			<div>
-				Created on: <p class="inline font-semibold text-primary-500">
-					{dayjs(data.selectedLeague.createdDate).format('MM/DD/YYYY')}
-				</p>
-			</div>
-			<div>
-				Members: <p class="inline font-semibold text-primary-500">{data.selectedLeague.members.length}</p>
+				{#if $page.url.pathname.includes('/seasons')}
+					<li class="text-gray-600" aria-hidden="true">&rsaquo;</li>
+					{#if breadcrumbs.length === 4}
+						<li class="text-sm text-emerald-300/80">Seasons</li>
+					{:else if breadcrumbs.length === 5}
+						<li>
+							<a
+								class="text-sm text-gray-400 transition-colors hover:text-emerald-300 hover:underline"
+								href={`/leagues/${data.selectedLeague.id}/seasons`}
+							>
+								Seasons
+							</a>
+						</li>
+					{/if}
+				{/if}
+			</ol>
+
+			<!-- League meta info -->
+			<div class="hidden items-center gap-6 lg:flex">
+				<div
+					class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-xs"
+				>
+					<span class="text-gray-400">Commissioner</span>
+					<span class="font-semibold text-emerald-300"
+						>{data.selectedLeague.creator.username}</span
+					>
+				</div>
+				<div
+					class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-xs"
+				>
+					<span class="text-gray-400">Created</span>
+					<span class="font-semibold text-emerald-300"
+						>{dayjs(data.selectedLeague.createdDate).format('MM/DD/YYYY')}</span
+					>
+				</div>
+				<div
+					class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-xs"
+				>
+					<span class="text-gray-400">Members</span>
+					<span class="font-semibold text-emerald-300"
+						>{data.selectedLeague.members.length}</span
+					>
+				</div>
 			</div>
 		</div>
-
-		<!-- <div class="card w-full border border-dashed border-red-500 p-4">
-			
-		</div> -->
 	</div>
-	<div class="mt-24">
+
+	<!-- Child content -->
+	<div class="relative z-10 pt-6">
 		{@render children?.()}
 	</div>
 </main>
