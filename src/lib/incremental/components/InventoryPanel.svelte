@@ -164,10 +164,108 @@
 	});
 </script>
 
-<!-- Main content: two sections (currency + items) + description panel -->
-<div class="{compact ? 'space-y-4' : 'flex flex-col lg:flex-row gap-6'}">
+{#if compact}
+<!-- Compact layout: small grids left + description panel right -->
+<div class="flex gap-4">
+	<div class="flex-1 min-w-0 space-y-3">
+		<section>
+			<h2 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1.5">Currency</h2>
+			<div class="grid gap-1.5" style="grid-template-columns: repeat(5, 48px);">
+				{#each currencySlots as slot}
+					{#if slot.type === 'currency'}
+						{@const isSelected = selectedSlot?.type === 'currency' && selectedSlot.currencyId === slot.currencyId}
+						<button
+							type="button"
+							class="relative w-12 h-12 rounded-md border transition-all {isSelected
+								? 'border-primary bg-primary/15'
+								: 'border-gray-600 bg-gray-800 hover:border-gray-500 hover:bg-gray-700'}"
+							onclick={() => selectCurrency(slot)}
+						>
+							<span class="absolute inset-0 flex items-center justify-center select-none" aria-hidden="true">
+								<span class="gi w-5 h-5 text-amber-400" style="--gi: url({slot.def.icon})"></span>
+							</span>
+							<span class="absolute -bottom-0.5 -right-0.5 min-w-4 rounded bg-black/80 px-0.5 text-center text-[10px] font-bold text-white">
+								{formatAmount(slot.amount)}
+							</span>
+						</button>
+					{:else}
+						<div class="w-12 h-12 rounded-md border border-dashed border-gray-600 bg-gray-800/50" aria-hidden="true"></div>
+					{/if}
+				{/each}
+			</div>
+		</section>
+
+		<section>
+			<h2 class="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1.5">Items</h2>
+			<div class="grid gap-1.5" style="grid-template-columns: repeat(5, 48px);">
+				{#each itemSlots as slot}
+					{#if slot.type === 'item'}
+						{@const isSelected = selectedSlot?.type === 'item' && selectedSlot.itemDefId === slot.itemDefId}
+						<button
+							type="button"
+							class="relative w-12 h-12 rounded-md border transition-all {isSelected
+								? 'border-primary bg-primary/15'
+								: 'border-gray-600 bg-gray-800 hover:border-gray-500 hover:bg-gray-700'}"
+							onclick={() => selectItem(slot)}
+						>
+							<span class="absolute inset-0 flex items-center justify-center select-none" aria-hidden="true">
+								<span class="gi w-5 h-5 text-amber-400" style="--gi: url({slot.def.icon})"></span>
+							</span>
+							{#if slot.quantity > 1}
+								<span class="absolute -bottom-0.5 -right-0.5 min-w-4 rounded bg-black/80 px-0.5 text-center text-[10px] font-bold text-white">
+									{slot.quantity > 999 ? '999+' : slot.quantity}
+								</span>
+							{/if}
+						</button>
+					{:else}
+						<div class="w-12 h-12 rounded-md border border-dashed border-gray-600 bg-gray-800/50" aria-hidden="true"></div>
+					{/if}
+				{/each}
+			</div>
+		</section>
+	</div>
+
+	<!-- Description panel (right side) -->
+	<aside class="w-56 shrink-0 rounded-lg border border-gray-700 bg-gray-900 overflow-hidden {!selectedSlot ? 'border-dashed' : ''}">
+		{#if selectedSlot}
+			<div class="p-3 flex flex-col h-full">
+				<div class="flex items-center gap-2 mb-2">
+					<div class="w-8 h-8 rounded bg-gray-800 flex items-center justify-center shrink-0">
+						<span class="gi w-5 h-5 text-amber-400" style="--gi: url({selectedSlot.def.icon})"></span>
+					</div>
+					<div class="min-w-0">
+						<h3 class="text-sm font-semibold text-gray-100 truncate">{selectedSlot.def.name}</h3>
+						<p class="text-[11px] text-gray-400">
+							{#if selectedSlot.type === 'currency'}
+								Owned: {(selectedSlot.currencyId === 'essence' ? essence : (currencies[selectedSlot.currencyId] ?? 0)).toLocaleString()}
+							{:else}
+								Owned: {selectedSlot.quantity}
+							{/if}
+						</p>
+					</div>
+				</div>
+				<p class="text-xs text-gray-400 leading-relaxed flex-1">{selectedSlot.def.description}</p>
+				{#if selectedSlot.type === 'item' && selectedSlot.def.usageType !== 'none'}
+					<button
+						type="button"
+						class="mt-2 w-full rounded-md bg-primary text-primary-foreground py-1.5 text-xs font-medium hover:opacity-90 transition-opacity"
+						onclick={openUseModal}
+					>
+						Use
+					</button>
+				{/if}
+			</div>
+		{:else}
+			<div class="p-3 text-center text-gray-500 text-xs">
+				Select an item to view details.
+			</div>
+		{/if}
+	</aside>
+</div>
+{:else}
+<!-- Full layout: large grids + side-by-side description panel on lg -->
+<div class="flex flex-col lg:flex-row gap-6">
 	<div class="flex-1 min-w-0 space-y-6">
-		<!-- Currency section: 10 slots, same grid pattern -->
 		<section>
 			<h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">Currency</h2>
 			<div
@@ -203,7 +301,6 @@
 			</div>
 		</section>
 
-		<!-- Items section: 10 slots, only qty > 0 show icon; rest skeleton -->
 		<section>
 			<h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">Items</h2>
 			<div
@@ -242,61 +339,59 @@
 		</section>
 	</div>
 
-	<!-- Description panel (hidden in compact/modal mode) -->
-	{#if !compact}
-		<aside
-			class="w-full lg:w-80 shrink-0 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm overflow-hidden {!selectedSlot ? 'border-dashed' : ''}"
-		>
-			{#if selectedSlot}
-				<div class="p-4 flex flex-col h-full">
-					<div class="flex items-center gap-3 mb-3">
-						<div
-							class="w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center shrink-0 p-2"
-						>
-							<span class="gi w-8 h-8 text-amber-400" style="--gi: url({selectedSlot.def.icon})"></span>
-						</div>
-						<div class="min-w-0">
-							<h3 class="text-base font-semibold text-gray-900 dark:text-gray-100 truncate">
-								{selectedSlot.def.name}
-							</h3>
-							<p class="text-xs text-gray-500 dark:text-gray-400">
-								{#if selectedSlot.type === 'currency'}
-									You have {(selectedSlot.currencyId === 'essence' ? essence : (currencies[selectedSlot.currencyId] ?? 0)).toLocaleString()}
-								{:else}
-									You have {selectedSlot.quantity}
-								{/if}
-							</p>
-						</div>
+	<aside
+		class="w-full lg:w-80 shrink-0 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm overflow-hidden {!selectedSlot ? 'border-dashed' : ''}"
+	>
+		{#if selectedSlot}
+			<div class="p-4 flex flex-col h-full">
+				<div class="flex items-center gap-3 mb-3">
+					<div
+						class="w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center shrink-0 p-2"
+					>
+						<span class="gi w-8 h-8 text-amber-400" style="--gi: url({selectedSlot.def.icon})"></span>
 					</div>
-					<p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed mb-4 flex-1">
-						{selectedSlot.def.description}
-					</p>
-					{#if selectedSlot.type === 'item'}
-						<div class="flex flex-col gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-							{#if selectedSlot.def.usageType !== 'none'}
-								<button
-									type="button"
-									class="w-full rounded-lg bg-primary text-primary-foreground py-2.5 text-sm font-medium hover:opacity-90 transition-opacity"
-									onclick={openUseModal}
-								>
-									Use
-								</button>
+					<div class="min-w-0">
+						<h3 class="text-base font-semibold text-gray-900 dark:text-gray-100 truncate">
+							{selectedSlot.def.name}
+						</h3>
+						<p class="text-xs text-gray-500 dark:text-gray-400">
+							{#if selectedSlot.type === 'currency'}
+								You have {(selectedSlot.currencyId === 'essence' ? essence : (currencies[selectedSlot.currencyId] ?? 0)).toLocaleString()}
 							{:else}
-								<p class="text-xs text-gray-500 dark:text-gray-400 italic">
-									This item cannot be used.
-								</p>
+								You have {selectedSlot.quantity}
 							{/if}
-						</div>
-					{/if}
+						</p>
+					</div>
 				</div>
-			{:else}
-				<div class="p-6 text-center text-gray-400 dark:text-gray-500 text-sm">
-					Select a currency or item to view its description.
-				</div>
-			{/if}
-		</aside>
-	{/if}
+				<p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed mb-4 flex-1">
+					{selectedSlot.def.description}
+				</p>
+				{#if selectedSlot.type === 'item'}
+					<div class="flex flex-col gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+						{#if selectedSlot.def.usageType !== 'none'}
+							<button
+								type="button"
+								class="w-full rounded-lg bg-primary text-primary-foreground py-2.5 text-sm font-medium hover:opacity-90 transition-opacity"
+								onclick={openUseModal}
+							>
+								Use
+							</button>
+						{:else}
+							<p class="text-xs text-gray-500 dark:text-gray-400 italic">
+								This item cannot be used.
+							</p>
+						{/if}
+					</div>
+				{/if}
+			</div>
+		{:else}
+			<div class="p-6 text-center text-gray-400 dark:text-gray-500 text-sm">
+				Select a currency or item to view its description.
+			</div>
+		{/if}
+	</aside>
 </div>
+{/if}
 
 {#if selectedItem}
 	<UseItemModal

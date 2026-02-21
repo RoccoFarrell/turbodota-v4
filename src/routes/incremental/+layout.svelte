@@ -125,7 +125,7 @@
 		></div>
 		<div class="inventory-sheet">
 			<div
-				class="w-full max-h-[60vh] overflow-y-auto rounded-t-2xl border border-b-0 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-2xl"
+				class="w-full rounded-t-2xl border border-b-0 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-2xl"
 				role="dialog"
 				aria-label="Inventory"
 			>
