@@ -1,11 +1,12 @@
 <script lang="ts">
 	import type { LayoutData } from './$types';
-	import { page } from '$app/stores';
 	import { onMount, onDestroy, getContext } from 'svelte';
 	import { Dialog, Portal } from '@skeletonlabs/skeleton-svelte';
 	import { TRAINING_BUILDINGS, type TrainingStatKey } from '$lib/incremental/actions';
 	import { formatSlotLabel } from '$lib/incremental/actions/action-definitions';
 	import * as actionStore from '$lib/incremental/stores/action-slots.svelte';
+	import BottomBar from '$lib/incremental/components/BottomBar.svelte';
+	import InventoryPanel from '$lib/incremental/components/InventoryPanel.svelte';
 	import type { CatchUpResult } from '$lib/incremental/stores/action-slots.svelte';
 
 	interface Props {
@@ -26,13 +27,7 @@
 
 	// ---- Reactive bindings to the store ----
 	const slots = $derived(actionStore.getSlots());
-	// Hide bottom bar on slot-management pages (they have their own slot strip)
-	const isSlotManagementPage = $derived(
-		$page.url.pathname === '/incremental/scavenging' ||
-		$page.url.pathname === '/incremental/barracks' ||
-		$page.url.pathname.startsWith('/incremental/scavenging/') ||
-		$page.url.pathname.startsWith('/incremental/barracks/')
-	);
+	let inventoryOpen = $state(false);
 	// ---- Display helpers ----
 
 	function slotLabel(slot: actionStore.SlotState): string {
@@ -121,37 +116,13 @@
 		{@render children?.()}
 	</main>
 
-	<!-- Bottom bar: active action slots (hidden on slot-management pages that have their own strip) -->
-	{#if slots.length > 0 && !isSlotManagementPage}
-		<div class="shrink-0 border-t border-gray-200 dark:border-gray-700 bg-gray-50/95 dark:bg-gray-900/95 backdrop-blur-sm px-4 py-2">
-			<div class="max-w-3xl mx-auto flex items-center gap-4">
-				{#each slots as slot}
-					<div class="flex-1 min-w-0">
-						<div class="flex items-center justify-between gap-2 mb-0.5">
-							<span class="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
-								{slotLabel(slot)}
-							</span>
-							<span class="text-xs text-gray-500 dark:text-gray-400 shrink-0">
-								{slotNextIn(slot) > 0 ? `${slotNextIn(slot).toFixed(1)}s` : '...'}
-							</span>
-						</div>
-						<div class="h-2 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
-							<div
-								class="h-full bg-primary transition-[width] duration-75 ease-linear"
-								style="width: {Math.min(100, slotProgress(slot) * 100)}%"
-							></div>
-						</div>
-					</div>
-				{/each}
-				<a
-					href="/incremental/scavenging"
-					class="shrink-0 text-xs text-primary hover:underline font-medium"
-				>
-					Manage
-				</a>
-			</div>
-		</div>
-	{/if}
+	<BottomBar
+		{slots}
+		{slotLabel}
+		slotProgress={slotProgress}
+		slotNextIn={slotNextIn}
+		onOpenInventory={() => { inventoryOpen = true; }}
+	/>
 </div>
 
 <!-- Catch-up dialog (shown after returning from background) -->
@@ -222,3 +193,28 @@
 		</Portal>
 	</Dialog>
 {/if}
+
+<!-- Inventory modal (slide up from bottom) -->
+<Dialog
+	open={inventoryOpen}
+	onOpenChange={(details) => { inventoryOpen = details.open; }}
+>
+	<Portal>
+		<Dialog.Backdrop class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm" />
+		<Dialog.Positioner class="fixed inset-0 z-50 flex items-end justify-center">
+			<Dialog.Content
+				class="w-full max-w-2xl max-h-[70vh] overflow-y-auto rounded-t-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-2xl"
+			>
+				<div class="sticky top-0 z-10 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
+					<Dialog.Title class="text-lg font-semibold text-gray-900 dark:text-gray-100">Inventory</Dialog.Title>
+					<Dialog.CloseTrigger class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+						<i class="fi fi-rr-cross-small text-xl"></i>
+					</Dialog.CloseTrigger>
+				</div>
+				<div class="p-4">
+					<InventoryPanel compact />
+				</div>
+			</Dialog.Content>
+		</Dialog.Positioner>
+	</Portal>
+</Dialog>
