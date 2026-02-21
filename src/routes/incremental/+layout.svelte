@@ -212,7 +212,9 @@
 					</Dialog.CloseTrigger>
 				</div>
 				<div class="p-4">
-					<InventoryPanel compact />
+					{#if inventoryOpen}
+						<InventoryPanel compact />
+					{/if}
 				</div>
 			</Dialog.Content>
 		</Dialog.Positioner>
