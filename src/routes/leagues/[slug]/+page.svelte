@@ -91,7 +91,7 @@
 	let testToastCount = $state(0);
 
 	let memberAccountIds = $derived(new Set(((data.selectedLeague as LeagueWithSeasonsAndMembers | undefined)?.members ?? []).map((m: any) => m.account_id)));
-	let usersNotInLeague = $derived((data.allUsers ?? []).filter((u: { account_id: number }) => !memberAccountIds.has(u.account_id)));
+	let usersNotInLeague = $derived((data.allUsers ?? []).filter((u: { account_id: number | null }) => u.account_id != null && !memberAccountIds.has(u.account_id)));
 	let filteredUsersToAdd = $derived(
 		userSearchQuery.trim()
 			? usersNotInLeague.filter((u: { username: string }) => u.username.toLowerCase().includes(userSearchQuery.toLowerCase()))
@@ -196,7 +196,7 @@
 	}
 
 	// Admin check helper
-	let isAdmin = $derived(data.session?.user?.roles?.includes('dev') ?? false);
+	let isAdmin = $derived(data.user?.roles?.includes('dev') ?? false);
 
 	// Collapsible section state (start collapsed so leaderboard is focus)
 	let membersExpanded = $state(false);
@@ -678,7 +678,7 @@
 							<form method="POST" action="?/createSeason" use:enhance={enhanceForm} class="space-y-6 max-w-xl">
 								<input type="hidden" name="leagueID" value={selectedLeague.id} />
 								<input type="hidden" name="leagueName" value={selectedLeague.name} />
-								<input type="hidden" name="creatorID" value={data.session?.user.account_id ?? ''} />
+								<input type="hidden" name="creatorID" value={data.user?.account_id ?? ''} />
 								<input type="hidden" name="members" value={leagueMemberIDs.join(',')} />
 
 								<label class="block" for="seasonType">

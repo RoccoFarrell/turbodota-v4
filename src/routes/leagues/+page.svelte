@@ -64,7 +64,7 @@
 		}
 	};
 
-	let isAdmin = $derived(data.session?.user?.roles?.includes('dev') ?? false);
+	let isAdmin = $derived(data.user?.roles?.includes('dev') ?? false);
 </script>
 
 <div class="min-h-screen relative">
@@ -167,24 +167,20 @@
 					<div class="space-y-3">
 						<h4 class="text-emerald-400 font-semibold text-sm">Add friends</h4>
 
-						<Tabs defaultValue="friends">
-							{#snippet list()}
-								<Tabs.Control value="friends">
-									{#snippet lead()}
-										<i class="fi fi-rr-following"></i>
-									{/snippet}
+						<Tabs value="friends">
+							<Tabs.List>
+								<Tabs.Trigger value="friends">
+									<i class="fi fi-rr-following mr-1"></i>
 									Friends
-								</Tabs.Control>
-								<Tabs.Control value="search">
-									{#snippet lead()}
-										<i class="fi fi-rr-search-heart"></i>
-									{/snippet}
+								</Tabs.Trigger>
+								<Tabs.Trigger value="search">
+									<i class="fi fi-rr-search-heart mr-1"></i>
 									Search
-								</Tabs.Control>
-							{/snippet}
+								</Tabs.Trigger>
+								<Tabs.Indicator />
+							</Tabs.List>
 
-							{#snippet content()}
-								<Tabs.Panel value="friends">
+							<Tabs.Content value="friends">
 									<div class="my-2 space-y-2">
 										<div class="text-gray-400 text-sm">Most played with friends</div>
 										<div class="flex w-full flex-wrap gap-2">
@@ -222,6 +218,7 @@
 																	)}
 																	onclick={() =>
 																		handleAddCommonFriend(friend.account_id ? friend.account_id : friend)}
+																	aria-label="Add {friend.username ?? friend.account_id ?? 'friend'}"
 																><i class="fi fi-br-add"></i></button>
 															</div>
 														</div>
@@ -230,11 +227,10 @@
 											{/if}
 										</div>
 									</div>
-								</Tabs.Panel>
-								<Tabs.Panel value="search">
-									<div class="w-full italic text-gray-500 py-4">Coming soon!</div>
-								</Tabs.Panel>
-							{/snippet}
+							</Tabs.Content>
+							<Tabs.Content value="search">
+								<div class="w-full italic text-gray-500 py-4">Coming soon!</div>
+							</Tabs.Content>
 						</Tabs>
 					</div>
 
