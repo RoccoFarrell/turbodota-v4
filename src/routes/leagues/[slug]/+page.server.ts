@@ -10,6 +10,7 @@ import {
 } from '$lib/constants/matches';
 import { fetchOpenDotaPlayerProfile, OPENDOTA_DELAY_MS } from '$lib/server/opendota';
 import { createDotaUser } from '../../api/helpers';
+import { computeDarkRiftLeaderboard, type DarkRiftLeaderboardRow } from '$lib/server/league-leaderboard';
 
 function sleep(ms: number): Promise<void> {
 	return new Promise((resolve) => setTimeout(resolve, ms));
@@ -73,11 +74,34 @@ export const load: PageServerLoad = async ({ locals, parent }) => {
 		}
 	}
 
+	// Dark Rift leaderboard: find active darkrift season and compute leaderboard
+	let darkRiftLeaderboard: DarkRiftLeaderboardRow[] = [];
+	let activeDarkRiftSeason: { id: number; name: string; startDate: Date; endDate: Date } | null = null;
+
+	if (selectedLeague && 'seasons' in selectedLeague) {
+		const seasons = (selectedLeague as any).seasons ?? [];
+		const season = seasons.find((s: any) => s.active && s.type === 'darkrift');
+		if (season) {
+			activeDarkRiftSeason = {
+				id: season.id,
+				name: season.name,
+				startDate: season.startDate,
+				endDate: season.endDate
+			};
+			darkRiftLeaderboard = await computeDarkRiftLeaderboard(
+				{ members: (selectedLeague as any).members },
+				{ startDate: season.startDate, endDate: season.endDate }
+			);
+		}
+	}
+
 	return {
 		...parentData,
 		allUsers,
 		memberMatchCounts,
-		memberLastRanked
+		memberLastRanked,
+		darkRiftLeaderboard,
+		activeDarkRiftSeason
 	};
 };
 

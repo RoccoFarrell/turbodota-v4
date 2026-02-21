@@ -537,6 +537,7 @@
 								<label class="label block" for="seasonType">
 									<span class="font-medium text-surface-700 dark:text-surface-300">Season type</span>
 									<select id="seasonType" class="select mt-1 w-full" name="seasonType" required>
+										<option value="darkrift">Dark Rift</option>
 										<option value="dotadeck">Dotadeck</option>
 										<option value="random">Random Romp</option>
 										<option value="snake" disabled>Snake Draft Survival</option>
