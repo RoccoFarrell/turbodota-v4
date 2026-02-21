@@ -6,7 +6,7 @@
 	import * as actionStore from '$lib/incremental/stores/action-slots.svelte';
 
 	interface Props {
-		/** When true, description panel stacks below grids instead of side-by-side on lg screens. */
+		/** When true, hides the description panel (for modal use). */
 		compact?: boolean;
 		/** Increment to trigger a data re-fetch (e.g. after external mutations). */
 		refreshKey?: number;
@@ -165,7 +165,7 @@
 </script>
 
 <!-- Main content: two sections (currency + items) + description panel -->
-<div class="{compact ? 'flex flex-col gap-4' : 'flex flex-col lg:flex-row gap-6'}">
+<div class="{compact ? 'space-y-4' : 'flex flex-col lg:flex-row gap-6'}">
 	<div class="flex-1 min-w-0 space-y-6">
 		<!-- Currency section: 10 slots, same grid pattern -->
 		<section>
@@ -242,58 +242,60 @@
 		</section>
 	</div>
 
-	<!-- Description panel -->
-	<aside
-		class="w-full shrink-0 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm overflow-hidden {!selectedSlot ? 'border-dashed' : ''} {compact ? '' : 'lg:w-80'}"
-	>
-		{#if selectedSlot}
-			<div class="p-4 flex flex-col h-full">
-				<div class="flex items-center gap-3 mb-3">
-					<div
-						class="w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center shrink-0 p-2"
-					>
-						<span class="gi w-8 h-8 text-amber-400" style="--gi: url({selectedSlot.def.icon})"></span>
-					</div>
-					<div class="min-w-0">
-						<h3 class="text-base font-semibold text-gray-900 dark:text-gray-100 truncate">
-							{selectedSlot.def.name}
-						</h3>
-						<p class="text-xs text-gray-500 dark:text-gray-400">
-							{#if selectedSlot.type === 'currency'}
-								You have {(selectedSlot.currencyId === 'essence' ? essence : (currencies[selectedSlot.currencyId] ?? 0)).toLocaleString()}
-							{:else}
-								You have {selectedSlot.quantity}
-							{/if}
-						</p>
-					</div>
-				</div>
-				<p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed mb-4 flex-1">
-					{selectedSlot.def.description}
-				</p>
-				{#if selectedSlot.type === 'item'}
-					<div class="flex flex-col gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-						{#if selectedSlot.def.usageType !== 'none'}
-							<button
-								type="button"
-								class="w-full rounded-lg bg-primary text-primary-foreground py-2.5 text-sm font-medium hover:opacity-90 transition-opacity"
-								onclick={openUseModal}
-							>
-								Use
-							</button>
-						{:else}
-							<p class="text-xs text-gray-500 dark:text-gray-400 italic">
-								This item cannot be used.
+	<!-- Description panel (hidden in compact/modal mode) -->
+	{#if !compact}
+		<aside
+			class="w-full lg:w-80 shrink-0 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-sm overflow-hidden {!selectedSlot ? 'border-dashed' : ''}"
+		>
+			{#if selectedSlot}
+				<div class="p-4 flex flex-col h-full">
+					<div class="flex items-center gap-3 mb-3">
+						<div
+							class="w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center shrink-0 p-2"
+						>
+							<span class="gi w-8 h-8 text-amber-400" style="--gi: url({selectedSlot.def.icon})"></span>
+						</div>
+						<div class="min-w-0">
+							<h3 class="text-base font-semibold text-gray-900 dark:text-gray-100 truncate">
+								{selectedSlot.def.name}
+							</h3>
+							<p class="text-xs text-gray-500 dark:text-gray-400">
+								{#if selectedSlot.type === 'currency'}
+									You have {(selectedSlot.currencyId === 'essence' ? essence : (currencies[selectedSlot.currencyId] ?? 0)).toLocaleString()}
+								{:else}
+									You have {selectedSlot.quantity}
+								{/if}
 							</p>
-						{/if}
+						</div>
 					</div>
-				{/if}
-			</div>
-		{:else}
-			<div class="p-6 text-center text-gray-400 dark:text-gray-500 text-sm">
-				Select a currency or item to view its description.
-			</div>
-		{/if}
-	</aside>
+					<p class="text-sm text-gray-600 dark:text-gray-300 leading-relaxed mb-4 flex-1">
+						{selectedSlot.def.description}
+					</p>
+					{#if selectedSlot.type === 'item'}
+						<div class="flex flex-col gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+							{#if selectedSlot.def.usageType !== 'none'}
+								<button
+									type="button"
+									class="w-full rounded-lg bg-primary text-primary-foreground py-2.5 text-sm font-medium hover:opacity-90 transition-opacity"
+									onclick={openUseModal}
+								>
+									Use
+								</button>
+							{:else}
+								<p class="text-xs text-gray-500 dark:text-gray-400 italic">
+									This item cannot be used.
+								</p>
+							{/if}
+						</div>
+					{/if}
+				</div>
+			{:else}
+				<div class="p-6 text-center text-gray-400 dark:text-gray-500 text-sm">
+					Select a currency or item to view its description.
+				</div>
+			{/if}
+		</aside>
+	{/if}
 </div>
 
 {#if selectedItem}
