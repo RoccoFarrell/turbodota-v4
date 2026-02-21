@@ -4,13 +4,15 @@
  * The Bank holds both these currency balances and item inventory per save.
  */
 
+import essenceIcon from '$lib/assets/essence.png';
+
 export type CurrencySource = 'idle' | 'battle' | 'dota2' | 'shop' | 'other';
 
 export interface CurrencyDef {
 	id: string;
 	name: string;
 	description: string;
-	/** Path to SVG icon (game-icons.net) for inventory display. */
+	/** Path to icon for inventory display. SVG uses .gi mask; PNG/JPG renders as <img>. */
 	icon: string;
 	/** Where this currency can be earned (for UI/tooltips). */
 	sources: CurrencySource[];
@@ -24,7 +26,7 @@ export const CURRENCIES: Record<string, CurrencyDef> = {
 		id: 'essence',
 		name: 'Essence',
 		description: 'Earned by mining in the idle game. Spend to convert Dota 2 wins into roster heroes.',
-		icon: `${GI}/lorc/gems.svg`,
+		icon: essenceIcon,
 		sources: ['idle']
 	},
 	loot_coins: {
@@ -56,6 +58,11 @@ export type CurrencyKey = (typeof CURRENCY_IDS)[number];
 
 export function getCurrencyDef(key: string): CurrencyDef | undefined {
 	return CURRENCIES[key];
+}
+
+/** Returns true if the icon path is a raster image (PNG/JPG) vs an SVG mask. */
+export function isImageIcon(iconPath: string): boolean {
+	return /\.(png|jpe?g|webp)$/i.test(iconPath);
 }
 
 /** Default balance for a currency when not present in Bank (0). */

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import essenceIcon from '$lib/assets/essence.png';
 	import { toaster } from '$lib/toaster';
 	import * as actionStore from '$lib/incremental/stores/action-slots.svelte';
 	import QuestIcon from '$lib/incremental/quests/QuestIcon.svelte';
@@ -240,7 +241,7 @@
 									{#if !claimed}
 										<div class="mt-2 flex items-center gap-3">
 											<span class="reward-badge">
-												<span class="essence-coin-sm" aria-hidden="true">E</span>
+												<img src={essenceIcon} alt="Essence" class="w-3.5 h-3.5 object-contain inline" />
 												{quest.rewardDescription}
 											</span>
 
@@ -524,20 +525,6 @@
 		border: 1px solid rgba(217, 119, 6, 0.15);
 		border-radius: 0.375rem;
 		padding: 2px 8px;
-	}
-
-	.essence-coin-sm {
-		width: 14px;
-		height: 14px;
-		border-radius: 50%;
-		background: linear-gradient(135deg, #f59e0b, #d97706);
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 8px;
-		font-weight: 700;
-		color: #451a03;
-		flex-shrink: 0;
 	}
 
 	/* ── Bounty card (recurring quest) ── */

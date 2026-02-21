@@ -6,6 +6,8 @@
  * Add new items here; the use-item API and UI read this registry.
  */
 
+import arcaneRuneIcon from '$lib/assets/arcanerune.png';
+
 /** What kind of effect this item has when used. */
 export type ItemUsageType =
 	| 'idle_instant_1h' // Grant 1 hour of idle progress to a chosen action (mining or training)
@@ -18,7 +20,7 @@ export interface ItemDef {
 	id: string;
 	name: string;
 	description: string;
-	/** Path to SVG icon (game-icons.net) for display in inventory. */
+	/** Path to icon for display in inventory. SVG uses .gi mask; PNG/JPG renders as <img>. */
 	icon: string;
 	/** How the item is used. Drives the use-item API logic. */
 	usageType: ItemUsageType;
@@ -35,7 +37,7 @@ export const ITEM_DEFINITIONS: Record<string, ItemDef> = {
 		name: 'Arcane Rune',
 		description:
 			'Grants 1 hour of instant progress to a mining or training action. Earned by playing ranked or turbo Dota 2 games.',
-		icon: '/game-icons/ffffff/transparent/1x1/delapouite/sparkles.svg',
+		icon: arcaneRuneIcon,
 		usageType: 'idle_instant_1h',
 		applicableTargets: ['mining', 'training'],
 		stackable: true

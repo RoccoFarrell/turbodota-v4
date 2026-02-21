@@ -2,6 +2,7 @@
 	import { onMount, getContext } from 'svelte';
 	import { slide } from 'svelte/transition';
 	import { dev } from '$app/environment';
+	import essenceIcon from '$lib/assets/essence.png';
 	import { toaster } from '$lib/toaster';
 	import {
 		formatStat,
@@ -359,7 +360,7 @@
 			<div
 				class="flex items-center gap-2.5 rounded-lg bg-amber-900/20 border border-amber-700/30 px-3.5 py-2 shrink-0"
 			>
-				<span class="essence-coin" aria-hidden="true">E</span>
+				<img src={essenceIcon} alt="Essence" class="w-5 h-5 object-contain" />
 				<span class="text-lg font-bold text-amber-300 tabular-nums">{essence}</span>
 			</div>
 		</header>
@@ -926,21 +927,6 @@
 	}
 	.tavern-heading::after {
 		background: linear-gradient(90deg, rgba(180, 120, 40, 0.3), transparent);
-	}
-
-	/* ── Essence coin ── */
-	.essence-coin {
-		width: 1.25rem;
-		height: 1.25rem;
-		border-radius: 50%;
-		background: linear-gradient(135deg, #f59e0b, #d97706);
-		box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		font-size: 10px;
-		font-weight: 700;
-		color: #451a03;
 	}
 
 	/* ── Attribute filter chips ── */

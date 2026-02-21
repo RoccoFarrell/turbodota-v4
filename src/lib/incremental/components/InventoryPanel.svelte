@@ -2,7 +2,7 @@
 	import { onMount, getContext } from 'svelte';
 	import UseItemModal from '$lib/incremental/components/UseItemModal.svelte';
 	import { ITEM_DEFINITIONS, type ItemDef } from '$lib/incremental/constants/item-definitions';
-	import { CURRENCY_IDS, getCurrencyDef, type CurrencyDef } from '$lib/incremental/constants/currencies';
+	import { CURRENCY_IDS, getCurrencyDef, isImageIcon, type CurrencyDef } from '$lib/incremental/constants/currencies';
 	import * as actionStore from '$lib/incremental/stores/action-slots.svelte';
 
 	interface Props {
@@ -182,7 +182,11 @@
 							onclick={() => selectCurrency(slot)}
 						>
 							<span class="absolute inset-0 flex items-center justify-center select-none" aria-hidden="true">
-								<span class="gi w-5 h-5 text-amber-400" style="--gi: url({slot.def.icon})"></span>
+								{#if isImageIcon(slot.def.icon)}
+									<img src={slot.def.icon} alt={slot.def.name} class="w-5 h-5 object-contain" />
+								{:else}
+									<span class="gi w-5 h-5 text-amber-400" style="--gi: url({slot.def.icon})"></span>
+								{/if}
 							</span>
 							<span class="absolute -bottom-0.5 -right-0.5 min-w-4 rounded bg-black/80 px-0.5 text-center text-[10px] font-bold text-white">
 								{formatAmount(slot.amount)}
@@ -209,7 +213,11 @@
 							onclick={() => selectItem(slot)}
 						>
 							<span class="absolute inset-0 flex items-center justify-center select-none" aria-hidden="true">
-								<span class="gi w-5 h-5 text-amber-400" style="--gi: url({slot.def.icon})"></span>
+								{#if isImageIcon(slot.def.icon)}
+									<img src={slot.def.icon} alt={slot.def.name} class="w-5 h-5 object-contain" />
+								{:else}
+									<span class="gi w-5 h-5 text-amber-400" style="--gi: url({slot.def.icon})"></span>
+								{/if}
 							</span>
 							{#if slot.quantity > 1}
 								<span class="absolute -bottom-0.5 -right-0.5 min-w-4 rounded bg-black/80 px-0.5 text-center text-[10px] font-bold text-white">
@@ -231,7 +239,11 @@
 			<div class="p-3 flex flex-col h-full">
 				<div class="flex items-center gap-2 mb-2">
 					<div class="w-8 h-8 rounded bg-gray-800 flex items-center justify-center shrink-0">
-						<span class="gi w-5 h-5 text-amber-400" style="--gi: url({selectedSlot.def.icon})"></span>
+						{#if isImageIcon(selectedSlot.def.icon)}
+							<img src={selectedSlot.def.icon} alt={selectedSlot.def.name} class="w-5 h-5 object-contain" />
+						{:else}
+							<span class="gi w-5 h-5 text-amber-400" style="--gi: url({selectedSlot.def.icon})"></span>
+						{/if}
 					</div>
 					<div class="min-w-0">
 						<h3 class="text-sm font-semibold text-gray-100 truncate">{selectedSlot.def.name}</h3>
@@ -283,7 +295,11 @@
 							onclick={() => selectCurrency(slot)}
 						>
 							<span class="absolute inset-0 flex items-center justify-center select-none" aria-hidden="true">
-								<span class="gi w-8 h-8 text-amber-400" style="--gi: url({slot.def.icon})"></span>
+								{#if isImageIcon(slot.def.icon)}
+									<img src={slot.def.icon} alt={slot.def.name} class="w-16 h-16 object-contain" />
+								{:else}
+									<span class="gi w-8 h-8 text-amber-400" style="--gi: url({slot.def.icon})"></span>
+								{/if}
 							</span>
 							<span
 								class="absolute bottom-0.5 right-0.5 min-w-5 rounded bg-black/70 px-1 py-0.5 text-center text-xs font-bold text-white shadow"
@@ -318,7 +334,11 @@
 							onclick={() => selectItem(slot)}
 						>
 							<span class="absolute inset-0 flex items-center justify-center select-none" aria-hidden="true">
-								<span class="gi w-8 h-8 text-amber-400" style="--gi: url({slot.def.icon})"></span>
+								{#if isImageIcon(slot.def.icon)}
+									<img src={slot.def.icon} alt={slot.def.name} class="w-16 h-16 object-contain" />
+								{:else}
+									<span class="gi w-8 h-8 text-amber-400" style="--gi: url({slot.def.icon})"></span>
+								{/if}
 							</span>
 							{#if slot.quantity > 1}
 								<span
@@ -348,7 +368,11 @@
 					<div
 						class="w-12 h-12 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center shrink-0 p-2"
 					>
-						<span class="gi w-8 h-8 text-amber-400" style="--gi: url({selectedSlot.def.icon})"></span>
+						{#if isImageIcon(selectedSlot.def.icon)}
+							<img src={selectedSlot.def.icon} alt={selectedSlot.def.name} class="w-8 h-8 object-contain" />
+						{:else}
+							<span class="gi w-8 h-8 text-amber-400" style="--gi: url({selectedSlot.def.icon})"></span>
+						{/if}
 					</div>
 					<div class="min-w-0">
 						<h3 class="text-base font-semibold text-gray-900 dark:text-gray-100 truncate">

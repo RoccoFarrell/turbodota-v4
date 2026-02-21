@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { page } from '$app/stores';
+	import essenceIcon from '$lib/assets/essence.png';
 	import type { PageData, ActionData } from './$types';
 
 	interface Props {
@@ -38,8 +39,8 @@
 		return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 	}
 
-	const currencyConfig: Record<string, { label: string; icon: string; color: string }> = {
-		essence: { label: 'Essence', icon: 'fi fi-br-diamond', color: 'text-cyan-400' },
+	const currencyConfig: Record<string, { label: string; icon: string; color: string; imageUrl?: string }> = {
+		essence: { label: 'Essence', icon: '', color: '', imageUrl: essenceIcon },
 		gold: { label: 'Gold', icon: 'fi fi-rr-coin', color: 'text-amber-400' },
 		loot_coins: { label: 'Loot', icon: 'fi fi-rr-treasure-chest', color: 'text-violet-400' },
 		wood: { label: 'Wood', icon: 'fi fi-rr-tree', color: 'text-emerald-400' }
@@ -354,7 +355,11 @@
 									{#if (save.currencies[key] ?? 0) > 0}
 										{@const cfg = currencyConfig[key] ?? { label: key, icon: 'fi fi-rr-coin', color: 'text-amber-400' }}
 										<div class="flex items-center gap-[0.3rem] text-sm">
-											<i class="{cfg.icon} {cfg.color} text-sm leading-none"></i>
+											{#if cfg.imageUrl}
+												<img src={cfg.imageUrl} alt={cfg.label} class="w-3.5 h-3.5 object-contain" />
+											{:else}
+												<i class="{cfg.icon} {cfg.color} text-sm leading-none"></i>
+											{/if}
 											<span class="text-(--text-muted) tabular-nums">{formatNum(save.currencies[key])}</span>
 										</div>
 									{/if}

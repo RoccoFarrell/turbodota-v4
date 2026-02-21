@@ -61,7 +61,7 @@
 		return key.replace(/_/g, ' ');
 	}
 
-	import { getCurrencyDef } from '$lib/incremental/constants/currencies';
+	import { getCurrencyDef, isImageIcon } from '$lib/incremental/constants/currencies';
 
 	function currencyIcon(key: string): string {
 		return getCurrencyDef(key)?.icon ?? '/game-icons/ffffff/transparent/1x1/delapouite/gold-stack.svg';
@@ -188,7 +188,7 @@
 										{#each Object.entries(result.currenciesEarned) as [key, amount]}
 											{#if amount > 0}
 												<span class="text-sm font-semibold text-primary">
-													<span class="gi inline w-4 h-4 text-amber-400" style="--gi: url({currencyIcon(key)})"></span> +{amount} {currencyLabel(key)}
+													{#if isImageIcon(currencyIcon(key))}<img src={currencyIcon(key)} alt={currencyLabel(key)} class="inline w-4 h-4 object-contain" />{:else}<span class="gi inline w-4 h-4 text-amber-400" style="--gi: url({currencyIcon(key)})"></span>{/if} +{amount} {currencyLabel(key)}
 												</span>
 											{/if}
 										{/each}
@@ -206,7 +206,7 @@
 							{#each Object.entries(catchUpResult.totalCurrenciesEarned) as [key, amount]}
 								{#if amount > 0}
 									<p class="text-2xl font-bold text-primary text-center">
-										<span class="gi inline w-4 h-4 text-amber-400" style="--gi: url({currencyIcon(key)})"></span> +{amount} {currencyLabel(key)}
+										{#if isImageIcon(currencyIcon(key))}<img src={currencyIcon(key)} alt={currencyLabel(key)} class="inline w-4 h-4 object-contain" />{:else}<span class="gi inline w-4 h-4 text-amber-400" style="--gi: url({currencyIcon(key)})"></span>{/if} +{amount} {currencyLabel(key)}
 									</p>
 								{/if}
 							{/each}

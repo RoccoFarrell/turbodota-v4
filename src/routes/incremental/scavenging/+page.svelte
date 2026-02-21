@@ -2,6 +2,8 @@
 	import { getContext } from 'svelte';
 	import { fade } from 'svelte/transition';
 	import { toaster } from '$lib/toaster';
+	import essenceIcon from '$lib/assets/essence.png';
+	import arcaneRuneIcon from '$lib/assets/arcanerune.png';
 	import { SCAVENGING_ACTION_DEFS, MINING_ACTION_ID } from '$lib/incremental/actions/action-definitions';
 	import ActionSlotBar from '$lib/incremental/components/ActionSlotBar.svelte';
 	import ScavengingResourceCard from '$lib/incremental/components/ScavengingResourceCard.svelte';
@@ -131,7 +133,7 @@
 		<!-- Resource balances + Rune button -->
 		<div class="flex items-center gap-4 text-sm">
 			<div class="flex items-center gap-1.5">
-				<span class="gi w-4 h-4 text-purple-400" style="--gi: url(/game-icons/ffffff/transparent/1x1/lorc/gems.svg)"></span>
+				<img src={essenceIcon} alt="Essence" class="w-4 h-4 object-contain" />
 				<span class="font-semibold text-gray-900 dark:text-gray-100">{essence}</span>
 				<span class="text-gray-500 dark:text-gray-400">Essence</span>
 			</div>
@@ -148,7 +150,7 @@
 				onclick={() => { runeApplyMode = true; }}
 				class="rounded-lg bg-amber-500/15 border border-amber-500/30 px-3 py-1.5 text-sm font-medium text-amber-400 hover:bg-amber-500/25 transition-colors disabled:opacity-40"
 			>
-				<span class="gi inline w-4 h-4 text-amber-400" style="--gi: url(/game-icons/ffffff/transparent/1x1/delapouite/sparkles.svg)"></span> {arcaneRuneQty} Arcane Rune{arcaneRuneQty !== 1 ? 's' : ''}
+				<img src={arcaneRuneIcon} alt="Arcane Rune" class="inline w-4 h-4 object-contain" /> {arcaneRuneQty} Arcane Rune{arcaneRuneQty !== 1 ? 's' : ''}
 			</button>
 		</div>
 	</div>

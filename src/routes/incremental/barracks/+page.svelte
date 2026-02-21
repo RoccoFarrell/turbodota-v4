@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount, getContext } from 'svelte';
 	import { fade } from 'svelte/transition';
+	import arcaneRuneIcon from '$lib/assets/arcanerune.png';
 	import { toaster } from '$lib/toaster';
 	import {
 		TRAINING_BUILDINGS,
@@ -202,7 +203,7 @@
 				onclick={() => { runeApplyMode = true; }}
 				class="rounded-lg bg-amber-500/15 border border-amber-500/30 px-3 py-1.5 text-sm font-medium text-amber-400 hover:bg-amber-500/25 transition-colors disabled:opacity-40"
 			>
-				<span class="gi inline w-4 h-4 text-amber-400" style="--gi: url(/game-icons/ffffff/transparent/1x1/delapouite/sparkles.svg)"></span> {arcaneRuneQty} Arcane Rune{arcaneRuneQty !== 1 ? 's' : ''}
+				<img src={arcaneRuneIcon} alt="Arcane Rune" class="inline w-4 h-4 object-contain" /> {arcaneRuneQty} Arcane Rune{arcaneRuneQty !== 1 ? 's' : ''}
 			</button>
 		</div>
 	</div>
