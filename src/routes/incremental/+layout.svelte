@@ -111,43 +111,46 @@
 	});
 </script>
 
-<div class="w-full h-full flex flex-col min-h-0 relative">
-	<main class="flex-1 min-h-0 overflow-y-auto">
-		{@render children?.()}
-	</main>
+<div class="w-full h-full flex flex-col min-h-0">
+	<!-- Content area (relative container for inventory overlay) -->
+	<div class="flex-1 min-h-0 relative">
+		<main class="h-full overflow-y-auto">
+			{@render children?.()}
+		</main>
 
-	<!-- Inventory sheet (slides up from bottom bar, contained within layout) -->
-	{#if inventoryOpen}
-		<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-		<div
-			class="inventory-backdrop"
-			onclick={() => { inventoryOpen = false; }}
-		></div>
-		<div class="inventory-sheet">
+		<!-- Inventory sheet (slides up from bottom, contained within content area) -->
+		{#if inventoryOpen}
+			<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
 			<div
-				class="w-full rounded-t-2xl border border-b-0 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-2xl"
-				role="dialog"
-				aria-label="Inventory"
-			>
-				<div class="sticky top-0 z-10 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 rounded-t-2xl">
-					<h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Inventory</h2>
-					<button
-						type="button"
-						class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-						onclick={() => { inventoryOpen = false; }}
-						aria-label="Close inventory"
-					>
-						<i class="fi fi-rr-cross-small text-xl"></i>
-					</button>
-				</div>
-				<div class="p-4">
-					<InventoryPanel compact />
+				class="inventory-backdrop"
+				onclick={() => { inventoryOpen = false; }}
+			></div>
+			<div class="inventory-sheet">
+				<div
+					class="w-full rounded-t-2xl border border-b-0 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-2xl"
+					role="dialog"
+					aria-label="Inventory"
+				>
+					<div class="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 rounded-t-2xl">
+						<h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Inventory</h2>
+						<button
+							type="button"
+							class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+							onclick={() => { inventoryOpen = false; }}
+							aria-label="Close inventory"
+						>
+							<i class="fi fi-rr-cross-small text-xl"></i>
+						</button>
+					</div>
+					<div class="p-4">
+						<InventoryPanel compact />
+					</div>
 				</div>
 			</div>
-		</div>
-	{/if}
+		{/if}
+	</div>
 
-	<div class="shrink-0 relative z-30">
+	<div class="shrink-0">
 		<BottomBar
 			{slots}
 			{slotLabel}
