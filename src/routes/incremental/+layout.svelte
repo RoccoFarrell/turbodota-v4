@@ -111,18 +111,51 @@
 	});
 </script>
 
-<div class="w-full h-full flex flex-col min-h-0">
+<div class="w-full h-full flex flex-col min-h-0 relative">
 	<main class="flex-1 min-h-0 overflow-y-auto">
 		{@render children?.()}
 	</main>
 
-	<BottomBar
-		{slots}
-		{slotLabel}
-		slotProgress={slotProgress}
-		slotNextIn={slotNextIn}
-		onOpenInventory={() => { inventoryOpen = true; }}
-	/>
+	<!-- Inventory sheet (slides up from bottom bar, contained within layout) -->
+	{#if inventoryOpen}
+		<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+		<div
+			class="inventory-backdrop"
+			onclick={() => { inventoryOpen = false; }}
+		></div>
+		<div class="inventory-sheet">
+			<div
+				class="w-full max-h-[60vh] overflow-y-auto rounded-t-2xl border border-b-0 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-2xl"
+				role="dialog"
+				aria-label="Inventory"
+			>
+				<div class="sticky top-0 z-10 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 rounded-t-2xl">
+					<h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Inventory</h2>
+					<button
+						type="button"
+						class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+						onclick={() => { inventoryOpen = false; }}
+						aria-label="Close inventory"
+					>
+						<i class="fi fi-rr-cross-small text-xl"></i>
+					</button>
+				</div>
+				<div class="p-4">
+					<InventoryPanel compact />
+				</div>
+			</div>
+		</div>
+	{/if}
+
+	<div class="shrink-0 relative z-30">
+		<BottomBar
+			{slots}
+			{slotLabel}
+			slotProgress={slotProgress}
+			slotNextIn={slotNextIn}
+			onOpenInventory={() => { inventoryOpen = !inventoryOpen; }}
+		/>
+	</div>
 </div>
 
 <!-- Catch-up dialog (shown after returning from background) -->
@@ -194,47 +227,30 @@
 	</Dialog>
 {/if}
 
-<!-- Inventory modal (slide up from bottom) -->
-{#if inventoryOpen}
-	<div class="fixed inset-0 z-50">
-		<!-- Backdrop -->
-		<!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-		<div
-			class="absolute inset-0 bg-black/60 backdrop-blur-sm animate-[fadeIn_200ms_ease-out]"
-			onclick={() => { inventoryOpen = false; }}
-		></div>
-		<!-- Sheet -->
-		<div class="absolute inset-x-0 bottom-0 flex justify-center animate-[slideUp_300ms_ease-out]">
-			<div
-				class="w-full max-w-2xl max-h-[70vh] overflow-y-auto rounded-t-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-2xl"
-				role="dialog"
-				aria-label="Inventory"
-			>
-				<div class="sticky top-0 z-10 flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 rounded-t-2xl">
-					<h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Inventory</h2>
-					<button
-						type="button"
-						class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-						onclick={() => { inventoryOpen = false; }}
-						aria-label="Close inventory"
-					>
-						<i class="fi fi-rr-cross-small text-xl"></i>
-					</button>
-				</div>
-				<div class="p-4">
-					<InventoryPanel compact />
-				</div>
-			</div>
-		</div>
-	</div>
-{/if}
-
 <style>
-	@keyframes slideUp {
+	.inventory-backdrop {
+		position: absolute;
+		inset: 0;
+		z-index: 10;
+		background: rgba(0, 0, 0, 0.4);
+		animation: inventoryFadeIn 200ms ease-out;
+	}
+
+	.inventory-sheet {
+		position: absolute;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		z-index: 20;
+		animation: inventorySlideUp 300ms ease-out;
+	}
+
+	@keyframes inventorySlideUp {
 		from { transform: translateY(100%); }
 		to { transform: translateY(0); }
 	}
-	@keyframes fadeIn {
+
+	@keyframes inventoryFadeIn {
 		from { opacity: 0; }
 		to { opacity: 1; }
 	}
