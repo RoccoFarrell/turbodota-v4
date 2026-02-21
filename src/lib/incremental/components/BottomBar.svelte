@@ -58,6 +58,7 @@
 
 		<!-- Right zone: backpack icon -->
 		<button
+			type="button"
 			class="shrink-0 w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
 			onclick={onOpenInventory}
 			aria-label="Open inventory"
