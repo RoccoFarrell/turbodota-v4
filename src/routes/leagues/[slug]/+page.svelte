@@ -195,348 +195,500 @@
 		}
 	}
 
-	// Controlled tab state; custom classes so tab list + content layout and visibility work with our card layout.
-	let mainTab = $state('overview');
-	let membersSubTab = $state('members');
+	// Admin check helper
+	let isAdmin = $derived(data.session?.user?.roles?.includes('dev') ?? false);
 
-	const mainTriggerClass = (value: string) =>
-		`px-6 py-3 font-medium transition-colors ${mainTab === value ? 'text-primary-500 font-semibold bg-primary-500/10' : 'text-surface-600 dark:text-surface-400'}`;
+	// Collapsible section state (start collapsed so leaderboard is focus)
+	let membersExpanded = $state(false);
+	let seasonsExpanded = $state(false);
+
+	// Member sub-tab state (preserved from original)
+	let membersSubTab = $state('members');
 	const subTriggerClass = (value: string) =>
-		`px-4 py-2.5 text-sm font-medium transition-colors ${membersSubTab === value ? 'text-primary-500 font-semibold bg-primary-500/10' : 'text-surface-600 dark:text-surface-400'}`;
+		`px-4 py-2.5 text-sm font-medium transition-colors ${membersSubTab === value ? 'text-emerald-400 font-semibold bg-emerald-500/10' : 'text-gray-400 hover:text-gray-300'}`;
 </script>
 
-<section class="lg:max-w-5xl w-full min-h-screen px-4 lg:mx-auto py-6 space-y-6">
-	{#if selectedLeague}
-	<!-- League summary card: visible context without relying only on layout header -->
-	<div class="card border border-surface-200 dark:border-surface-700 p-5 rounded-xl bg-surface-50 dark:bg-surface-800/50">
-		<div class="flex flex-wrap items-center gap-x-8 gap-y-2 text-sm">
-			<div>
-				<span class="text-surface-500 dark:text-surface-400">Commissioner</span>
-				<p class="font-semibold text-primary-500">{selectedLeague.creator.username}</p>
-			</div>
-			<div>
-				<span class="text-surface-500 dark:text-surface-400">Created</span>
-				<p class="font-semibold text-surface-700 dark:text-surface-300">{dayjs(selectedLeague.createdDate).format('MMM D, YYYY')}</p>
-			</div>
-			<div>
-				<span class="text-surface-500 dark:text-surface-400">Members</span>
-				<p class="font-semibold text-surface-700 dark:text-surface-300">{selectedLeague.members.length}</p>
-			</div>
-		</div>
-	</div>
+<div class="min-h-full relative">
+	<div class="relative z-10 max-w-5xl mx-auto px-4 py-6 space-y-8">
 
-	<div class="w-full">
-		<Tabs value={mainTab} onValueChange={(d) => (mainTab = d.value)}>
-			<div class="card p-0 overflow-hidden rounded-xl border border-surface-200 dark:border-surface-700">
-				<Tabs.List class="relative flex gap-0 min-h-12 bg-surface-100 dark:bg-surface-800 border-b border-surface-200 dark:border-surface-700">
-					<Tabs.Trigger value="overview" class={mainTriggerClass('overview')}>
-						<i class="fi fi-rr-apps mr-2" aria-hidden="true"></i>
-						Overview
-					</Tabs.Trigger>
-					<Tabs.Trigger value="members" class={mainTriggerClass('members')}>
-						<i class="fi fi-rr-users-alt mr-2" aria-hidden="true"></i>
-						Members
-					</Tabs.Trigger>
-					<Tabs.Trigger value="seasons" class={mainTriggerClass('seasons')}>
-						<i class="fi fi-rr-calendar-star mr-2" aria-hidden="true"></i>
-						Seasons
-					</Tabs.Trigger>
-					<Tabs.Trigger value="history" class={mainTriggerClass('history')}>
-						<i class="fi fi-rr-history mr-2" aria-hidden="true"></i>
-						History
-					</Tabs.Trigger>
-					<Tabs.Indicator />
-				</Tabs.List>
-			</div>
+		{#if selectedLeague}
 
-			<!-- Overview: at-a-glance league info + active seasons -->
-			<Tabs.Content value="overview" class="focus:outline-none">
-				<div class="card mt-0 rounded-t-none border-t-0 border border-surface-200 dark:border-surface-700 p-6 space-y-6">
-					<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-						<h2 class="h3 text-surface-800 dark:text-surface-200">Active seasons</h2>
-						<button
-							type="button"
-							class="btn preset-tonal-success w-fit"
-							onclick={() => (mainTab = 'seasons')}
-						>
-							<i class="fi fi-rr-plus mr-2"></i>Create season
-						</button>
+			<!-- ───────────────────────── 1. Active Season Banner ───────────────────────── -->
+			<section class="rounded-xl border border-emerald-500/20 bg-gray-900/60 backdrop-blur-sm p-5">
+				{#if data.activeDarkRiftSeason}
+					<div class="flex flex-wrap items-center justify-between gap-4">
+						<div class="flex items-center gap-4 min-w-0">
+							<div class="flex items-center justify-center w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 shrink-0">
+								<svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+								</svg>
+							</div>
+							<div class="min-w-0">
+								<h2 class="text-lg font-bold text-gray-100 truncate">{data.activeDarkRiftSeason.name}</h2>
+								<p class="text-sm text-gray-400">
+									{dayjs(data.activeDarkRiftSeason.startDate).format('MMM D, YYYY')} &ndash; {dayjs(data.activeDarkRiftSeason.endDate).format('MMM D, YYYY')}
+								</p>
+							</div>
+						</div>
+						<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-xs font-semibold text-emerald-300">
+							<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+							Active
+						</span>
 					</div>
-					{#if seasonTableData.length > 0}
-						<div class="table-container rounded-lg overflow-hidden border border-surface-200 dark:border-surface-700">
-							<table class="table">
-								<thead class="bg-surface-200 dark:bg-surface-700">
-									<tr>
-										{#each tableSource.head as header}
-											<th class="font-semibold text-surface-700 dark:text-surface-300 py-3 px-4 text-left">{header}</th>
-										{/each}
-									</tr>
-								</thead>
-								<tbody>
-									{#each tableSource.body as row}
-										<tr class="border-t border-surface-200 dark:border-surface-700 hover:bg-surface-100 dark:hover:bg-surface-800/50">
-											<td>
-												<a href={`/leagues/${selectedLeague.id}/seasons/${row[1]}`} class="font-semibold text-primary-500 hover:underline hover:text-primary-600">{row[0]}</a>
-											</td>
-											<td class="text-surface-500 dark:text-surface-400 text-sm">{row[1]}</td>
-											<td><span class="chip preset-tonal-warning text-xs">{row[2]}</span></td>
-											<td>{row[3]}</td>
-											<td>{row[4]}</td>
-											<td>{row[5]}</td>
-											<td>
-												{#if row[6]}
-													<span class="chip preset-filled-success-500 text-xs">Active</span>
-													<button
-														class="btn btn-sm preset-tonal-warning ml-1"
-														onclick={() => handleSeasonStatusUpdate(parseInt(row[1]), false)}
-													>Deactivate</button>
-												{:else}
-													<span class="chip preset-filled-surface-500 text-xs">Inactive</span>
-													<button
-														class="btn btn-sm preset-tonal-success ml-1"
-														onclick={() => handleSeasonStatusUpdate(parseInt(row[1]), true)}
-													>Activate</button>
-												{/if}
-											</td>
-											<td>
-												<button
-													class="btn btn-sm btn-icon preset-filled-error-500"
-													onclick={() => handleDeleteSeason({ id: parseInt(row[1]), name: row[0] })}
-													aria-label="Delete season {row[0]}"
-													title="Delete season"
-												>
-													<i class="fi fi-bs-trash" aria-hidden="true"></i>
-												</button>
-											</td>
-										</tr>
-									{/each}
-								</tbody>
-							</table>
+				{:else}
+					<div class="flex items-center gap-4 py-2">
+						<div class="flex items-center justify-center w-10 h-10 rounded-lg bg-gray-800/80 border border-gray-700 shrink-0">
+							<svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+							</svg>
 						</div>
-					{:else}
-						<div class="rounded-xl border border-dashed border-surface-300 dark:border-surface-600 p-8 text-center">
-							<p class="text-surface-500 dark:text-surface-400 mb-4">No seasons yet.</p>
-							<button type="button" class="btn preset-tonal-success" onclick={() => (mainTab = 'seasons')}>
-								<i class="fi fi-rr-plus mr-2"></i>Create first season
-							</button>
+						<div>
+							<p class="text-gray-400 font-medium">No active Dark Rift season</p>
+							<p class="text-sm text-gray-500">Create a new season in the Seasons section below.</p>
 						</div>
-					{/if}
-				</div>
-			</Tabs.Content>
+					</div>
+				{/if}
+			</section>
 
-			<Tabs.Content value="members" class="focus:outline-none">
-					<div class="card flex flex-col relative mt-0 rounded-t-none border-t-0 border border-surface-200 dark:border-surface-700">
-						{#if !data.session || !data.session.user.roles || !data.session.user.roles.includes('dev')}
-							<div class="z-50 absolute inset-0 bg-surface-900/90 flex items-center justify-center rounded-b-xl">
-								<div class="text-center p-8 rounded-xl bg-surface-800 border border-surface-600">
-									<img src={Lock} class="h-24 w-24 mx-auto mb-4 opacity-80" alt="" />
-									<p class="text-surface-200 font-medium">Contact an admin to manage members.</p>
-								</div>
-							</div>
-						{/if}
+			<!-- ───────────────────────── 2. Dark Rift Leaderboard ───────────────────────── -->
+			<section class="rounded-xl border border-emerald-500/20 bg-gray-900/60 backdrop-blur-sm overflow-hidden">
+				<header class="px-6 py-4 border-b border-emerald-500/10">
+					<div class="flex items-center justify-between">
+						<div class="flex items-center gap-3">
+							<h2 class="text-lg font-bold text-gray-100">Dark Rift Leaderboard</h2>
+							{#if data.darkRiftLeaderboard?.length}
+								<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-xs font-semibold text-emerald-300">
+									{data.darkRiftLeaderboard.length} players
+								</span>
+							{/if}
+						</div>
+					</div>
+				</header>
 
-						<div class="p-6 space-y-6">
-							<div class="flex flex-wrap items-center justify-between gap-4">
-								<h2 class="h3 text-surface-800 dark:text-surface-200">Manage members</h2>
-								<div class="flex flex-wrap items-center gap-2">
-									{#if data.session?.user?.roles?.includes('dev')}
-										<button
-											type="button"
-											class="btn preset-filled-surface-500"
-											onclick={() => { testToastCount += 1; toaster.info({ title: `Test toast ${testToastCount}` }); }}
-											title="Fire a test toast (for testing stacking)"
-										>
-											Test toast
-										</button>
-									{/if}
-									{#if data.session?.user?.roles?.includes('dev') && selectedLeague?.members?.length}
-										<button
-											type="button"
-											class="btn preset-tonal-primary"
-											disabled={refreshingMatches}
-											onclick={refreshAllMatches}
-											title="Fetch latest matches from OpenDota for all league members"
-										>
-											{#if refreshingMatches}
-												<i class="fi fi-rr-spinner animate-spin mr-2" aria-hidden="true"></i>
-												Refreshing…
+				{#if data.darkRiftLeaderboard && data.darkRiftLeaderboard.length > 0}
+					<div class="overflow-x-auto">
+						<table class="w-full">
+							<thead>
+								<tr class="bg-gray-800/50 text-left">
+									<th class="py-3 px-4 text-xs font-semibold uppercase tracking-wider text-gray-400 w-16">Rank</th>
+									<th class="py-3 px-4 text-xs font-semibold uppercase tracking-wider text-gray-400">Player</th>
+									<th class="py-3 px-4 text-xs font-semibold uppercase tracking-wider text-gray-400 text-right">Deepest Level</th>
+									<th class="py-3 px-4 text-xs font-semibold uppercase tracking-wider text-gray-400 text-right">Best DPS</th>
+									<th class="py-3 px-4 text-xs font-semibold uppercase tracking-wider text-gray-400 text-right">Runs</th>
+								</tr>
+							</thead>
+							<tbody class="divide-y divide-gray-800">
+								{#each data.darkRiftLeaderboard as entry}
+									<tr class={entry.rank === 1
+										? 'bg-emerald-500/5 hover:bg-emerald-500/10 transition-colors'
+										: 'hover:bg-gray-800/50 transition-colors'}>
+										<td class="py-3 px-4">
+											{#if entry.rank === 1}
+												<span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 text-white font-bold text-sm shadow-lg shadow-emerald-500/20">
+													{entry.rank}
+												</span>
+											{:else if entry.rank === 2}
+												<span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-700 text-gray-200 font-bold text-sm">
+													{entry.rank}
+												</span>
+											{:else if entry.rank === 3}
+												<span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-700/60 text-gray-300 font-bold text-sm">
+													{entry.rank}
+												</span>
 											{:else}
-												<i class="fi fi-rr-refresh mr-2" aria-hidden="true"></i>
-												Refresh all matches
+												<span class="inline-flex items-center justify-center w-8 h-8 text-gray-400 font-medium text-sm">
+													{entry.rank}
+												</span>
 											{/if}
-										</button>
-									{/if}
-								</div>
-							</div>
-
-							<Tabs value={membersSubTab} onValueChange={(d) => (membersSubTab = d.value)}>
-								<nav class="border-b border-surface-200 dark:border-surface-700 mb-6" aria-label="Member management">
-									<Tabs.List class="relative flex flex-wrap gap-0">
-										<Tabs.Trigger value="members" class={subTriggerClass('members')}>
-											<i class="fi fi-rr-following mr-1.5" aria-hidden="true"></i>
-											Current members
-										</Tabs.Trigger>
-										<Tabs.Trigger value="add-friends" class={subTriggerClass('add-friends')}>
-											<i class="fi fi-br-user-add mr-1.5" aria-hidden="true"></i>
-											Add by ID
-										</Tabs.Trigger>
-										<Tabs.Trigger value="pick-database" class={subTriggerClass('pick-database')}>
-											<i class="fi fi-rr-database mr-1.5" aria-hidden="true"></i>
-											From database
-										</Tabs.Trigger>
-										<Tabs.Indicator />
-									</Tabs.List>
-								</nav>
-
-								<Tabs.Content value="members" id="tabs:s2:content-members" class="focus:outline-none w-full">
-										<div class="flex w-full flex-wrap">
-											<div class="table-container w-full rounded-lg overflow-hidden border border-surface-200 dark:border-surface-700">
-												<table class="table w-full">
-													<thead class="bg-surface-200 dark:bg-surface-700">
-														<tr>
-															<th class="font-semibold text-surface-700 dark:text-surface-300 py-2.5 px-4">User</th>
-															<th class="font-semibold text-surface-700 dark:text-surface-300 py-2.5 px-4">Last Turbo</th>
-															<th class="font-semibold text-surface-700 dark:text-surface-300 py-2.5 px-4">Last Ranked</th>
-															<th class="font-semibold text-surface-700 dark:text-surface-300 py-2.5 px-4">Turbo (30d)</th>
-															<th class="font-semibold text-surface-700 dark:text-surface-300 py-2.5 px-4">Ranked (30d)</th>
-															<th class="font-semibold text-surface-700 dark:text-surface-300 py-2.5 px-4">Actions</th>
-														</tr>
-													</thead>
-													<tbody>
-														{#each selectedLeague.members as friend}
-															{@const member = friend as LeagueMemberRow}
-															<tr class="items-center">
-																<td class="flex items-center gap-2">
-																	{#if member?.user?.avatar_url ?? member?.avatar_url}
-																		<img class="rounded-full h-8 w-8 shrink-0" src={member?.user?.avatar_url ?? member?.avatar_url} alt="" />
-																	{:else}
-																		<div class="rounded-full h-8 w-8 shrink-0 bg-surface-500 flex items-center justify-center">
-																			<i class="fi fi-rr-portrait text-sm"></i>
-																		</div>
-																	{/if}
-																	<span>{member?.user?.username ?? member?.display_name ?? member.account_id}</span>
-																</td>
-																<td>{member.newestMatch ? dayjs(member.newestMatch).format('MM/DD/YYYY') : '—'}</td>
-																<td>{data.memberLastRanked?.[member.account_id] ? dayjs(data.memberLastRanked[member.account_id]).format('MM/DD/YYYY') : '—'}</td>
-																<td>{data.memberMatchCounts?.[member.account_id]?.turbo ?? 0}</td>
-																<td>{data.memberMatchCounts?.[member.account_id]?.ranked ?? 0}</td>
-																<td>
-																	<form method="POST" action="?/removeLeagueMember" use:enhance={enhanceMemberForm}>
-																		<input type="hidden" name="account_id" value={member.account_id} />
-																		<button
-																			type="submit"
-																			class="btn-icon btn-icon-sm preset-filled-warning-500 hover:translate-y-1 hover:bg-amber-500"
-																			title="Remove from league"
-																			aria-label="Remove {member?.user?.username ?? member?.display_name ?? member.account_id} from league"
-																		>
-																			<i class="fi fi-bs-remove-user" aria-hidden="true"></i>
-																		</button>
-																	</form>
-																</td>
-															</tr>
-														{/each}
-													</tbody>
-												</table>
-											</div>
-										</div>
-									</Tabs.Content>
-									<Tabs.Content value="add-friends" class="focus:outline-none">
-										<form method="POST" action="?/addLeagueMembers" use:enhance={enhanceMemberForm} class="flex flex-col space-y-4 max-w-md">
-											<p class="text-sm text-surface-500 dark:text-surface-400">Add members by Dota account ID. Enter one or more IDs, comma-separated.</p>
-											<label class="label">
-												<span class="font-medium text-surface-700 dark:text-surface-300">Account IDs</span>
-												<textarea
-													class="textarea mt-1"
-													name="account_ids"
-													rows="4"
-													placeholder="e.g. 65110965, 423076846"
-													bind:value={friendsString}
-												></textarea>
-											</label>
-											{#if form?.missing}
-												<aside class="alert preset-tonal-primary border border-primary-500" transition:fade|local={{ duration: 200 }}>
-													<div class="alert-message">
-														<h4 class="h4 text-red-600">Enter at least one valid Dota User ID</h4>
-													</div>
-												</aside>
-											{/if}
-											<button type="submit" class="btn preset-filled-success-500 w-fit">Add to league</button>
-										</form>
-									</Tabs.Content>
-									<Tabs.Content value="pick-database" class="focus:outline-none">
-										<div class="space-y-4 max-w-2xl">
-											<p class="text-sm text-surface-500 dark:text-surface-400">Add any user from the app database to this league.</p>
-											<label class="label block">
-												<span class="font-medium text-surface-700 dark:text-surface-300">Search users</span>
-												<input
-													type="search"
-													class="input mt-1"
-													placeholder="Filter by username..."
-													bind:value={userSearchQuery}
-													aria-label="Search users to add"
-												/>
-											</label>
-											<div class="max-h-80 overflow-y-auto rounded-lg border border-surface-200 dark:border-surface-700 divide-y divide-surface-200 dark:divide-surface-700">
-												{#if filteredUsersToAdd.length === 0}
-													<div class="p-6 text-center text-surface-500 dark:text-surface-400 text-sm">
-														{userSearchQuery.trim() ? 'No users match your search.' : 'All database users are already in this league.'}
-													</div>
+										</td>
+										<td class="py-3 px-4">
+											<div class="flex items-center gap-3">
+												{#if entry.avatarUrl}
+													<img
+														class="w-8 h-8 rounded-full shrink-0 {entry.rank === 1 ? 'ring-2 ring-emerald-400/50' : ''}"
+														src={entry.avatarUrl}
+														alt=""
+													/>
 												{:else}
-													{#each filteredUsersToAdd as user}
-														<div class="flex items-center justify-between gap-4 p-3 hover:bg-surface-100 dark:hover:bg-surface-800/50">
-															<div class="flex items-center gap-3 min-w-0">
-																{#if user.avatar_url}
-																	<img class="rounded-full h-10 w-10 shrink-0" src={user.avatar_url} alt="" />
+													<div class="w-8 h-8 rounded-full shrink-0 bg-gray-700 flex items-center justify-center {entry.rank === 1 ? 'ring-2 ring-emerald-400/50' : ''}">
+														<svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+															<path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+														</svg>
+													</div>
+												{/if}
+												<span class="font-medium {entry.rank === 1 ? 'text-emerald-200' : 'text-gray-200'}">{entry.displayName}</span>
+											</div>
+										</td>
+										<td class="py-3 px-4 text-right">
+											<span class="font-bold {entry.rank === 1 ? 'text-emerald-300' : 'text-gray-200'}">
+												{entry.deepestLevel}
+											</span>
+										</td>
+										<td class="py-3 px-4 text-right">
+											<span class="text-gray-300 tabular-nums">{entry.totalDps.toFixed(1)}</span>
+										</td>
+										<td class="py-3 px-4 text-right">
+											<span class="text-gray-400">{entry.runCount}</span>
+										</td>
+									</tr>
+								{/each}
+							</tbody>
+						</table>
+					</div>
+				{:else}
+					<div class="p-12 text-center">
+						<div class="rounded-xl border border-dashed border-emerald-500/30 p-8 max-w-md mx-auto">
+							<svg class="w-12 h-12 mx-auto text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+							</svg>
+							<p class="text-gray-400 font-medium mb-1">No leaderboard data yet</p>
+							<p class="text-sm text-gray-500">Complete Dark Rift runs during an active season to appear on the leaderboard.</p>
+						</div>
+					</div>
+				{/if}
+			</section>
+
+			<!-- ───────────────────────── 3. Members Section (ADMIN-LOCKED) ───────────────────────── -->
+			<section class="relative rounded-xl border border-emerald-500/20 bg-gray-900/60 backdrop-blur-sm overflow-hidden">
+				{#if !isAdmin}
+					<div class="absolute inset-0 z-50 bg-gray-900/90 flex items-center justify-center rounded-xl">
+						<div class="text-center p-8 rounded-xl bg-gray-800/80 border border-emerald-500/20">
+							<img src={Lock} class="h-20 w-20 mx-auto mb-4 opacity-60" alt="" />
+							<p class="text-gray-300 font-medium">Admin access required</p>
+						</div>
+					</div>
+				{/if}
+
+				<!-- Disclosure header -->
+				<button
+					type="button"
+					class="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-gray-800/30 transition-colors"
+					onclick={() => (membersExpanded = !membersExpanded)}
+				>
+					<div class="flex items-center gap-3">
+						<svg
+							class="w-4 h-4 text-gray-400 transition-transform {membersExpanded ? 'rotate-90' : ''}"
+							fill="none" stroke="currentColor" viewBox="0 0 24 24"
+						>
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+						</svg>
+						<h2 class="text-lg font-bold text-gray-100">Members</h2>
+						<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-xs font-semibold text-emerald-300">
+							{selectedLeague.members.length}
+						</span>
+					</div>
+				</button>
+
+				{#if membersExpanded}
+					<div class="border-t border-emerald-500/10 p-6 space-y-6" transition:fade={{ duration: 150 }}>
+						<!-- Header actions -->
+						<div class="flex flex-wrap items-center justify-between gap-4">
+							<h3 class="text-base font-semibold text-gray-200">Manage members</h3>
+							<div class="flex flex-wrap items-center gap-2">
+								{#if isAdmin}
+									<button
+										type="button"
+										class="px-3 py-1.5 text-sm rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-300 transition-colors"
+										onclick={() => { testToastCount += 1; toaster.info({ title: `Test toast ${testToastCount}` }); }}
+										title="Fire a test toast (for testing stacking)"
+									>
+										Test toast
+									</button>
+								{/if}
+								{#if isAdmin && selectedLeague?.members?.length}
+									<button
+										type="button"
+										class="px-3 py-1.5 text-sm rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition-colors disabled:opacity-50"
+										disabled={refreshingMatches}
+										onclick={refreshAllMatches}
+										title="Fetch latest matches from OpenDota for all league members"
+									>
+										{#if refreshingMatches}
+											<span class="inline-flex items-center gap-1.5">
+												<svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24">
+													<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+													<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+												</svg>
+												Refreshing...
+											</span>
+										{:else}
+											Refresh all matches
+										{/if}
+									</button>
+								{/if}
+							</div>
+						</div>
+
+						<!-- Member sub-tabs -->
+						<Tabs value={membersSubTab} onValueChange={(d) => (membersSubTab = d.value)}>
+							<nav class="border-b border-gray-800 mb-6" aria-label="Member management">
+								<Tabs.List class="relative flex flex-wrap gap-0">
+									<Tabs.Trigger value="members" class={subTriggerClass('members')}>
+										Current members
+									</Tabs.Trigger>
+									<Tabs.Trigger value="add-friends" class={subTriggerClass('add-friends')}>
+										Add by ID
+									</Tabs.Trigger>
+									<Tabs.Trigger value="pick-database" class={subTriggerClass('pick-database')}>
+										From database
+									</Tabs.Trigger>
+									<Tabs.Indicator />
+								</Tabs.List>
+							</nav>
+
+							<Tabs.Content value="members" class="focus:outline-none w-full">
+								<div class="flex w-full flex-wrap">
+									<div class="w-full rounded-lg overflow-hidden border border-gray-800">
+										<table class="w-full">
+											<thead class="bg-gray-800/50">
+												<tr>
+													<th class="font-semibold text-gray-300 py-2.5 px-4 text-left">User</th>
+													<th class="font-semibold text-gray-300 py-2.5 px-4 text-left">Last Turbo</th>
+													<th class="font-semibold text-gray-300 py-2.5 px-4 text-left">Last Ranked</th>
+													<th class="font-semibold text-gray-300 py-2.5 px-4 text-left">Turbo (30d)</th>
+													<th class="font-semibold text-gray-300 py-2.5 px-4 text-left">Ranked (30d)</th>
+													<th class="font-semibold text-gray-300 py-2.5 px-4 text-left">Actions</th>
+												</tr>
+											</thead>
+											<tbody class="divide-y divide-gray-800">
+												{#each selectedLeague.members as friend}
+													{@const member = friend as LeagueMemberRow}
+													<tr class="items-center hover:bg-gray-800/50 transition-colors">
+														<td class="py-2.5 px-4">
+															<div class="flex items-center gap-2">
+																{#if member?.user?.avatar_url ?? member?.avatar_url}
+																	<img class="rounded-full h-8 w-8 shrink-0" src={member?.user?.avatar_url ?? member?.avatar_url} alt="" />
 																{:else}
-																	<div class="rounded-full h-10 w-10 shrink-0 bg-surface-500 flex items-center justify-center">
-																		<i class="fi fi-rr-portrait text-xl"></i>
+																	<div class="rounded-full h-8 w-8 shrink-0 bg-gray-700 flex items-center justify-center">
+																		<svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+																			<path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+																		</svg>
 																	</div>
 																{/if}
-																<span class="font-medium truncate">{user.username}</span>
-																<span class="text-sm text-secondary-500 shrink-0">ID: {user.account_id}</span>
+																<span class="text-gray-200">{member?.user?.username ?? member?.display_name ?? member.account_id}</span>
 															</div>
-															<form method="POST" action="?/addLeagueMembers" use:enhance={enhanceMemberForm} class="shrink-0">
-																<input type="hidden" name="account_ids" value={user.account_id} />
-																<button type="submit" class="btn btn-sm preset-tonal-success">
-																	<i class="fi fi-br-add mr-1"></i> Add to league
+														</td>
+														<td class="py-2.5 px-4 text-gray-400">{member.newestMatch ? dayjs(member.newestMatch).format('MM/DD/YYYY') : '—'}</td>
+														<td class="py-2.5 px-4 text-gray-400">{data.memberLastRanked?.[member.account_id] ? dayjs(data.memberLastRanked[member.account_id]).format('MM/DD/YYYY') : '—'}</td>
+														<td class="py-2.5 px-4 text-gray-400">{data.memberMatchCounts?.[member.account_id]?.turbo ?? 0}</td>
+														<td class="py-2.5 px-4 text-gray-400">{data.memberMatchCounts?.[member.account_id]?.ranked ?? 0}</td>
+														<td class="py-2.5 px-4">
+															<form method="POST" action="?/removeLeagueMember" use:enhance={enhanceMemberForm}>
+																<input type="hidden" name="account_id" value={member.account_id} />
+																<button
+																	type="submit"
+																	class="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-colors"
+																	title="Remove from league"
+																	aria-label="Remove {member?.user?.username ?? member?.display_name ?? member.account_id} from league"
+																>
+																	<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+																		<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zM21 12h-6" />
+																	</svg>
 																</button>
 															</form>
-														</div>
-													{/each}
-												{/if}
-											</div>
+														</td>
+													</tr>
+												{/each}
+											</tbody>
+										</table>
+									</div>
+								</div>
+							</Tabs.Content>
+
+							<Tabs.Content value="add-friends" class="focus:outline-none">
+								<form method="POST" action="?/addLeagueMembers" use:enhance={enhanceMemberForm} class="flex flex-col space-y-4 max-w-md">
+									<p class="text-sm text-gray-400">Add members by Dota account ID. Enter one or more IDs, comma-separated.</p>
+									<label class="block">
+										<span class="font-medium text-gray-300 text-sm">Account IDs</span>
+										<textarea
+											class="mt-1 w-full rounded-lg bg-gray-800 border border-gray-700 text-gray-200 placeholder-gray-500 px-3 py-2 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none"
+											name="account_ids"
+											rows="4"
+											placeholder="e.g. 65110965, 423076846"
+											bind:value={friendsString}
+										></textarea>
+									</label>
+									{#if form?.missing}
+										<div class="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-300 text-sm" transition:fade|local={{ duration: 200 }}>
+											Enter at least one valid Dota User ID
 										</div>
-									</Tabs.Content>
-							</Tabs>
+									{/if}
+									<button type="submit" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium transition-colors w-fit">
+										Add to league
+									</button>
+								</form>
+							</Tabs.Content>
+
+							<Tabs.Content value="pick-database" class="focus:outline-none">
+								<div class="space-y-4 max-w-2xl">
+									<p class="text-sm text-gray-400">Add any user from the app database to this league.</p>
+									<label class="block">
+										<span class="font-medium text-gray-300 text-sm">Search users</span>
+										<input
+											type="search"
+											class="mt-1 w-full rounded-lg bg-gray-800 border border-gray-700 text-gray-200 placeholder-gray-500 px-3 py-2 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none"
+											placeholder="Filter by username..."
+											bind:value={userSearchQuery}
+											aria-label="Search users to add"
+										/>
+									</label>
+									<div class="max-h-80 overflow-y-auto rounded-lg border border-gray-800 divide-y divide-gray-800">
+										{#if filteredUsersToAdd.length === 0}
+											<div class="p-6 text-center text-gray-500 text-sm">
+												{userSearchQuery.trim() ? 'No users match your search.' : 'All database users are already in this league.'}
+											</div>
+										{:else}
+											{#each filteredUsersToAdd as user}
+												<div class="flex items-center justify-between gap-4 p-3 hover:bg-gray-800/50 transition-colors">
+													<div class="flex items-center gap-3 min-w-0">
+														{#if user.avatar_url}
+															<img class="rounded-full h-10 w-10 shrink-0" src={user.avatar_url} alt="" />
+														{:else}
+															<div class="rounded-full h-10 w-10 shrink-0 bg-gray-700 flex items-center justify-center">
+																<svg class="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+																	<path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+																</svg>
+															</div>
+														{/if}
+														<span class="font-medium text-gray-200 truncate">{user.username}</span>
+														<span class="text-sm text-gray-500 shrink-0">ID: {user.account_id}</span>
+													</div>
+													<form method="POST" action="?/addLeagueMembers" use:enhance={enhanceMemberForm} class="shrink-0">
+														<input type="hidden" name="account_ids" value={user.account_id} />
+														<button type="submit" class="px-3 py-1.5 text-sm rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition-colors">
+															Add to league
+														</button>
+													</form>
+												</div>
+											{/each}
+										{/if}
+									</div>
+								</div>
+							</Tabs.Content>
+						</Tabs>
+					</div>
+				{/if}
+			</section>
+
+			<!-- ───────────────────────── 4. Seasons Section (ADMIN-LOCKED) ───────────────────────── -->
+			<section class="relative rounded-xl border border-emerald-500/20 bg-gray-900/60 backdrop-blur-sm overflow-hidden">
+				{#if !isAdmin}
+					<div class="absolute inset-0 z-50 bg-gray-900/90 flex items-center justify-center rounded-xl">
+						<div class="text-center p-8 rounded-xl bg-gray-800/80 border border-emerald-500/20">
+							<img src={Lock} class="h-20 w-20 mx-auto mb-4 opacity-60" alt="" />
+							<p class="text-gray-300 font-medium">Admin access required</p>
 						</div>
 					</div>
-				</Tabs.Content>
-				<Tabs.Content value="seasons" class="focus:outline-none">
-					<div class="card flex flex-col relative mt-0 rounded-t-none border-t-0 border border-surface-200 dark:border-surface-700">
-						{#if !data.session?.user?.roles?.includes('dev')}
-							<div class="z-50 absolute inset-0 bg-surface-900/90 flex items-center justify-center rounded-b-xl">
-								<div class="text-center p-8 rounded-xl bg-surface-800 border border-surface-600">
-									<img src={Lock} class="h-24 w-24 mx-auto mb-4 opacity-80" alt="" />
-									<p class="text-surface-200 font-medium">Contact an admin to manage seasons.</p>
+				{/if}
+
+				<!-- Disclosure header -->
+				<button
+					type="button"
+					class="w-full flex items-center justify-between px-6 py-4 text-left hover:bg-gray-800/30 transition-colors"
+					onclick={() => (seasonsExpanded = !seasonsExpanded)}
+				>
+					<div class="flex items-center gap-3">
+						<svg
+							class="w-4 h-4 text-gray-400 transition-transform {seasonsExpanded ? 'rotate-90' : ''}"
+							fill="none" stroke="currentColor" viewBox="0 0 24 24"
+						>
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+						</svg>
+						<h2 class="text-lg font-bold text-gray-100">Seasons</h2>
+						<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-xs font-semibold text-emerald-300">
+							{seasonTableData.length}
+						</span>
+					</div>
+				</button>
+
+				{#if seasonsExpanded}
+					<div class="border-t border-emerald-500/10 p-6 space-y-8" transition:fade={{ duration: 150 }}>
+						<!-- Existing seasons table -->
+						{#if seasonTableData.length > 0}
+							<div>
+								<h3 class="text-base font-semibold text-gray-200 mb-4">All seasons</h3>
+								<div class="rounded-lg overflow-hidden border border-gray-800">
+									<table class="w-full">
+										<thead class="bg-gray-800/50">
+											<tr>
+												{#each tableSource.head as header}
+													<th class="font-semibold text-gray-300 py-3 px-4 text-left text-sm">{header}</th>
+												{/each}
+											</tr>
+										</thead>
+										<tbody class="divide-y divide-gray-800">
+											{#each tableSource.body as row}
+												<tr class="hover:bg-gray-800/50 transition-colors">
+													<td class="py-3 px-4">
+														<a href={`/leagues/${selectedLeague.id}/seasons/${row[1]}`} class="font-semibold text-emerald-400 hover:text-emerald-300 hover:underline">{row[0]}</a>
+													</td>
+													<td class="py-3 px-4 text-gray-500 text-sm">{row[1]}</td>
+													<td class="py-3 px-4">
+														<span class="inline-flex px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300">{row[2]}</span>
+													</td>
+													<td class="py-3 px-4 text-gray-400">{row[3]}</td>
+													<td class="py-3 px-4 text-gray-400">{row[4]}</td>
+													<td class="py-3 px-4 text-gray-400">{row[5]}</td>
+													<td class="py-3 px-4">
+														{#if row[6]}
+															<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-xs font-semibold text-emerald-300">
+																<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+																Active
+															</span>
+															<button
+																class="ml-2 px-2 py-1 text-xs rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 hover:text-amber-300 transition-colors"
+																onclick={() => handleSeasonStatusUpdate(parseInt(row[1]), false)}
+															>Deactivate</button>
+														{:else}
+															<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-gray-700 text-xs text-gray-400">Inactive</span>
+															<button
+																class="ml-2 px-2 py-1 text-xs rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 hover:text-emerald-300 transition-colors"
+																onclick={() => handleSeasonStatusUpdate(parseInt(row[1]), true)}
+															>Activate</button>
+														{/if}
+													</td>
+													<td class="py-3 px-4">
+														<button
+															class="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-colors"
+															onclick={() => handleDeleteSeason({ id: parseInt(row[1]), name: row[0] })}
+															aria-label="Delete season {row[0]}"
+															title="Delete season"
+														>
+															<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+																<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+															</svg>
+														</button>
+													</td>
+												</tr>
+											{/each}
+										</tbody>
+									</table>
 								</div>
+							</div>
+						{:else}
+							<div class="rounded-xl border border-dashed border-emerald-500/30 p-8 text-center">
+								<p class="text-gray-400 mb-1">No seasons yet.</p>
+								<p class="text-sm text-gray-500">Create your first season below.</p>
 							</div>
 						{/if}
 
-						<div class="p-6 space-y-6">
-							<div>
-								<h2 class="h3 text-surface-800 dark:text-surface-200">Create a season</h2>
-								<p class="text-sm text-surface-500 dark:text-surface-400 mt-1">Active seasons are listed in the Overview tab.</p>
-							</div>
-
+						<!-- Create season form -->
+						<div>
+							<h3 class="text-base font-semibold text-gray-200 mb-4">Create a season</h3>
 							<form method="POST" action="?/createSeason" use:enhance={enhanceForm} class="space-y-6 max-w-xl">
 								<input type="hidden" name="leagueID" value={selectedLeague.id} />
 								<input type="hidden" name="leagueName" value={selectedLeague.name} />
 								<input type="hidden" name="creatorID" value={data.session?.user.account_id ?? ''} />
 								<input type="hidden" name="members" value={leagueMemberIDs.join(',')} />
 
-								<label class="label block" for="seasonType">
-									<span class="font-medium text-surface-700 dark:text-surface-300">Season type</span>
-									<select id="seasonType" class="select mt-1 w-full" name="seasonType" required>
+								<label class="block" for="seasonType">
+									<span class="font-medium text-gray-300 text-sm">Season type</span>
+									<select
+										id="seasonType"
+										class="mt-1 w-full rounded-lg bg-gray-800 border border-gray-700 text-gray-200 px-3 py-2 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none"
+										name="seasonType"
+										required
+									>
 										<option value="darkrift">Dark Rift</option>
 										<option value="dotadeck">Dotadeck</option>
 										<option value="random">Random Romp</option>
@@ -546,33 +698,31 @@
 								</label>
 
 								<div id="seasonDateRange" class="space-y-3">
-									<span class="font-medium text-surface-700 dark:text-surface-300 block">Season date range</span>
+									<span class="font-medium text-gray-300 text-sm block">Season date range</span>
 									<input type="hidden" name="seasonStartDate" value={value.start?.toString() ?? ''} required />
 									<input type="hidden" name="seasonEndDate" value={value.end?.toString() ?? ''} required />
 									{#if value.start && value.end}
-										<p class="text-sm text-surface-600 dark:text-surface-400">
-											{dayjs(value.start.toString()).format('MMM D, YYYY')} – {dayjs(value.end.toString()).format('MMM D, YYYY')}
+										<p class="text-sm text-gray-400">
+											{dayjs(value.start.toString()).format('MMM D, YYYY')} &ndash; {dayjs(value.end.toString()).format('MMM D, YYYY')}
 										</p>
 									{/if}
-									<RangeCalendar bind:value class="border border-surface-200 dark:border-surface-600 rounded-lg" numberOfMonths={2} />
+									<RangeCalendar bind:value class="border border-gray-700 rounded-lg" numberOfMonths={2} />
 								</div>
 
-								<button type="submit" class="btn preset-filled-success-500">
-									<i class="fi fi-rr-plus mr-2"></i>Create season
+								<button type="submit" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium transition-colors">
+									Create season
 								</button>
 							</form>
 						</div>
 					</div>
-				</Tabs.Content>
-				<Tabs.Content value="history" class="focus:outline-none">
-					<div class="card mt-0 rounded-t-none border-t-0 border border-surface-200 dark:border-surface-700 p-12 text-center">
-						<i class="fi fi-rr-history text-4xl text-surface-400 dark:text-surface-500 mb-4" aria-hidden="true"></i>
-						<p class="text-surface-500 dark:text-surface-400">History coming soon.</p>
-					</div>
-				</Tabs.Content>
-		</Tabs>
+				{/if}
+			</section>
+
+		{:else}
+			<div class="rounded-xl border border-dashed border-emerald-500/30 p-12 text-center">
+				<p class="text-gray-400">League not found.</p>
+			</div>
+		{/if}
+
 	</div>
-	{:else}
-		<p class="text-secondary-500">League not found.</p>
-	{/if}
-</section>
+</div>
