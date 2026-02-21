@@ -1,313 +1,271 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import Trophy_light from '$lib/assets/trophy_light.png';
 	import { fade } from 'svelte/transition';
-
 	import dayjs from 'dayjs';
+	import { toaster } from '$lib/toaster';
 
-	//page data
 	import type { PageData } from './$types';
-	export let data: PageData;
-
-	//skeleton
 	import { Tabs } from '@skeletonlabs/skeleton-svelte';
-	
-	// Skeleton v3 Tabs API - Control and Panel are accessed via Tabs.Control and Tabs.Panel
-	// Using the components directly ensures proper styling
-	
-	// TableSource type (not exported from Skeleton v3)
+
+	import Lock from '$lib/assets/lock.png';
+
+	let { data, form }: { data: PageData; form: any } = $props();
+
+	// Toast: use shared toaster from $lib/toaster (same instance as Toast.Group)
+	function showToast(message: string, background?: string) {
+		const opts = { title: message };
+		if (background?.includes('success')) toaster.success(opts);
+		else if (background?.includes('error')) toaster.error(opts);
+		else if (background?.includes('warning')) toaster.warning(opts);
+		else toaster.info(opts);
+	}
+
+	// React to form responses
+	$effect(() => {
+		if (form?.missing) {
+			showToast('Enter at least one valid Dota User ID', 'preset-filled-error-500');
+		} else if (form?.success) {
+			showToast('Record created!', 'preset-filled-success-500');
+		}
+	});
+
+	// Table helpers
 	type TableSource = {
 		head: string[];
 		body: any[][];
 		meta?: any[][];
 	};
-	
-	// Helper function to map table data values
-	function tableMapperValues(data: any[], keys: string[]): any[][] {
-		return data.map(item => keys.map(key => item[key]));
+
+	function tableMapperValues(arr: any[], keys: string[]): any[][] {
+		return arr.map((item) => keys.map((key) => item[key]));
 	}
 
-	//images
-	import Lock from '$lib/assets/lock.png';
-
-	//$: console.log(data);
-
-	export let form;
-
-	//$: console.log(form);
-	import { getContext } from 'svelte';
-	const toastStore = getContext<{ trigger: (settings: ToastSettings) => void }>('toaster');
-	
-	// ToastSettings type (may not be exported from Skeleton v3)
-	type ToastSettings = {
-		message: string;
-		background?: string;
-	};
-
-	$: if (form?.missing) {
-		const t: ToastSettings = {
-			message: `Enter at least one valid Dota User ID`,
-			background: 'preset-filled-error-500'
-		};
-
-		toastStore.trigger(t);
-	} else if (form?.success) {
-		const t: ToastSettings = {
-			message: `Record created!`,
-			background: 'preset-filled-success-500'
-		};
-
-		toastStore.trigger(t);
-	}
-
-	/* 
-        Create league table
-    */
-
-	let leagueTableData = data.leagues.map((league: any) => {
-		return {
+	let leagueTableData = $derived(
+		data.leagues.map((league: any) => ({
 			id: league.id,
 			name: league.name,
 			creatorID: league.creator.username,
 			lastUpdated: dayjs(league.lastUpdated).format('MM/DD/YYYY'),
 			membersCount: league.members.length
-		};
-	});
-	const tableSource: TableSource = {
-		// A list of heading labels.
+		}))
+	);
+
+	let tableSource = $derived<TableSource>({
 		head: ['Name', 'ID', 'Creator', 'Last Updated', 'Members'],
-		// The data visibly shown in your table body UI.
 		body: tableMapperValues(leagueTableData, ['name', 'id', 'creatorID', 'lastUpdated', 'membersCount']),
-		// Optional: The data returned when interactive is enabled and a row is clicked.
 		meta: tableMapperValues(leagueTableData, ['name', 'id', 'creatorID', 'lastUpdated', 'membersCount'])
-		// Optional: A list of footer labels.
-		//foot: ['Total', '', '<code class="code">5</code>']
-	};
+	});
 
-	// Note: Skeleton v3 Tabs manages state internally - no need for tabSet variable
-
-	let friendsString: string = '';
+	let friendsString = $state('');
 
 	const handleAddCommonFriend = (account_id: number) => {
 		if (!friendsString.includes(account_id.toString())) {
 			friendsString += `${account_id},`;
 		}
 	};
+
+	let isAdmin = $derived(data.session?.user?.roles?.includes('dev') ?? false);
 </script>
 
-<section class="lg:w-3/4 w-full h-screen px-4 lg:mx-auto my-4 space-y-8">
-	<div class="flex justify-center items-center space-x-8">
-		<img src={Trophy_light} class="w-20 h-20" alt="leagues page" />
-		<h2 class="h2">Leagues Admin</h2>
+<div class="min-h-screen relative">
+	<!-- Emerald glow background -->
+	<div class="fixed inset-0 -z-10 bg-gray-950">
+		<div class="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-emerald-500/5 rounded-full blur-3xl"></div>
 	</div>
 
-	<div class="space-y-2">
-		<h3 class="h3 text-primary-500">Existing Leagues</h3>
-		{#if leagueTableData.length > 0}
-			<!-- <Table
-				source={tableSource}
-				class="table-compact"
-				regionCell="dark:first:text-amber-500 first:text-amber-600 first:font-bold"
-			/> -->
+	<div class="relative z-10 max-w-5xl mx-auto px-4 py-8 space-y-8">
+		<!-- Header -->
+		<div class="text-center space-y-2">
+			<h1 class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-b from-gray-100 via-emerald-200 to-emerald-400">
+				Leagues
+			</h1>
+			<p class="text-gray-400 text-sm">Manage your Dark Rift leagues and competitions</p>
+		</div>
 
-			<div class="table-container">
-				<!-- Native Table Element -->
-				<table class="table ">
-					<thead>
-						<tr>
-							{#each tableSource.head as header, i}
-								<th>{header}</th>
-							{/each}
-						</tr>
-					</thead>
-					<tbody>
-						{#each tableSource.body as row, i}
-							<tr>
-								<td><a href={`/leagues/${row[1]}`} class="font-bold text-amber-500 hover:underline hover:text-primary-600">{row[0]}</a></td>
-								<td>{row[1]}</td>
-								<td>{row[2]}</td>
-								<td>{row[3]}</td>
-								<td>{row[4]}</td>
-							</tr>
-						{/each}
-					</tbody>
-					<!-- <tfoot>
-						<tr>
-							<td>{row[0]}</td>
-								<td>{row[1]}</td>
-								<td>{row[2]}</td>
-                                <td>{row[3]}</td>
-                                <td>{row[4]}</td>
-						</tr>
-					</tfoot> -->
-				</table>
-			</div>
-		{:else}
-			<div>No leagues found!</div>
-		{/if}
-		<!-- <div class="grid grid-cols-4">
-			<div></div>
-			{#each data.leagues as league}
-				<div>{league.name}</div>
-				<div>{league.members.count}</div>
-				<div>{league.name}</div>
-				<div>{league.name}</div>
-			{/each}
-		</div> -->
-
-		<!-- <div class="w-full border border-dashed border-red-500 p-4">League 1</div> -->
-	</div>
-
-	<div class="space-y-4 card flex flex-col max-w-screen relative">
-		{#if !data.session.user.roles || !data.session.user.roles.includes('dev')}
-			<div class="z-50 absolute w-full h-full bg-slate-900/90 flex items-center justify-center rounded-xl">
-				<img src={Lock} class="h-32 w-32 inline" alt="locked" />
-				<h3 class="h3 text-primary-500 rounded-xl m-4 bg-surface-500/90 p-4">Contact an admin to create a league!</h3>
-			</div>
-		{/if}
-
-		<div class="p-4 space-y-4">
-			<h3 class="h3 p-2 w-full border-b border-primary-700 border-dashed">Create a new League</h3>
-			<form method="POST" class="space-y-8" action="?/createLeague" use:enhance>
-				<!-- <hgroup>
-                <h2>Login</h2>
-                <h3>Welcome back!</h3>
-            </hgroup> -->
-				<!-- <label for="username">Username</label>
-            <input type="text" id="username" name="username" required /> -->
-				<div class="flex space-x-4 items-center">
-					<label for="leagueName" class="my-1 text-secondary-500 h4 font-bold">League Name</label>
-					<input
-						type="text"
-						id="leagueName"
-						name="leagueName"
-						placeholder="Turbotown Enjoyers"
-						required
-						class="input w-1/2 p-2"
-					/>
+		<!-- Existing Leagues Table -->
+		<section class="rounded-xl border border-emerald-500/20 bg-gray-900/60 backdrop-blur-sm overflow-hidden">
+			<header class="px-6 py-4 border-b border-emerald-500/10">
+				<div class="flex items-center gap-3">
+					<h2 class="text-lg font-bold text-gray-100">Existing Leagues</h2>
+					{#if leagueTableData.length > 0}
+						<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-xs font-semibold text-emerald-300">
+							{leagueTableData.length}
+						</span>
+					{/if}
 				</div>
+			</header>
 
-				<div>
-					<h4 class="h4 text-amber-500">Add friends</h4>
+			{#if leagueTableData.length > 0}
+				<div class="overflow-x-auto">
+					<table class="w-full">
+						<thead>
+							<tr class="bg-gray-800/50 text-left">
+								{#each tableSource.head as header}
+									<th class="py-3 px-4 text-xs font-semibold uppercase tracking-wider text-gray-400">{header}</th>
+								{/each}
+							</tr>
+						</thead>
+						<tbody class="divide-y divide-gray-800">
+							{#each tableSource.body as row}
+								<tr class="hover:bg-gray-800/50 transition-colors">
+									<td class="py-3 px-4">
+										<a href={`/leagues/${row[1]}`} class="text-emerald-400 font-bold hover:text-emerald-300 hover:underline transition-colors">
+											{row[0]}
+										</a>
+									</td>
+									<td class="py-3 px-4 text-gray-500 text-sm">{row[1]}</td>
+									<td class="py-3 px-4 text-gray-300">{row[2]}</td>
+									<td class="py-3 px-4 text-gray-400">{row[3]}</td>
+									<td class="py-3 px-4 text-gray-400">{row[4]}</td>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				</div>
+			{:else}
+				<div class="p-12 text-center">
+					<div class="rounded-xl border border-dashed border-emerald-500/30 p-8 max-w-md mx-auto">
+						<p class="text-gray-400 font-medium mb-1">No leagues found</p>
+						<p class="text-sm text-gray-500">Create your first league below to get started.</p>
+					</div>
+				</div>
+			{/if}
+		</section>
 
-					<Tabs defaultValue="friends">
-						{#snippet list()}
-							<Tabs.Control value="friends">
-								{#snippet lead()}
-									<i class="fi fi-rr-following"></i>
-								{/snippet}
-								Friends
-							</Tabs.Control>
-							<Tabs.Control value="search">
-								{#snippet lead()}
-									<i class="fi fi-rr-search-heart"></i>
-								{/snippet}
-								Search
-							</Tabs.Control>
-						{/snippet}
+		<!-- Create League Form -->
+		<section class="relative rounded-xl border border-emerald-500/20 bg-gray-900/60 backdrop-blur-sm overflow-hidden">
+			{#if !isAdmin}
+				<div class="absolute inset-0 z-50 bg-gray-900/90 flex items-center justify-center rounded-xl">
+					<div class="text-center p-8 rounded-xl bg-gray-800/80 border border-emerald-500/20">
+						<img src={Lock} class="h-20 w-20 mx-auto mb-4 opacity-60" alt="" />
+						<p class="text-gray-300 font-medium">Admin access required</p>
+						<p class="text-sm text-gray-500 mt-1">Contact an admin to create a league.</p>
+					</div>
+				</div>
+			{/if}
 
-						{#snippet content()}
-							<Tabs.Panel value="friends">
-								<div class="my-2 space-y-2">
-									<div class="text-secondary-500">Most played with friends</div>
-									<div class="flex w-full flex-wrap">
-										{#if data.common.commonCombined}
-											{#each data.common.commonCombined as friend}
-												<div
-													class="m-1 flex flex-col card card-hover xl:w-[calc(33%-1em)] md:w-[calc(50%-1em)] max-md:w-full h-full space-y-2 items-center"
-												>
-													<div class="grid grid-cols-4 w-full min-h-[50px]">
-														{#if friend.avatar_url}
-															<div class="col-span-1 flex items-center w-full">
-																<header class="rounded-l-full h-full">
-																	<img class="rounded-l-full h-full" src={friend.avatar_url} alt="friend" />
-																</header>
-															</div>
-														{:else}
-															<div class="col-span-1 flex justify-center items-center w-full">
-																<header class="flex items-center">
-																	<i class="scale-150 fi fi-rr-portrait"></i>
-																</header>
-															</div>
-														{/if}
+			<header class="px-6 py-4 border-b border-emerald-500/10">
+				<h2 class="text-lg font-bold text-gray-100">Create a new League</h2>
+			</header>
 
-														<div class="col-span-2">
-															{#if friend.username}
-																<section class="flex items-center h-full">
-																	<h5 class="h5 overflow-hidden text-ellipsis whitespace-nowrap">
-																		{friend.username}
-																	</h5>
-																</section>
+			<div class="p-6 space-y-6">
+				<form method="POST" class="space-y-8" action="?/createLeague" use:enhance>
+					<!-- League Name -->
+					<div class="flex flex-col sm:flex-row sm:items-center gap-3">
+						<label for="leagueName" class="text-emerald-400 font-semibold text-sm whitespace-nowrap">League Name</label>
+						<input
+							type="text"
+							id="leagueName"
+							name="leagueName"
+							placeholder="Turbotown Enjoyers"
+							required
+							class="flex-1 rounded-lg bg-gray-800 border border-gray-700 text-gray-200 placeholder-gray-500 px-3 py-2 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none"
+						/>
+					</div>
+
+					<!-- Add Friends Tabs -->
+					<div class="space-y-3">
+						<h4 class="text-emerald-400 font-semibold text-sm">Add friends</h4>
+
+						<Tabs defaultValue="friends">
+							{#snippet list()}
+								<Tabs.Control value="friends">
+									{#snippet lead()}
+										<i class="fi fi-rr-following"></i>
+									{/snippet}
+									Friends
+								</Tabs.Control>
+								<Tabs.Control value="search">
+									{#snippet lead()}
+										<i class="fi fi-rr-search-heart"></i>
+									{/snippet}
+									Search
+								</Tabs.Control>
+							{/snippet}
+
+							{#snippet content()}
+								<Tabs.Panel value="friends">
+									<div class="my-2 space-y-2">
+										<div class="text-gray-400 text-sm">Most played with friends</div>
+										<div class="flex w-full flex-wrap gap-2">
+											{#if data.common.commonCombined}
+												{#each data.common.commonCombined as friend}
+													<div class="flex flex-col rounded-xl border border-emerald-500/20 bg-gray-800/60 xl:w-[calc(33%-0.5rem)] md:w-[calc(50%-0.5rem)] max-md:w-full overflow-hidden hover:border-emerald-500/40 transition-colors">
+														<div class="grid grid-cols-4 w-full min-h-[50px]">
+															{#if friend.avatar_url}
+																<div class="col-span-1 flex items-center w-full">
+																	<img class="rounded-l-xl h-full w-full object-cover" src={friend.avatar_url} alt="friend" />
+																</div>
 															{:else}
-																<section class="flex items-center h-full">
-																	<h5 class="h5 overflow-hidden text-ellipsis whitespace-nowrap">{friend}</h5>
-																</section>
+																<div class="col-span-1 flex justify-center items-center w-full bg-gray-700/50">
+																	<i class="scale-150 fi fi-rr-portrait text-gray-400"></i>
+																</div>
 															{/if}
-														</div>
-														<div
-															class="preset-filled-success-500 rounded-r-full flex items-center justify-center hover:bg-green-300 hover:cursor-pointer"
-														>
-															<button
-																class="p-2"
-																disabled={friendsString.includes(
-																	friend.account_id ? friend.account_id : friend
-																)}
-																on:click={() =>
-																	handleAddCommonFriend(friend.account_id ? friend.account_id : friend)}
-															><i class="fi fi-br-add"></i></button
-															>
+
+															<div class="col-span-2 flex items-center px-3">
+																{#if friend.username}
+																	<span class="text-sm font-medium text-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
+																		{friend.username}
+																	</span>
+																{:else}
+																	<span class="text-sm font-medium text-gray-200 overflow-hidden text-ellipsis whitespace-nowrap">
+																		{friend}
+																	</span>
+																{/if}
+															</div>
+
+															<div class="col-span-1 flex items-center justify-center">
+																<button
+																	class="w-full h-full flex items-center justify-center bg-emerald-600 hover:bg-emerald-500 text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+																	disabled={friendsString.includes(
+																		friend.account_id ? friend.account_id : friend
+																	)}
+																	onclick={() =>
+																		handleAddCommonFriend(friend.account_id ? friend.account_id : friend)}
+																><i class="fi fi-br-add"></i></button>
+															</div>
 														</div>
 													</div>
-													<!-- <div class="flex justify-around space-x-2"></div> -->
-													<!-- <footer>
-														<button
-															class="btn variant-ghost-secondary p-2"
-															disabled={friendsString.includes(friend.account_id ? friend.account_id : friend)}
-															on:click={() =>
-																handleAddCommonFriend(friend.account_id ? friend.account_id : friend)}
-															>Add to League</button
-														>
-													</footer> -->
-												</div>
-											{/each}
-										{/if}
+												{/each}
+											{/if}
+										</div>
 									</div>
-								</div>
-							</Tabs.Panel>
-							<Tabs.Panel value="search">
-								<div class="w-full italic">Coming soon!</div>
-							</Tabs.Panel>
-						{/snippet}
-					</Tabs>
-				</div>
+								</Tabs.Panel>
+								<Tabs.Panel value="search">
+									<div class="w-full italic text-gray-500 py-4">Coming soon!</div>
+								</Tabs.Panel>
+							{/snippet}
+						</Tabs>
+					</div>
 
-				<label class="label">
-					<span>Enter a comma separated list of your friend's Dota Account IDs:</span>
-					<textarea
-						class="textarea"
-						id="dotaUsersList"
-						name="dotaUsersList"
-						rows="4"
-						required
-						placeholder="100001, 20002, 30003, 40004, etc..."
-						bind:value={friendsString}
-					/>
-				</label>
+					<!-- Comma-separated IDs -->
+					<label class="block space-y-2">
+						<span class="font-medium text-gray-300 text-sm">Enter a comma separated list of your friend's Dota Account IDs:</span>
+						<textarea
+							class="w-full rounded-lg bg-gray-800 border border-gray-700 text-gray-200 placeholder-gray-500 px-3 py-2 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none"
+							id="dotaUsersList"
+							name="dotaUsersList"
+							rows="4"
+							required
+							placeholder="100001, 20002, 30003, 40004, etc..."
+							bind:value={friendsString}
+						></textarea>
+					</label>
 
-				{#if form?.missing}
-					<!-- <p class="alert-message">Enter at least one valid Dota User ID.</p> -->
-					<aside class="alert preset-tonal-primary border border-primary-500" transition:fade|local={{ duration: 200 }}>
-						<div class="alert-message">
-							<h4 class="h4 text-red-600">Enter at least one valid Dota User ID</h4>
-							<p>Total length of valid Dota User IDs was 0.</p>
+					{#if form?.missing}
+						<div class="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-300 text-sm" transition:fade|local={{ duration: 200 }}>
+							<span class="font-semibold">Enter at least one valid Dota User ID.</span>
+							<span class="text-red-400/80"> Total length of valid Dota User IDs was 0.</span>
 						</div>
-					</aside>
-				{/if}
+					{/if}
 
-				<div class="w-full flex justify-center">
-					<button type="submit" class="btn preset-filled-success-500 w-1/2 mx-auto">Create League</button>
-				</div>
-			</form>
-		</div>
+					<div class="w-full flex justify-center">
+						<button type="submit" class="px-6 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium transition-colors w-1/2">
+							Create League
+						</button>
+					</div>
+				</form>
+			</div>
+		</section>
 	</div>
-</section>
+</div>
