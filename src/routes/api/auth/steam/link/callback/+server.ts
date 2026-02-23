@@ -3,6 +3,7 @@ import type { RequestHandler } from '@sveltejs/kit';
 import prisma from '$lib/server/prisma';
 import { deriveAccountId } from '$lib/server/steam-utils';
 import { steamLink } from '../steam-link';
+import { createDotaUser } from '../../../helpers';
 
 /**
  * Handle Steam OpenID callback for account linking
@@ -40,8 +41,17 @@ export const GET: RequestHandler = async ({ request, locals }) => {
 		});
 
 		if (accountIdUser && accountIdUser.id !== locals.user.id) {
-			throw error(400, 'This Dota 2 account is already linked to another user');
+			// The other user had this ID via manual entry (they can't have a matching
+			// steam_id because we already checked steam_id uniqueness above).
+			// Clear their manually-entered account_id since we're now verifying ownership.
+			await prisma.user.update({
+				where: { id: accountIdUser.id },
+				data: { account_id: null }
+			});
 		}
+
+		// Ensure DotaUser row exists before setting FK
+		await createDotaUser(account_id);
 
 		// Update user with Steam information
 		await prisma.user.update({
@@ -49,9 +59,7 @@ export const GET: RequestHandler = async ({ request, locals }) => {
 			data: {
 				steam_id: BigInt(steamUser.steamid),
 				account_id: account_id,
-				// Optionally update username if not set
 				username: locals.user.username || steamUser.username,
-				// Optionally update avatar if not set or prefer Steam avatar
 				avatar_url: steamUser.avatar?.small || locals.user.avatar_url,
 				profile_url: steamUser.profile
 			}
