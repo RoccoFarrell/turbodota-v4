@@ -207,6 +207,6 @@ export const actions: Actions = {
 		// sees the new account_id instead of the stale pre-action value.
 		locals.user.account_id = account_id;
 
-		return { success: true };
+		return { setAccountId: { success: true } };
 	}
 };

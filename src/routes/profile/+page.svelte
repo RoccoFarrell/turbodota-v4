@@ -33,6 +33,15 @@
 		accountIdInput = data.user.account_id?.toString() ?? '';
 	});
 
+	// Clean transient query params after they've been shown
+	$effect(() => {
+		if (linkedSteam) {
+			const url = new URL(window.location.href);
+			url.searchParams.delete('linked');
+			history.replaceState({}, '', url.toString());
+		}
+	});
+
 	function dismissOnboarding() {
 		onboardingDismissed = true;
 		onboardingStep = 'choice';

@@ -1,4 +1,4 @@
-import { error, redirect } from '@sveltejs/kit';
+import { error, isHttpError, isRedirect, redirect } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
 import prisma from '$lib/server/prisma';
 import { deriveAccountId } from '$lib/server/steam-utils';
@@ -69,7 +69,7 @@ export const GET: RequestHandler = async ({ request, locals }) => {
 		throw redirect(302, '/profile?linked=steam');
 	} catch (err) {
 		console.error('Steam linking error:', err);
-		if (err instanceof Response) {
+		if (isRedirect(err) || isHttpError(err)) {
 			throw err; // Re-throw redirects and errors
 		}
 		throw error(500, 'Failed to link Steam account');
