@@ -2,21 +2,11 @@ import { error, redirect } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
 import prisma from '$lib/server/prisma';
 import { createSession, setSessionCookie } from '$lib/server/session';
+import { deriveAccountId } from '$lib/server/steam-utils';
 import steam from '../steam';
 
 //helpers
 import { createDotaUser } from '../../../helpers';
-
-/**
- * Derive Dota 2 account_id from Steam ID
- * Formula: account_id = steam_id - 76561197960265728
- * FIXED: Previous code had wrong constant (missing leading 7)
- */
-function deriveAccountId(steamId: string): number {
-	const steamIdBigInt = BigInt(steamId);
-	const accountIdBigInt = steamIdBigInt - 76561197960265728n;
-	return Number(accountIdBigInt);
-}
 
 export const GET: RequestHandler = async ({ request, cookies }) => {
 	console.log('received GET to authenticate');

@@ -1,17 +1,8 @@
 import { error, redirect } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
 import prisma from '$lib/server/prisma';
+import { deriveAccountId } from '$lib/server/steam-utils';
 import { steamLink } from '../steam-link';
-
-/**
- * Derive Dota 2 account_id from Steam ID
- * Formula: account_id = steam_id - 76561197960265728
- */
-function deriveAccountId(steamId: string): number {
-	const steamIdBigInt = BigInt(steamId);
-	const accountIdBigInt = steamIdBigInt - 76561197960265728n;
-	return Number(accountIdBigInt);
-}
 
 /**
  * Handle Steam OpenID callback for account linking
