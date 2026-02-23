@@ -1,6 +1,7 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import type { PageServerLoad, Actions } from './$types';
 import prisma from '$lib/server/prisma';
+import { isAccountLocked } from '$lib/server/steam-utils';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.user) throw redirect(302, '/');
@@ -130,7 +131,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		}
 	}
 
-	return { user, saves, matchStats };
+	return { user, saves, matchStats, isAccountLocked: isAccountLocked(user) };
 };
 
 export const actions: Actions = {
@@ -179,7 +180,13 @@ export const actions: Actions = {
 
 		const existing = await prisma.user.findUnique({ where: { account_id } });
 		if (existing && existing.id !== locals.user.id) {
-			return fail(400, { setAccountId: { error: 'This account ID is already in use' } });
+			// Check if the other user's claim is locked (verified via Steam)
+			if (isAccountLocked(existing)) {
+				return fail(400, {
+					setAccountId: { error: 'This account ID is verified by another user via Steam' }
+				});
+			}
+			// Otherwise it's a manual claim — allow last-write-wins
 		}
 
 		// User.account_id is a FK → DotaUser.account_id.
