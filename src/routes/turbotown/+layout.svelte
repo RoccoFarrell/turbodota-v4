@@ -45,8 +45,8 @@
 
 	//avatar
 	let avatarURL = $state('');
-	if (data.session && data.session.user.avatar_url) {
-		avatarURL = data.session.user.avatar_url.replace('.jpg', '_full.jpg');
+	if (data.session && data.user?.avatar_url) {
+		avatarURL = data.user.avatar_url.replace('.jpg', '_full.jpg');
 	}
 
 	let pagePath = $page.url.pathname.split('/turbotown/')[1] || '';
@@ -67,9 +67,9 @@
 	};
 
 	//set towninfo
-	if (data.session && data.session.user) {
+	if (data.session && data.user) {
 		//console.log('account_id found in turbotown layout');
-		setContext('account_id', data.session.user.account_id);
+		setContext('account_id', data.user.account_id);
 	} else {
 		console.error('no account_id found in turbotown layout');
 	}
@@ -92,7 +92,7 @@
 
 	//set metrics
 	let questRandomIDs = [...new Set(data.town.turbotown?.quests.map((quest) => quest.randomID))];
-	let randomVariabilityPercent: number = questRandomIDs.length / data.town?.turbotown?.quests?.length;
+	let randomVariabilityPercent: number = questRandomIDs.length / (data.town?.turbotown?.quests?.length ?? 1);
 
 
 	//set ban list
@@ -156,12 +156,12 @@
 						return allHeroesCopy.filter((hero: Hero) => hero.id === parseInt(randomID))[0];
 					}),
 					bannedHeroes:
-						quest1?.random?.bannedHeroes.length > 0
-							? quest1.random.bannedHeroes.split(',').map((randomID: string) => {
+						(quest1?.random?.bannedHeroes ?? '').length > 0
+							? quest1.random.bannedHeroes!.split(',').map((randomID: string) => {
 									return allHeroesCopy.filter((hero: Hero) => hero.id === parseInt(randomID))[0];
 								})
 							: [],
-					selectedRoles: quest1.random.selectedRoles.split(',') || [],
+					selectedRoles: (quest1.random.selectedRoles ?? '').split(',') || [],
 					startingGold: constant_startingGold,
 					expectedGold: quest1.random.expectedGold,
 					banMultiplier: constant_banMultiplier,
@@ -182,12 +182,12 @@
 						return allHeroesCopy.filter((hero: Hero) => hero.id === parseInt(randomID))[0];
 					}),
 					bannedHeroes:
-						quest2.random.bannedHeroes.length > 0
-							? quest2.random.bannedHeroes.split(',').map((randomID: string) => {
+						(quest2.random.bannedHeroes ?? '').length > 0
+							? quest2.random.bannedHeroes!.split(',').map((randomID: string) => {
 									return allHeroesCopy.filter((hero: Hero) => hero.id === parseInt(randomID))[0];
 								})
 							: [],
-					selectedRoles: quest2.random.selectedRoles.split(',') || [],
+					selectedRoles: (quest2.random.selectedRoles ?? '').split(',') || [],
 					startingGold: constant_startingGold,
 					expectedGold: quest2.random.expectedGold,
 					banMultiplier: constant_banMultiplier,
@@ -208,12 +208,12 @@
 						return allHeroesCopy.filter((hero: Hero) => hero.id === parseInt(randomID))[0];
 					}),
 					bannedHeroes:
-						quest3.random.bannedHeroes.length > 0
-							? quest3.random.bannedHeroes.split(',').map((randomID: string) => {
+						(quest3.random.bannedHeroes ?? '').length > 0
+							? quest3.random.bannedHeroes!.split(',').map((randomID: string) => {
 									return allHeroesCopy.filter((hero: Hero) => hero.id === parseInt(randomID))[0];
 								})
 							: [],
-					selectedRoles: quest3.random.selectedRoles.split(',') || [],
+					selectedRoles: (quest3.random.selectedRoles ?? '').split(',') || [],
 					startingGold: constant_startingGold,
 					expectedGold: quest3.random.expectedGold,
 					banMultiplier: constant_banMultiplier,
@@ -228,12 +228,7 @@
 		//end set stores
 	}
 
-	// PopupSettings removed in Skeleton v4 - using plain object
-	const popupHover = {
-		event: 'hover',
-		target: 'popupHover',
-		placement: 'bottom'
-	};
+	// PopupSettings removed in Skeleton v4
 	//refresh turbotown on render
 	//$: data.town.turbotown
 	run(() => {
@@ -257,15 +252,15 @@
 			// }
 
 			if (!$quest1Store.randomedHero) {
-				quest1Store.setBanList(setList);
+				setList && quest1Store.setBanList(setList);
 			}
 
 			if (!$quest2Store.randomedHero) {
-				quest2Store.setBanList(setList);
+				setList && quest2Store.setBanList(setList);
 			}
 
 			if (!$quest3Store.randomedHero) {
-				quest3Store.setBanList(setList);
+				setList && quest3Store.setBanList(setList);
 			}
 
 			console.log('town store quest 1 store after bans: ', $quest1Store, ' heroID: ');
@@ -320,14 +315,14 @@
 											<p class="text-xs italic text-tertiary-500 text-center">Season Participation %</p>
 											{#if data.quests?.quests.length > 0}
 												<p class="font-bold text-green-500 text-center">
-													{((data.quests.quests.length / data.league._counts.questsInSeason) * 100).toFixed(2)}
+													{((data.quests.quests.length / (data.league._counts.questsInSeason ?? 1)) * 100).toFixed(2)}
 												</p>
 											{:else}
 												<p class="text-center font-slate-700">n/a</p>
 											{/if}
 										</div>
 									</div>
-									<div class="h-full flex justify-center *:pointer-events-none" use:popup={popupHover}>
+									<div class="h-full flex justify-center *:pointer-events-none">
 										<div class="w-full my-auto">
 											<p class="text-xs italic text-tertiary-500 text-center">Random Variability %</p>
 											{#if data.quests?.quests.length > 0}
@@ -385,7 +380,7 @@
 									</p>
 								</div>
 
-								<Progress label="Progress Bar" value={50} max={100} />
+								<Progress value={50} max={100} />
 							</div>
 						{/key}
 					</div>
@@ -421,8 +416,7 @@
 					transition:slide={{ delay: 50, duration: 400, easing: expoIn, axis: 'y' }}
 					class={'fixed bottom-0 left-[256px] w-[calc(100vw-256px)] h-[500px] z-50'}
 					onblur={onBlur}
-					use:clickOutside
-					onclick_outside={onBlur}
+					use:clickOutside={onBlur}
 				>
 					<div
 						class="w-full h-16 rounded-t-3xl bg-yellow-950 hover:bg-yellow-900 border-yellow-800 border-t border-l border-r bg-linear-to-b to-transparent from-yellow-950"

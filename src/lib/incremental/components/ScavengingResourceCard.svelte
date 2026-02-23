@@ -197,7 +197,7 @@
 			{:else}
 				<p class="text-sm text-gray-400 italic text-center">No free slots available</p>
 				<p class="text-xs text-gray-400 text-center">
-					Unlock more slots in <a href="/incremental/talents" class="text-primary hover:underline">Talents</a>
+					Unlock more slots in <a href="/darkrift/talents" class="text-primary hover:underline">Talents</a>
 				</p>
 			{/if}
 		{/if}

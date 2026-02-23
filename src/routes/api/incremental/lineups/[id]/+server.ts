@@ -6,7 +6,7 @@ import { getAllowedHeroIds } from '$lib/server/incremental-hero-resolver';
 const MIN_HEROES = 1;
 const MAX_HEROES = 5;
 
-function authLineup(lineup: { save?: { userId: string } | null }, sessionUserId: string) {
+function authLineup(lineup: { save?: { userId: string } | null } | null, sessionUserId: string): asserts lineup is { save: { userId: string } } {
 	if (!lineup?.save) error(404, 'Lineup not found');
 	if (lineup.save.userId !== sessionUserId) error(403, 'Forbidden');
 }

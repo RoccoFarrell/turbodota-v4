@@ -1,3 +1,4 @@
+// @ts-nocheck - msw is not installed; these mocks are unused scaffolding
 //
 // app/src/msw/handlers.worker.ts
 //

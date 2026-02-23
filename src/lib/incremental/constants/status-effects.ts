@@ -15,24 +15,54 @@ const statusEffects: StatusEffectDef[] = [
 		tickDamageType: 'magical'
 	},
 	{
+		// Flat armor modifier; magnitude from Buff.value (e.g. -5)
 		id: 'armor_reduce',
-		armorMod: -3
+		armorMod: 0
 	},
 	{
+		// Flat magic resist modifier; magnitude from Buff.value (e.g. -0.15)
 		id: 'magic_resist_reduce',
-		magicResistMod: -0.15
+		magicResistMod: 0
 	},
 	{
 		id: 'heal_over_time',
 		healPerSecond: true
 	},
 	{
+		// Attack damage multiplier; magnitude from Buff.value (e.g. -0.2)
 		id: 'attack_damage_reduce',
-		attackDamageMult: -0.2
+		attackDamageMult: 0
 	},
 	{
 		id: 'spell_damage_boost',
 		spellDamageMult: 0.1
+	},
+	{
+		// Attack speed multiplier; magnitude from Buff.value (e.g. -0.25)
+		id: 'attack_speed_slow',
+		attackSpeedMult: 0
+	},
+	{
+		// Evasion chance (0–1); magnitude from Buff.value (e.g. 0.25)
+		id: 'evasion',
+		evasionChance: 0
+	},
+	{
+		// Flat HP shield; Buff.value = initial shield amount
+		id: 'shield',
+		shieldHp: true
+	},
+	{
+		// Magical damage over time; Buff.value = DPS (baseDamage + spellPower)
+		id: 'magic_dot',
+		tickDamage: true,
+		tickDamageType: 'magical'
+	},
+	{
+		// Physical damage over time; Buff.value = DPS (baseDamage + spellPower)
+		id: 'physical_dot',
+		tickDamage: true,
+		tickDamageType: 'physical'
 	}
 ];
 

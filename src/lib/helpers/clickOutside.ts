@@ -1,12 +1,17 @@
-export function clickOutside(node: HTMLElement, ignore?: string) {
-    console.log(node)
+export function clickOutside(node: HTMLElement, callback?: (() => void) | string) {
+    const ignore = typeof callback === 'string' ? callback : undefined;
+    const cb = typeof callback === 'function' ? callback : undefined;
     const handleClick = (event: Event) => {
         const target = event.target as HTMLElement;
         if (!event.target || (ignore && target.closest(ignore))) {
             return;
         }
         if (node && !node.contains(target) && !event.defaultPrevented) {
-            node.dispatchEvent(new CustomEvent('click_outside'));
+            if (cb) {
+                cb();
+            } else {
+                node.dispatchEvent(new CustomEvent('click_outside'));
+            }
         }
     };
 

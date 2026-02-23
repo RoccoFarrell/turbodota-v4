@@ -1,7 +1,6 @@
 <script lang="ts">
 	import type { User } from '@prisma/client';
 	import { page } from '$app/stores';
-	import { dev } from '$app/environment';
 	import { slide } from 'svelte/transition';
 	import { quintOut } from 'svelte/easing';
 
@@ -16,13 +15,7 @@
 		!!(session?.user?.account_id != null && PRIVILEGED.includes(session.user.account_id))
 	);
 
-	let incrementalExpanded = $state($page.url.pathname.startsWith('/incremental'));
-
-	$effect(() => {
-		if ($page.url.pathname.startsWith('/incremental')) {
-			incrementalExpanded = true;
-		}
-	});
+	let incrementalExpanded = $state(true);
 
 	function isActive(path: string, exact = false) {
 		return exact ? $page.url.pathname === path : $page.url.pathname.startsWith(path);
@@ -36,17 +29,17 @@
 		'pt-3 pr-3 pb-1 pl-3 flex items-center gap-2 text-xs font-extrabold tracking-[0.14em] uppercase text-slate-600 before:content-["◆"] before:text-[0.45rem] before:text-[rgb(var(--clr-accent)/0.5)] after:content-[""] after:flex-1 after:h-px after:bg-linear-to-r after:from-slate-600/50 after:to-transparent';
 
 	const incrementalRoutes = [
-		{ label: 'Enter the Rift', path: '/incremental/darkrift', icon: 'fi fi-br-flame', featured: true },
-		{ label: 'Dashboard', path: '/incremental', exact: true, icon: 'fi fi-br-apps' },
-		{ label: 'Scavenging', path: '/incremental/scavenging', icon: 'fi fi-br-pickaxe' },
-		{ label: 'Barracks', path: '/incremental/barracks', icon: 'fi fi-br-dumbbell-fitness' },
-		{ label: 'Tavern', path: '/incremental/tavern', icon: 'fi fi-rr-beer' },
-		{ label: 'Lineups', path: '/incremental/lineup', icon: 'fi fi-br-users-alt' },
-		{ label: 'Talents', path: '/incremental/talents', icon: 'fi fi-br-diploma' },
-		{ label: 'Inventory', path: '/incremental/inventory', icon: 'fi fi-rr-briefcase' },
-		{ label: 'Quests', path: '/incremental/quests', icon: 'fi fi-rr-scroll' },
-		{ label: 'History', path: '/incremental/history', icon: 'fi fi-rr-time-past' },
-		{ label: 'Atlas', path: '/incremental/atlas', icon: 'fi fi-br-globe' },
+		{ label: 'Enter the Rift', path: '/darkrift/dungeon', icon: 'fi fi-br-flame', featured: true },
+		{ label: 'Dashboard', path: '/darkrift', exact: true, icon: 'fi fi-br-apps' },
+		{ label: 'Scavenging', path: '/darkrift/scavenging', icon: 'fi fi-br-pickaxe' },
+		{ label: 'Barracks', path: '/darkrift/barracks', icon: 'fi fi-br-dumbbell-fitness' },
+		{ label: 'Tavern', path: '/darkrift/tavern', icon: 'fi fi-rr-beer' },
+		{ label: 'Lineups', path: '/darkrift/lineup', icon: 'fi fi-br-users-alt' },
+		{ label: 'Quests', path: '/darkrift/quests', icon: 'fi fi-rr-scroll' },
+		{ label: 'Inventory', path: '/darkrift/inventory', icon: 'fi fi-rr-briefcase' },
+		{ label: 'History', path: '/darkrift/history', icon: 'fi fi-rr-time-past' },
+		{ label: 'Talents', path: '/darkrift/talents', icon: 'fi fi-br-diploma' },
+		{ label: 'Atlas', path: '/darkrift/atlas', icon: 'fi fi-br-globe' },
 	];
 </script>
 
@@ -102,61 +95,11 @@
 		</a>
 	{/if}
 
-	<!-- ── EXPLORE ─────────────────────── -->
-	<div class="section-header {sectionHeader}">Explore</div>
-
+	<!-- ── HOME ───────────────────────── -->
 	<a href="/" data-sveltekit-preload-data="tap" class={navLink} class:is-active={isActive('/', true)}>
 		<i class="fi fi-br-house-chimney nav-icon text-emerald-400 w-4 text-center text-sm leading-none"></i>
 		<span>Home</span>
 	</a>
-
-	<a href="/blog" data-sveltekit-preload-data="tap" class={navLink} class:is-active={isActive('/blog')}>
-		<i class="fi fi-rr-blog-text nav-icon text-pink-400 w-4 text-center text-sm leading-none"></i>
-		<span>Blog</span>
-	</a>
-
-	{#if session?.user}
-		<a href="/profile" data-sveltekit-preload-data="tap" class={navLink} class:is-active={isActive('/profile')}>
-			<i class="fi fi-rr-user nav-icon text-cyan-400 w-4 text-center text-sm leading-none"></i>
-			<span>Profile</span>
-		</a>
-	{/if}
-
-	<!-- ── DOTA 2 ──────────────────────── -->
-	<div class="section-header mt-1 {sectionHeader}">Dota 2</div>
-
-	{#if session?.user}
-		<a href="/dotadeck" data-sveltekit-preload-data="tap" class={navLink} class:is-active={isActive('/dotadeck')}>
-			<i class="fi fi-rr-playing-cards nav-icon text-amber-400 w-4 text-center text-sm leading-none"></i>
-			<span>DotaDeck</span>
-		</a>
-	{:else}
-		<span class="{navLink} opacity-40 !cursor-not-allowed hover:!bg-transparent hover:!text-slate-400 hover:!border-l-transparent" title="Login required">
-			<i class="fi fi-rr-playing-cards nav-icon text-amber-400/40 w-4 text-center text-sm leading-none"></i>
-			<span>DotaDeck</span>
-			<i class="fi fi-br-lock text-[0.6rem] ml-auto text-slate-600"></i>
-		</span>
-	{/if}
-
-	{#if session?.user}
-		<a href="/leagues" data-sveltekit-preload-data="tap" class={navLink} class:is-active={isActive('/leagues')}>
-			<i class="fi fi-br-users-alt nav-icon text-teal-400 w-4 text-center text-sm leading-none"></i>
-			<span>Leagues</span>
-		</a>
-	{:else}
-		<span class="{navLink} opacity-40 !cursor-not-allowed hover:!bg-transparent hover:!text-slate-400 hover:!border-l-transparent" title="Login required">
-			<i class="fi fi-br-users-alt nav-icon text-teal-400/40 w-4 text-center text-sm leading-none"></i>
-			<span>Leagues</span>
-			<i class="fi fi-br-lock text-[0.6rem] ml-auto text-slate-600"></i>
-		</span>
-	{/if}
-
-	{#if isPrivileged}
-		<a href="/herostats" data-sveltekit-preload-data="tap" class={navLink} class:is-active={isActive('/herostats')}>
-			<i class="fi fi-br-chart-histogram nav-icon text-amber-400 w-4 text-center text-sm leading-none"></i>
-			<span>Hero Stats</span>
-		</a>
-	{/if}
 
 	<!-- ── THE DARK RIFT ──────────────── -->
 	<div class="section-header mt-1 {sectionHeader}">The Dark Rift</div>
@@ -164,7 +107,7 @@
 	<button
 		type="button"
 		class={navLink}
-		class:is-active={isActive('/incremental') && !incrementalExpanded}
+		class:is-active={isActive('/darkrift') && !incrementalExpanded}
 		onclick={() => (incrementalExpanded = !incrementalExpanded)}
 	>
 		<i class="fi fi-br-flame nav-icon text-violet-400 w-4 text-center text-sm leading-none"></i>
@@ -203,21 +146,47 @@
 		</div>
 	{/if}
 
-	<!-- ── DEV ────────────────────────── -->
-	{#if dev}
-		<div
-			class="flex items-center gap-2 py-1 px-3 opacity-25 before:content-[''] before:flex-1 before:h-px before:bg-red-950 after:content-[''] after:flex-1 after:h-px after:bg-red-950"
-		>
-			<span class="text-xs text-red-600 tracking-[0.2em]">✦ ✦ ✦</span>
-		</div>
-		<div class="section-header {sectionHeader} text-orange-400/60">Dev</div>
-		<a href="/admin/login" class={navLink} class:is-active={isActive('/admin/login')}>
-			<i class="fi fi-br-binary nav-icon text-sky-400 w-4 text-center text-sm leading-none"></i>
-			<span>Login</span>
+	<!-- ── DOTA 2 ──────────────────────── -->
+	<div class="section-header mt-1 {sectionHeader}">Dota 2</div>
+
+	{#if session?.user}
+		<a href="/leagues" data-sveltekit-preload-data="tap" class={navLink} class:is-active={isActive('/leagues')}>
+			<i class="fi fi-br-users-alt nav-icon text-teal-400 w-4 text-center text-sm leading-none"></i>
+			<span>Leagues</span>
 		</a>
-		<a href="/admin/register" class={navLink} class:is-active={isActive('/admin/register')}>
-			<i class="fi fi-br-binary nav-icon text-sky-400 w-4 text-center text-sm leading-none"></i>
-			<span>Register</span>
+	{:else}
+		<span class="{navLink} opacity-40 !cursor-not-allowed hover:!bg-transparent hover:!text-slate-400 hover:!border-l-transparent" title="Login required">
+			<i class="fi fi-br-users-alt nav-icon text-teal-400/40 w-4 text-center text-sm leading-none"></i>
+			<span>Leagues</span>
+			<i class="fi fi-br-lock text-[0.6rem] ml-auto text-slate-600"></i>
+		</span>
+	{/if}
+
+	{#if isPrivileged}
+		<a href="/herostats" data-sveltekit-preload-data="tap" class={navLink} class:is-active={isActive('/herostats')}>
+			<i class="fi fi-br-chart-histogram nav-icon text-amber-400 w-4 text-center text-sm leading-none"></i>
+			<span>Hero Stats</span>
+		</a>
+	{/if}
+
+	<!-- ── BOTTOM ─────────────────────── -->
+	<div class="mt-auto"></div>
+
+	<div
+		class="flex items-center gap-2 py-1 px-3 opacity-25 before:content-[''] before:flex-1 before:h-px before:bg-red-950 after:content-[''] after:flex-1 after:h-px after:bg-red-950"
+	>
+		<span class="text-xs text-red-600 tracking-[0.2em]">✦ ✦ ✦</span>
+	</div>
+
+	<a href="/blog" data-sveltekit-preload-data="tap" class={navLink} class:is-active={isActive('/blog')}>
+		<i class="fi fi-rr-blog-text nav-icon text-pink-400 w-4 text-center text-sm leading-none"></i>
+		<span>Blog</span>
+	</a>
+
+	{#if session?.user}
+		<a href="/profile" data-sveltekit-preload-data="tap" class={navLink} class:is-active={isActive('/profile')}>
+			<i class="fi fi-rr-user nav-icon text-cyan-400 w-4 text-center text-sm leading-none"></i>
+			<span>Profile</span>
 		</a>
 	{/if}
 </nav>

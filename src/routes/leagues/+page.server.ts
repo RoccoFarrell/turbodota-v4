@@ -22,7 +22,9 @@ export const actions: Actions = {
 		const user = locals.user;
 
 		if (!user || !user.roles?.includes('dev')) return fail(400, { message: 'Not an admin' });
-		const { leagueName, dotaUsersList } = Object.fromEntries(await request.formData()) as Record<string, string>;
+		const formData = await request.formData();
+		const leagueName = formData.get('leagueName') as string;
+		const dotaUsersList = formData.get('dotaUsersList') as string;
 
 		try {
 			console.log(leagueName, dotaUsersList);

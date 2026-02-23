@@ -125,7 +125,7 @@
 	let animateSlot3: boolean = $state(false);
 
 	// Subscribe to hero pool changes
-	let availableHeroCount: number = $state();
+	let availableHeroCount: number = $state(0);
 	heroPoolStore.subscribe(state => {
 		availableHeroCount = state.availableHeroes.length;
 	});
@@ -146,17 +146,17 @@
 				setTimeout(() => {
 					if (animateSlot1) {
 						$townStore.quests.quest1.reset(data.heroDescriptions.allHeroes);
-						setList?.length > 0 ? quest1Store.setBanList(setList) : '';
+						setList && setList.length > 0 ? quest1Store.setBanList(setList) : '';
 						animateSlot1 = false;
 					}
 					if (animateSlot2) {
 						$townStore.quests.quest2.reset(data.heroDescriptions.allHeroes);
-						setList?.length > 0 ? quest2Store.setBanList(setList) : '';
+						setList && setList.length > 0 ? quest2Store.setBanList(setList) : '';
 						animateSlot2 = false;
 					}
 					if (animateSlot3) {
 						$townStore.quests.quest3.reset(data.heroDescriptions.allHeroes);
-						setList?.length > 0 ? quest3Store.setBanList(setList) : '';
+						setList && setList.length > 0 ? quest3Store.setBanList(setList) : '';
 						animateSlot3 = false;
 					}
 				}, 5000);
@@ -211,12 +211,12 @@
 	let randomSeasonStats = {
 		userPlace: -1
 	};
-	if (data.session && data.session.user && data.league.currentSeasonLeaderboard) {
+	if (data.session && data.user && data.league.currentSeasonLeaderboard) {
 		randomSeasonStats = {
 			userPlace:
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 				// @ts-ignore: Unreachable code error
-				data.league.currentSeasonLeaderboard.findIndex((item: any) => item.player === data.session.user.account_id) + 1
+				data.league.currentSeasonLeaderboard.findIndex((item: any) => item.player === data.user.account_id) + 1
 		};
 	}
 
@@ -288,7 +288,7 @@
 		onQuestComplete(data.quests);
 	});
 	run(() => {
-		animateSlot1, animateSlot2, animateSlot3;
+		void animateSlot1; void animateSlot2; void animateSlot3;
 	});
 	run(() => {
 		if (banLimitErrorVisible === true)
@@ -423,7 +423,7 @@
 
 		<!-- Random button and last 5-->
 		<div class="w-full grid grid-cols-2 max-md:flex max-md:flex-col gap-x-4 my-4">
-			{#if data.session && data.session.user}
+			{#if data.session && data.user}
 				<div class="w-full">
 					<MatchHistory {matchTableData} />
 				</div>

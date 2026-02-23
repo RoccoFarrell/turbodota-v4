@@ -8,3 +8,6 @@
  * No card-battler / deck-battler setup lives here. Battler tests
  * that need a DB should use their own setup module if reintroduced.
  */
+
+/** Placeholder Prisma client for battler test fixtures (not connected to a real DB). */
+export const testPrisma = null as any;

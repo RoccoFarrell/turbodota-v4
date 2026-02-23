@@ -216,12 +216,12 @@
 	let randomSeasonStats = $state({
 		userPlace: -1
 	});
-	if (data.session && data.session.user) {
+	if (data.session && data.user) {
 		randomSeasonStats = {
 			userPlace:
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 				// @ts-ignore: Unreachable code error
-				data.currentSeasonLeaderboard.findIndex((item: any) => item.player === data.session.user.account_id) + 1
+				data.currentSeasonLeaderboard.findIndex((item: any) => item.player === data.user.account_id) + 1
 		};
 	}
 
@@ -302,7 +302,7 @@
 	// 	} else {
 	// 		console.error('[set locked random hero] - couldnt set locked random');
 	// 	}
-	// } else if (data.session && data.session.user) {
+	// } else if (data.session && data.user) {
 	// 	const t: ToastSettings = {
 	// 		message: `No active randoms found for user`,
 	// 		background: 'variant-filled-warning'
@@ -372,16 +372,16 @@
 				<div class="flex justify-around items-center">
 					<!-- <a href="/random/leaderboard"><button class="btn variant-ghost-primary">Leaderboard</button></a> -->
 
-					{#if data.session && data.session.user}
+					{#if data.session && data.user}
 						<div class="text-xs">
-							Logged in as: <p class="text-secondary-500 text-lg font-bold">{data.session.user.username}</p>
+							Logged in as: <p class="text-secondary-500 text-lg font-bold">{data.user.username}</p>
 						</div>
 					{/if}
 				</div>
 			</div>
 
 			<!-- current season info -->
-			{#if data.session && data.session.user && data.leagueAndSeasonsResult[0] && data.leagueAndSeasonsResult[0].seasons.length > 0}
+			{#if data.session && data.user && data.leagueAndSeasonsResult[0] && data.leagueAndSeasonsResult[0].seasons.length > 0}
 				<div class="flex flex-col w-full justify-center col-span-2 p-2">
 					<div class="w-full grid grid-cols-2 p-1">
 						<div class="text-sm text-tertiary-500">
@@ -498,7 +498,7 @@
 			<!-- <div class={'rounded-xl mx-1 my-2 ' + (!data.session ? ' lg:w-3/4 mx-auto my-4' : 'lg:w-1/2')}>
 				<GenerateRandom {data}></GenerateRandom>
 			</div> -->
-			{#if data.session && data.session.user}
+			{#if data.session && data.user}
 				<div class="m-2 lg:w-1/2"><MatchHistory {matchTableData} /></div>
 			{/if}
 			<div

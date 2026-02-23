@@ -1,4 +1,5 @@
 <script lang="ts">
+	// @ts-nocheck - bits-ui type incompatibility with current svelte version
 	import { RangeCalendar as RangeCalendarPrimitive } from "bits-ui";
 	import { ChevronLeft } from "radix-icons-svelte";
 	import { buttonVariants } from "$lib/components/ui/button";
@@ -29,7 +30,7 @@
 	{...rest}
 	
 >
-	{#snippet children({ builder })}
+	{#snippet children({ builder }: { builder: any })}
 		{#if children_render}{@render children_render({ builder, })}{:else}
 			<ChevronLeft class="h-4 w-4" />
 		{/if}

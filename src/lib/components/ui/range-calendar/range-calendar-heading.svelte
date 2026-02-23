@@ -1,4 +1,5 @@
 <script lang="ts">
+	// @ts-nocheck - bits-ui type incompatibility with current svelte version
 	import { RangeCalendar as RangeCalendarPrimitive } from "bits-ui";
 	import { cn } from "$lib/utils";
 
@@ -21,7 +22,7 @@
 	class={cn("text-sm font-medium", className)}
 	{...rest}
 >
-	{#snippet children({ headingValue })}
+	{#snippet children({ headingValue }: { headingValue: string })}
 		{#if children_render}{@render children_render({ headingValue, })}{:else}
 			{headingValue}
 		{/if}

@@ -124,7 +124,7 @@
 	</div>
 
 	<!-- Duration text overlay -->
-	<div class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 text-[8px] font-bold text-white bg-black/70 px-1 rounded whitespace-nowrap">
+	<div class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 text-xs font-bold text-white bg-black/70 px-1 rounded whitespace-nowrap">
 		{buff.duration.toFixed(1)}s
 	</div>
 
@@ -132,9 +132,9 @@
 	<div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block z-50 w-48 rounded-lg border border-gray-600 bg-gray-900 p-2 text-xs text-left shadow-xl pointer-events-none">
 		<p class="font-semibold text-gray-200 border-b border-gray-600 pb-1 mb-1">{displayName}</p>
 		<p class="text-gray-300 whitespace-pre-line">{description}</p>
-		<p class="text-gray-400 mt-1 text-[10px]">Duration: {buff.duration.toFixed(1)}s</p>
+		<p class="text-gray-400 mt-1 text-xs">Duration: {buff.duration.toFixed(1)}s</p>
 		{#if buff.value != null}
-			<p class="text-gray-400 text-[10px]">Value: {buff.value}</p>
+			<p class="text-gray-400 text-xs">Value: {buff.value}</p>
 		{/if}
 	</div>
 </div>

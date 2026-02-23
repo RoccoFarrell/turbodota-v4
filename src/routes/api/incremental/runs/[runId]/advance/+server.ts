@@ -47,7 +47,7 @@ export const POST: RequestHandler<{ runId: string }> = async ({
 			const nodeClearances = { ...prev, [nextNodeId.trim()]: { outcome: 'skip' as const } };
 			await prisma.incrementalRun.update({
 				where: { id: runId },
-				data: { nodeClearances }
+				data: { nodeClearances: nodeClearances as any }
 			});
 		}
 		if (result.encounter) {

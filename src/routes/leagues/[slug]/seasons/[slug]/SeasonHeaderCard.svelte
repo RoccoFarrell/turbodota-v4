@@ -4,8 +4,6 @@
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
 
-	//types
-	import type { PageData } from '../../../../turbotown/$types';
 	// ModalSettings type (not exported from Skeleton v3)
 	type ModalSettings = {
 		type?: string;
@@ -54,7 +52,7 @@
 	
 	interface Props {
 		//data
-		data: PageData;
+		data: any;
 	}
 
 	let { data }: Props = $props();
@@ -73,12 +71,12 @@
 	let randomSeasonStats = $state({
 		userPlace: -1
 	});
-	if (data.session && data.session.user && data.league.currentSeasonLeaderboard) {
+	if (data.session && data.user && data.league.currentSeasonLeaderboard) {
 		randomSeasonStats = {
 			userPlace:
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 				// @ts-ignore: Unreachable code error
-				data.league.currentSeasonLeaderboard.findIndex((item: any) => item.player === data.session.user.account_id) + 1
+				data.league.currentSeasonLeaderboard.findIndex((item: any) => item.player === data.user.account_id) + 1
 		};
 	}
 
@@ -122,7 +120,7 @@
 		</div>
 
 		<!-- current season info -->
-		{#if data.session?.user && data.league.leagueAndSeasonsResult && data.league.leagueAndSeasonsResult[0] && data.league?.leagueAndSeasonsResult[0]?.seasons?.length > 0}
+		{#if data.user && data.league.leagueAndSeasonsResult && data.league.leagueAndSeasonsResult[0] && data.league?.leagueAndSeasonsResult[0]?.seasons?.length > 0}
 			<div class="flex flex-col w-full justify-center col-span-2 p-2">
 				<div class="w-full grid grid-cols-2 p-1">
 					<div class="text-sm text-tertiary-500">

@@ -126,10 +126,16 @@ export function resolveAutoAttack(
 /** AGI-to-armor: each point of AGI adds this much to Main Armor (Dota-style). */
 const AGI_ARMOR_FACTOR = 0.167;
 
+/** Read a numeric modifier from buff: Buff.value overrides def default when present. */
+function buffModValue(b: Buff, defValue: number | undefined): number {
+	if (b.value != null) return b.value;
+	return defValue ?? 0;
+}
+
 /**
  * Effective armor (ΣArmor) and magic resist from base + buffs.
  * Main Armor = baseArmor + (agi ?? 0) × 0.167; ΣArmor = Main + Σ(armorMod from buffs).
- * Ready for armor negation when we add f(ArmorNegation).
+ * Buff.value overrides the StatusEffectDef default for armor/MR mods.
  */
 function getEffectiveArmorMr(
 	buffs: Buff[] | undefined,
@@ -142,10 +148,41 @@ function getEffectiveArmorMr(
 	let magicResist = baseMagicResist;
 	for (const b of buffs ?? []) {
 		const def = getStatusEffectDef(b.id);
-		if (def?.armorMod != null) armor += def.armorMod;
-		if (def?.magicResistMod != null) magicResist += def.magicResistMod;
+		if (!def) continue;
+		if (def.armorMod != null) armor += buffModValue(b, def.armorMod);
+		if (def.magicResistMod != null) magicResist += buffModValue(b, def.magicResistMod);
 	}
 	return { armor, magicResist: Math.max(0, Math.min(1, magicResist)) };
+}
+
+/** Sum of all attackDamageMult modifiers from buffs on a unit. */
+function getAttackDamageMult(buffs: Buff[] | undefined): number {
+	let mult = 0;
+	for (const b of buffs ?? []) {
+		const def = getStatusEffectDef(b.id);
+		if (def?.attackDamageMult != null) mult += buffModValue(b, def.attackDamageMult);
+	}
+	return mult;
+}
+
+/** Sum of all attackSpeedMult modifiers from buffs on a unit. */
+function getAttackSpeedMult(buffs: Buff[] | undefined): number {
+	let mult = 0;
+	for (const b of buffs ?? []) {
+		const def = getStatusEffectDef(b.id);
+		if (def?.attackSpeedMult != null) mult += buffModValue(b, def.attackSpeedMult);
+	}
+	return mult;
+}
+
+/** Sum of all evasion chances from buffs on a unit. Capped at 0.75. */
+function getEvasionChance(buffs: Buff[] | undefined): number {
+	let chance = 0;
+	for (const b of buffs ?? []) {
+		const def = getStatusEffectDef(b.id);
+		if (def?.evasionChance != null) chance += buffModValue(b, def.evasionChance);
+	}
+	return Math.min(0.75, Math.max(0, chance));
 }
 
 /** Active (timer) ability that can be cast on single_enemy: has damage and/or status effect. */
@@ -211,12 +248,55 @@ export function resolveSpell(
 		ability.target === 'single_enemy' &&
 		((ability.baseDamage != null && ability.baseDamage > 0) || ability.statusEffectOnHit != null);
 
+	const appliesToSelf =
+		ability.target === 'self' && ability.statusEffectOnHit != null;
+
 	let enemy = state.enemy;
 	let combatLog = state.combatLog ?? [];
+	let updatedPlayer = state.player;
 
-	if (appliesToTarget && state.enemy.length > 0) {
+	if (appliesToSelf) {
+		// Self-targeting spell: apply buff to the caster (focused hero)
+		const { statusEffectId, duration, value: seValue } = ability.statusEffectOnHit!;
+		const seDef = getStatusEffectDef(statusEffectId);
+		if (seDef) {
+			// For shield: value = baseDamage + spellPower; for evasion: value from statusEffectOnHit
+			const buffValue = seDef.shieldHp
+				? (ability.baseDamage ?? 0) + (def.spellPower ?? 0)
+				: (seValue ?? ability.baseDamage);
+			const newBuff: Buff = { id: statusEffectId, duration, value: buffValue };
+			const updatedHero = {
+				...hero,
+				buffs: [...hero.buffs, newBuff],
+				...(seDef.shieldHp && buffValue != null ? { shieldHp: (hero.shieldHp ?? 0) + buffValue } : {})
+			};
+			updatedPlayer = state.player.map((p, i) =>
+				i === heroIndex ? updatedHero : p
+			) as HeroInstance[];
+
+			combatLog = appendLog(state, {
+				time: state.elapsedTime,
+				type: 'status_effect',
+				attackerHeroIndex: heroIndex,
+				attackerHeroId: hero.heroId,
+				targetHeroIndex: heroIndex,
+				targetHeroId: hero.heroId,
+				statusEffectId,
+				statusEffectDuration: duration,
+				abilityId
+			});
+		}
+		// Also log the spell cast
+		combatLog = appendLog({ ...state, combatLog }, {
+			time: state.elapsedTime,
+			type: 'spell',
+			attackerHeroIndex: heroIndex,
+			attackerHeroId: hero.heroId,
+			abilityId
+		});
+	} else if (appliesToTarget && state.enemy.length > 0) {
 		const targetIdx = Math.min(state.targetIndex, state.enemy.length - 1);
-		let target = state.enemy[targetIdx];
+		const target = state.enemy[targetIdx];
 		const enemyDef = getEnemyDef(target.enemyDefId);
 		if (enemyDef) {
 			const enemyFrontLinerIndex = getEnemyFrontLinerIndex(state);
@@ -245,11 +325,16 @@ export function resolveSpell(
 
 			let targetBuffs = target.buffs ?? [];
 			if (ability.statusEffectOnHit) {
-				const { statusEffectId, duration } = ability.statusEffectOnHit;
-				if (getStatusEffectDef(statusEffectId)) {
+				const { statusEffectId, duration, value: seValue } = ability.statusEffectOnHit;
+				const seDef = getStatusEffectDef(statusEffectId);
+				if (seDef) {
+					// For tick damage (DoT): value = baseDamage + spellPower
+					const buffValue = seDef.tickDamage
+						? (seValue ?? ability.baseDamage ?? 0) + (def.spellPower ?? 0)
+						: (seValue ?? ability.baseDamage);
 					targetBuffs = [
 						...targetBuffs,
-						{ id: statusEffectId, duration, value: ability.baseDamage }
+						{ id: statusEffectId, duration, value: buffValue }
 					];
 					// Log status effect application
 					combatLog = appendLog(state, {
@@ -303,7 +388,7 @@ export function resolveSpell(
 		});
 	}
 
-	const player = state.player.map((p, i) =>
+	const player = (appliesToSelf ? updatedPlayer : state.player).map((p, i) =>
 		i === heroIndex
 			? { ...p, spellTimer: 0, lastCastAbilityIndex: nextAbilityIndex }
 			: p
@@ -335,7 +420,11 @@ export function resolveEnemyActions(state: BattleState, defs?: BattleDefsProvide
 		if (enemy.currentHp <= 0) continue;
 		const def = getEnemyDef(enemy.enemyDefId);
 		if (!def) continue;
-		if (enemy.attackTimer < def.attackInterval) continue;
+
+		// Attack speed slow: effective interval increased by debuff (clamped to prevent div-by-zero)
+		const enemySpeedMult = Math.max(-0.9, getAttackSpeedMult(enemy.buffs));
+		const effectiveEnemyInterval = attackInterval(def.attackInterval, enemySpeedMult);
+		if (enemy.attackTimer < effectiveEnemyInterval) continue;
 
 		const focusedHero = next.player[focusIdx];
 		if (!focusedHero || focusedHero.currentHp <= 0) break;
@@ -351,8 +440,44 @@ export function resolveEnemyActions(state: BattleState, defs?: BattleDefsProvide
 			heroDef?.baseArmor ?? 0,
 			heroDef?.baseMagicResist ?? 0
 		);
+
+		// Attack damage reduce: apply debuff multiplier to raw damage
 		const rawDamage = enemy.attackDamage ?? def.damage;
-		const finalDamage = applyDamageByType(rawDamage, DamageTypeConst.PHYSICAL, heroArmorMr);
+		const damageMult = Math.max(0, 1 + getAttackDamageMult(enemy.buffs));
+		const effectiveRawDamage = rawDamage * damageMult;
+		const finalDamage = applyDamageByType(effectiveRawDamage, DamageTypeConst.PHYSICAL, heroArmorMr);
+
+		// Evasion: check if focused hero dodges this attack
+		const evasionChance = getEvasionChance(focusedHero.buffs);
+		if (evasionChance > 0 && Math.random() < evasionChance) {
+			const evadeLog: CombatLogEntry = {
+				time: next.elapsedTime,
+				type: 'enemy_attack',
+				attackerEnemyDefId: enemy.enemyDefId,
+				attackerEnemyIndex: i,
+				targetHeroIndex: focusIdx,
+				targetHeroId: focusedHero.heroId,
+				damage: 0,
+				damageType: 'physical',
+				evaded: true
+			};
+			const enemyList = next.enemy.map((e, j) =>
+				j === i ? { ...e, attackTimer: 0 } : e
+			) as EnemyInstance[];
+			next = { ...next, enemy: enemyList, combatLog: appendLog(next, evadeLog) };
+			continue;
+		}
+
+		// Shield: absorb damage before HP
+		let remainingDamage = finalDamage;
+		let shieldAbsorbed = 0;
+		let heroShieldHp = focusedHero.shieldHp ?? 0;
+		if (heroShieldHp > 0) {
+			const absorbed = Math.min(heroShieldHp, remainingDamage);
+			heroShieldHp -= absorbed;
+			remainingDamage -= absorbed;
+			shieldAbsorbed = absorbed;
+		}
 
 		const attackLog: CombatLogEntry = {
 			time: next.elapsedTime,
@@ -361,20 +486,21 @@ export function resolveEnemyActions(state: BattleState, defs?: BattleDefsProvide
 			attackerEnemyIndex: i,
 			targetHeroIndex: focusIdx,
 			targetHeroId: focusedHero.heroId,
-			damage: Math.round(finalDamage),
+			damage: Math.round(remainingDamage),
 			damageType: 'physical',
 			rawDamage: rawDamage,
 			targetArmor: heroDef?.baseArmor ?? 0,
-			targetMagicResist: heroDef?.baseMagicResist ?? 0
+			targetMagicResist: heroDef?.baseMagicResist ?? 0,
+			...(shieldAbsorbed > 0 ? { shieldAbsorbed: Math.round(shieldAbsorbed) } : {})
 		};
 		let combatLog = appendLog(next, attackLog);
 
-		const newHeroHp = Math.max(0, next.player[focusIdx].currentHp - finalDamage);
+		const newHeroHp = Math.max(0, focusedHero.currentHp - remainingDamage);
 		const player = next.player.map((p, j) =>
-			j === focusIdx ? { ...p, currentHp: newHeroHp } : p
+			j === focusIdx ? { ...p, currentHp: newHeroHp, shieldHp: heroShieldHp } : p
 		) as HeroInstance[];
 
-		// Return damage to attacker (this enemy)
+		// Return damage to attacker (based on full finalDamage, not shield-reduced)
 		let enemyHp = enemy.currentHp;
 		if (returnRatio > 0 && finalDamage > 0) {
 			const enemyArmorMr = getEffectiveArmorMr(enemy.buffs, def.baseArmor, def.baseMagicResist);
@@ -525,6 +651,15 @@ export function processBuffs(
 			magicResist: def?.baseMagicResist ?? 0
 		}));
 	}) as HeroInstance[];
+
+	// Shield expiry: if no shield buff remains on a hero, zero out shieldHp
+	player = player.map((hero) => {
+		if ((hero.shieldHp ?? 0) <= 0) return hero;
+		const hasShieldBuff = (hero.buffs ?? []).some((b) => getStatusEffectDef(b.id)?.shieldHp);
+		if (!hasShieldBuff) return { ...hero, shieldHp: 0 };
+		return hero;
+	}) as HeroInstance[];
+
 	let enemy = state.enemy.map((e, i) => {
 		const edef = getEnemyDef(e.enemyDefId);
 		return processUnitBuffs(e, () => ({

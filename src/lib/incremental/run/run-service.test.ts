@@ -18,7 +18,7 @@ function getHeroDef(heroId: number): HeroDef | undefined { return heroById.get(h
 
 describe('run-service', () => {
 	it('startRun creates run with map and returns run state', async () => {
-		const lineupStore: Array<{ id: string; userId: string; name: string; heroIds: number[] }> = [];
+		const lineupStore: Array<{ id: string; saveId: string; name: string; heroIds: number[] }> = [];
 		const runs = new Map<string, RunRecord>();
 		const nodes = new Map<string, { nextNodeIds: string[]; nodeType: string; encounterId: string | null }>();
 		let runIdCounter = 0;
@@ -28,7 +28,7 @@ describe('run-service', () => {
 				findUnique: async (args) => {
 					const row = lineupStore.find((l) => l.id === args.where.id);
 					if (!row) return null;
-					return { id: row.id, saveId: 'save_1', heroIds: row.heroIds, save: { userId: row.userId } };
+					return { id: row.id, saveId: 'save_1', heroIds: row.heroIds, save: { userId: 'u1' } };
 				}
 			},
 			incrementalRun: {
@@ -81,7 +81,7 @@ describe('run-service', () => {
 
 		lineupStore.push({
 			id: 'lineup_1',
-			userId: 'user_1',
+			saveId: 'save_1',
 			name: 'Team',
 			heroIds: [99, 25, 50]
 		});
@@ -97,15 +97,15 @@ describe('run-service', () => {
 	it('advanceRun moves to next node; on combat node returns encounter and battle state', async () => {
 		// Use real createRunMap so nodes exist; we need a minimal db that stores runs and nodes
 		const { createRunMap, getRunState } = await import('../data/run-map');
-		const lineupStore: Array<{ id: string; userId: string; name: string; heroIds: number[] }> = [];
+		const lineupStore: Array<{ id: string; saveId: string; name: string; heroIds: number[] }> = [];
 		const lineupDb: IncrementalDb = {
 			incrementalLineup: {
 				create: async (args) => {
-					const row = { id: `lineup_${lineupStore.length + 1}`, userId: args.data.userId, name: args.data.name, heroIds: args.data.heroIds };
+					const row = { id: `lineup_${lineupStore.length + 1}`, saveId: args.data.saveId, name: args.data.name, heroIds: args.data.heroIds };
 					lineupStore.push(row);
 					return row;
 				},
-				findMany: async (args) => lineupStore.filter((l) => l.userId === args.where.userId)
+				findMany: async (args) => lineupStore.filter((l) => l.saveId === args.where.saveId)
 			},
 			incrementalRun: {
 				create: async (args) => ({
@@ -121,7 +121,7 @@ describe('run-service', () => {
 				findMany: async () => []
 			}
 		};
-		const lineup = await createLineup(lineupDb, { userId: 'u1', name: 'L', heroIds: [99, 25] });
+		const lineup = await createLineup(lineupDb, { saveId: 'save_1', name: 'L', heroIds: [99, 25] });
 		lineupStore.push(lineup);
 		const run = await createRun(lineupDb, { userId: 'u1', lineupId: lineup.id, currentNodeId: '' });
 		const runs = new Map<string, RunRecord>();
@@ -133,7 +133,7 @@ describe('run-service', () => {
 				findUnique: async (args) => {
 					const row = lineupStore.find((l) => l.id === args.where.id);
 					if (!row) return null;
-					return { id: row.id, saveId: 'save_1', heroIds: row.heroIds, save: { userId: row.userId } };
+					return { id: row.id, saveId: 'save_1', heroIds: row.heroIds, save: { userId: 'u1' } };
 				}
 			},
 			incrementalRun: {
@@ -196,8 +196,8 @@ describe('run-service', () => {
 	});
 
 	it('startRun throws when lineup has wrong user or invalid hero count', async () => {
-		const lineupStore: Array<{ id: string; userId: string; name: string; heroIds: number[] }> = [];
-		lineupStore.push({ id: 'l1', userId: 'user_1', name: 'L', heroIds: [99] });
+		const lineupStore: Array<{ id: string; saveId: string; name: string; heroIds: number[] }> = [];
+		lineupStore.push({ id: 'l1', saveId: 'save_1', name: 'L', heroIds: [99] });
 		const runs = new Map<string, RunRecord>();
 		const nodes = new Map<string, { nextNodeIds: string[]; nodeType: string; encounterId: string | null }>();
 		const db: RunServiceDb = {
@@ -205,7 +205,7 @@ describe('run-service', () => {
 				findUnique: async (args) => {
 					const row = lineupStore.find((l) => l.id === args.where.id);
 					if (!row) return null;
-					return { id: row.id, saveId: 'save_1', heroIds: row.heroIds, save: { userId: row.userId } };
+					return { id: row.id, saveId: 'save_1', heroIds: row.heroIds, save: { userId: 'u1' } };
 				}
 			},
 			incrementalRun: {
@@ -216,19 +216,19 @@ describe('run-service', () => {
 			incrementalMapNode: { createMany: async () => {}, findUnique: async () => null, findMany: async () => [] }
 		};
 		await expect(startRun(db, 'user_2', 'l1')).rejects.toThrow('Lineup does not belong to user');
-		lineupStore.push({ id: 'l2', userId: 'user_1', name: 'Empty', heroIds: [] });
+		lineupStore.push({ id: 'l2', saveId: 'save_1', name: 'Empty', heroIds: [] });
 		await expect(startRun(db, 'user_1', 'l2')).rejects.toThrow('1–5 heroes');
 	});
 
 	it('advanceRun throws when nextNodeId not in current node nextNodeIds', async () => {
-		const lineupStore: Array<{ id: string; userId: string; name: string; heroIds: number[] }> = [];
-		lineupStore.push({ id: 'l1', userId: 'u1', name: 'L', heroIds: [99] });
+		const lineupStore: Array<{ id: string; saveId: string; name: string; heroIds: number[] }> = [];
+		lineupStore.push({ id: 'l1', saveId: 'save_1', name: 'L', heroIds: [99] });
 		const runs = new Map<string, RunRecord>();
 		runs.set('r1', { id: 'r1', userId: 'u1', lineupId: 'l1', status: 'ACTIVE', currentNodeId: 'n1' });
 		const nodes = new Map<string, { nextNodeIds: string[]; nodeType: string; encounterId: string | null }>();
 		nodes.set('n1', { nextNodeIds: ['n2'], nodeType: 'COMBAT', encounterId: 'wolf_pack' });
 		const db: RunServiceDb = {
-			incrementalLineup: { findUnique: async (args) => lineupStore.find((l) => l.id === args.where.id) ?? null },
+			incrementalLineup: { findUnique: async (args) => { const row = lineupStore.find((l) => l.id === args.where.id); return row ? { id: row.id, saveId: row.saveId, heroIds: row.heroIds, save: { userId: 'u1' } } : null; } },
 			incrementalRun: {
 				create: async () => ({ id: 'r1', userId: 'u1', lineupId: 'l1', status: 'ACTIVE', currentNodeId: 'n1', startedAt: new Date(), seed: null, level: 1 }),
 				findUnique: async (args) => runs.get(args.where.id) ?? null,

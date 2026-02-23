@@ -35,7 +35,7 @@ export const GET: RequestHandler = async ({ params }) => {
             history: history.map(h => ({
                 action: h.action,
                 timestamp: h.timestamp,
-                username: h.seasonUser.user.username,
+                username: h.seasonUser.user.display_name ?? 'Unknown',
                 goldMod: h.goldMod,
                 xpMod: h.xpMod
             }))

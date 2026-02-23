@@ -22,8 +22,8 @@
 
 	function slotHref(slot: SlotState): string {
 		const def = getActionDef(slot.actionType);
-		if (def?.category === 'training') return '/incremental/barracks';
-		return '/incremental/scavenging';
+		if (def?.category === 'training') return '/darkrift/barracks';
+		return '/darkrift/scavenging';
 	}
 </script>
 
@@ -46,8 +46,8 @@
 					{#each slots as slot (slot.slotIndex)}
 						<a href={slotHref(slot)} class="flex-1 min-w-0">
 							<div class="flex items-center justify-between gap-1">
-								<span class="text-[11px] text-gray-700 dark:text-gray-300 truncate">{slotLabel(slot)}</span>
-								<span class="text-[10px] text-gray-500 dark:text-gray-400 tabular-nums shrink-0">{slotNextIn(slot).toFixed(1)}s</span>
+								<span class="text-xs text-gray-700 dark:text-gray-300 truncate">{slotLabel(slot)}</span>
+								<span class="text-xs text-gray-500 dark:text-gray-400 tabular-nums shrink-0">{slotNextIn(slot).toFixed(1)}s</span>
 							</div>
 							<div class="h-1 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden">
 								<div
@@ -60,8 +60,8 @@
 				</div>
 			{:else}
 				<div class="flex items-center gap-2">
-					<a href="/incremental/barracks" class="rounded-full border border-gray-300 dark:border-gray-600 px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">Barracks</a>
-					<a href="/incremental/scavenging" class="rounded-full border border-gray-300 dark:border-gray-600 px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">Scavenging</a>
+					<a href="/darkrift/barracks" class="rounded-full border border-gray-300 dark:border-gray-600 px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">Barracks</a>
+					<a href="/darkrift/scavenging" class="rounded-full border border-gray-300 dark:border-gray-600 px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">Scavenging</a>
 				</div>
 			{/if}
 		</div>

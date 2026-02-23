@@ -294,7 +294,7 @@
 			</aside>
 			
 			<!-- Main Content -->
-			<div class="flex w-full overflow-y-auto" id="pageRoute">
+			<div class="flex flex-1 min-w-0 overflow-y-auto" id="pageRoute">
 				{#if ($navigating && !$navigating?.to?.url.pathname.includes('herostats')) || navigatingTest}
 					<div class="m-8 w-full"><Loading /></div>
 				{:else}
@@ -389,19 +389,6 @@
 									{/if}
 								</span>
 							</div>
-							<!-- Notifications -->
-							{#if !$page.url.pathname.includes('herostats')}
-								<a href="/feed" class="h-10 w-10" aria-label="Notifications">
-									<div class="relative inline-block mt-2">
-										<span class="vibrating badge-icon bg-primary-500 absolute -top-2 right-0 z-50"
-											><p class="inline text-amber-500 font-bold"></p></span
-										>
-										<button class="hover:bg-amber-500/50 rounded-full w-10 h-10" aria-label="Notifications">
-											<i class="fi fi-rr-bell text-xl h-10 w-10"></i>
-										</button>
-									</div>
-								</a>
-							{/if}
 							<!-- Logout -->
 							<form method="POST">
 								<button class="btn bg-red-950/50 hover:bg-red-900/60 text-red-300 border border-red-800/50" formaction="/logout" type="submit">

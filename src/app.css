@@ -273,15 +273,172 @@ body {
 
 }
 
-/* Skeleton utility classes - will be available again after Skeleton v3 migration */
-.prose :is(h1) {
-  /* @apply h1; */
-  /* Skeleton h1 utility - temporarily disabled for Tailwind v4 migration */
+/* Blog prose typography — dark editorial theme */
+.blog-prose {
+  --prose-body: #d1d5db;
+  --prose-headings: #f3f4f6;
+  --prose-links: #f87171;
+  --prose-bold: #e5e7eb;
+  --prose-counters: #6b7280;
+  --prose-bullets: #991b1b;
+  --prose-hr: #1f2937;
+  --prose-quotes: #9ca3af;
+  --prose-quote-borders: #991b1b;
+  --prose-captions: #6b7280;
+  --prose-code: #fca5a5;
+  --prose-pre-code: #d1d5db;
+  --prose-pre-bg: #0a0a0f;
+  --prose-th-borders: #374151;
+  --prose-td-borders: #1f2937;
+  color: var(--prose-body);
+  font-size: 1.05rem;
+  line-height: 1.8;
 }
 
-.prose :is(h2) {
-  /* @apply h1; */
-  /* Skeleton h1 utility - temporarily disabled for Tailwind v4 migration */
+.blog-prose :is(h1, h2, h3, h4, h5, h6) {
+  color: var(--prose-headings);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.blog-prose h1 { font-size: 2rem; margin-top: 0; margin-bottom: 1rem; }
+.blog-prose h2 { font-size: 1.6rem; margin-top: 2.5rem; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid #1f2937; }
+.blog-prose h3 { font-size: 1.25rem; margin-top: 2rem; margin-bottom: 0.5rem; }
+.blog-prose h4 { font-size: 1.1rem; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+
+.blog-prose p {
+  margin-top: 0.75em;
+  margin-bottom: 0.75em;
+}
+
+.blog-prose a {
+  color: var(--prose-links);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.15s;
+  border-bottom: 1px solid transparent;
+}
+.blog-prose a:hover {
+  color: #fca5a5;
+  border-bottom-color: #fca5a580;
+}
+
+.blog-prose strong {
+  color: var(--prose-bold);
+  font-weight: 700;
+}
+
+.blog-prose ul {
+  list-style: none;
+  padding-left: 1.25em;
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+.blog-prose ul li {
+  position: relative;
+  padding-left: 0.25em;
+  margin-top: 0.35em;
+  margin-bottom: 0.35em;
+}
+.blog-prose ul li::before {
+  content: '';
+  position: absolute;
+  left: -1em;
+  top: 0.7em;
+  width: 5px;
+  height: 5px;
+  border-radius: 1px;
+  background: var(--prose-bullets);
+  transform: rotate(45deg);
+}
+
+.blog-prose ol {
+  padding-left: 1.5em;
+  margin-top: 0.5em;
+  margin-bottom: 0.5em;
+}
+.blog-prose ol li {
+  padding-left: 0.25em;
+  margin-top: 0.35em;
+  margin-bottom: 0.35em;
+}
+.blog-prose ol li::marker {
+  color: var(--prose-counters);
+  font-weight: 600;
+}
+
+.blog-prose blockquote {
+  border-left: 3px solid var(--prose-quote-borders);
+  padding-left: 1.25em;
+  margin: 1.5em 0;
+  color: var(--prose-quotes);
+  font-style: italic;
+}
+
+.blog-prose hr {
+  border: none;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--prose-hr), transparent);
+  margin: 2em 0;
+}
+
+.blog-prose code {
+  color: var(--prose-code);
+  font-size: 0.875em;
+  background: rgba(220, 38, 38, 0.08);
+  padding: 0.15em 0.4em;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.blog-prose pre {
+  background: var(--prose-pre-bg);
+  color: var(--prose-pre-code);
+  border: 1px solid #1f2937;
+  border-radius: 0.75rem;
+  padding: 1.25em 1.5em;
+  overflow-x: auto;
+  margin: 1.5em 0;
+  font-size: 0.875em;
+  line-height: 1.7;
+}
+.blog-prose pre code {
+  background: none;
+  padding: 0;
+  color: inherit;
+  font-weight: normal;
+}
+
+.blog-prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5em 0;
+  font-size: 0.925em;
+}
+.blog-prose thead th {
+  text-align: left;
+  font-weight: 700;
+  color: var(--prose-headings);
+  padding: 0.75em 1em;
+  border-bottom: 2px solid var(--prose-th-borders);
+  background: rgba(255, 255, 255, 0.02);
+}
+.blog-prose tbody td {
+  padding: 0.65em 1em;
+  border-bottom: 1px solid var(--prose-td-borders);
+}
+.blog-prose tbody tr:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.blog-prose img {
+  border-radius: 0.75rem;
+  margin: 1.5em 0;
+  border: 1px solid #1f2937;
+}
+
+.blog-prose :is(h1, h2, h3, h4, h5, h6) + * {
+  margin-top: 0;
 }
 
 .stamp{

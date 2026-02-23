@@ -1,6 +1,6 @@
 import { error, redirect } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
-import { prisma } from '$lib/server/prisma'
+import prisma from '$lib/server/prisma'
 //const SteamAuth = require("node-steam-openid");
 import steam from './steam';
 

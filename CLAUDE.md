@@ -29,7 +29,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 TurboDota is a Dota 2 companion web app with multiple features built as separate route groups:
 
 ### Core Features (Route Groups)
-- `/incremental` — **Incremental idle game** (the most active area of development). Players manage heroes from their real Dota matches in an idle RPG system.
+- `/darkrift` — **Incremental idle game** (the most active area of development). Players manage heroes from their real Dota matches in an idle RPG system.
 - `/dotadeck` — Card-based Dota game mode
 - `/cards` — Card collection/battler system
 - `/herostats`, `/winrates` — Match statistics and analytics
@@ -79,6 +79,10 @@ Never use only `prisma db push` for tracked changes. Never manually edit applied
 
 - Always use Skeleton UI v4 (`@skeletonlabs/skeleton-svelte`), Tailwind CSS v4, and Svelte 5 for all components and styling
 - Always write automated tests (Vitest + `@testing-library/svelte`) for new frontend features
+
+## Git Workflow
+
+- **Do NOT commit unless explicitly asked.** Avoid creating many small commits while working — batch changes and only commit when the user requests it.
 
 ## Key Conventions
 

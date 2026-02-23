@@ -1,7 +1,6 @@
 /**
- * Seeds the dev database with one user (Rocco) and "Dev Test League".
- * Also uploads incremental game balance data from data/heroes_base_stats.csv and data/hero_abilities.csv.
- * Order matters: DotaUser → User → League.
+ * Seeds the dev database with incremental game balance data and hero data from OpenDota.
+ * Uploads from data/heroes_base_stats.csv and data/hero_abilities.csv.
  */
 import 'dotenv/config';
 import * as fs from 'fs';
@@ -17,61 +16,10 @@ const adapter = new PrismaPg({ connectionString });
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-	const now = new Date('2024-01-16T03:10:25.957Z');
-
-	// 1. DotaUser (required for User and League members)
-	await prisma.dotaUser.upsert({
-		where: { account_id: 65110965 },
-		create: {
-			account_id: 65110965,
-			createdDate: now,
-			lastUpdated: now
-		},
-		update: {}
-	});
-
-	// 2. User (dev user; id = steam_id string for Steam login)
-	await prisma.user.upsert({
-		where: { account_id: 65110965 },
-		create: {
-			id: '76561198025376693',
-			name: 'Rocco',
-			username: 'The Dog Petter',
-			account_id: 65110965,
-			steam_id: BigInt('76561198025376693'),
-			profile_url: 'https://steamcommunity.com/profiles/76561198025376693/',
-			avatar_url:
-				'https://avatars.steamstatic.com/6f8292e77e9ae4384e0028668c7b7b0049bd1ee5.jpg',
-			roles: 'dev',
-			createdDate: now,
-			lastUpdated: now
-		},
-		update: {}
-	});
-
-	// 3. Dev Test League (creator = this user, member = their DotaUser)
-	const existing = await prisma.league.findFirst({ where: { name: 'Dev Test League' } });
-	if (existing) {
-		await prisma.league.update({
-			where: { id: existing.id },
-			data: { lastUpdated: new Date(), members: { set: [{ account_id: 65110965 }] } }
-		});
-	} else {
-		await prisma.league.create({
-			data: {
-				name: 'Dev Test League',
-				creatorID: 65110965,
-				createdDate: now,
-				lastUpdated: now,
-				members: { connect: [{ account_id: 65110965 }] }
-			}
-		});
-	}
-
-	// 4. Incremental game: hero base stats and abilities from CSVs
+	// 1. Incremental game: hero base stats and abilities from CSVs
 	await seedIncrementalHeroData(prisma);
 
-	// 5. Hero table from OpenDota (same as GET /api/getHeroes?forceUpdate=true)
+	// 2. Hero table from OpenDota (same as GET /api/getHeroes?forceUpdate=true)
 	await syncHeroesFromOpenDota(prisma);
 }
 

@@ -1,3 +1,4 @@
+// @ts-nocheck - msw is not installed; these mocks are unused scaffolding
 import { setupServer } from "msw/node";
 import { http, bypass, HttpResponse } from "msw";
 //import winOrLoss from "$lib/helpers/winOrLoss";

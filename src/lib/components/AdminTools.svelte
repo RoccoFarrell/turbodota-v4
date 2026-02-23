@@ -22,7 +22,7 @@
 	};
 
 	let matchTimestamp: number = $state(dayjs().unix());
-    const toastStore = getContext('toaster');
+    const toastStore: any = getContext('toaster');
 
     //export let seasonUserId: string;
 

@@ -33,6 +33,9 @@ function mockMapRunDb(runId: string): {
 				}),
 				findUnique: vi.fn(async (args: { where: { id: string } }) => {
 					return nodes.get(args.where.id) ?? null;
+				}),
+				findMany: vi.fn(async () => {
+					return [...nodes.values()];
 				})
 			}
 		}

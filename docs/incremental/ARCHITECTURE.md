@@ -12,7 +12,7 @@ Proposed **code layout**, **data models**, **timer engine**, and **API surface**
 4. **API**: Endpoints for lineup CRUD, run start/advance, battle actions (focus, get state), map, PvP.  
 5. **UI**: Pages and components for lineup builder, map, battle screen (tap-to-focus, timer display).
 
-The website already uses **SvelteKit** (`src/routes`), **Prisma** (`prisma/schema.prisma`), and **API routes** under `src/routes/api`. The incremental game should live as a **separate feature** (e.g. under a route prefix like `/incremental` or `/lineup`) and can share auth and user identity with the rest of the app.
+The website already uses **SvelteKit** (`src/routes`), **Prisma** (`prisma/schema.prisma`), and **API routes** under `src/routes/api`. The incremental game should live as a **separate feature** (e.g. under a route prefix like `/darkrift` or `/lineup`) and can share auth and user identity with the rest of the app.
 
 ---
 

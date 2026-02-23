@@ -2,6 +2,7 @@
 	//svelte
 	import { blur } from 'svelte/transition';
 	import type { SvelteComponent } from 'svelte';
+	import { getContext } from 'svelte';
 	import { browser } from '$app/environment';
 	import { enhance } from '$app/forms';
 
@@ -181,54 +182,48 @@
 	<div class="z-20 bg-surface-900 h-full w-full absolute top-16"></div>
 </div>
 
-<!-- Skeleton v3 Modals -->
+<!-- Modals -->
 {#if showObserverModal}
-	<Dialog 
-		open={showObserverModal} 
-		onOpenChange={(details) => showObserverModal = details.open}
+	<Dialog
+		open={showObserverModal}
+		onOpenChange={(details: any) => showObserverModal = details.open}
 	>
-		{#snippet content()}
-			<Observer
-				account_id={data.session.user.account_id}
-				statuses={data.town.turbotown.statuses}
-				turbotownID={data.town.turbotown.id}
-				seasonID={data.league.seasonID}
-				onClose={() => showObserverModal = false}
-			/>
-		{/snippet}
+		<Observer
+			account_id={data.user.account_id}
+			statuses={data.town.turbotown.statuses}
+			turbotownID={data.town.turbotown.id}
+			seasonID={data.league.seasonID}
+			onClose={() => showObserverModal = false}
+		/>
 	</Dialog>
 {/if}
 
 {#if showLinkensModal}
-	<Dialog 
-		open={showLinkensModal} 
-		onOpenChange={(details) => showLinkensModal = details.open}
+	<Dialog
+		open={showLinkensModal}
+		onOpenChange={(details: any) => showLinkensModal = details.open}
 	>
-		{#snippet content()}
-			<Linkens
-				account_id={data.session.user.account_id}
-				allTurbotowns={data.league.currentSeason.turbotowns}
-				turbotownID={data.town.turbotown.id}
-				turbotownUsers={data.league.currentSeason.turbotowns}
-				onClose={() => showLinkensModal = false}
-			/>
-		{/snippet}
+		<Linkens
+			account_id={data.user.account_id}
+			allTurbotowns={data.league.currentSeason.turbotowns}
+			turbotownID={data.town.turbotown.id}
+			turbotownUsers={data.league.currentSeason.turbotowns}
+			onClose={() => showLinkensModal = false}
+		/>
 	</Dialog>
 {/if}
 
 {#if showQuellingBladeModal}
-	<Dialog 
-		open={showQuellingBladeModal} 
-		onOpenChange={(details) => showQuellingBladeModal = details.open}
+	<Dialog
+		open={showQuellingBladeModal}
+		onOpenChange={(details: any) => showQuellingBladeModal = details.open}
 	>
-		{#snippet content()}
-			<QuellingBlade
-				account_id={data.session.user.account_id}
-				turbotownID={data.town.turbotown.id}
-				seasonID={data.league.seasonID}
-				quests={data.town.turbotown.quests}
-				onClose={() => showQuellingBladeModal = false}
-			/>
-		{/snippet}
+		<QuellingBlade
+			account_id={data.user.account_id}
+			turbotownID={data.town.turbotown.id}
+			seasonID={data.league.seasonID}
+			quests={data.town.turbotown.quests}
+			onClose={() => showQuellingBladeModal = false}
+		/>
 	</Dialog>
 {/if}

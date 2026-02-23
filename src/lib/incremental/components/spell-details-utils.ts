@@ -65,6 +65,19 @@ export function humanizeEffect(effect: string | undefined): string | null {
 			return 'Reduces armor';
 		case 'magic_resist_reduce':
 			return 'Strips magic resist';
+		case 'attack_speed_slow':
+			return 'Slows attack speed';
+		case 'attack_damage_reduce':
+			return 'Reduces attack damage';
+		case 'evasion':
+			return 'Grants evasion';
+		case 'shield':
+		case 'damage_block':
+			return 'Grants HP shield';
+		case 'magic_dot':
+			return 'Magic damage over time';
+		case 'physical_dot':
+			return 'Physical damage over time';
 		default:
 			return effect.replace(/_/g, ' ');
 	}

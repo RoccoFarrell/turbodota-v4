@@ -27,7 +27,7 @@
 		ref: any;
 	};
 	type ModalStore = any;
-	import { } from '@skeletonlabs/skeleton-svelte';
+	// Skeleton v4 components imported as needed
 
 	//images
 	import shopkeeper from '$lib/assets/shopkeeper.png';

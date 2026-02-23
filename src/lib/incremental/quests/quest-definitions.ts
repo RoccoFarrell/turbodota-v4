@@ -138,7 +138,7 @@ export interface OnboardingDef {
 	order: number;
 	/** Key that maps to a server-side completion check function. */
 	checkKey: OnboardingCheckKey;
-	/** Navigation link to the relevant page (e.g. "/incremental/scavenging"). */
+	/** Navigation link to the relevant page (e.g. "/darkrift/scavenging"). */
 	navLink: string;
 	/** Reward granted on claim. */
 	reward?: QuestReward;
@@ -235,7 +235,7 @@ export const ONBOARDING_DEFINITIONS: readonly OnboardingDef[] = [
 		description: 'Start mining to gather Essence.',
 		iconId: 'pickaxe',
 		checkKey: 'has_mining_action',
-		navLink: '/incremental/scavenging',
+		navLink: '/darkrift/scavenging',
 		reward: { currency: { key: 'essence', amount: 100 } }
 	},
 	{
@@ -246,7 +246,7 @@ export const ONBOARDING_DEFINITIONS: readonly OnboardingDef[] = [
 		description: 'Unlock a hero in the Tavern.',
 		iconId: 'users',
 		checkKey: 'has_roster_hero',
-		navLink: '/incremental/tavern',
+		navLink: '/darkrift/tavern',
 		reward: { currency: { key: 'essence', amount: 200 } }
 	},
 	{
@@ -257,7 +257,7 @@ export const ONBOARDING_DEFINITIONS: readonly OnboardingDef[] = [
 		description: 'Assemble your battle team.',
 		iconId: 'swords',
 		checkKey: 'has_lineup',
-		navLink: '/incremental/lineups',
+		navLink: '/darkrift/lineups',
 		reward: { currency: { key: 'essence', amount: 300 } }
 	},
 	{
@@ -268,7 +268,7 @@ export const ONBOARDING_DEFINITIONS: readonly OnboardingDef[] = [
 		description: 'Begin your first run.',
 		iconId: 'portal',
 		checkKey: 'has_run',
-		navLink: '/incremental/rift',
+		navLink: '/darkrift/rift',
 		reward: { currency: { key: 'essence', amount: 500 } }
 	}
 ];

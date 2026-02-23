@@ -774,7 +774,7 @@ These are in the app but not called out as separate phases in the roster-first t
 **Dependencies**: 16.1, 16.2
 
 **Tasks**:
-- [ ] Checklist or linear flow UI (e.g. on `/incremental` or dedicated `/incremental/onboarding`): show the five steps with done/current/locked; highlight “next” action (e.g. “Mine your first Essence”, “Convert a win at the Tavern”, “Train a hero”, “Build a lineup”, “Start a run”).
+- [ ] Checklist or linear flow UI (e.g. on `/darkrift` or dedicated `/darkrift/onboarding`): show the five steps with done/current/locked; highlight “next” action (e.g. “Mine your first Essence”, “Convert a win at the Tavern”, “Train a hero”, “Build a lineup”, “Start a run”).
 - [ ] After each step: show reward (e.g. “+50 Essence”, “Talent branch unlocked”) and advance to next step. Optional: dismissible or collapsible so returning players are not stuck in onboarding.
 
 **Files**: `src/routes/incremental/+page.svelte` or `src/routes/incremental/onboarding/+page.svelte`; components for onboarding checklist.

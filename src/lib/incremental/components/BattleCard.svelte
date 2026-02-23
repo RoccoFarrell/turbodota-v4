@@ -287,7 +287,7 @@
 				class:opacity-60={isStunned}
 			>
 				{#if isStunned}
-					<div class="absolute inset-0 flex items-center justify-center z-1 text-amber-400 text-[10px] font-bold gap-1">
+					<div class="absolute inset-0 flex items-center justify-center z-1 text-amber-400 text-xs font-bold gap-1">
 						<span class="gi w-3 h-3 text-amber-400" style="--gi: url({STATUS_ICONS.stun})"></span> Stunned — timers paused
 					</div>
 				{/if}
@@ -298,7 +298,7 @@
 							style="width: {attackProgress * 100}%"
 						></div>
 					</div>
-					<span class="text-[10px] text-amber-400 w-14 truncate" title="Attack timer">
+					<span class="text-xs text-amber-400 w-14 truncate" title="Attack timer">
 						{attackTimer.toFixed(1)}/{attackIntervalSec.toFixed(1)}s
 					</span>
 				</div>
@@ -308,15 +308,15 @@
 			{#if hasSpells}
 				<div class="mt-2 border-t border-gray-600 pt-1.5 {isStunned ? 'opacity-70' : ''}">
 					{#if isStunned}
-						<p class="text-[10px] text-amber-400 font-medium mb-1 flex items-center gap-1"><span class="gi w-3 h-3 text-amber-400" style="--gi: url({STATUS_ICONS.stun})"></span> Spells paused (stunned)</p>
+						<p class="text-xs text-amber-400 font-medium mb-1 flex items-center gap-1"><span class="gi w-3 h-3 text-amber-400" style="--gi: url({STATUS_ICONS.stun})"></span> Spells paused (stunned)</p>
 					{/if}
-					<p class="text-[10px] font-semibold text-blue-400 uppercase tracking-wide mb-1.5">Spells</p>
+					<p class="text-xs font-semibold text-blue-400 uppercase tracking-wide mb-1.5">Spells</p>
 					{#if (spellInfo?.abilities?.length ?? 0) > 0}
 						<div class="space-y-1.5">
 							{#each spellInfo?.abilities ?? [] as ab}
 								{@const isCasting = spellInfo?.active?.abilityId === ab.id}
 								<div
-									class="rounded border p-1.5 text-[10px] min-w-0 {isCasting
+									class="rounded border p-1.5 text-xs min-w-0 {isCasting
 										? 'border-blue-500 bg-blue-900/30'
 										: 'border-gray-600 bg-gray-800/50'}"
 								>
@@ -343,7 +343,7 @@
 						</div>
 					{:else if spellIntervalSec != null}
 						<div class="rounded border border-gray-600 bg-gray-800/50 p-1.5">
-							<p class="text-[10px] text-blue-300/80">Cooldown</p>
+							<p class="text-xs text-blue-300/80">Cooldown</p>
 							<div class="flex items-center gap-1 mt-0.5">
 								<div class="h-2 flex-1 rounded bg-gray-700 overflow-hidden">
 									<div
@@ -351,13 +351,13 @@
 										style="width: {spellProgress * 100}%"
 									></div>
 								</div>
-								<span class="text-[10px] text-blue-400">{spellTimer.toFixed(1)}/{spellIntervalSec.toFixed(1)}s</span>
+								<span class="text-xs text-blue-400">{spellTimer.toFixed(1)}/{spellIntervalSec.toFixed(1)}s</span>
 							</div>
 						</div>
 					{/if}
 				</div>
 			{:else}
-				<p class="text-[10px] text-gray-500 mt-1">Spell: —</p>
+				<p class="text-xs text-gray-500 mt-1">Spell: —</p>
 			{/if}
 		</div>
 	{:else}
@@ -393,7 +393,7 @@
 				class:opacity-60={isStunned}
 			>
 				{#if isStunned}
-					<div class="absolute inset-0 flex items-center justify-center z-1 text-amber-400 text-[10px] font-bold gap-1">
+					<div class="absolute inset-0 flex items-center justify-center z-1 text-amber-400 text-xs font-bold gap-1">
 						<span class="gi w-3 h-3 text-amber-400" style="--gi: url({STATUS_ICONS.stun})"></span> Stunned — attack paused
 					</div>
 				{/if}
@@ -404,7 +404,7 @@
 							style="width: {enemyAttackProgress * 100}%"
 						></div>
 					</div>
-					<span class="text-[10px] text-amber-400">
+					<span class="text-xs text-amber-400">
 						{enemyAttackTimer.toFixed(1)}/{enemyAttackInterval.toFixed(1)}s
 					</span>
 				</div>
@@ -428,7 +428,7 @@
 			{#if (spellInfo?.abilities?.length ?? 0) > 0}
 				<p class="text-blue-400 mt-0.5 font-medium">Spells:</p>
 				{#each spellInfo?.abilities ?? [] as ab}
-					<p class="text-blue-300 text-[11px] pl-1">
+					<p class="text-blue-300 text-xs pl-1">
 						{ab.displayName}
 						{#if ab.baseDamage != null}<span class="text-blue-200"> — {ab.baseDamage} {ab.damageType ?? 'dmg'}</span>{/if}
 						{#if ab.effect}<span class="text-gray-400"> ({ab.effect})</span>{/if}

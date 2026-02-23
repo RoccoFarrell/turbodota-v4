@@ -57,12 +57,12 @@ export const POST: RequestHandler<{ runId: string }> = async ({ params, locals }
 			where: { id: newNodeId },
 			select: { nextNodeIds: true }
 		}));
-	const isFinalNode = (newNode?.nextNodeIds?.length ?? 0) === 0;
+	const isFinalNode = (typeof newNode === 'object' && newNode?.nextNodeIds?.length ? newNode.nextNodeIds.length : 0) === 0;
 
 	await prisma.incrementalRun.update({
 		where: { id: runId },
 		data: {
-			nodeClearances,
+			nodeClearances: nodeClearances as any,
 			...(isFinalNode ? { status: IncrementalRunStatus.WON, finishedAt: new Date() } : {})
 		}
 	});

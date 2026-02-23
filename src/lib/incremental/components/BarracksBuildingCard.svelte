@@ -174,7 +174,7 @@
 		{#if !activeSlot}
 			{#if rosterHeroIds.length === 0}
 				<p class="text-xs text-gray-400 italic">
-					Recruit heroes in <a href="/incremental/tavern" class="text-primary hover:underline">Hero Tavern</a> to train here.
+					Recruit heroes in <a href="/darkrift/tavern" class="text-primary hover:underline">Hero Tavern</a> to train here.
 				</p>
 			{:else}
 				<button
@@ -213,7 +213,7 @@
 
 				{#if !hasFreeSlot}
 					<p class="text-xs text-gray-400 text-center">
-						Unlock more slots in <a href="/incremental/talents" class="text-primary hover:underline">Talents</a>
+						Unlock more slots in <a href="/darkrift/talents" class="text-primary hover:underline">Talents</a>
 					</p>
 				{/if}
 			{/if}

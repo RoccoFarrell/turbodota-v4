@@ -90,6 +90,13 @@ const EFFECT_ICONS: Record<string, string> = {
 	poison: gi('sbed', 'poison'),
 	armor_reduce: gi('delapouite', 'armor-downgrade'),
 	magic_resist_reduce: gi('lorc', 'magic-shield'),
+	attack_speed_slow: gi('lorc', 'snail'),
+	attack_damage_reduce: gi('lorc', 'breaking-chain'),
+	evasion: gi('delapouite', 'dodging'),
+	shield: gi('lorc', 'edged-shield'),
+	damage_block: gi('lorc', 'edged-shield'),
+	magic_dot: gi('lorc', 'fire-ring'),
+	physical_dot: gi('lorc', 'bleeding-wound'),
 };
 
 /** Simple hash of a string to a number. */

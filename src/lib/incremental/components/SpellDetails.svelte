@@ -228,7 +228,7 @@
 
 	/* ── Type badge ── */
 	.spell-card__type-badge {
-		font-size: 9px;
+		font-size: 0.75rem; /* text-xs minimum */
 		font-weight: 700;
 		text-transform: uppercase;
 		letter-spacing: 0.06em;
@@ -247,7 +247,7 @@
 
 	/* ── Description ── */
 	.spell-card__desc {
-		font-size: 0.6875rem; /* 11px */
+		font-size: 0.75rem; /* text-xs minimum */
 		line-height: 1.4;
 		margin: 0;
 		display: -webkit-box;
@@ -273,7 +273,7 @@
 		display: inline-flex;
 		align-items: center;
 		gap: 3px;
-		font-size: 10px;
+		font-size: 0.75rem; /* text-xs minimum */
 		font-weight: 500;
 		padding: 1px 6px;
 		border-radius: 3px;

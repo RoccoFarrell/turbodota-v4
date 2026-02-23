@@ -2,7 +2,7 @@
 	import { run } from 'svelte/legacy';
 
 	import { setContext, getContext } from 'svelte';
-	import type { Hero, Session, UserPrefs } from '@prisma/client';
+	import type { Hero, UserPrefs } from '@prisma/client';
 
 	//skeleton
 	// ToastSettings type (not exported from Skeleton v3)
@@ -37,7 +37,7 @@
 	
 	interface Props {
 		randomFound?: boolean;
-		session?: Session | null;
+		session?: any;
 		heroes?: Hero[];
 		//export let parent: any;
 		freeBans?: number;

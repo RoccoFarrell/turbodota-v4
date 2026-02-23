@@ -43,7 +43,7 @@ export const PATCH: RequestHandler<{ runId: string }> = async ({ params, request
 	if (body.heroHp === null) {
 		await prisma.incrementalRun.update({
 			where: { id: runId },
-			data: { heroHp: null }
+			data: { heroHp: { set: null } as any }
 		});
 		const runState = await getRunState(prisma as unknown as MapRunDb, runId);
 		return json(runState);

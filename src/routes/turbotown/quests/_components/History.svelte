@@ -3,12 +3,13 @@
 
 	import type { Hero, Random } from '@prisma/client';
 
+	type RandomWithMatch = Random & { match?: { kills: number; assists: number; deaths: number } };
 
 	import { calculateKdaClasses } from '$lib/helpers/tableColors';
 	import daysAgoString from '$lib/helpers/daysAgo';
 	interface Props {
 		allHeroes?: Hero[];
-		completedRandoms?: Random[];
+		completedRandoms?: RandomWithMatch[];
 	}
 
 	let { allHeroes = [], completedRandoms = $bindable([]) }: Props = $props();

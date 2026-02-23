@@ -23,13 +23,15 @@
 	/* 
         Data table setup
     */
+	// @ts-ignore: svelte-headless-table types don't resolve in svelte-check
 	import { createTable, Render, Subscribe, createRender } from 'svelte-headless-table';
+	// @ts-ignore: svelte-headless-table types don't resolve in svelte-check
 	import { addSelectedRows } from 'svelte-headless-table/plugins';
 	import { readable } from 'svelte/store';
 	import * as Table from '$lib/components/ui/table';
 	import DataTableCheckbox from './data-table-checkbox.svelte';
 
-	let { data } = $props();
+	let { data }: { data: any } = $props();
 	if(browser){
 		console.log(`[/seasons/<ID>] data: `, data);
 	}
@@ -42,13 +44,13 @@
 	const columns = table.createColumns([
 		table.column({
 			accessor: 'id',
-			header: (_, { pluginStates }) => {
+			header: (_: any, { pluginStates }: any) => {
 				const { allPageRowsSelected } = pluginStates.select;
 				return createRender(DataTableCheckbox, {
 					checked: allPageRowsSelected
 				});
 			},
-			cell: ({ row }, { pluginStates }) => {
+			cell: ({ row }: any, { pluginStates }: any) => {
 				const { getRowState } = pluginStates.select;
 				const { isSelected } = getRowState(row);
 				return createRender(DataTableCheckbox, {
@@ -69,7 +71,7 @@
 			header: 'Hero'
 		}),
 		table.column({
-			accessor: ({ id }) => id,
+			accessor: ({ id }: any) => id,
 			header: 'Random ID'
 		})
 	]);

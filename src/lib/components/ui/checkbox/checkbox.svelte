@@ -1,4 +1,5 @@
 <script lang="ts">
+	// @ts-nocheck - bits-ui type incompatibility with current svelte version
 	import { Checkbox as CheckboxPrimitive } from "bits-ui";
 	import { Check, Minus } from "radix-icons-svelte";
 	import { cn } from "$lib/utils";
@@ -30,7 +31,7 @@
 		
 		
 	>
-		{#snippet children({ isChecked, isIndeterminate })}
+		{#snippet children({ isChecked, isIndeterminate }: { isChecked: boolean; isIndeterminate: boolean })}
 				{#if isIndeterminate}
 				<Minus class="h-3.5 w-3.5" />
 			{:else}

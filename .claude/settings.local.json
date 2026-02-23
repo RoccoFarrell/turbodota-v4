@@ -50,7 +50,17 @@
       "Bash(PGPASSWORD='postgres' \"C:\\\\Program Files\\\\PostgreSQL\\\\18\\\\bin\\\\psql.exe\":*)",
       "Bash(PGPASSWORD='postgres' \"C:\\\\Program Files\\\\PostgreSQL\\\\18\\\\bin\\\\psql.exe\" -h 127.0.0.1 -p 54322 -U postgres -d postgres -c \":*)",
       "Bash(git diff:*)",
-      "Bash(npx svelte-kit sync:*)"
+      "Bash(npx svelte-kit sync:*)",
+      "Bash(cp:*)",
+      "Bash(xargs:*)",
+      "Bash(cd:*)",
+      "Bash(cd /c/Users/bosto/Documents/code/turbodota-v4 && npm ls svelte-headless-table 2>&1)",
+      "Bash(\"C:/Users/bosto/Documents/code/turbodota-v4/src/lib/server/steam-utils.test.ts\":*)",
+      "Bash(\"C:/Users/bosto/Documents/code/turbodota-v4/src/lib/server/steam-utils.ts\":*)",
+      "Bash(\"C:/Users/bosto/Documents/code/turbodota-v4/src/routes/api/auth/steam/authenticate/+server.ts\":*)",
+      "Bash(\"C:/Users/bosto/Documents/code/turbodota-v4/src/routes/api/auth/steam/link/callback/+server.ts\":*)",
+      "Bash(git status:*)",
+      "Bash(git reset:*)"
     ]
   }
 }

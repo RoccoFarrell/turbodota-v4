@@ -38,6 +38,52 @@ const heroDefs: HeroDef[] = [
 		baseMagicResist: 0.25,
 		baseSpellInterval: 8,
 		abilityIds: ['poison_touch']
+	},
+	{
+		heroId: 101,
+		primaryAttribute: PrimaryAttribute.AGI,
+		baseAttackInterval: 1.3,
+		baseAttackDamage: 20,
+		baseMaxHp: 110,
+		baseArmor: 2,
+		baseMagicResist: 0.25,
+		baseSpellInterval: 8,
+		abilityIds: ['test_attack_speed_slow']
+	},
+	{
+		heroId: 102,
+		primaryAttribute: PrimaryAttribute.AGI,
+		baseAttackInterval: 1.3,
+		baseAttackDamage: 20,
+		baseMaxHp: 110,
+		baseArmor: 2,
+		baseMagicResist: 0.25,
+		baseSpellInterval: 8,
+		abilityIds: ['test_evasion']
+	},
+	{
+		heroId: 103,
+		primaryAttribute: PrimaryAttribute.STR,
+		baseAttackInterval: 1.4,
+		baseAttackDamage: 18,
+		baseMaxHp: 160,
+		baseArmor: 5,
+		baseMagicResist: 0.25,
+		baseSpellInterval: 12,
+		spellPower: 20,
+		abilityIds: ['test_shield']
+	},
+	{
+		heroId: 104,
+		primaryAttribute: PrimaryAttribute.INT,
+		baseAttackInterval: 1.5,
+		baseAttackDamage: 18,
+		baseMaxHp: 100,
+		baseArmor: 1,
+		baseMagicResist: 0.25,
+		baseSpellInterval: 8,
+		spellPower: 10,
+		abilityIds: ['test_magic_dot']
 	}
 ];
 
@@ -70,6 +116,40 @@ const abilityDefs: AbilityDef[] = [
 		damageType: 'magical',
 		baseDamage: 30,
 		statusEffectOnHit: { statusEffectId: 'stun', duration: 1.5 }
+	},
+	{
+		id: 'test_attack_speed_slow',
+		type: 'active',
+		trigger: 'timer',
+		effect: 'attack_speed_slow',
+		target: 'single_enemy',
+		statusEffectOnHit: { statusEffectId: 'attack_speed_slow', duration: 4, value: -0.25 }
+	},
+	{
+		id: 'test_evasion',
+		type: 'active',
+		trigger: 'timer',
+		effect: 'evasion',
+		target: 'self',
+		statusEffectOnHit: { statusEffectId: 'evasion', duration: 6, value: 0.25 }
+	},
+	{
+		id: 'test_shield',
+		type: 'active',
+		trigger: 'timer',
+		effect: 'shield',
+		target: 'self',
+		baseDamage: 50,
+		statusEffectOnHit: { statusEffectId: 'shield', duration: 8 }
+	},
+	{
+		id: 'test_magic_dot',
+		type: 'active',
+		trigger: 'timer',
+		effect: 'magic_dot',
+		target: 'single_enemy',
+		baseDamage: 15,
+		statusEffectOnHit: { statusEffectId: 'magic_dot', duration: 5 }
 	}
 ];
 

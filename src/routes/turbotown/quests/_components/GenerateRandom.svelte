@@ -7,7 +7,7 @@
 	import { setContext, getContext } from 'svelte';
 
 	//prisma types
-	import type { Random, Hero, UserPrefs, Session } from '@prisma/client';
+	import type { Random, Hero } from '@prisma/client';
 	//types
 	import type { createRandomStore } from '$lib/stores/randomStore';
 
@@ -45,9 +45,9 @@
 
 	
 	interface Props {
-		data: PageData;
+		data: any;
 		//component props
-		session?: Session | null;
+		session?: any;
 		questSlot?: number;
 	}
 
@@ -60,7 +60,7 @@
 
 	/* Get session from context */
 	if (!session) session = getContext('session');
-	let preferences: UserPrefs[] = [];
+	let preferences: any[] = [];
 	if (!preferences || preferences.length === 0) preferences = getContext('userPreferences');
 	//console.log(preferences);
 
@@ -123,7 +123,7 @@
 				questSlot
 			};
 			//bodyData.availableHeroes = bodyData.availableHeroes.map((hero: Hero) => hero.id);
-			let response = await fetch(`/api/random/${data.session.user.account_id}/create`, {
+			let response = await fetch(`/api/random/${data.user!.account_id}/create`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json'
@@ -164,7 +164,7 @@
 		console.log('checking for random complete');
 		let responseStratz, responseParse;
 		if (!stratzTimeout && data.session) {
-			responseStratz = await fetch(`/api/stratz/players/${data.session.user.account_id}/recentMatches`, {
+			responseStratz = await fetch(`/api/stratz/players/${data.user!.account_id}/recentMatches`, {
 				method: 'GET',
 				headers: {
 					'Content-Type': 'application/json'
@@ -320,7 +320,7 @@
 						<p class="inline text-orange-500 font-bold">{stratzTimeoutCountdown}s</p>
 						before you can check again
 					</div>
-					{#if data.session && data.session.user}
+					{#if data.session && data.user}
 						<div class="flex items-center justify-center">
 							<button
 								class="btn preset-filled-success-500 w-full"

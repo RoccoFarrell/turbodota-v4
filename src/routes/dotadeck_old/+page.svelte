@@ -10,13 +10,13 @@
 
     interface UserCard {
         id: string;
-        card: HeroCard;
+        card: HeroCardData;
         timesPlayed: number;
         totalScore: number;
         lastPlayedAt: Date | null;
     }
 
-    interface HeroCard {
+    interface HeroCardData {
         id: string;
         name: string;
         imageUrl: string;
@@ -37,7 +37,7 @@
     let score = data.score ?? 0;
     let gold = $state(data.gold ?? 0);
     let currentRound = data.currentRound ?? null;
-    let shopCards = $derived(data.shopCards ?? []);
+    let shopCards: HeroCardData[] = $state(data.shopCards ?? []);
 
     const colors = {
         STAT_MULTIPLIER: '#4A90E2',
@@ -55,7 +55,7 @@
         purchaseSound = new Audio('/sounds/purchase.mp3');
     }
 
-    function toggleCardSelection(card: HeroCard) {
+    function toggleCardSelection(card: HeroCardData) {
         if (selectedCards.has(card.id)) {
             selectedCards.delete(card.id);
         } else {
@@ -69,7 +69,7 @@
         selectedCards = selectedCards;
     }
 
-    async function purchaseCard(card: HeroCard) {
+    async function purchaseCard(card: HeroCardData) {
         if (gold < card.cost) return;
 
         const response = await fetch('/api/cards/purchase', {

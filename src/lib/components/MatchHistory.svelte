@@ -10,6 +10,11 @@
 	import { calculateKdaClasses } from '$lib/helpers/tableColors';
 	let { matchTableData } = $props();
 
+	/** @deprecated tableMapperValues was removed in Skeleton v4 */
+	function tableMapperValues(data: any[], keys: string[]): any[][] {
+		return data.map((row: any) => keys.map((k: string) => row[k]));
+	}
+
 	const tableMatch: TableSource = {
 		// A list of heading labels.
 		head: ['Match ID', 'Result', 'Hero', 'KDA'],

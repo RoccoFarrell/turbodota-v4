@@ -8,7 +8,7 @@
 
 	
 
-	let heroes = getContext('heroes')
+	let heroes: any = getContext('heroes')
 
 	//constants
 	//import { playersWeCareAbout } from '$lib/constants/playersWeCareAbout';
@@ -156,7 +156,7 @@
         Handle row select
     */
 
-	let selectedRow = $derived(-1);
+	let selectedRow = $state(-1);
 	const rowSelected = (row: any, i: number) => {
 		console.log(`${i}: ${row}`);
 		if (selectedRow === i) selectedRow = -1;
@@ -254,7 +254,7 @@
 									>
 										<History
 											completedRandoms={randoms.filter(
-												(random) => random.account_id === parseInt(row[0]) && random.active === false && random.status !== 'skipped'
+												(random: any) => random.account_id === parseInt(row[0]) && random.active === false && random.status !== 'skipped'
 											)}
 											allHeroes={heroes}
 										/>

@@ -188,7 +188,7 @@
 									<span class="gi w-5 h-5 text-amber-400" style="--gi: url({slot.def.icon})"></span>
 								{/if}
 							</span>
-							<span class="absolute -bottom-0.5 -right-0.5 min-w-4 rounded bg-black/80 px-0.5 text-center text-[10px] font-bold text-white">
+							<span class="absolute -bottom-0.5 -right-0.5 min-w-4 rounded bg-black/80 px-0.5 text-center text-xs font-bold text-white">
 								{formatAmount(slot.amount)}
 							</span>
 						</button>
@@ -220,7 +220,7 @@
 								{/if}
 							</span>
 							{#if slot.quantity > 1}
-								<span class="absolute -bottom-0.5 -right-0.5 min-w-4 rounded bg-black/80 px-0.5 text-center text-[10px] font-bold text-white">
+								<span class="absolute -bottom-0.5 -right-0.5 min-w-4 rounded bg-black/80 px-0.5 text-center text-xs font-bold text-white">
 									{slot.quantity > 999 ? '999+' : slot.quantity}
 								</span>
 							{/if}
@@ -247,7 +247,7 @@
 					</div>
 					<div class="min-w-0">
 						<h3 class="text-sm font-semibold text-gray-100 truncate">{selectedSlot.def.name}</h3>
-						<p class="text-[11px] text-gray-400">
+						<p class="text-xs text-gray-400">
 							{#if selectedSlot.type === 'currency'}
 								Owned: {(selectedSlot.currencyId === 'essence' ? essence : (currencies[selectedSlot.currencyId] ?? 0)).toLocaleString()}
 							{:else}

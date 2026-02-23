@@ -15,18 +15,15 @@
 	import LocalizedFormat from 'dayjs/plugin/localizedFormat';
 	dayjs.extend(LocalizedFormat);
 
-	//page data
-	import type { PageData } from '../$types';
-
 	//stores
 	//import { randomStore } from '$lib/stores/randomStore';
 	import { townStore } from '$lib/stores/townStore';
 
 	
 	interface Props {
-		data: PageData;
+		data: any;
 		//component props
-		session?: Session | null;
+		session?: any;
 		questSlot?: number;
 	}
 
@@ -40,7 +37,7 @@
 
 	/* Get session from context */
 	if (!session) session = getContext('session');
-	let preferences: UserPrefs[] = [];
+	let preferences: any[] = [];
 	if (!preferences || preferences.length === 0) preferences = getContext('userPreferences');
 	//console.log(preferences);
 
@@ -96,7 +93,7 @@
 				randomedHero: generatedRandomHero.id
 			};
 			//bodyData.availableHeroes = bodyData.availableHeroes.map((hero: Hero) => hero.id);
-			let response = await fetch(`/api/random/${data.session.user.account_id}/create`, {
+			let response = await fetch(`/api/random/${data.user.account_id}/create`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json'
@@ -125,7 +122,7 @@
 	const checkForRandomComplete = async () => {
 		let responseStratz, responseParse;
 		if (!stratzTimeout && data.session) {
-			responseStratz = await fetch(`/api/stratz/players/${data.session.user.account_id}/recentMatches`, {
+			responseStratz = await fetch(`/api/stratz/players/${data.user.account_id}/recentMatches`, {
 				method: 'GET',
 				headers: {
 					'Content-Type': 'application/json'
@@ -234,7 +231,7 @@
 				</div>
 			{/if}
 		{/await}
-		{#if data.session && data.session.user}
+		{#if data.session && data.user}
 			<div class="flex items-center justify-center">
 				<button
 					class="btn preset-filled-success-500 w-full"
@@ -248,7 +245,7 @@
 				>
 			</div>
 		{/if}
-		<!-- {#if data.session && data.session.user}
+		<!-- {#if data.session && data.user}
 					<div class="my-4"><MatchHistory {matchTableData} /></div>
 				{/if} -->
 	</div>

@@ -7,11 +7,10 @@
 	import { getHeroDef as getHeroDefStub, getAbilityDef as getAbilityDefStub } from '$lib/incremental/constants';
 	import type { HeroDef, AbilityDef } from '$lib/incremental/types';
 	import { toaster } from '$lib/toaster';
-	import { TRAINING_BUILDINGS, formatStat } from '$lib/incremental/actions/constants';
-	import type { TrainingStatKey } from '$lib/incremental/actions/constants';
 	import { computeLineupStats, type HeroCombatStats } from '$lib/incremental/stats/lineup-stats';
 
 	import { abilityIconPath } from './game-icons';
+	import HeroDetailPanel from './HeroDetailPanel.svelte';
 
 	function abilityDisplayName(ability: AbilityDef | undefined): string {
 		if (!ability) return '';
@@ -112,23 +111,6 @@
 	let reordering = $state(false);
 	let healingIndex = $state<number | null>(null);
 	let hoveredHeroIndex = $state<number | null>(null);
-
-	function statLabel(statKey: string): string {
-		return TRAINING_BUILDINGS[statKey as TrainingStatKey]?.name ?? statKey;
-	}
-
-	function statWithTraining(
-		heroId: number,
-		value: number | undefined,
-		trainedKey: string | undefined,
-		format: (v: number) => string = formatStat
-	): string {
-		if (value == null) return '—';
-		const base = format(value);
-		const tr = trainedKey != null ? trainingByHero?.[heroId]?.[trainedKey] : undefined;
-		if (tr != null) return `${base} (+${format(tr)} from training)`;
-		return base;
-	}
 
 	function currentHp(index: number): number {
 		const def = getHeroDef(heroIds[index]);
@@ -306,7 +288,7 @@
 						<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
 						<span class="relative inline-flex rounded-full h-2 w-2 bg-amber-400"></span>
 					</span>
-					<span class="text-[11px] font-medium text-amber-400">Active run</span>
+					<span class="text-xs font-medium text-amber-400">Active run</span>
 				{/if}
 			</div>
 			{#if showActions}
@@ -314,13 +296,13 @@
 					{#if activeRun}
 						{@const ar = activeRun}
 						<a
-							href="/incremental/darkrift/{ar.runId}"
+							href="/darkrift/dungeon/{ar.runId}"
 							class="rounded-md border border-gray-600 bg-gray-800 px-2.5 py-1 text-xs font-medium text-gray-300 hover:bg-gray-700 hover:text-gray-100 transition-colors"
 						>
 							View run
 						</a>
 						<a
-							href="/incremental/lineup/{lineupId}"
+							href="/darkrift/lineup/{lineupId}"
 							class="rounded-md border border-gray-600 bg-gray-800 px-2.5 py-1 text-xs font-medium text-gray-300 hover:bg-gray-700 hover:text-gray-100 transition-colors"
 						>
 							Edit
@@ -337,7 +319,7 @@
 						{/if}
 					{:else}
 						<a
-							href="/incremental/lineup/{lineupId}"
+							href="/darkrift/lineup/{lineupId}"
 							class="rounded-md border border-gray-600 bg-gray-800 px-2.5 py-1 text-xs font-medium text-gray-300 hover:bg-gray-700 hover:text-gray-100 transition-colors"
 						>
 							Edit
@@ -371,27 +353,27 @@
 		{#if lineupStats.heroStats.length > 0}
 			<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-px bg-gray-700/40">
 				<div class="flex items-center gap-1.5 px-3 py-2 bg-gray-900/80">
-					<span class="text-amber-400 text-[11px] font-semibold uppercase tracking-wide">Auto</span>
+					<span class="text-amber-400 text-xs font-semibold uppercase tracking-wide">Auto</span>
 					<span class="text-sm font-bold text-amber-300">{fmtDps(lineupStats.totalAutoDps)}</span>
 				</div>
 				<div class="flex items-center gap-1.5 px-3 py-2 bg-gray-900/80">
-					<span class="text-blue-400 text-[11px] font-semibold uppercase tracking-wide">Spell</span>
+					<span class="text-blue-400 text-xs font-semibold uppercase tracking-wide">Spell</span>
 					<span class="text-sm font-bold text-blue-300">{fmtDps(lineupStats.totalSpellDps)}</span>
 				</div>
 				<div class="flex items-center gap-1.5 px-3 py-2 bg-gray-900/80">
-					<span class="text-white/60 text-[11px] font-semibold uppercase tracking-wide">Total</span>
+					<span class="text-white/60 text-xs font-semibold uppercase tracking-wide">Total</span>
 					<span class="text-sm font-bold text-white">{fmtDps(lineupStats.totalDps)} DPS</span>
 				</div>
 				<div class="flex items-center gap-1.5 px-3 py-2 bg-gray-900/80">
-					<span class="text-green-400 text-[11px] font-semibold uppercase tracking-wide">HP</span>
+					<span class="text-green-400 text-xs font-semibold uppercase tracking-wide">HP</span>
 					<span class="text-sm font-bold text-green-300">{fmtHp(lineupStats.totalHp)}</span>
 				</div>
 				<div class="flex items-center gap-1.5 px-3 py-2 bg-gray-900/80">
-					<span class="text-gray-400 text-[11px] font-semibold uppercase tracking-wide">Armor</span>
+					<span class="text-gray-400 text-xs font-semibold uppercase tracking-wide">Armor</span>
 					<span class="text-sm font-bold text-gray-300">{lineupStats.avgArmor.toFixed(1)}</span>
 				</div>
 				<div class="flex items-center gap-1.5 px-3 py-2 bg-gray-900/80">
-					<span class="text-cyan-400 text-[11px] font-semibold uppercase tracking-wide">MR</span>
+					<span class="text-cyan-400 text-xs font-semibold uppercase tracking-wide">MR</span>
 					<span class="text-sm font-bold text-cyan-300">{Math.round(lineupStats.avgMagicResist * 100)}%</span>
 				</div>
 			</div>
@@ -426,7 +408,7 @@
 								</svg>
 							</span>
 						{/if}
-						<span class="text-[11px] font-mono text-gray-500 w-3 text-center shrink-0">{index + 1}</span>
+						<span class="text-xs font-mono text-gray-500 w-3 text-center shrink-0">{index + 1}</span>
 
 						<!-- Hero icon -->
 						<span class="d2mh hero-{heroId} shrink-0 w-8 h-8 rounded bg-gray-700" aria-hidden="true"></span>
@@ -436,7 +418,7 @@
 							<div class="flex items-center gap-1.5">
 								<span class="truncate text-sm font-medium text-gray-100">{getHeroName(heroId)}</span>
 								{#if def}
-									<span class="text-[9px] font-bold uppercase px-1 py-0.5 rounded {ATTR_COLORS[def.primaryAttribute] ?? 'bg-gray-600 text-gray-300'}">
+									<span class="text-xs font-bold uppercase px-1 py-0.5 rounded {ATTR_COLORS[def.primaryAttribute] ?? 'bg-gray-600 text-gray-300'}">
 										{def.primaryAttribute}
 									</span>
 								{/if}
@@ -465,92 +447,19 @@
 						{/if}
 
 						<!-- Hover popover -->
-						{#if hoveredHeroIndex === index}
+						{#if hoveredHeroIndex === index && def}
 							<div
-								class="absolute left-full top-0 z-50 ml-2 w-[min(340px,90vw)] rounded-xl border border-gray-600 bg-gray-900 shadow-xl p-4"
+								class="absolute left-full top-0 z-50 ml-2 w-[min(380px,90vw)] max-h-[80vh] overflow-y-auto"
 								role="tooltip"
 							>
-								<div class="flex items-center gap-2 border-b border-gray-700 pb-2 mb-3">
-									<span class="d2mh hero-{heroId} shrink-0 w-10 h-10 rounded bg-gray-700" aria-hidden="true"></span>
-									<div>
-										<p class="font-semibold text-gray-100">{getHeroName(heroId)}</p>
-										{#if def}
-											<span class="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded {ATTR_COLORS[def.primaryAttribute] ?? 'bg-gray-600 text-gray-300'}">
-												{def.primaryAttribute}
-											</span>
-										{/if}
-									</div>
-								</div>
-								{#if def}
-									<!-- DPS breakdown -->
-									{#if hs}
-										<p class="text-[10px] font-semibold text-gray-400 uppercase mb-1.5 tracking-wider">DPS Breakdown</p>
-										<div class="grid grid-cols-3 gap-2 mb-3">
-											<div class="rounded bg-amber-500/10 border border-amber-500/20 px-2 py-1.5 text-center">
-												<p class="text-[10px] text-amber-400/80 uppercase">Auto</p>
-												<p class="text-sm font-bold text-amber-300">{fmtDps(hs.autoDps)}</p>
-											</div>
-											<div class="rounded bg-blue-500/10 border border-blue-500/20 px-2 py-1.5 text-center">
-												<p class="text-[10px] text-blue-400/80 uppercase">Spell</p>
-												<p class="text-sm font-bold text-blue-300">{fmtDps(hs.spellDps)}</p>
-											</div>
-											<div class="rounded bg-white/5 border border-white/10 px-2 py-1.5 text-center">
-												<p class="text-[10px] text-gray-400 uppercase">Total</p>
-												<p class="text-sm font-bold text-white">{fmtDps(hs.totalDps)}</p>
-											</div>
-										</div>
-									{/if}
-
-									<p class="text-[10px] font-semibold text-gray-400 uppercase mb-1.5 tracking-wider">Stats</p>
-									<dl class="grid grid-cols-2 gap-x-3 gap-y-1 text-sm mb-4">
-										<span class="text-gray-500">Max HP</span>
-										<span class="text-gray-100">{statWithTraining(heroId, def.baseMaxHp, 'hp', (v) => String(Math.round(v)))}</span>
-										<span class="text-gray-500">Attack damage</span>
-										<span class="text-gray-100">{statWithTraining(heroId, def.baseAttackDamage, 'attack_damage')}</span>
-										<span class="text-gray-500">Armor</span>
-										<span class="text-gray-100">{statWithTraining(heroId, def.baseArmor, 'armor')}</span>
-										<span class="text-gray-500">Magic resist</span>
-										<span class="text-gray-100">{statWithTraining(heroId, def.baseMagicResist, 'magic_resist', (v) => (v * 100).toFixed(1) + '%')}</span>
-										<span class="text-gray-500">Attack interval</span>
-										<span class="text-gray-100">{def.baseAttackInterval}s{#if trainingByHero[heroId]?.attack_speed != null} <span class="text-amber-400">+{formatStat(trainingByHero[heroId].attack_speed)} speed</span>{/if}</span>
-										{#if def.baseSpellInterval != null}
-											<span class="text-gray-500">Spell interval</span>
-											<span class="text-gray-100">{def.baseSpellInterval}s{#if trainingByHero[heroId]?.spell_haste != null} <span class="text-blue-400">+{formatStat(trainingByHero[heroId].spell_haste)} haste</span>{/if}</span>
-										{/if}
-									</dl>
-									{#if (def.abilityIds?.length ?? 0) > 0}
-										<p class="text-[10px] font-semibold text-gray-400 uppercase mb-1.5 tracking-wider">Abilities</p>
-										<div class="space-y-2">
-											{#each def.abilityIds as abilityId}
-												{@const ability = getAbilityDef(abilityId)}
-												<div class="rounded-lg border border-gray-700 bg-gray-800/50 p-2.5">
-													<p class="text-sm font-semibold text-gray-100">{abilityDisplayName(ability)}</p>
-													{#if ability?.description}
-														<p class="text-xs text-gray-400 mt-1">{ability.description}</p>
-													{/if}
-													<dl class="grid grid-cols-2 gap-x-2 gap-y-0.5 mt-1.5 text-xs text-gray-400">
-														{#if ability}
-															<span><strong class="text-gray-500">Type</strong> {ability.type}</span>
-															<span><strong class="text-gray-500">Trigger</strong> {ability.trigger}</span>
-															{#if ability.effect != null}<span><strong class="text-gray-500">Effect</strong> {ability.effect}</span>{/if}
-															{#if ability.target != null}<span><strong class="text-gray-500">Target</strong> {ability.target}</span>{/if}
-															{#if ability.damageType != null}<span><strong class="text-gray-500">Dmg type</strong> {ability.damageType}</span>{/if}
-															{#if ability.baseDamage != null}<span><strong class="text-gray-500">Base dmg</strong> {ability.baseDamage}</span>{/if}
-															{#if ability.returnDamageRatio != null}<span><strong class="text-gray-500">Return</strong> {ability.returnDamageRatio}</span>{/if}
-															{#if ability.statusEffectOnHit != null}<span class="col-span-2"><strong class="text-gray-500">On hit</strong> {ability.statusEffectOnHit.statusEffectId} {ability.statusEffectOnHit.duration}s</span>{/if}
-														{:else}
-															<span class="col-span-2 text-gray-500">—</span>
-														{/if}
-													</dl>
-												</div>
-											{/each}
-										</div>
-									{:else}
-										<p class="text-xs text-gray-500 italic">No abilities.</p>
-									{/if}
-								{:else}
-									<p class="text-sm text-gray-400">Stats not loaded.</p>
-								{/if}
+								<HeroDetailPanel
+									heroDef={def}
+									heroName={getHeroName(heroId)}
+									training={trainingByHero?.[heroId] ?? {}}
+									{abilityDefs}
+									{getAbilityDef}
+									theme="default"
+								/>
 							</div>
 						{/if}
 					</div>

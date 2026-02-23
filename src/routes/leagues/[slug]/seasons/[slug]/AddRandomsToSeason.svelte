@@ -14,13 +14,15 @@
 	/* 
         Data table setup
     */
+	// @ts-ignore: svelte-headless-table types don't resolve in svelte-check
 	import { createTable, Render, Subscribe, createRender } from 'svelte-headless-table';
+	// @ts-ignore: svelte-headless-table types don't resolve in svelte-check
 	import { addSelectedRows } from 'svelte-headless-table/plugins';
 	import { readable } from 'svelte/store';
 	import * as Table from '$lib/components/ui/table';
 	import DataTableCheckbox from './data-table-checkbox.svelte';
 
-	let { data = $bindable() } = $props();
+	let { data = $bindable() }: { data: any } = $props();
 	console.log(`[/seasons/<ID>] data: `, data);
 
 	const table = createTable(readable(data.allRandoms), {
@@ -30,13 +32,13 @@
 	const columns = table.createColumns([
 		table.column({
 			accessor: 'id',
-			header: (_, { pluginStates }) => {
+			header: (_: any, { pluginStates }: any) => {
 				const { allPageRowsSelected } = pluginStates.select;
 				return createRender(DataTableCheckbox, {
 					checked: allPageRowsSelected
 				});
 			},
-			cell: ({ row }, { pluginStates }) => {
+			cell: ({ row }: any, { pluginStates }: any) => {
 				const { getRowState } = pluginStates.select;
 				const { isSelected } = getRowState(row);
 				return createRender(DataTableCheckbox, {
@@ -57,7 +59,7 @@
 			header: 'Hero'
 		}),
 		table.column({
-			accessor: ({ id }) => id,
+			accessor: ({ id }: any) => id,
 			header: 'Random ID'
 		})
 	]);
@@ -108,7 +110,7 @@
 								<Table.Row>
 									{#each headerRow.cells as cell (cell.id)}
 										<Subscribe attrs={cell.attrs()}  props={cell.props()}>
-											{#snippet children({ attrs })}
+											{#snippet children({ attrs }: any)}
 																		<Table.Head {...attrs} class="[&:has([role=checkbox])]:pl-3">
 													<Render of={cell.render()} />
 												</Table.Head>
@@ -122,11 +124,11 @@
 					<Table.Body {...$tableBodyAttrs}>
 						{#each $pageRows as row (row.id)}
 							<Subscribe rowAttrs={row.attrs()} >
-								{#snippet children({ rowAttrs })}
+								{#snippet children({ rowAttrs }: any)}
 												<Table.Row {...rowAttrs} data-state={$selectedDataIds[row.id] && 'selected'}>
 										{#each row.cells as cell (cell.id)}
 											<Subscribe attrs={cell.attrs()} >
-												{#snippet children({ attrs })}
+												{#snippet children({ attrs }: any)}
 																		<Table.Cell {...attrs}>
 														<Render of={cell.render()} />
 													</Table.Cell>

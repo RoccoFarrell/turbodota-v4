@@ -67,8 +67,8 @@
     let temp2 = heroes.filter(hero => hero.id == currentQuestList[0].random.randomedHero)
     console.log("temp2", temp2[0].localized_name)
 
-    let inputQuestID: number = $state()
-    let inputrandomID : number = $state()
+    let inputQuestID: number = $state(0)
+    let inputrandomID : number = $state(0)
 
 	function onFormSubmit(selectedQuestID: any, randomID: any): void {
         inputQuestID = selectedQuestID

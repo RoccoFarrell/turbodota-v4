@@ -75,8 +75,9 @@ export interface AbilityDef {
 	abilityName?: string;
 	/** User-facing description from DB. */
 	description?: string;
-	/** When cast, apply this status effect to the spell target (e.g. stun). */
-	statusEffectOnHit?: { statusEffectId: string; duration: number };
+	/** When cast, apply this status effect to the spell target (e.g. stun).
+	 *  value overrides Buff.value (debuff magnitude) when present. */
+	statusEffectOnHit?: { statusEffectId: string; duration: number; value?: number };
 }
 
 /** Enemy unit definition (HP, attack interval, damage, defensive stats). */
@@ -103,7 +104,8 @@ export interface EncounterDef {
 // Status effects (buffs / debuffs)
 // ---------------------------------------------------------------------------
 
-/** Definition of a status effect (stun, poison, stat mods, etc.). */
+/** Definition of a status effect (stun, poison, stat mods, etc.).
+ *  For numeric modifiers (armorMod, attackDamageMult, etc.), Buff.value overrides the def value when present. */
 export interface StatusEffectDef {
 	id: string;
 	/** If true, target cannot advance attack or spell timers. */
@@ -111,13 +113,21 @@ export interface StatusEffectDef {
 	/** If true, each tick deals damage; amount comes from Buff.value and tickDamageType. */
 	tickDamage?: boolean;
 	tickDamageType?: DamageType;
-	/** Multiplier to incoming/outgoing damage or other stats. Applied additively (e.g. -0.2 = 20% less). */
+	/** Multiplier applied additively to attack damage output (e.g. -0.2 = 20% less). Buff.value overrides. */
 	attackDamageMult?: number;
 	spellDamageMult?: number;
+	/** Flat armor modifier. Buff.value overrides when present. */
 	armorMod?: number;
+	/** Flat magic resist modifier. Buff.value overrides when present. */
 	magicResistMod?: number;
 	/** Heal over time per second; value from Buff.value. */
 	healPerSecond?: boolean;
+	/** Multiplier applied additively to attack speed (e.g. -0.25 = 25% slower). Buff.value overrides. */
+	attackSpeedMult?: number;
+	/** Evasion chance (0–1) granted to the buff holder. Buff.value overrides. Capped at 0.75. */
+	evasionChance?: number;
+	/** If true, Buff.value represents flat HP shield that absorbs incoming damage before HP. */
+	shieldHp?: boolean;
 }
 
 /** A single buff/debuff instance on a unit. Duration in seconds; value used for scaling (e.g. poison damage). */
@@ -142,6 +152,8 @@ export interface HeroInstance {
 	buffs: Buff[];
 	/** Index into active (timer) abilities for round-robin casting. */
 	lastCastAbilityIndex?: number;
+	/** Current HP shield. Absorbs incoming damage before currentHp is reduced. */
+	shieldHp?: number;
 }
 
 /** Single enemy instance in battle. */
@@ -197,6 +209,10 @@ export interface CombatLogEntry {
 	statusEffectDuration?: number;
 	/** For summon: the enemy def id that was summoned (summonedEnemyDefId). */
 	summonedEnemyDefId?: string;
+	/** True if the attack was evaded (no damage dealt). */
+	evaded?: boolean;
+	/** Amount absorbed by the hero's HP shield. */
+	shieldAbsorbed?: number;
 }
 
 /** Full battle state. All heroes' attack timers advance; only Front Liner spell timer advances. */

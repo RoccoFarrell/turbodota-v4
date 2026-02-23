@@ -37,7 +37,7 @@
 
 	let { account_id, allTurbotowns, turbotownID, turbotownUsers, onClose }: Props = $props();
 
-	let selectedUser: String = $state();
+	let selectedUser: String = $state('');
 	let selectedTown = $state(allTurbotowns.filter((town) => town.user.account_id === account_id));
 	let selectedTownString: String = $state(townToString(selectedTown[0]));
 

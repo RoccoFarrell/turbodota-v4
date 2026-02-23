@@ -13,9 +13,51 @@ function primaryAttribute(value: string): PrimaryAttribute {
 	return PrimaryAttributeConst.STR;
 }
 
-/** Derive statusEffectOnHit from DB ability when effect/target imply a stun. */
-function statusEffectOnHitFromDb(effect: string | null, target: string | null): { statusEffectId: 'stun'; duration: number } | undefined {
-	if (effect === 'stun' && target === 'single_enemy') return { statusEffectId: 'stun', duration: 1.5 };
+/** Derive statusEffectOnHit from DB ability effect and target columns. */
+function statusEffectOnHitFromDb(
+	effect: string | null,
+	target: string | null
+): { statusEffectId: string; duration: number; value?: number } | undefined {
+	if (!effect) return undefined;
+
+	// Self-targeting buffs (evasion, shield)
+	if (target === 'self') {
+		switch (effect) {
+			case 'evasion':
+				return { statusEffectId: 'evasion', duration: 6, value: 0.25 };
+			case 'shield':
+				// Shield value is computed at cast time (baseDamage + spellPower)
+				return { statusEffectId: 'shield', duration: 8 };
+			case 'damage_block':
+				return { statusEffectId: 'shield', duration: 8 };
+			default:
+				return undefined;
+		}
+	}
+
+	// Enemy-targeting debuffs
+	if (target === 'single_enemy') {
+		switch (effect) {
+			case 'stun':
+				return { statusEffectId: 'stun', duration: 1.5 };
+			case 'attack_speed_slow':
+				return { statusEffectId: 'attack_speed_slow', duration: 4, value: -0.25 };
+			case 'attack_damage_reduce':
+				return { statusEffectId: 'attack_damage_reduce', duration: 4, value: -0.2 };
+			case 'armor_reduce':
+				return { statusEffectId: 'armor_reduce', duration: 6, value: -5 };
+			case 'magic_resist_reduce':
+				return { statusEffectId: 'magic_resist_reduce', duration: 6, value: -0.15 };
+			case 'magic_dot':
+				// Value = baseDamage DPS; spellPower added at cast time in resolveSpell
+				return { statusEffectId: 'magic_dot', duration: 5 };
+			case 'physical_dot':
+				return { statusEffectId: 'physical_dot', duration: 5 };
+			default:
+				return undefined;
+		}
+	}
+
 	return undefined;
 }
 

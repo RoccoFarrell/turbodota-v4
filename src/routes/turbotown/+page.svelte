@@ -74,12 +74,12 @@
 	let randomSeasonStats = {
 		userPlace: -1
 	};
-	if (data.session && data.session.user && data.league.currentSeasonLeaderboard) {
+	if (data.session && data.user && data.league.currentSeasonLeaderboard) {
 		randomSeasonStats = {
 			userPlace:
 				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 				// @ts-ignore: Unreachable code error
-				data.league.currentSeasonLeaderboard.findIndex((item: any) => item.player === data.session.user.account_id) + 1
+				data.league.currentSeasonLeaderboard.findIndex((item: any) => item.player === data.user.account_id) + 1
 		};
 	}
 

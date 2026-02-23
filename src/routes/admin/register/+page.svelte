@@ -9,7 +9,7 @@
 	import { getContext } from 'svelte';
 	const toastStore = getContext<{ trigger: (settings: ToastSettings) => void }>('toaster');
 
-	let { form } = $props();
+	let { form }: { form: any } = $props();
 	run(() => {
 		if (form?.missing) {
 			const t: ToastSettings = {

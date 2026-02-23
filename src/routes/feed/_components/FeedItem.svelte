@@ -52,7 +52,7 @@
 			</div>
 			<div class="mr-2">
 				{#if action?.user?.avatar_url}
-					<Avatar width="w-12" rounded="rounded-xl">
+					<Avatar class="w-12 rounded-xl">
 						<Avatar.Image src={getHighDefSteamAvatar(action.user.avatar_url)} />
 						<Avatar.Fallback>{action.user.username?.charAt(0).toUpperCase() || 'U'}</Avatar.Fallback>
 					</Avatar>
@@ -72,7 +72,7 @@
 					<p class="ps-1">has an</p>
 					<p class="text-blue-500 ps-1">active quest</p>
 					<p class="ps-1">as</p>
-					<i class={`d2mh hero-${heroes.filter((hero) => hero.id === action.quest.random.randomedHero)[0].id} m-1 p-4`}
+					<i class={`d2mh hero-${heroes.filter((hero: any) => hero.id === action.quest.random.randomedHero)[0].id} m-1 p-4`}
 					></i>
 					<p>in slot {action.quest.questSlot}</p>
 				{:else if action.quest.status === 'completed'}
@@ -80,7 +80,7 @@
 						{action.quest.win ? 'won' : 'lost'}
 					</p>
 					<p class="ps-1">quest as</p>
-					<i class={`d2mh hero-${heroes.filter((hero) => hero.id === action.quest.random.randomedHero)[0].id} m-1 p-4`}
+					<i class={`d2mh hero-${heroes.filter((hero: any) => hero.id === action.quest.random.randomedHero)[0].id} m-1 p-4`}
 					></i>
 					<!-- on
 					<p class="font-extrabold ps-1">{dayjs(action.quest.endDate).format('lll')}</p> -->
@@ -94,7 +94,7 @@
 				{:else if action.quest.status === 'skipped'}
 					<p class="ps-1 text-orange-500">skipped</p>
 					<p class="ps-1">quest as</p>
-					<i class={`d2mh hero-${heroes.filter((hero) => hero.id === action.quest.random.randomedHero)[0].id} m-1 p-4`}
+					<i class={`d2mh hero-${heroes.filter((hero: any) => hero.id === action.quest.random.randomedHero)[0].id} m-1 p-4`}
 					></i>
 					<!-- on
 					<p class="font-extrabold ps-1">{dayjs(action.quest.endDate).format('lll')}</p> -->
@@ -114,7 +114,7 @@
 				<p class="font-extrabold ps-1 text-amber-300">{action.action.action}</p>
 				<p class="ps-1">to {action.action.action === 'observer' ? 'select' : 'skip'}</p>
 				{#if action.action.value}
-					<i class={`d2mh hero-${heroes.filter((hero) => hero.id === parseInt(action.action.value))[0].id} m-1 p-4`}
+					<i class={`d2mh hero-${heroes.filter((hero: any) => hero.id === parseInt(action.action.value))[0].id} m-1 p-4`}
 					></i>
 				{:else}
 					<i class="fi fi-sr-person-circle-question text-2xl px-2"></i>
@@ -129,7 +129,7 @@
 					<p>has</p>
 					<div class="inline">
 						{#each action.heroes as heroID}
-							<i class={`d2mh hero-${heroes.filter((hero) => hero.id === heroID)[0].id} m-1 p-4`}></i>
+							<i class={`d2mh hero-${heroes.filter((hero: any) => hero.id === heroID)[0].id} m-1 p-4`}></i>
 						{/each}
 					</div>
 					<p>as their active quests</p>

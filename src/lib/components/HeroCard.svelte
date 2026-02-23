@@ -2,7 +2,7 @@
     import { createBubbler } from 'svelte/legacy';
 
     const bubble = createBubbler();
-    import type { HeroCard as HeroCardType } from '$lib/types';
+    type HeroCardType = { id: string; effectType: string; statType: string; cost: number; [key: string]: any };
 
     interface Props {
         card: HeroCardType;
@@ -33,7 +33,7 @@
     } as const;
 
     function generateCardPattern(card: HeroCardType): string {
-        const baseColor = colors[card.effectType] || '#4A90E2';
+        const baseColor = colors[card.effectType as keyof typeof colors] || '#4A90E2';
         return `
             <svg width="100%" height="100%" viewBox="0 0 300 400" xmlns="http://www.w3.org/2000/svg">
                 <defs>
@@ -87,7 +87,7 @@
         <div class="relative w-[140px] aspect-3/4 rounded-lg overflow-hidden"
              style="background-image: url('data:image/svg+xml;utf8,{encodeURIComponent(generateCardPattern(card))}')">
             <div class="absolute inset-0 flex items-center justify-center">
-                <div class="text-2xl font-bold" style="color: {colors[card.effectType]}">
+                <div class="text-2xl font-bold" style="color: {colors[card.effectType as keyof typeof colors]}">
                     {card.statType.charAt(0)}
                 </div>
             </div>
