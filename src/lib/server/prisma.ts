@@ -10,7 +10,7 @@ if (!connectionString) {
 		'Prisma: set DIRECT_URL or DATABASE_URL in your environment (e.g. .env)'
 	);
 }
-const adapter = new PrismaPg({ connectionString });
+const adapter = new PrismaPg({ connectionString, ssl: { rejectUnauthorized: false } });
 const prisma = new PrismaClient({ adapter });
 
 // prisma.$on('query', (e) => {
