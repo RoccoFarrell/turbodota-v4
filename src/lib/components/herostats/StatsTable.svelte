@@ -6,9 +6,6 @@
 		meta?: any[][];
 	};
 
-	//helpers
-	import { calculateKdaClasses, calculateWinPercentageClasses } from '$lib/helpers/tableColors';
-
 	//stores
 	import { sortData } from '$lib/stores/sortData';
 
@@ -18,22 +15,31 @@
 		sortBy?: SortBy;
 	}
 
-	let { tableData = $bindable({
-		head: [],
-		body: []
-	}), selectedPlayer = 'All', sortBy = $bindable({
-		sortObj: {
-			headerText: 'Games',
-			headerKey: 'games',
-			index: 1
-		},
-		ascending: false
-	}) }: Props = $props();
+	let {
+		tableData = $bindable({
+			head: [],
+			body: []
+		}),
+		selectedPlayer = 'All',
+		sortBy = $bindable({
+			sortObj: {
+				headerText: 'Games',
+				headerKey: 'games',
+				index: 1
+			},
+			ascending: false
+		})
+	}: Props = $props();
 
 	interface SortObj {
 		headerText: string;
 		headerKey: string;
 		index: number;
+	}
+
+	interface SortBy {
+		sortObj: SortObj;
+		ascending: boolean;
 	}
 
 	const sortMap: SortObj[] = [
@@ -89,7 +95,8 @@
 		}
 	];
 
-	//$: handleSortHeaderChange($sortData.sortHeader)
+	const headers = ['Player', 'Games', 'Wins', 'Losses', 'Win %', 'KDA', 'Kills', 'Deaths', 'Assists'];
+	const hiddenOnMobile = new Set([2, 3, 6, 7, 8]);
 
 	function handleSortHeaderClick(headerText: string) {
 		let temp = sortMap.filter((item) => item.headerText === headerText)[0];
@@ -107,62 +114,77 @@
 			})
 		};
 	}
+
+	function getWinPillClasses(value: number): string {
+		if (value < 0.45) return 'bg-red-900/60 text-red-400';
+		if (value > 0.55) return 'bg-emerald-900/60 text-emerald-400';
+		return 'bg-slate-800/60 text-slate-300';
+	}
+
+	function getKdaPillClasses(value: number): string {
+		if (value < 3) return 'bg-red-900/60 text-red-400';
+		if (value > 6) return 'bg-emerald-900/60 text-emerald-400';
+		return 'bg-slate-800/60 text-slate-300';
+	}
+
+	function getDisplayHeaders(): string[] {
+		if (selectedPlayer === 'All') return headers;
+		return ['Hero', ...headers.slice(1)];
+	}
 </script>
 
-<!-- Native Table Element -->
-<table class="table table-interactive">
-	<thead>
-		<tr>
-			{#if selectedPlayer == 'All'}
-				{#each ['Player', 'Games', 'Wins', 'Losses', 'Win %', 'KDA', 'Kills', 'Deaths', 'Assists'] as headerText, i}
+<div class="bg-black/40 backdrop-blur-sm border border-amber-900/30 rounded-lg overflow-hidden">
+	<table class="w-full border-collapse">
+		<thead>
+			<tr class="border-b border-amber-500/20">
+				{#each getDisplayHeaders() as headerText, i}
 					<th
-						id={headerText}
-						class={'hover:bg-surface-500/50' +
-							([2, 3, 6, 7, 8].includes(i) ? ' max-sm:hidden md:visible' : '') +
-							(headerText === sortBy.sortObj.headerText && sortBy.ascending ? ' table-sort-asc' : '') +
-							(headerText === sortBy.sortObj.headerText && !sortBy.ascending ? ' table-sort-dsc' : '')}
-						onclick={() => handleSortHeaderClick(headerText)}>{headerText}</th
+						class="px-3 py-2.5 text-left font-semibold uppercase tracking-wider text-xs text-amber-300/70 cursor-pointer select-none hover:text-amber-300 transition-colors duration-150{hiddenOnMobile.has(i) ? ' max-sm:hidden' : ''}"
+						onclick={() => handleSortHeaderClick(headerText)}
 					>
-				{/each}
-			{:else}
-				{#each ['Hero', 'Games', 'Wins', 'Losses', 'Win %', 'KDA', 'Kills', 'Deaths', 'Assists'] as headerText, i}
-					<th
-						id={headerText}
-						class={'hover:bg-surface-500/50' +
-							([2, 3, 6, 7, 8].includes(i) ? ' max-sm:hidden md:visible' : '') +
-							(headerText === sortBy.sortObj.headerText && sortBy.ascending ? ' table-sort-asc' : '') +
-							(headerText === sortBy.sortObj.headerText && !sortBy.ascending ? ' table-sort-dsc' : '')}
-						onclick={() => handleSortHeaderClick(headerText)}>{headerText}</th
-					>
-				{/each}
-			{/if}
-		</tr>
-	</thead>
-	<tbody>
-		{#key tableData}
-			{#each tableData.body as row, i}
-				<tr>
-					{#each ['Player', 'Games', 'Wins', 'Losses', 'Win %', 'KDA', 'Kills', 'Deaths', 'Assists'] as cellText, i}
-						{#if i === 4}
-							<td class={`${calculateWinPercentageClasses(parseFloat(row[i]))}`}>{(parseFloat(row[i]) * 100).toFixed(2)}</td>
-						{:else if i === 1}
-							<td class="text-primary-500 font-semibold">{row[i]}</td>
-						{:else if i === 5}
-							<td class={`${calculateKdaClasses(parseFloat(row[i]))}`}>{parseFloat(row[i]).toFixed(2)}</td>
-						{:else if [2, 3, 6, 7, 8].includes(i)}
-							<td class="max-sm:hidden md:visible">{row[i]}</td>
-						{:else}
-							<td>{row[i]}</td>
+						{headerText}
+						{#if headerText === sortBy.sortObj.headerText}
+							<span class="ml-1 text-amber-400">{sortBy.ascending ? '▲' : '▼'}</span>
 						{/if}
-					{/each}
-				</tr>
-			{/each}
-		{/key}
-	</tbody>
-	<!-- <tfoot>
-			<tr>
-				<th colspan="3">Calculated Total Weight</th>
-				<td>test</td>
+					</th>
+				{/each}
 			</tr>
-		</tfoot> -->
-</table>
+		</thead>
+		<tbody>
+			{#key tableData}
+				{#each tableData.body as row, rowIndex}
+					<tr class="hover:bg-amber-500/5 transition-colors duration-150{rowIndex % 2 === 0 ? ' bg-white/[0.02]' : ''}">
+						{#each headers as _cellText, i}
+							{#if i === 0}
+								<!-- Name column -->
+								<td class="px-3 py-2 font-medium text-slate-200">{row[i]}</td>
+							{:else if i === 1}
+								<!-- Games column -->
+								<td class="px-3 py-2 text-amber-400 font-semibold">{row[i]}</td>
+							{:else if i === 4}
+								<!-- Win % pill badge -->
+								<td class="px-3 py-2">
+									<span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold {getWinPillClasses(parseFloat(row[i]))}"
+										>{(parseFloat(row[i]) * 100).toFixed(1)}%</span
+									>
+								</td>
+							{:else if i === 5}
+								<!-- KDA pill badge -->
+								<td class="px-3 py-2">
+									<span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold {getKdaPillClasses(parseFloat(row[i]))}"
+										>{parseFloat(row[i]).toFixed(2)}</span
+									>
+								</td>
+							{:else if hiddenOnMobile.has(i)}
+								<!-- Wins, Losses, Kills, Deaths, Assists — hidden on mobile -->
+								<td class="px-3 py-2 text-slate-400 max-sm:hidden">{row[i]}</td>
+							{:else}
+								<td class="px-3 py-2 text-slate-400">{row[i]}</td>
+							{/if}
+						{/each}
+					</tr>
+				{/each}
+			{/key}
+		</tbody>
+	</table>
+</div>

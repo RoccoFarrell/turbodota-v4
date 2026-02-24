@@ -183,6 +183,11 @@
 		<span>Blog</span>
 	</a>
 
+	<a href="/herostats" data-sveltekit-preload-data="tap" class={navLink} class:is-active={isActive('/herostats')}>
+		<i class="fi fi-br-chart-histogram nav-icon text-amber-400 w-4 text-center text-sm leading-none"></i>
+		<span>Hero Stats</span>
+	</a>
+
 	{#if session?.user}
 		<a href="/profile" data-sveltekit-preload-data="tap" class={navLink} class:is-active={isActive('/profile')}>
 			<i class="fi fi-rr-user nav-icon text-cyan-400 w-4 text-center text-sm leading-none"></i>

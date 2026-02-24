@@ -1,56 +1,42 @@
 <script lang="ts">
-	import { handlers } from 'svelte/legacy';
-
 	import type { PageData } from './$types';
-	import { page } from '$app/stores';
-	import { navigating } from '$app/stores';
 	import type { Hero } from '@prisma/client';
 
-	//components
-	import { Tabs, Progress } from '@skeletonlabs/skeleton-svelte';
-	
-	// TableSource type (might need to be defined locally if not exported)
+	// Components
+	import Loading from '$lib/components/Loading.svelte';
+	import StatsTable from '$lib/components/herostats/StatsTable.svelte';
+
+	// Helpers
+	import winOrLoss from '$lib/helpers/winOrLoss';
+	import { filterMatchesByGameMode } from '$lib/helpers/herostats';
+
+	// Constants
+	import { playersWeCareAbout } from '$lib/constants/playersWeCareAbout';
+	import { heroRoles } from '$lib/constants/heroRoles';
+
+	// Stores
+	import { sortData } from '$lib/stores/sortData';
+
+	// TableSource type
 	type TableSource = {
 		head: string[];
 		body: any[][];
 	};
-	
+
 	// Helper function to map table data values
 	function tableMapperValues(data: any[], keys: string[]): any[][] {
 		return data.map(item => keys.map(key => item[key]));
 	}
-	import Loading from '$lib/components/Loading.svelte';
 
-	import StatsTable from '$lib/components/herostats/StatsTable.svelte';
-
-	//images
-	import turboking from '$lib/assets/turboking.png';
-	import Knight from '$lib/assets/knight.png';
-
-	//helpers
-	import winOrLoss from '$lib/helpers/winOrLoss';
-
-	//constants
-	import { playersWeCareAbout } from '$lib/constants/playersWeCareAbout';
-	import { heroRoles } from '$lib/constants/heroRoles';
-
-	//stores
-	import { sortData } from '$lib/stores/sortData';
-
-	
 	interface Props {
-		//page data
 		data: PageData;
 	}
 
 	let { data }: Props = $props();
 
 	console.log(`[herostats page.svelte]`, data);
-	//console.log(page);
 
-	/* 
-		Hero List
-	*/
+	/* Hero List */
 	let heroListWithAll = data.streamed.heroDescriptions.allHeroes.sort((a: any, b: any) => {
 		if (a.localized_name < b.localized_name) return -1;
 		else return 1;
@@ -67,10 +53,7 @@
 
 	const heroList: Hero[] = heroListWithAll;
 
-	/* 
-		End hero list
-	*/
-
+	/* Table Row class */
 	class TableRow {
 		playerID: number = 0;
 		name: string = '';
@@ -84,7 +67,8 @@
 		assists: number = 0;
 	}
 
-	// Note: Skeleton v3 Tabs manages state internally - no need for tabSet variable
+	/* Local view state */
+	let activeView: 'heroes' | 'players' = $state('heroes');
 
 	let tableData: TableSource = $state({
 		head: [],
@@ -101,60 +85,19 @@
 	});
 
 	const sortMap: SortObj[] = [
-		{
-			headerText: 'Player',
-			headerKey: 'player',
-			index: 0
-		},
-		{
-			headerText: 'Hero',
-			headerKey: 'hero',
-			index: 0
-		},
-		{
-			headerText: 'Games',
-			headerKey: 'games',
-			index: 1
-		},
-		{
-			headerText: 'Wins',
-			headerKey: 'wins',
-			index: 2
-		},
-		{
-			headerText: 'Losses',
-			headerKey: 'losses',
-			index: 3
-		},
-		{
-			headerText: 'Win %',
-			headerKey: 'win_percentage',
-			index: 4
-		},
-		{
-			headerText: 'KDA',
-			headerKey: 'kda',
-			index: 5
-		},
-		{
-			headerText: 'Kills',
-			headerKey: 'kills',
-			index: 6
-		},
-		{
-			headerText: 'Deaths',
-			headerKey: 'deaths',
-			index: 7
-		},
-		{
-			headerText: 'Assists',
-			headerKey: 'assists',
-			index: 8
-		}
+		{ headerText: 'Player', headerKey: 'player', index: 0 },
+		{ headerText: 'Hero', headerKey: 'hero', index: 0 },
+		{ headerText: 'Games', headerKey: 'games', index: 1 },
+		{ headerText: 'Wins', headerKey: 'wins', index: 2 },
+		{ headerText: 'Losses', headerKey: 'losses', index: 3 },
+		{ headerText: 'Win %', headerKey: 'win_percentage', index: 4 },
+		{ headerText: 'KDA', headerKey: 'kda', index: 5 },
+		{ headerText: 'Kills', headerKey: 'kills', index: 6 },
+		{ headerText: 'Deaths', headerKey: 'deaths', index: 7 },
+		{ headerText: 'Assists', headerKey: 'assists', index: 8 }
 	];
 
 	function handleSort(sortBy: SortBy) {
-		//console.log('[herostats page.svelte] Sort by: ', sortBy);
 		tableData = {
 			head: tableData.head,
 			body: tableData.body.sort((a: any, b: any) => {
@@ -164,15 +107,8 @@
 		};
 	}
 
-	//helper functions
-
+	/* Match stats */
 	let matchStats: MatchStats[] = [];
-	// data.streamed.matchStats.then((value) => {
-	// 	//console.log(`promise finished ${value}`);
-	// 	matchStats = value;
-	// 	recalcTable();
-	// 	handleSort(sortBy);
-	// });
 
 	const generateMatchStatsArr = async () => {
 		let userDataArray: MatchStats[] = [];
@@ -181,8 +117,6 @@
 				return data.streamed.separatedMatchStats[playerID];
 			})
 		);
-
-		//console.log(`apiResults: `, apiResults)
 
 		apiResults.forEach((result) => {
 			userDataArray.push({
@@ -199,6 +133,9 @@
 		handleSort(sortBy);
 		return userDataArray;
 	};
+
+	// Call generateMatchStatsArr ONCE and store the promise
+	const matchStatsPromise = generateMatchStatsArr();
 
 	const recalcTable = () => {
 		tableData = {
@@ -220,7 +157,6 @@
 	};
 
 	const recalcTableData = () => {
-		//console.log($sortData);
 		let tableData: TableRow[] = [];
 
 		let startDateUnix = $sortData.startDate === '' ? new Date(0) : new Date($sortData.startDate);
@@ -228,18 +164,17 @@
 
 		if ($sortData.selectedPlayer == 'All') {
 			matchStats.forEach((player) => {
-				//filters match data for selected hero
 				let pushObj: TableRow = new TableRow();
 
 				let filteredMatchData = [];
 
-				//filter by heroID
+				// Filter by heroID
 				if ($sortData.heroID != -1) {
 					$sortData.role = 'All';
 					$sortData.selectedPlayer = 'All';
 					filteredMatchData = player.matchData.filter((match: Match) => match.hero_id === $sortData.heroID);
 				}
-				//filter by heroRole
+				// Filter by heroRole
 				else if ($sortData.role != 'All') {
 					$sortData.selectedPlayer = 'All';
 					$sortData.heroID = -1;
@@ -255,12 +190,14 @@
 					filteredMatchData = player.matchData;
 				}
 
-				//filter by Date
+				// Filter by game mode
+				filteredMatchData = filterMatchesByGameMode(filteredMatchData, $sortData.gameMode);
+
+				// Filter by date
 				filteredMatchData = filteredMatchData.filter(
 					(match: Match) => match.start_time >= startDateUnix && match.start_time <= endDateUnix
 				);
 
-				//pushObj.playerID = player.playerID;
 				pushObj.name = player.playerName;
 				pushObj.games = filteredMatchData.length;
 				pushObj.wins = filteredMatchData.reduce(
@@ -276,31 +213,32 @@
 
 				tableData.push(pushObj);
 			});
-
-			//filter by Player
 		} else {
-			//$sortData.role = 'All';
+			// Player view
 			$sortData.heroID = -1;
 
 			heroListWithAll.forEach((hero: Hero) => {
-				//filters match data for selected player
 				let pushObj: TableRow = new TableRow();
 
 				let filteredMatchData = [];
 
-				//filter by heroID
 				const findPlayer = playersWeCareAbout.find((element) => element.playerName === $sortData.selectedPlayer);
 				if (findPlayer != undefined) {
 					let playerIndex: number = playersWeCareAbout.indexOf(findPlayer);
 
 					filteredMatchData = matchStats[playerIndex].matchData.filter((match: Match) => match.hero_id === hero.id);
+
+					// Filter by game mode
+					filteredMatchData = filterMatchesByGameMode(filteredMatchData, $sortData.gameMode);
+
+					// Filter by date
 					filteredMatchData = filteredMatchData.filter(
 						(match: Match) => match.start_time >= startDateUnix && match.start_time <= endDateUnix
 					);
 
 					if (typeof $sortData.role === 'string' && $sortData.heroID == -1) {
 						if ($sortData.role === 'all' || $sortData.role === 'All') {
-							//filteredMatchData = player.matchData;
+							// no additional filter
 						} else {
 							let filteredHeroList = heroList
 								.filter((hero) => hero.roles.includes($sortData.role))
@@ -327,269 +265,173 @@
 					throw new TypeError('Error selecting player!');
 				}
 			});
+
+			// Filter out zero-game heroes in player view
+			tableData = tableData.filter(row => row.games > 0);
 		}
 
 		return tableData;
 	};
 </script>
 
-<div id="tablePageContainer" class="m-4 md:mx-8 md:my-4 w-full max-w-[90%]">
-	<div>
-		<!-- Header-->
-		 
-		<div id="header" class="container mx-auto md:my-2 my-1">
-			<div class="flex items-center justify-around ">
-				<div class="flex flex-col items-center">
-					<h1 class="h1 text-primary-500">Hero Stats</h1>
-					<div class="flex justify-center items-center space-x-8 my-2 max-md:hidden">
-						<h3 class="h3">ONLY THE TRUE KING WILL RULE</h3>
-						<img class="w-8 lg:w-12" alt="turboking" src={turboking} />
-					</div>
+<div class="m-4 md:mx-8 md:my-4 w-full max-w-[90%]">
+	<!-- Header -->
+	<div class="text-center">
+		<h1 class="hud-glow text-4xl md:text-5xl font-extrabold uppercase tracking-wider text-amber-400">
+			HERO STATS
+		</h1>
+		<p class="text-[10px] tracking-[0.3em] text-amber-700/60 uppercase mt-1">
+			ONLY THE TRUE KING WILL RULE
+		</p>
+	</div>
+
+	<!-- Player Loading Indicators -->
+	<div class="flex items-center justify-center gap-1.5 my-3">
+		{#each data.playersWeCareAbout as player}
+			{#await data.streamed.separatedMatchStats[player.playerID]}
+				<div class="w-7 h-7 rounded-full flex items-center justify-center border border-amber-800/40 text-amber-800/40 text-[10px] font-bold animate-pulse">
+					{player.playerName[0]}
 				</div>
-				<!--Development stats-->
-				<div>
-					{#each data.playersWeCareAbout as player}
-						<div class="flex flex-col">
-							<div class="grid grid-cols-2 gap-4 text-xs">
-								<div>
-									<p class="text-primary-500">
-										{player.playerName}:
-									</p>
-								</div>
-								<div >
-									{#await data.streamed.separatedMatchStats[player.playerID]}
-										<div class="placeholder"></div>
-									{:then playerStats}
-										<p class="text-secondary-500">complete - {playerStats.matchData.length} matches</p>
-									{/await}
-								</div>
-							</div>
-						</div>
+			{:then}
+				<div class="w-7 h-7 rounded-full flex items-center justify-center bg-amber-500/20 border border-amber-500/50 text-amber-400 text-[10px] font-bold">
+					{player.playerName[0]}
+				</div>
+			{/await}
+		{/each}
+	</div>
+
+	<!-- Mode Selector -->
+	<div class="flex justify-center my-4">
+		<div class="border border-amber-800/40 rounded-lg overflow-hidden inline-flex">
+			<button
+				class="px-5 py-2 font-bold uppercase tracking-wider text-sm transition-all duration-150 {$sortData.gameMode === 'ranked' ? 'bg-amber-500 text-black mode-btn-active' : 'bg-black/40 text-slate-400 hover:text-amber-300 hover:bg-amber-950/30'}"
+				onclick={() => { sortData.setGameMode('ranked'); recalcTable(); }}
+			>RANKED</button>
+			<button
+				class="px-5 py-2 font-bold uppercase tracking-wider text-sm transition-all duration-150 {$sortData.gameMode === 'turbo' ? 'bg-amber-500 text-black mode-btn-active' : 'bg-black/40 text-slate-400 hover:text-amber-300 hover:bg-amber-950/30'}"
+				onclick={() => { sortData.setGameMode('turbo'); recalcTable(); }}
+			>TURBO</button>
+			<button
+				class="px-5 py-2 font-bold uppercase tracking-wider text-sm transition-all duration-150 {$sortData.gameMode === 'all' ? 'bg-amber-500 text-black mode-btn-active' : 'bg-black/40 text-slate-400 hover:text-amber-300 hover:bg-amber-950/30'}"
+				onclick={() => { sortData.setGameMode('all'); recalcTable(); }}
+			>ALL</button>
+		</div>
+	</div>
+
+	<!-- View Toggle -->
+	<div class="flex justify-center gap-6 mb-4">
+		<button
+			class="uppercase tracking-wider text-sm px-4 py-2 {activeView === 'heroes' ? 'border-b-2 border-amber-400 text-amber-400' : 'border-b-2 border-transparent text-slate-500 hover:text-slate-300'}"
+			onclick={() => { activeView = 'heroes'; sortData.setSelectedPlayer('All'); sortData.setHeroID(-1); recalcTable(); }}
+		>Heroes</button>
+		<button
+			class="uppercase tracking-wider text-sm px-4 py-2 {activeView === 'players' ? 'border-b-2 border-amber-400 text-amber-400' : 'border-b-2 border-transparent text-slate-500 hover:text-slate-300'}"
+			onclick={() => { activeView = 'players'; sortData.setSelectedPlayer('Rocco'); recalcTable(); }}
+		>Players</button>
+	</div>
+
+	<!-- Content -->
+	{#await matchStatsPromise}
+		<div class="flex justify-center my-8">
+			<Loading />
+		</div>
+	{:then}
+		<!-- Filter Bar -->
+		<div class="flex flex-wrap items-end gap-3 justify-center my-4 px-4">
+			{#if activeView === 'heroes'}
+				<!-- Hero dropdown -->
+				<div class="flex flex-col">
+					<label class="text-[10px] uppercase tracking-wider text-amber-600/60 mb-1">Hero</label>
+					<select
+						class="bg-black/30 border border-amber-900/30 text-slate-300 text-sm rounded px-2 py-1.5 focus:border-amber-500/50 focus:outline-none"
+						bind:value={$sortData.heroID}
+						onchange={() => { $sortData.role = 'All'; recalcTable(); }}
+					>
+						{#each heroList as hero}
+							<option value={hero.id}>{hero.localized_name}</option>
+						{/each}
+					</select>
+				</div>
+			{:else}
+				<!-- Player dropdown -->
+				<div class="flex flex-col">
+					<label class="text-[10px] uppercase tracking-wider text-amber-600/60 mb-1">Player</label>
+					<select
+						class="bg-black/30 border border-amber-900/30 text-slate-300 text-sm rounded px-2 py-1.5 focus:border-amber-500/50 focus:outline-none"
+						bind:value={$sortData.selectedPlayer}
+						onchange={() => recalcTable()}
+					>
+						{#each playersWeCareAbout as player}
+							<option>{player.playerName}</option>
+						{/each}
+					</select>
+				</div>
+			{/if}
+
+			<!-- Role dropdown -->
+			<div class="flex flex-col">
+				<label class="text-[10px] uppercase tracking-wider text-amber-600/60 mb-1">Role</label>
+				<select
+					class="bg-black/30 border border-amber-900/30 text-slate-300 text-sm rounded px-2 py-1.5 focus:border-amber-500/50 focus:outline-none"
+					bind:value={$sortData.role}
+					onchange={() => { $sortData.heroID = -1; recalcTable(); }}
+				>
+					{#each heroRoles as role}
+						<option>{role}</option>
 					{/each}
-				</div>
-				<!-- <div class="flex flex-col">
-					<h3 class="h3 text-primary-500">Data sources</h3>
-					<div>
-						Open Dota: <p class="inline text-orange-500 font-bold">
-							{matchStats.filter((player) => player.dataSource !== 'db').length}
-						</p>
-					</div>
-					<div>
-						Database: <p class="inline text-green-500 font-bold">
-							{matchStats.filter((player) => player.dataSource === 'db').length}
-						</p>
-					</div>
-				</div> -->
+				</select>
 			</div>
+
+			<!-- Start Date -->
+			<div class="flex flex-col">
+				<label class="text-[10px] uppercase tracking-wider text-amber-600/60 mb-1">Start Date</label>
+				<input
+					type="date"
+					class="bg-black/30 border border-amber-900/30 text-slate-300 text-sm rounded px-2 py-1.5 focus:border-amber-500/50 focus:outline-none"
+					bind:value={$sortData.startDate}
+					onchange={() => recalcTable()}
+				/>
+			</div>
+
+			<!-- End Date -->
+			<div class="flex flex-col">
+				<label class="text-[10px] uppercase tracking-wider text-amber-600/60 mb-1">End Date</label>
+				<input
+					type="date"
+					class="bg-black/30 border border-amber-900/30 text-slate-300 text-sm rounded px-2 py-1.5 focus:border-amber-500/50 focus:outline-none"
+					bind:value={$sortData.endDate}
+					onchange={() => recalcTable()}
+				/>
+			</div>
+
+			<!-- Reset button -->
+			<button
+				class="border border-red-800/40 text-red-400 hover:bg-red-900/20 rounded px-3 py-1.5 text-sm uppercase tracking-wider transition-colors"
+				onclick={() => {
+					sortBy = {
+						sortObj: sortMap.filter((item) => item.headerText === 'Games')[0],
+						ascending: false
+					};
+					sortData.reset();
+					recalcTable();
+				}}
+			>Reset</button>
 		</div>
 
-		<Tabs 
-			defaultValue="heroes"
-			onValueChange={(details) => {
-				if (details.value === 'heroes') {
-					sortData.setSelectedPlayer('All');
-					sortData.setHeroID(-1);
-					recalcTable();
-				} else if (details.value === 'players') {
-					sortData.setSelectedPlayer('Rocco');
-					recalcTable();
-				}
-			}}
-		>
-			<Tabs.List class="justify-center">
-				<Tabs.Trigger value="heroes">
-					<div class="flex justify-center ml-2">
-						<div class="d2mh axe"></div>
-					</div>
-					<span>Heroes</span>
-				</Tabs.Trigger>
-				<Tabs.Trigger value="players">
-					<div class="flex justify-center ml-2">
-						<img src={Knight} class="w-8" alt="Knight icon" />
-					</div>
-					<span>Players</span>
-				</Tabs.Trigger>
-			</Tabs.List>
-
-			<!-- Heroes Tab Panel -->
-			<Tabs.Content value="heroes">
-					<div class="flex flex-col justify-center">
-						{#await generateMatchStatsArr()}
-							<div class="m-8 w-full">
-								<Loading />
-							</div>
-						{:then matchStats}
-							<div class="flex justify-center items-center gap-4 my-4">
-								{#if $sortData.heroID === -1}
-									<span class="text-2xl font-bold text-amber-500">All Heroes</span>
-								{:else}
-									{#each heroList as hero}
-										{#if hero.id === $sortData.heroID}
-											<div class="flex items-center gap-4">
-												<div class="d2mh {hero.name?.toLowerCase()}"></div>
-												<span class="text-2xl font-bold text-amber-500">{hero.localized_name}</span>
-											</div>
-										{/if}
-									{/each}
-								{/if}
-							</div>
-							<!-- Filter elements -->
-							<div class="container mx-auto p-4">
-								<div class="max-md:flex-col flex justify-center items-center md:space-x-2 max-md:space-y-2">
-									<div
-										class="flex md:flex-col max-sm:justify-around items-center w-full md:space-x-1 md:justify-center"
-									>
-										<p class="w-full inline text-primary-500 font-bold max-sm:w-1/4 md:text-center">Hero</p>
-										<select
-											class="select select-sm preset-tonal-surface border border-surface-500 w-full"
-											bind:value={$sortData.heroID}
-											onchange={handlers(() => ($sortData.role = 'All'), () => recalcTable())}
-										>
-											{#each heroList as hero}
-												<option value={hero.id}>{hero.localized_name}</option>
-											{/each}
-										</select>
-									</div>
-									<div class="flex md:flex-col max-sm:justify-around items-center w-full md:space-x-1 md:justify-center">
-										<p class="w-full inline text-primary-500 font-bold max-sm:w-1/4 md:text-center">Role</p>
-										<select
-											class="select select-sm preset-tonal-surface border border-surface-500"
-											bind:value={$sortData.role}
-											onchange={handlers(() => ($sortData.heroID = -1), () => recalcTable())}
-										>
-											{#each heroRoles as role}
-												<option>{role}</option>
-											{/each}
-										</select>
-									</div>
-
-									<div class="flex md:flex-col max-sm:justify-around items-center w-full md:space-x-1 md:justify-center">
-										<p class="w-full inline text-primary-500 font-bold max-sm:w-1/4 md:text-center">Start Date</p>
-										<input
-											type="date"
-											class="select select-sm preset-tonal-surface border border-surface-500 w-full"
-											bind:value={$sortData.startDate}
-											onchange={() => recalcTable()}
-										/>
-									</div>
-									<div class="flex md:flex-col max-sm:justify-around items-center w-full md:space-x-1 md:justify-center">
-										<p class="w-full inline text-primary-500 font-bold max-sm:w-1/4 md:text-center">End Date</p>
-										<input
-											type="date"
-											class="select select-sm preset-tonal-surface border border-surface-500 w-full"
-											bind:value={$sortData.endDate}
-											onchange={() => recalcTable()}
-										/>
-									</div>
-									<div class="flex md:flex-col justify-around items-center w-full md:space-x-1 mt-6">
-										<button
-											type="button"
-											class="btn preset-outlined-error-500"
-											onclick={handlers(() =>
-											(sortBy = {
-												sortObj: sortMap.filter((item) => item.headerText === 'Games')[0],
-												ascending: false
-											}), () => {
-											sortData.reset();
-											recalcTable();
-										})}>Reset Table</button
-										>
-									</div>
-								</div>
-							</div>
-
-							<!-- Skeleton table styling -->
-							<div class="table-container overflow-hidden mx-auto">
-								<StatsTable {tableData} {sortBy} />
-							</div>
-						{:catch error}
-							{error.message}
-						{/await}
-					</div>
-			</Tabs.Content>
-
-			<!-- Players Tab Panel -->
-			<Tabs.Content value="players">
-					<div class="flex flex-col justify-center">
-						{#await generateMatchStatsArr()}
-							<div class="m-8 w-full">
-								<Loading />
-							</div>
-						{:then matchStats}
-							<!-- Filter elements -->
-							<div class="container mx-auto p-4">
-								<div class="max-md:flex-col flex justify-center items-center md:space-x-2 max-md:space-y-2">
-									<div
-										class="flex md:flex-col max-sm:justify-around items-center w-full md:space-x-1 md:justify-center"
-									>
-										<p class="w-full inline text-primary-500 font-bold max-sm:w-1/4 md:text-center">Player</p>
-										<select
-											class="select select-sm preset-tonal-surface border border-surface-500 w-full"
-											bind:value={$sortData.selectedPlayer}
-											onchange={() => recalcTable()}
-										>
-											{#each playersWeCareAbout as player}
-												<option>{player.playerName}</option>
-											{/each}
-										</select>
-									</div>
-									<div class="flex md:flex-col max-sm:justify-around items-center w-full md:space-x-1 md:justify-center">
-										<p class="w-full inline text-primary-500 font-bold max-sm:w-1/4 md:text-center">Role</p>
-										<select
-											class="select select-sm preset-tonal-surface border border-surface-500"
-											bind:value={$sortData.role}
-											onchange={handlers(() => ($sortData.heroID = -1), () => recalcTable())}
-										>
-											{#each heroRoles as role}
-												<option>{role}</option>
-											{/each}
-										</select>
-									</div>
-
-									<div class="flex md:flex-col max-sm:justify-around items-center w-full md:space-x-1 md:justify-center">
-										<p class="w-full inline text-primary-500 font-bold max-sm:w-1/4 md:text-center">Start Date</p>
-										<input
-											type="date"
-											class="select select-sm preset-tonal-surface border border-surface-500 w-full"
-											bind:value={$sortData.startDate}
-											onchange={() => recalcTable()}
-										/>
-									</div>
-									<div class="flex md:flex-col max-sm:justify-around items-center w-full md:space-x-1 md:justify-center">
-										<p class="w-full inline text-primary-500 font-bold max-sm:w-1/4 md:text-center">End Date</p>
-										<input
-											type="date"
-											class="select select-sm preset-tonal-surface border border-surface-500 w-full"
-											bind:value={$sortData.endDate}
-											onchange={() => recalcTable()}
-										/>
-									</div>
-									<div class="flex md:flex-col justify-around items-center w-full md:space-x-1 mt-6">
-										<button
-											type="button"
-											class="btn preset-outlined-error-500"
-											onclick={handlers(() =>
-											(sortBy = {
-												sortObj: sortMap.filter((item) => item.headerText === 'Games')[0],
-												ascending: false
-											}), () => {
-											sortData.reset();
-											recalcTable();
-										})}>Reset Table</button
-										>
-									</div>
-								</div>
-							</div>
-
-							<!-- Skeleton table styling -->
-							<div class="table-container overflow-hidden mx-auto">
-								<StatsTable {tableData} {sortBy} />
-							</div>
-						{:catch error}
-							{error.message}
-						{/await}
-					</div>
-			</Tabs.Content>
-		</Tabs>
-	</div>
+		<!-- Stats Table -->
+		<div class="border-t-2 border-amber-500/40 mt-2">
+			<StatsTable {tableData} {sortBy} selectedPlayer={$sortData.selectedPlayer} />
+		</div>
+	{:catch error}
+		<p class="text-red-400 text-center my-8">{error.message}</p>
+	{/await}
 </div>
+
+<style>
+	.hud-glow {
+		text-shadow: 0 0 20px rgba(245, 158, 11, 0.3), 0 0 40px rgba(245, 158, 11, 0.1);
+	}
+	.mode-btn-active {
+		box-shadow: 0 0 12px rgba(245, 158, 11, 0.25);
+	}
+</style>
