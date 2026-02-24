@@ -7,11 +7,17 @@
 		HeroInstance,
 		EnemyInstance,
 		HeroDef,
-		CombatLogEntry
+		AbilityDef,
+		CombatLogEntry,
+		BattleDefsProvider
 	} from '$lib/incremental/types';
+	import { tick as battleTick } from '$lib/incremental/engine/battle-loop';
 	import { getHeroDef, getEnemyDef, getAbilityDef } from '$lib/incremental/constants';
 	import { getEnemySpriteConfig } from '$lib/incremental/constants/enemy-sprites';
 	import { attackInterval, spellInterval } from '$lib/incremental/stats/formulas';
+	import {
+		HEAL_PERCENT_ON_WIN
+	} from '$lib/incremental/constants';
 	import BattleCard from '$lib/incremental/components/BattleCard.svelte';
 	import StatusEffectBadge from '$lib/incremental/components/StatusEffectBadge.svelte';
 	import type { SpellInfoAbility, SpellInfoActive } from '$lib/incremental/components/BattleCard.svelte';
@@ -36,7 +42,7 @@
 	/** Hero id -> def from API (for timer progress for all heroes) */
 	let heroDefById = $state<Map<number, HeroDef>>(new Map());
 	/** Ability id -> def from API (DB); fallback to constants in getSpellInfo */
-	let abilityDefById = $state<Map<string, import('$lib/incremental/types').AbilityDef>>(new Map());
+	let abilityDefById = $state<Map<string, AbilityDef>>(new Map());
 	/** Enemy sprite sheet metadata: enemyId -> metadata object */
 	let enemySpriteMetadata = $state<Map<string, any>>(new Map());
 
@@ -49,6 +55,12 @@
 	let logShowAutoAttacks = $state(true);
 	let logShowSpells = $state(true);
 	let logShowStatusEffects = $state(true);
+
+	/** Defs provider for client-side tick() calls */
+	const defsProvider: BattleDefsProvider = {
+		getHeroDef: (heroId: number) => heroDefById.get(heroId) ?? getHeroDef(heroId),
+		getAbilityDef: (abilityId: string) => abilityDefById.get(abilityId) ?? getAbilityDef(abilityId)
+	};
 
 	// Derived lists so each block reliably re-runs when battle state updates (fixes health bars not updating)
 	const playerList = $derived(battle?.player ?? []);
@@ -76,6 +88,89 @@
 	);
 
 	const tickIntervalMs = $derived(Math.max(20, Math.round(BASE_TICK_INTERVAL_MS / tickSpeedMultiplier)));
+
+	/** sessionStorage key for this run's battle data */
+	function storageKey(): string {
+		return `battle:${runId}`;
+	}
+
+	/** Save battle state + defs to sessionStorage for refresh survival */
+	function saveBattleToStorage() {
+		if (!battle) return;
+		try {
+			const data = {
+				battleState: battle,
+				heroDefs: Object.fromEntries(heroDefById),
+				abilityDefs: Object.fromEntries(abilityDefById)
+			};
+			sessionStorage.setItem(storageKey(), JSON.stringify(data));
+		} catch {
+			// storage full or unavailable; non-critical
+		}
+	}
+
+	/** Load battle state + defs from sessionStorage */
+	function loadBattleFromStorage(): boolean {
+		try {
+			const raw = sessionStorage.getItem(storageKey());
+			if (!raw) return false;
+			const data = JSON.parse(raw);
+			if (!data.battleState) return false;
+			battle = data.battleState;
+			if (data.heroDefs) {
+				heroDefById = new Map(Object.entries(data.heroDefs).map(([k, v]) => [Number(k), v as HeroDef]));
+			}
+			if (data.abilityDefs) {
+				abilityDefById = new Map(Object.entries(data.abilityDefs) as [string, AbilityDef][]);
+			}
+			return true;
+		} catch {
+			return false;
+		}
+	}
+
+	/** Clear sessionStorage entry for this battle */
+	function clearBattleStorage() {
+		try {
+			sessionStorage.removeItem(storageKey());
+		} catch {
+			// ignore
+		}
+	}
+
+	/** Call POST /battle/enter to get initial state (fallback if sessionStorage empty) */
+	async function fetchBattleFromServer(): Promise<boolean> {
+		if (!nodeId) {
+			error = 'No nodeId to enter battle';
+			return false;
+		}
+		try {
+			const res = await fetch(`/api/incremental/runs/${runId}/battle/enter`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ nextNodeId: nodeId })
+			});
+			if (!res.ok) {
+				const data = await res.json().catch(() => ({}));
+				error = data.message || res.statusText || 'Enter battle failed';
+				return false;
+			}
+			const data = await res.json();
+			battle = data.battleState;
+			if (data.heroDefs) {
+				heroDefById = new Map(Object.entries(data.heroDefs).map(([k, v]) => [Number(k), v as HeroDef]));
+			}
+			if (data.abilityDefs) {
+				abilityDefById = new Map(Object.entries(data.abilityDefs) as [string, AbilityDef][]);
+			}
+			// Save to sessionStorage so refresh works
+			saveBattleToStorage();
+			return true;
+		} catch (e) {
+			error = e instanceof Error ? e.message : 'Enter battle failed';
+			return false;
+		}
+	}
 
 	function heroDisplayName(heroId: number): string {
 		return heroNameById.get(heroId) ?? `Hero ${heroId}`;
@@ -133,7 +228,7 @@
 	}
 
 	/** Resolve ability def: DB first (from heroes API), then constants. */
-	function getAbilityDefForSpell(abilityId: string): import('$lib/incremental/types').AbilityDef | undefined {
+	function getAbilityDefForSpell(abilityId: string): AbilityDef | undefined {
 		return abilityDefById.get(abilityId) ?? getAbilityDef(abilityId);
 	}
 
@@ -249,7 +344,7 @@
 			action = 'return';
 			damage = `${d} ${dtype}`;
 		} else if (entry.type === 'status_effect') {
-			attacker = entry.attackerHeroId != null 
+			attacker = entry.attackerHeroId != null
 				? heroDisplayName(entry.attackerHeroId)
 				: entry.attackerEnemyDefId != null
 					? enemyName(entry.attackerEnemyDefId)
@@ -295,161 +390,173 @@
 					if (res.ok) {
 						const metadata = await res.json();
 						enemySpriteMetadata.set(enemyId, metadata);
-						console.log(`Loaded sprite sheet metadata for ${enemyId}:`, metadata);
-					} else {
-						console.warn(`Failed to load sprite sheet metadata for ${enemyId}: ${res.status} ${res.statusText}`);
 					}
-				} catch (e) {
-					console.warn(`Failed to load sprite sheet metadata for ${enemyId}:`, e);
+				} catch {
+					// ignore
 				}
 			}
 		}
 	}
 
-	async function loadBattle(): Promise<boolean> {
-		try {
-			const res = await fetch(`/api/incremental/runs/${runId}/battle`);
-			if (!res.ok) {
-				if (res.status === 404) error = 'No active battle for this run.';
-				else error = res.statusText || 'Failed to load battle';
-				battle = null;
-				return false;
-			}
-			battle = await res.json();
-			error = null;
-			// Load sprite sheet metadata for enemies
-			await loadEnemySpriteSheets();
-			return true;
-		} catch (e) {
-			error = e instanceof Error ? e.message : 'Failed to load battle';
-			battle = null;
-			return false;
-		}
-	}
-
-	async function patchBattle(body: {
-		focusedHeroIndex?: number;
-		targetIndex?: number;
-		deltaTime?: number;
-		autoRotateFrontLiner?: boolean;
-		resetHp?: boolean;
-	}): Promise<BattleState | null> {
-		try {
-			const res = await fetch(`/api/incremental/runs/${runId}/battle`, {
-				method: 'PATCH',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(body)
-			});
-			if (!res.ok) return null;
-			const state = await res.json();
-			battle = state;
-			return state;
-		} catch {
-			return null;
-		}
-	}
-
-	async function onTick() {
+	/** Run one client-side tick */
+	function onTick() {
 		if (!battle || battle.result !== null) return;
-		await patchBattle({
-			deltaTime: DELTA_TIME,
+		battle = battleTick(battle, DELTA_TIME, {
 			autoRotateFrontLiner: autoRotateFrontLiner
-		});
-		// When result is set, $effect cleanup will stop the tick loop (battleActive becomes false)
+		}, defsProvider);
 	}
 
-	async function onResetHp() {
+	function onResetHp() {
 		if (!battle || battle.result !== null) return;
-		const state = await patchBattle({ resetHp: true });
-		if (state) battle = state;
+		battle = {
+			...battle,
+			player: battle.player.map((p) => ({ ...p, currentHp: p.maxHp })),
+			enemy: battle.enemy.map((e) => ({ ...e, currentHp: e.maxHp }))
+		};
 	}
 
-	async function onHeroClick(index: number) {
+	function onHeroClick(index: number) {
 		if (!battle || battle.result !== null) return;
 		if (!canChangeFrontLiner()) return;
 		if (index === battle.focusedHeroIndex) return;
 		const hero = battle.player[index];
 		if (!hero || hero.currentHp <= 0) return;
-		await patchBattle({ focusedHeroIndex: index, deltaTime: 0 });
+		// Apply focus change through tick with deltaTime 0
+		battle = battleTick(battle, 0, { focusChange: index }, defsProvider);
 	}
 
-	async function onEnemyClick(index: number) {
+	function onEnemyClick(index: number) {
 		if (!battle || battle.result !== null) return;
 		if (index === battle.targetIndex) return;
 		const enemy = battle.enemy[index];
 		if (!enemy || enemy.currentHp <= 0) return;
-		await patchBattle({ targetIndex: index, deltaTime: 0 });
+		// Apply target change through tick with deltaTime 0
+		battle = battleTick(battle, 0, { targetChange: index }, defsProvider);
 	}
 
-	/** On victory: complete battle (advance run via server's pending node), then go to map. */
+	/** On victory: send result to server (advance run, apply rewards), then go to map. */
 	async function onContinueAfterWin() {
+		if (!battle || !nodeId) return;
 		try {
-			const res = await fetch(`/api/incremental/runs/${runId}/battle/complete`, {
-				method: 'POST'
+			// Compute healed HP
+			const healed = battle.player.map((p) => {
+				const heal = p.maxHp * HEAL_PERCENT_ON_WIN;
+				return Math.min(p.currentHp + heal, p.maxHp);
 			});
+			const playerHeroIds = battle.player.map((p) => p.heroId);
+
+			const res = await fetch(`/api/incremental/runs/${runId}/battle/complete`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					nodeId,
+					result: 'win',
+					elapsedTime: battle.elapsedTime,
+					heroHp: healed,
+					playerHeroIds
+				})
+			});
+			clearBattleStorage();
 			if (res.ok) {
 				await goto(`/darkrift/dungeon/${runId}`);
 				return;
 			}
-			// Fallback: if complete fails (e.g. no pending node), try advance with URL nodeId
-			if (nodeId) {
-				const advanceRes = await fetch(`/api/incremental/runs/${runId}/advance`, {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ nextNodeId: nodeId })
-				});
-				if (advanceRes.ok) {
-					await goto(`/darkrift/dungeon/${runId}`);
-					return;
-				}
-				const data = await advanceRes.json().catch(() => ({}));
-				error = data.message || advanceRes.statusText || 'Advance failed';
-			} else {
-				const data = await res.json().catch(() => ({}));
-				error = data.message || res.statusText || 'Complete failed';
-			}
+			const data = await res.json().catch(() => ({}));
+			error = data.message || res.statusText || 'Complete failed';
 		} catch (e) {
 			error = e instanceof Error ? e.message : 'Complete failed';
 		}
+	}
+
+	/** On defeat: notify server, then go to map. */
+	async function onContinueAfterLoss() {
+		if (!nodeId) {
+			clearBattleStorage();
+			await goto(`/darkrift/dungeon/${runId}`);
+			return;
+		}
+		try {
+			await fetch(`/api/incremental/runs/${runId}/battle/complete`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ nodeId, result: 'lose' })
+			});
+		} catch {
+			// best-effort
+		}
+		clearBattleStorage();
+		await goto(`/darkrift/dungeon/${runId}`);
 	}
 
 	// Only re-run when we should be ticking (active battle) or speed changes — not when battle object reference changes each tick
 	const battleActive = $derived(!loading && battle != null && battle.result === null);
 	const tickSpeed = $derived(tickSpeedMultiplier);
 
+	// Save to sessionStorage periodically (every ~1s worth of ticks)
+	let ticksSinceSave = 0;
+	const SAVE_EVERY_N_TICKS = 7; // ~1s at 150ms ticks
+
 	$effect(() => {
 		if (!battleActive) return;
 		const intervalMs = Math.max(20, Math.round(BASE_TICK_INTERVAL_MS / tickSpeed));
-		const id = setInterval(async () => {
+		const id = setInterval(() => {
 			if (battle?.result !== null) return;
-			await onTick();
+			onTick();
+			ticksSinceSave++;
+			if (ticksSinceSave >= SAVE_EVERY_N_TICKS) {
+				saveBattleToStorage();
+				ticksSinceSave = 0;
+			}
 		}, intervalMs);
 		return () => clearInterval(id);
 	});
 
+	// Save when battle ends (win/lose)
+	$effect(() => {
+		if (battle?.result !== null && battle?.result !== undefined) {
+			saveBattleToStorage();
+		}
+	});
+
 	onMount(async () => {
-		// Load hero names and defs (for timer progress for all heroes) and abilities from DB
+		// Load hero names from API (for display names)
 		try {
 			const heroesRes = await fetch('/api/incremental/heroes');
 			if (heroesRes.ok) {
 				const data = await heroesRes.json();
 				const names = (data.heroNames ?? []) as Array<{ heroId: number; localizedName: string }>;
 				heroNameById = new Map(names.map((n) => [n.heroId, n.localizedName]));
-				const heroes = (data.heroes ?? []) as HeroDef[];
-				heroDefById = new Map(heroes.map((h) => [h.heroId, h]));
-				const abDefs = (data.abilityDefs ?? {}) as Record<string, import('$lib/incremental/types').AbilityDef>;
-				abilityDefById = new Map(Object.entries(abDefs));
+				// Only set heroDefById/abilityDefById from API if not already loaded from sessionStorage
+				if (heroDefById.size === 0) {
+					const heroes = (data.heroes ?? []) as HeroDef[];
+					heroDefById = new Map(heroes.map((h) => [h.heroId, h]));
+				}
+				if (abilityDefById.size === 0) {
+					const abDefs = (data.abilityDefs ?? {}) as Record<string, AbilityDef>;
+					abilityDefById = new Map(Object.entries(abDefs));
+				}
 			}
 		} catch {
 			// keep empty maps
 		}
 
-		await loadBattle();
+		// Try loading battle from sessionStorage first (instant, survives refresh)
+		const loaded = loadBattleFromStorage();
+		if (!loaded) {
+			// Fallback: fetch from server (creates the encounter)
+			await fetchBattleFromServer();
+		}
+
+		if (battle) {
+			await loadEnemySpriteSheets();
+		}
+
 		loading = false;
 	});
 
 	onDestroy(() => {
-		// Tick loop is cleared by $effect cleanup when component is destroyed
+		// Save final state on unmount
+		saveBattleToStorage();
 	});
 </script>
 
@@ -480,12 +587,13 @@
 						Continue
 					</button>
 				{:else}
-					<a
-						href="/darkrift/dungeon/{runId}"
+					<button
+						type="button"
 						class="mt-4 inline-block rounded bg-primary px-4 py-2 text-primary-foreground hover:opacity-90"
+						onclick={onContinueAfterLoss}
 					>
 						Continue
-					</a>
+					</button>
 				{/if}
 			</section>
 		{:else}

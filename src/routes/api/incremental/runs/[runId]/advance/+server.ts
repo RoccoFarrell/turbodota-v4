@@ -2,10 +2,9 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
 import prisma from '$lib/server/prisma';
 import { advanceRun, type RunServiceDb } from '$lib/incremental/run/run-service';
-import { setBattleState } from '$lib/server/incremental-battle-cache';
 import { getHeroDefsFromDb } from '$lib/server/incremental-hero-resolver';
 
-/** POST /api/incremental/runs/[runId]/advance – body { nextNodeId }. Advance run; if combat/elite/boss, store battle and return encounter. */
+/** POST /api/incremental/runs/[runId]/advance – body { nextNodeId }. Advance run to a non-combat node. */
 export const POST: RequestHandler<{ runId: string }> = async ({
 	params,
 	request,
@@ -48,31 +47,6 @@ export const POST: RequestHandler<{ runId: string }> = async ({
 			await prisma.incrementalRun.update({
 				where: { id: runId },
 				data: { nodeClearances: nodeClearances as any }
-			});
-		}
-		if (result.encounter) {
-			const heroDefs: Record<string, import('$lib/incremental/types').HeroDef> = {};
-			const abilityDefs: Record<string, import('$lib/incremental/types').AbilityDef> = {};
-			for (const heroId of result.encounter.heroIds) {
-				const d = defs.getHeroDef(heroId);
-				if (d) {
-					heroDefs[String(heroId)] = d;
-					for (const abilityId of d.abilityIds) {
-						if (!(abilityId in abilityDefs)) {
-							const a = defs.getAbilityDef(abilityId);
-							if (a) abilityDefs[abilityId] = a;
-						}
-					}
-				}
-			}
-			setBattleState(runId, result.encounter.battleState, heroDefs, abilityDefs);
-			return json({
-				runState: result.runState,
-				encounter: {
-					encounterId: result.encounter.encounterId,
-					heroIds: result.encounter.heroIds,
-					started: true
-				}
 			});
 		}
 		return json({ runState: result.runState });

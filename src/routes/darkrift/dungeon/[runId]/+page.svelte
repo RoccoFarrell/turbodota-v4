@@ -175,6 +175,16 @@
 					error = data.message || res.statusText || 'Enter battle failed';
 					return;
 				}
+				// Store battle data in sessionStorage so the battle page can load instantly
+				try {
+					sessionStorage.setItem(`battle:${runId}`, JSON.stringify({
+						battleState: data.battleState,
+						heroDefs: data.heroDefs,
+						abilityDefs: data.abilityDefs
+					}));
+				} catch {
+					// non-critical
+				}
 				await goto(`/darkrift/dungeon/${runId}/battle?nodeId=${encodeURIComponent(nextNodeId)}`);
 				return;
 			}

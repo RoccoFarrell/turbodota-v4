@@ -2,14 +2,13 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
 import prisma from '$lib/server/prisma';
 import { createEncounterForNode, type RunServiceDb } from '$lib/incremental/run/run-service';
-import { setBattleState } from '$lib/server/incremental-battle-cache';
 import { getHeroDefsFromDb } from '$lib/server/incremental-hero-resolver';
 
 /**
  * POST /api/incremental/runs/[runId]/battle/enter – body { nextNodeId }.
  * Start a battle for the given next node without advancing the run.
- * Run advances only when the user wins (call advance from battle page).
- * User can leave battle anytime and return to map; re-entering restarts the battle.
+ * Returns full battleState + defs so client can run simulation locally.
+ * Run advances only when the user wins (call battle/complete from battle page).
  */
 export const POST: RequestHandler<{ runId: string }> = async ({
 	params,
@@ -61,9 +60,13 @@ export const POST: RequestHandler<{ runId: string }> = async ({
 				}
 			}
 		}
-		setBattleState(runId, encounter.battleState, heroDefs, abilityDefs, nextNodeId.trim());
 
-		return json({ started: true });
+		return json({
+			started: true,
+			battleState: encounter.battleState,
+			heroDefs,
+			abilityDefs
+		});
 	} catch (e) {
 		const msg = e instanceof Error ? e.message : 'Enter battle failed';
 		if (msg.includes('not found') || msg.includes('Invalid next node') || msg.includes('not a combat')) error(400, msg);
