@@ -4,7 +4,7 @@ import { env } from '$env/dynamic/private';
 
 // Prisma 7 with engine type "client" requires a driver adapter for PostgreSQL.
 // (Bank system: IncrementalBankCurrency + IncrementalBankItem added in 20260215 migration)
-const connectionString = env.DIRECT_URL || env.DATABASE_URL || '';
+const connectionString = env.DATABASE_URL || env.DIRECT_URL || '';
 if (!connectionString) {
 	throw new Error(
 		'Prisma: set DIRECT_URL or DATABASE_URL in your environment (e.g. .env)'
