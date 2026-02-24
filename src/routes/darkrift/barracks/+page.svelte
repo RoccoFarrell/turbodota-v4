@@ -10,6 +10,7 @@
 	} from '$lib/incremental/actions';
 	import ActionSlotBar from '$lib/incremental/components/ActionSlotBar.svelte';
 	import BarracksBuildingCard from '$lib/incremental/components/BarracksBuildingCard.svelte';
+	import CancelTrainingModal from '$lib/incremental/components/CancelTrainingModal.svelte';
 	import * as actionStore from '$lib/incremental/stores/action-slots.svelte';
 	import type { HeroDef, AbilityDef } from '$lib/incremental/types';
 	import { getArcaneRuneQty, formatTrainingRuneToast } from '$lib/incremental/items/rune-apply-helpers';
@@ -43,6 +44,7 @@
 	let arcaneRuneQty = $state(0);
 	let runeApplyMode = $state(false);
 	let applyingRune = $state(false);
+	let cancelModalOpen = $state(false);
 
 	// ---- Shared store bindings ----
 	const saveId = $derived(actionStore.getSaveId());
@@ -122,6 +124,15 @@
 
 	async function handleClearSlot(slotIndex: number) {
 		await actionStore.clearSlot(slotIndex);
+	}
+
+	function handleRequestSlot() {
+		cancelModalOpen = true;
+	}
+
+	async function handleCancelFromModal(slotIndex: number) {
+		await actionStore.clearSlot(slotIndex);
+		cancelModalOpen = false;
 	}
 
 	function cancelRuneApply() {
@@ -277,6 +288,7 @@
 					{runeApplyMode}
 					onRuneApply={handleRuneApplyTraining}
 					{applyingRune}
+					onRequestSlot={handleRequestSlot}
 				/>
 			{/each}
 		</div>
@@ -308,3 +320,12 @@
 		</button>
 	</div>
 {/if}
+
+<CancelTrainingModal
+	open={cancelModalOpen}
+	onOpenChange={(d) => { cancelModalOpen = d.open; }}
+	{slots}
+	{heroName}
+	slotDisplayProgress={actionStore.slotDisplayProgress}
+	onCancel={handleCancelFromModal}
+/>

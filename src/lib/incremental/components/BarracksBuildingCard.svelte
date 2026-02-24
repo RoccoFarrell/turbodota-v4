@@ -22,6 +22,7 @@
 		onAssign: (statKey: TrainingStatKey, heroId: number) => void;
 		onClear: (slotIndex: number) => void;
 		busyHeroIds?: Set<number>;
+		onRequestSlot?: () => void;
 		runeApplyMode?: boolean;
 		onRuneApply?: (statKey: TrainingStatKey, heroId: number) => void;
 		applyingRune?: boolean;
@@ -41,6 +42,7 @@
 		onAssign,
 		onClear,
 		busyHeroIds = new Set(),
+		onRequestSlot,
 		runeApplyMode = false,
 		onRuneApply,
 		applyingRune = false
@@ -179,11 +181,25 @@
 			{:else}
 				<button
 					type="button"
-					onclick={() => showPicker = !showPicker}
-					class="w-full text-left text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 flex items-center gap-1"
+					onclick={() => {
+						if (!hasFreeSlot) {
+							onRequestSlot?.();
+							return;
+						}
+						showPicker = !showPicker;
+					}}
+					class="w-full rounded-lg border-l-4 px-4 py-3 text-left text-sm font-medium transition-colors flex items-center gap-2
+						{building.color.replace('text-', 'border-')}
+						bg-gray-100 dark:bg-gray-700/50
+						text-gray-700 dark:text-gray-200
+						hover:bg-gray-200 dark:hover:bg-gray-600/50"
 				>
-					<span>{showPicker ? '▾' : '▸'}</span>
-					{selectedHeroId != null ? heroName(selectedHeroId) : 'Select hero to train…'}
+					<span class="gi w-5 h-5 {building.color}" style="--gi: url({building.icon})" aria-hidden="true"></span>
+					{#if selectedHeroId != null}
+						{heroName(selectedHeroId)}
+					{:else}
+						Select Hero to Train
+					{/if}
 				</button>
 
 				{#if showPicker}
@@ -199,22 +215,15 @@
 					/>
 				{/if}
 
-				<button
-					type="button"
-					onclick={handleTrain}
-					disabled={selectedHeroId == null || !hasFreeSlot}
-					class="w-full rounded-lg py-2 text-sm font-medium transition-colors
-						{selectedHeroId != null && hasFreeSlot
-							? 'bg-primary text-primary-foreground hover:opacity-90'
-							: 'bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed'}"
-				>
-					{!hasFreeSlot ? 'No free slots' : 'Train'}
-				</button>
-
-				{#if !hasFreeSlot}
-					<p class="text-xs text-gray-400 text-center">
-						Unlock more slots in <a href="/darkrift/talents" class="text-primary hover:underline">Talents</a>
-					</p>
+				{#if selectedHeroId != null && hasFreeSlot}
+					<button
+						type="button"
+						onclick={handleTrain}
+						class="w-full rounded-lg py-2 text-sm font-medium transition-colors
+							bg-primary text-primary-foreground hover:opacity-90"
+					>
+						Train
+					</button>
 				{/if}
 			{/if}
 		{/if}
