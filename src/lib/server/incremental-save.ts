@@ -20,13 +20,18 @@ export interface ResolvedSave {
 
 /**
  * Compute the effective match cutoff for a save.
- * Fallback chain: season.startDate → DotaUser.createdDate → MATCH_CUTOFF_START_TIME.
+ * Fallback chain:
+ *   1. Explicit season (seasonId)
+ *   2. User's most recent active darkrift season (via league membership)
+ *   3. DotaUser.createdDate
+ *   4. MATCH_CUTOFF_START_TIME
  * Exported for unit testing.
  */
 export async function computeMatchCutoff(
 	seasonId: number | null,
 	accountId: number | null
 ): Promise<bigint> {
+	// 1. Explicit season linked to this save
 	if (seasonId != null) {
 		const season = await prisma.season.findUnique({
 			where: { id: seasonId },
@@ -37,6 +42,25 @@ export async function computeMatchCutoff(
 			return seasonStart > MATCH_CUTOFF_START_TIME ? seasonStart : MATCH_CUTOFF_START_TIME;
 		}
 	}
+
+	// 2. Auto-detect: user's most recent active darkrift season
+	if (accountId != null) {
+		const activeSeason = await prisma.season.findFirst({
+			where: {
+				type: 'darkrift',
+				active: true,
+				members: { some: { account_id: accountId } }
+			},
+			select: { startDate: true },
+			orderBy: { startDate: 'desc' }
+		});
+		if (activeSeason) {
+			const seasonStart = BigInt(Math.floor(activeSeason.startDate.getTime() / 1000));
+			return seasonStart > MATCH_CUTOFF_START_TIME ? seasonStart : MATCH_CUTOFF_START_TIME;
+		}
+	}
+
+	// 3. DotaUser creation date
 	if (accountId != null) {
 		const dotaUser = await prisma.dotaUser.findUnique({
 			where: { account_id: accountId },
@@ -47,6 +71,8 @@ export async function computeMatchCutoff(
 			return userFloor > MATCH_CUTOFF_START_TIME ? userFloor : MATCH_CUTOFF_START_TIME;
 		}
 	}
+
+	// 4. Global floor
 	return MATCH_CUTOFF_START_TIME;
 }
 
@@ -78,7 +104,8 @@ export async function resolveIncrementalSave(
 		if (!save) error(404, 'Save not found');
 		if (save.userId !== userId) error(403, 'Forbidden');
 		const account_id = await ensureSaveAccountId(save, user.account_id);
-		const matchCutoff = await computeMatchCutoff(save.seasonId, account_id);
+		const seasonId = await ensureSaveSeasonId(save, account_id);
+		const matchCutoff = await computeMatchCutoff(seasonId, account_id);
 		return { saveId: save.id, userId: save.userId, account_id, essence: 0, matchCutoff };
 	}
 
@@ -89,18 +116,56 @@ export async function resolveIncrementalSave(
 		orderBy: { createdAt: 'asc' }
 	});
 	if (!save) {
-		// Create new save with account_id from user if available
+		const detectedSeasonId = await detectActiveDarkriftSeason(user.account_id);
 		save = await prisma.incrementalSave.create({
 			data: {
 				userId,
-				account_id: user.account_id || null
+				account_id: user.account_id || null,
+				seasonId: detectedSeasonId
 			},
 			select: { id: true, userId: true, account_id: true, seasonId: true }
 		});
 	}
 	const account_id = await ensureSaveAccountId(save, user.account_id);
-	const matchCutoff = await computeMatchCutoff(save.seasonId, account_id);
+	const seasonId = await ensureSaveSeasonId(save, account_id);
+	const matchCutoff = await computeMatchCutoff(seasonId, account_id);
 	return { saveId: save.id, userId: save.userId, account_id, essence: 0, matchCutoff };
+}
+
+/**
+ * Detect the user's most recent active darkrift season from league membership.
+ * Returns the season id or null if none found.
+ */
+async function detectActiveDarkriftSeason(accountId: number | null): Promise<number | null> {
+	if (accountId == null) return null;
+	const season = await prisma.season.findFirst({
+		where: {
+			type: 'darkrift',
+			active: true,
+			members: { some: { account_id: accountId } }
+		},
+		select: { id: true },
+		orderBy: { startDate: 'desc' }
+	});
+	return season?.id ?? null;
+}
+
+/**
+ * If the save has no seasonId, auto-detect from the user's active darkrift season and persist.
+ * Returns the effective seasonId for the save.
+ */
+async function ensureSaveSeasonId(
+	save: { id: string; seasonId: number | null },
+	accountId: number | null
+): Promise<number | null> {
+	if (save.seasonId != null) return save.seasonId;
+	const detectedSeasonId = await detectActiveDarkriftSeason(accountId);
+	if (detectedSeasonId == null) return null;
+	await prisma.incrementalSave.update({
+		where: { id: save.id },
+		data: { seasonId: detectedSeasonId }
+	});
+	return detectedSeasonId;
 }
 
 /**

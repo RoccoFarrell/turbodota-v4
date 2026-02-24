@@ -20,9 +20,11 @@ const connectionString = url.toString();
 // Construct our own Pool so we can control SSL settings directly.
 // Supabase's pooler cert chain isn't trusted by Node in serverless envs,
 // so we disable cert verification while keeping the connection encrypted.
+// Local dev (127.0.0.1 / localhost) doesn't support SSL, so skip it there.
+const isLocal = url.hostname === '127.0.0.1' || url.hostname === 'localhost';
 const pool = new pg.Pool({
 	connectionString,
-	ssl: { rejectUnauthorized: false }
+	ssl: isLocal ? false : { rejectUnauthorized: false }
 });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });

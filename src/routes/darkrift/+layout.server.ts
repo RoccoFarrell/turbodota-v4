@@ -28,7 +28,7 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 				name: true,
 				createdAt: true,
 				seasonId: true,
-				season: { select: { id: true, name: true, startDate: true, endDate: true, active: true } }
+				season: { select: { id: true, name: true, startDate: true, endDate: true, active: true, leagueID: true } }
 			},
 			orderBy: { createdAt: 'asc' }
 		})
@@ -57,7 +57,8 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 						name: s.season.name,
 						startDate: s.season.startDate.toISOString(),
 						endDate: s.season.endDate.toISOString(),
-						active: s.season.active
+						active: s.season.active,
+						leagueID: s.season.leagueID
 					}
 				: null
 		}))

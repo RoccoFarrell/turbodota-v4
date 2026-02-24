@@ -12,6 +12,7 @@
 			startDate: string;
 			endDate: string;
 			active: boolean;
+			leagueID: number;
 		} | null;
 	}
 
@@ -55,5 +56,17 @@
 				</option>
 			{/each}
 		</select>
+	</div>
+{:else if saves.length === 1 && saves[0].season}
+	<div class="mx-3 mb-1 mt-0.5">
+		<a
+			href="/leagues/{saves[0].season.leagueID}/seasons/{saves[0].season.id}"
+			class="flex items-center w-full text-xs font-semibold rounded-md border border-violet-800/30 bg-violet-950/30
+			       text-violet-300 px-2 py-1.5 no-underline hover:border-violet-600/50 hover:text-violet-200 transition-colors"
+		>
+			{#if saves[0].season.active}<span class="inline-block w-1.5 h-1.5 rounded-full bg-green-400 shadow-[0_0_4px_rgba(74,222,128,0.6)] mr-1.5 shrink-0"></span>{/if}
+			<span class="truncate">{saves[0].season.name}</span>
+			<i class="fi fi-br-angle-right ml-auto text-[0.5rem] text-violet-600 shrink-0"></i>
+		</a>
 	</div>
 {/if}

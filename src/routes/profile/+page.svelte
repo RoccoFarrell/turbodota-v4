@@ -19,6 +19,7 @@
 	let onboardingStep = $state<'choice' | 'manual'>('choice');
 
 	const linkedSteam = $derived($page.url.searchParams.get('linked') === 'steam');
+	const linkError = $derived($page.url.searchParams.get('link_error'));
 
 	let editingUsername = $state(false);
 	let usernameInput = $state(data.user.username);
@@ -35,12 +36,20 @@
 
 	// Clean transient query params after they've been shown
 	$effect(() => {
-		if (linkedSteam) {
+		if (linkedSteam || linkError) {
 			const url = new URL(window.location.href);
 			url.searchParams.delete('linked');
+			url.searchParams.delete('link_error');
 			history.replaceState({}, '', url.toString());
 		}
 	});
+
+	const linkErrorMessages: Record<string, string> = {
+		session_expired: 'Your session expired. Please log in and try again.',
+		steam_failed: 'Failed to authenticate with Steam. Please try again.',
+		already_linked: 'This Steam account is already linked to another user with a Google account. Contact support if you need help merging accounts.',
+		unknown: 'Something went wrong while linking your Steam account. Please try again.'
+	};
 
 	function dismissOnboarding() {
 		onboardingDismissed = true;
@@ -145,6 +154,13 @@
 	class="profile-root min-h-full p-6 flex flex-col gap-4 max-w-[1100px] mx-auto text-(--text-primary)"
 	style="background: radial-gradient(ellipse at 50% 0%, rgba(139, 92, 246, 0.08) 0%, transparent 50%), radial-gradient(ellipse at 50% 100%, rgba(88, 28, 135, 0.05) 0%, transparent 40%), #030712"
 >
+
+	<!-- Error banners -->
+	{#if linkError}
+		<div class="reveal reveal-1 py-3 px-4 rounded-lg text-sm bg-[rgba(69,10,10,0.5)] border border-[rgba(239,68,68,0.3)] text-red-300">
+			{linkErrorMessages[linkError] ?? linkErrorMessages.unknown}
+		</div>
+	{/if}
 
 	<!-- Success banners -->
 	{#if linkedSteam}

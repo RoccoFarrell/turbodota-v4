@@ -4,7 +4,7 @@ import { MATCH_CUTOFF_START_TIME } from '$lib/constants/matches';
 // Mock prisma before importing the module under test
 vi.mock('$lib/server/prisma', () => ({
 	default: {
-		season: { findUnique: vi.fn() },
+		season: { findUnique: vi.fn(), findFirst: vi.fn() },
 		dotaUser: { findUnique: vi.fn() }
 	}
 }));
@@ -35,7 +35,32 @@ describe('computeMatchCutoff', () => {
 		expect(prisma.dotaUser.findUnique).not.toHaveBeenCalled();
 	});
 
-	it('falls back to DotaUser.createdDate when no season', async () => {
+	it('auto-detects active darkrift season when no explicit seasonId', async () => {
+		const seasonStart = new Date('2026-02-20T00:00:00Z');
+		vi.mocked(prisma.season.findFirst).mockResolvedValue({
+			startDate: seasonStart
+		} as never);
+
+		const result = await computeMatchCutoff(null, 12345);
+
+		const expected = BigInt(Math.floor(seasonStart.getTime() / 1000));
+		expect(result).toBe(expected);
+		expect(prisma.season.findUnique).not.toHaveBeenCalled();
+		expect(prisma.season.findFirst).toHaveBeenCalledWith({
+			where: {
+				type: 'darkrift',
+				active: true,
+				members: { some: { account_id: 12345 } }
+			},
+			select: { startDate: true },
+			orderBy: { startDate: 'desc' }
+		});
+		// Should not fall through to dotaUser
+		expect(prisma.dotaUser.findUnique).not.toHaveBeenCalled();
+	});
+
+	it('falls back to DotaUser.createdDate when no season and no active darkrift season', async () => {
+		vi.mocked(prisma.season.findFirst).mockResolvedValue(null);
 		const userCreated = new Date('2026-01-10T00:00:00Z');
 		vi.mocked(prisma.dotaUser.findUnique).mockResolvedValue({
 			createdDate: userCreated

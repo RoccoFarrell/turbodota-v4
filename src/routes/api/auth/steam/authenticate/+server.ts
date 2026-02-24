@@ -42,7 +42,7 @@ export const GET: RequestHandler = async ({ request, cookies }) => {
 					username: steamUser.username,
 					steam_id: BigInt(steamUser.steamid),
 					account_id: account_id,
-					profile_url: steamUser.profile,
+					profile_url: steamUser.profile?.url || null,
 					avatar_url: steamUser.avatar?.small,
 					createdDate: new Date()
 				}
@@ -58,5 +58,5 @@ export const GET: RequestHandler = async ({ request, cookies }) => {
 	setSessionCookie(cookies, session.id, session.expiresAt);
 
 	// Redirect to turbotown
-	throw redirect(302, '/turbotown');
+	throw redirect(302, '/');
 };
