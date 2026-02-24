@@ -38,9 +38,10 @@ let slots = $state<SlotState[]>([]);
 let displayTime = $state(Date.now());
 let isRunning = $state(true);
 
-// ---- Timers ----
+// ---- Timers & in-flight tracking ----
 let tickInterval: ReturnType<typeof setInterval> | null = null;
 let displayInterval: ReturnType<typeof setInterval> | null = null;
+const tickingSlots = new Set<number>(); // slotIndex values currently awaiting server response
 
 const TICK_MS = 200;
 const DISPLAY_MS = 50;
@@ -176,8 +177,9 @@ function clientTick(): void {
 	}
 
 	for (const slot of slots) {
-		if (slot.progress >= 1) {
-			tickSlot(slot);
+		if (slot.progress >= 1 && !tickingSlots.has(slot.slotIndex)) {
+			tickingSlots.add(slot.slotIndex);
+			tickSlot(slot).finally(() => tickingSlots.delete(slot.slotIndex));
 		}
 	}
 }
@@ -274,6 +276,7 @@ export async function clearSlot(slotIndex: number): Promise<void> {
 	});
 	if (res.ok) {
 		slots = slots.filter((s) => s.slotIndex !== slotIndex);
+		tickingSlots.delete(slotIndex);
 	}
 }
 
