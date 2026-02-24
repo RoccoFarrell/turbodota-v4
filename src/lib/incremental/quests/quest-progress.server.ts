@@ -30,8 +30,14 @@ export interface QuestProgress {
  *
  * One DB query (Match ⋈ PlayersMatchDetail), one loop over results.
  * Returns one entry per quest definition.
+ *
+ * @param accountId - Dota account ID
+ * @param startAfter - Earliest match timestamp (unix seconds BigInt). Defaults to MATCH_CUTOFF_START_TIME.
  */
-export async function getQuestProgress(accountId: number): Promise<QuestProgress[]> {
+export async function getQuestProgress(
+	accountId: number,
+	startAfter: bigint = MATCH_CUTOFF_START_TIME
+): Promise<QuestProgress[]> {
 	// ── 1. Single query: qualifying match details ──────────────────────────
 	// We need PlayersMatchDetail rows where the corresponding Match row has
 	// the right account_id, game_mode, and start_time.
@@ -39,7 +45,7 @@ export async function getQuestProgress(accountId: number): Promise<QuestProgress
 		where: {
 			account_id: accountId,
 			match_detail: {
-				start_time: { gte: MATCH_CUTOFF_START_TIME }
+				start_time: { gte: startAfter }
 			}
 		},
 		select: {
@@ -65,7 +71,7 @@ export async function getQuestProgress(accountId: number): Promise<QuestProgress
 				match_id: { in: matchIds },
 				account_id: accountId,
 				game_mode: { in: QUALIFYING_GAME_MODES },
-				start_time: { gte: MATCH_CUTOFF_START_TIME }
+				start_time: { gte: startAfter }
 			},
 			select: { match_id: true }
 		});

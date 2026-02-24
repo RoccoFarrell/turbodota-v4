@@ -15,10 +15,24 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 	}
 
 	const accountId = user.account_id;
-	const dotaUser = await prisma.dotaUser.findUnique({
-		where: { account_id: accountId },
-		select: { lastUpdated: true }
-	});
+
+	const [dotaUser, saves] = await Promise.all([
+		prisma.dotaUser.findUnique({
+			where: { account_id: accountId },
+			select: { lastUpdated: true }
+		}),
+		prisma.incrementalSave.findMany({
+			where: { userId: user.id },
+			select: {
+				id: true,
+				name: true,
+				createdAt: true,
+				seasonId: true,
+				season: { select: { id: true, name: true, startDate: true, endDate: true, active: true } }
+			},
+			orderBy: { createdAt: 'asc' }
+		})
+	]);
 
 	const staleThreshold = new Date(Date.now() - MATCH_REFRESH_STALE_MINUTES * 60 * 1000);
 	const isStale = !dotaUser?.lastUpdated || dotaUser.lastUpdated < staleThreshold;
@@ -31,5 +45,21 @@ export const load: LayoutServerLoad = async ({ locals, url }) => {
 		}
 	}
 
-	return { accountId };
+	return {
+		accountId,
+		saves: saves.map((s) => ({
+			id: s.id,
+			name: s.name,
+			createdAt: s.createdAt.toISOString(),
+			season: s.season
+				? {
+						id: s.season.id,
+						name: s.season.name,
+						startDate: s.season.startDate.toISOString(),
+						endDate: s.season.endDate.toISOString(),
+						active: s.season.active
+					}
+				: null
+		}))
+	};
 };

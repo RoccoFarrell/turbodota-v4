@@ -31,10 +31,11 @@ export const POST: RequestHandler = async (event) => {
 
 	const match = await prisma.match.findFirst({
 		where: { account_id: accountId, match_id: matchId },
-		select: { match_id: true, hero_id: true, player_slot: true, radiant_win: true }
+		select: { match_id: true, hero_id: true, player_slot: true, radiant_win: true, start_time: true }
 	});
 	if (!match) error(400, 'Match not found or not yours');
 	if (!isWin(match.player_slot, match.radiant_win)) error(400, 'Only wins can be converted');
+	if (match.start_time < save.matchCutoff) error(400, 'This match is outside the current season window');
 
 	const [essence, alreadyConverted, alreadyOnRoster, rosterCount] = await Promise.all([
 		getBankBalance(save.saveId, 'essence'),

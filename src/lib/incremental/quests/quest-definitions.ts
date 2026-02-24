@@ -16,13 +16,6 @@
 export type QuestType = 'recurring' | 'onboarding' | 'one_time';
 
 // ---------------------------------------------------------------------------
-// Default quest period start (used when first assigning a quest to a save)
-// ---------------------------------------------------------------------------
-
-/** Midnight EST on 2026-02-13. Used as startedAt when creating a new IncrementalSaveQuest row. */
-export const DEFAULT_QUEST_START_DATE = new Date('2026-02-13T05:00:00.000Z');
-
-// ---------------------------------------------------------------------------
 // Stat keys — the subset of PlayersMatchDetail columns we can track
 // ---------------------------------------------------------------------------
 
@@ -257,7 +250,7 @@ export const ONBOARDING_DEFINITIONS: readonly OnboardingDef[] = [
 		description: 'Assemble your battle team.',
 		iconId: 'swords',
 		checkKey: 'has_lineup',
-		navLink: '/darkrift/lineups',
+		navLink: '/darkrift/lineup',
 		reward: { currency: { key: 'essence', amount: 300 } }
 	},
 	{

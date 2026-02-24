@@ -11,7 +11,7 @@ import {
 	type QuestDef,
 	type OnboardingDef
 } from '$lib/incremental/quests/quest-definitions';
-import { GAME_MODE_TURBO, GAME_MODES_RANKED, MATCH_CUTOFF_START_TIME } from '$lib/constants/matches';
+import { GAME_MODE_TURBO, GAME_MODES_RANKED } from '$lib/constants/matches';
 
 /**
  * GET /api/incremental/quests?saveId=...
@@ -29,7 +29,7 @@ export const GET: RequestHandler = async (event) => {
 
 	// ── 1. Fetch both progress sources in parallel ───────────────────────
 	const [recurringProgress, onboardingProgress] = await Promise.all([
-		accountId ? getQuestProgress(accountId) : Promise.resolve([]),
+		accountId ? getQuestProgress(accountId, save.matchCutoff) : Promise.resolve([]),
 		getOnboardingProgress(save.saveId)
 	]);
 
@@ -76,7 +76,7 @@ export const GET: RequestHandler = async (event) => {
 						...saveQuestValues.map((r) => Math.floor(r.startedAt.getTime() / 1000))
 					)
 				: 0;
-		const cutoffSeconds = Number(MATCH_CUTOFF_START_TIME);
+		const cutoffSeconds = Number(save.matchCutoff);
 		qualifyingMatches = await prisma.match.findMany({
 			where: {
 				account_id: accountId,

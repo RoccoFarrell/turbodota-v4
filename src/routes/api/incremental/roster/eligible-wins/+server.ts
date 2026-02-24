@@ -28,7 +28,7 @@ export const GET: RequestHandler = async (event) => {
 
 	const [matches, converted, roster, heroes] = await Promise.all([
 		prisma.match.findMany({
-			where: { account_id: accountId },
+			where: { account_id: accountId, start_time: { gte: save.matchCutoff } },
 			orderBy: { start_time: 'desc' },
 			take: 10,
 			select: { match_id: true, hero_id: true, player_slot: true, radiant_win: true, start_time: true, game_mode: true }

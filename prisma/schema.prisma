@@ -195,8 +195,9 @@ model Season {
   members        DotaUser[]
   season_results SeasonResult[]
   turbotowns     Turbotown[]
-  decks          Deck[]
-  users          SeasonUser[]
+  decks              Deck[]
+  users              SeasonUser[]
+  incrementalSaves   IncrementalSave[]
 }
 
 model SeasonResult {
@@ -611,10 +612,12 @@ model IncrementalSave {
   userId     String
   account_id Int? // Per-save Dota account (can differ from User.account_id)
   name       String? // e.g. "Main", "Alt" – optional label
+  seasonId   Int? // Optional link to a league Season for season-scoped play
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
   user              User                              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  season            Season?                           @relation(fields: [seasonId], references: [id])
   actionState       IncrementalActionState?
   actionSlots       IncrementalActionSlot[]
   rosterHeroes      IncrementalRosterHero[]

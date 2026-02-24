@@ -3,12 +3,18 @@
 	import { page } from '$app/stores';
 	import { slide } from 'svelte/transition';
 	import { quintOut } from 'svelte/easing';
+	import SaveSeasonPicker from '$lib/incremental/components/SaveSeasonPicker.svelte';
 
 	interface Props {
 		session: { user: User } | null;
 	}
 
 	let { session }: Props = $props();
+
+	// Saves with season info come from the darkrift layout server data
+	const darkriftSaves = $derived(
+		$page.url.pathname.startsWith('/darkrift') ? ($page.data?.saves ?? []) : []
+	);
 
 	const PRIVILEGED = [34940151, 65110965, 68024789, 80636612, 113003047, 423076846];
 	const isPrivileged = $derived(
@@ -119,6 +125,7 @@
 
 	{#if incrementalExpanded}
 		<div transition:slide={{ duration: 180, easing: quintOut }}>
+			<SaveSeasonPicker saves={darkriftSaves} />
 			{#each incrementalRoutes as route}
 				{#if route.featured}
 					<a
@@ -181,11 +188,6 @@
 	<a href="/blog" data-sveltekit-preload-data="tap" class={navLink} class:is-active={isActive('/blog')}>
 		<i class="fi fi-rr-blog-text nav-icon text-pink-400 w-4 text-center text-sm leading-none"></i>
 		<span>Blog</span>
-	</a>
-
-	<a href="/herostats" data-sveltekit-preload-data="tap" class={navLink} class:is-active={isActive('/herostats')}>
-		<i class="fi fi-br-chart-histogram nav-icon text-amber-400 w-4 text-center text-sm leading-none"></i>
-		<span>Hero Stats</span>
 	</a>
 
 	{#if session?.user}

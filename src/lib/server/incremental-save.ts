@@ -6,6 +6,7 @@
 import { error } from '@sveltejs/kit';
 import type { RequestEvent } from '@sveltejs/kit';
 import prisma from '$lib/server/prisma';
+import { MATCH_CUTOFF_START_TIME } from '$lib/constants/matches';
 
 export interface ResolvedSave {
 	saveId: string;
@@ -13,6 +14,40 @@ export interface ResolvedSave {
 	account_id: number | null; // Per-save Dota account ID
 	/** @deprecated Read essence from Bank via getBankBalance(saveId, 'essence') instead. */
 	essence: number;
+	/** Effective earliest match timestamp (unix seconds as BigInt) for season-aware queries. */
+	matchCutoff: bigint;
+}
+
+/**
+ * Compute the effective match cutoff for a save.
+ * Fallback chain: season.startDate → DotaUser.createdDate → MATCH_CUTOFF_START_TIME.
+ * Exported for unit testing.
+ */
+export async function computeMatchCutoff(
+	seasonId: number | null,
+	accountId: number | null
+): Promise<bigint> {
+	if (seasonId != null) {
+		const season = await prisma.season.findUnique({
+			where: { id: seasonId },
+			select: { startDate: true }
+		});
+		if (season) {
+			const seasonStart = BigInt(Math.floor(season.startDate.getTime() / 1000));
+			return seasonStart > MATCH_CUTOFF_START_TIME ? seasonStart : MATCH_CUTOFF_START_TIME;
+		}
+	}
+	if (accountId != null) {
+		const dotaUser = await prisma.dotaUser.findUnique({
+			where: { account_id: accountId },
+			select: { createdDate: true }
+		});
+		if (dotaUser) {
+			const userFloor = BigInt(Math.floor(dotaUser.createdDate.getTime() / 1000));
+			return userFloor > MATCH_CUTOFF_START_TIME ? userFloor : MATCH_CUTOFF_START_TIME;
+		}
+	}
+	return MATCH_CUTOFF_START_TIME;
 }
 
 /**
@@ -38,18 +73,19 @@ export async function resolveIncrementalSave(
 	if (saveId) {
 		const save = await prisma.incrementalSave.findUnique({
 			where: { id: saveId },
-			select: { id: true, userId: true, account_id: true }
+			select: { id: true, userId: true, account_id: true, seasonId: true }
 		});
 		if (!save) error(404, 'Save not found');
 		if (save.userId !== userId) error(403, 'Forbidden');
 		const account_id = await ensureSaveAccountId(save, user.account_id);
-		return { saveId: save.id, userId: save.userId, account_id, essence: 0 };
+		const matchCutoff = await computeMatchCutoff(save.seasonId, account_id);
+		return { saveId: save.id, userId: save.userId, account_id, essence: 0, matchCutoff };
 	}
 
 	// No saveId: use first save or create one
 	let save = await prisma.incrementalSave.findFirst({
 		where: { userId },
-		select: { id: true, userId: true, account_id: true },
+		select: { id: true, userId: true, account_id: true, seasonId: true },
 		orderBy: { createdAt: 'asc' }
 	});
 	if (!save) {
@@ -59,11 +95,12 @@ export async function resolveIncrementalSave(
 				userId,
 				account_id: user.account_id || null
 			},
-			select: { id: true, userId: true, account_id: true }
+			select: { id: true, userId: true, account_id: true, seasonId: true }
 		});
 	}
 	const account_id = await ensureSaveAccountId(save, user.account_id);
-	return { saveId: save.id, userId: save.userId, account_id, essence: 0 };
+	const matchCutoff = await computeMatchCutoff(save.seasonId, account_id);
+	return { saveId: save.id, userId: save.userId, account_id, essence: 0, matchCutoff };
 }
 
 /**

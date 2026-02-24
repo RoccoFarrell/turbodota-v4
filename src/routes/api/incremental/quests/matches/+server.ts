@@ -3,7 +3,7 @@ import type { RequestHandler } from '@sveltejs/kit';
 import prisma from '$lib/server/prisma';
 import { resolveIncrementalSave } from '$lib/server/incremental-save';
 import { ensureMatchDetails } from '$lib/server/ensure-match-details';
-import { GAME_MODE_TURBO, GAME_MODES_RANKED, MATCH_CUTOFF_START_TIME } from '$lib/constants/matches';
+import { GAME_MODE_TURBO, GAME_MODES_RANKED } from '$lib/constants/matches';
 
 const QUALIFYING_GAME_MODES = [GAME_MODE_TURBO, ...GAME_MODES_RANKED];
 
@@ -36,7 +36,7 @@ export const GET: RequestHandler = async (event) => {
 		where: {
 			account_id: accountId,
 			game_mode: { in: QUALIFYING_GAME_MODES },
-			start_time: { gte: MATCH_CUTOFF_START_TIME }
+			start_time: { gte: save.matchCutoff }
 		},
 		orderBy: { start_time: 'desc' },
 		take: limit,
