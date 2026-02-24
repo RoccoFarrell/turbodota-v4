@@ -63,6 +63,11 @@ const statusEffects: StatusEffectDef[] = [
 		id: 'physical_dot',
 		tickDamage: true,
 		tickDamageType: 'physical'
+	},
+	{
+		// Attack speed multiplier (positive = bonus); magnitude from Buff.value (e.g. 0.3)
+		id: 'attack_speed_bonus',
+		attackSpeedMult: 0
 	}
 ];
 

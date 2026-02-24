@@ -84,6 +84,51 @@ const heroDefs: HeroDef[] = [
 		baseSpellInterval: 8,
 		spellPower: 10,
 		abilityIds: ['test_magic_dot']
+	},
+	{
+		heroId: 105,
+		primaryAttribute: PrimaryAttribute.AGI,
+		baseAttackInterval: 1.3,
+		baseAttackDamage: 20,
+		baseMaxHp: 110,
+		baseArmor: 2,
+		baseMagicResist: 0.25,
+		baseSpellInterval: null,
+		abilityIds: ['test_bonus_damage']
+	},
+	{
+		heroId: 106,
+		primaryAttribute: PrimaryAttribute.STR,
+		baseAttackInterval: 1.3,
+		baseAttackDamage: 20,
+		baseMaxHp: 110,
+		baseArmor: 2,
+		baseMagicResist: 0.25,
+		baseSpellInterval: null,
+		abilityIds: ['test_lifesteal']
+	},
+	{
+		heroId: 107,
+		primaryAttribute: PrimaryAttribute.STR,
+		baseAttackInterval: 1.3,
+		baseAttackDamage: 20,
+		baseMaxHp: 110,
+		baseArmor: 2,
+		baseMagicResist: 0.25,
+		baseSpellInterval: 8,
+		abilityIds: ['test_attack_speed_bonus']
+	},
+	{
+		heroId: 108,
+		primaryAttribute: PrimaryAttribute.INT,
+		baseAttackInterval: 1.4,
+		baseAttackDamage: 18,
+		baseMaxHp: 100,
+		baseArmor: 1,
+		baseMagicResist: 0.25,
+		baseSpellInterval: 8,
+		spellPower: 10,
+		abilityIds: ['test_all_enemies_nuke']
 	}
 ];
 
@@ -150,6 +195,40 @@ const abilityDefs: AbilityDef[] = [
 		target: 'single_enemy',
 		baseDamage: 15,
 		statusEffectOnHit: { statusEffectId: 'magic_dot', duration: 5 }
+	},
+	{
+		id: 'test_bonus_damage',
+		type: 'passive',
+		trigger: 'on_attack',
+		effect: 'bonus_damage',
+		target: 'attacked_enemy',
+		damageType: 'physical',
+		baseDamage: 15
+	},
+	{
+		id: 'test_lifesteal',
+		type: 'passive',
+		trigger: 'on_attack',
+		effect: 'lifesteal',
+		target: 'attacked_enemy',
+		returnDamageRatio: 0.3
+	},
+	{
+		id: 'test_attack_speed_bonus',
+		type: 'active',
+		trigger: 'timer',
+		effect: 'attack_speed_bonus',
+		target: 'self',
+		statusEffectOnHit: { statusEffectId: 'attack_speed_bonus', duration: 8, value: 0.3 }
+	},
+	{
+		id: 'test_all_enemies_nuke',
+		type: 'active',
+		trigger: 'timer',
+		effect: 'magic_damage',
+		target: 'all_enemies',
+		damageType: 'magical',
+		baseDamage: 50
 	}
 ];
 

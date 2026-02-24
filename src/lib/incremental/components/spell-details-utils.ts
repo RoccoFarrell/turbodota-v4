@@ -78,6 +78,12 @@ export function humanizeEffect(effect: string | undefined): string | null {
 			return 'Magic damage over time';
 		case 'physical_dot':
 			return 'Physical damage over time';
+		case 'bonus_damage':
+			return 'Bonus attack damage';
+		case 'lifesteal':
+			return 'Heals on attack';
+		case 'attack_speed_bonus':
+			return 'Boosts attack speed';
 		default:
 			return effect.replace(/_/g, ' ');
 	}

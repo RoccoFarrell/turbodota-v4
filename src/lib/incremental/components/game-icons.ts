@@ -97,6 +97,9 @@ const EFFECT_ICONS: Record<string, string> = {
 	damage_block: gi('lorc', 'edged-shield'),
 	magic_dot: gi('lorc', 'fire-ring'),
 	physical_dot: gi('lorc', 'bleeding-wound'),
+	bonus_damage: gi('lorc', 'bloody-sword'),
+	lifesteal: gi('lorc', 'health-decrease'),
+	attack_speed_bonus: gi('lorc', 'lightning-frequency'),
 };
 
 /** Simple hash of a string to a number. */

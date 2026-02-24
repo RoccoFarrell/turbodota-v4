@@ -326,6 +326,138 @@ describe('resolution', () => {
 		expect(dotBuff!.duration).toBe(5);
 	});
 
+	it('bonus_damage: hero with bonus_damage passive deals more damage on auto-attack', () => {
+		// Hero 105 has test_bonus_damage (baseDamage: 15) — same base stats as hero 101 but with bonus_damage
+		const stateBonus = createBattleState([105], 'wolf_pack', withDefs);
+		const defBonus = getHeroDef(105)!;
+		const intervalBonus = formulas.attackInterval(defBonus.baseAttackInterval, 0);
+		const readyBonus = {
+			...stateBonus,
+			player: stateBonus.player.map((p) => ({ ...p, attackTimer: intervalBonus }))
+		};
+		const hpBeforeBonus = readyBonus.enemy[0].currentHp;
+		const afterBonus = resolution.resolveAutoAttack(readyBonus, 0, defs);
+		const damageBonus = hpBeforeBonus - afterBonus.enemy[0].currentHp;
+
+		// Hero 101 has same base stats but NO bonus_damage (test_attack_speed_slow is active/timer, not passive)
+		const stateNormal = createBattleState([101], 'wolf_pack', withDefs);
+		const defNormal = getHeroDef(101)!;
+		const intervalNormal = formulas.attackInterval(defNormal.baseAttackInterval, 0);
+		const readyNormal = {
+			...stateNormal,
+			player: stateNormal.player.map((p) => ({ ...p, attackTimer: intervalNormal }))
+		};
+		const hpBeforeNormal = readyNormal.enemy[0].currentHp;
+		const afterNormal = resolution.resolveAutoAttack(readyNormal, 0, defs);
+		const damageNormal = hpBeforeNormal - afterNormal.enemy[0].currentHp;
+
+		expect(damageBonus).toBeGreaterThan(damageNormal);
+	});
+
+	it('lifesteal: hero with lifesteal passive heals on auto-attack', () => {
+		let state = createBattleState([106], 'wolf_pack', withDefs);
+		const def = getHeroDef(106)!;
+		const interval = formulas.attackInterval(def.baseAttackInterval, 0);
+		// Reduce hero HP so heal is visible
+		state = {
+			...state,
+			player: state.player.map((p) => ({ ...p, currentHp: 50, attackTimer: interval }))
+		};
+		const hpBefore = state.player[0].currentHp;
+		const after = resolution.resolveAutoAttack(state, 0, defs);
+		// Hero should have healed (lifesteal ratio 0.3 × finalDamage)
+		expect(after.player[0].currentHp).toBeGreaterThan(hpBefore);
+	});
+
+	it('lifesteal: hero does not heal above max HP', () => {
+		let state = createBattleState([106], 'wolf_pack', withDefs);
+		const def = getHeroDef(106)!;
+		const interval = formulas.attackInterval(def.baseAttackInterval, 0);
+		// Hero at full HP
+		state = {
+			...state,
+			player: state.player.map((p) => ({ ...p, attackTimer: interval }))
+		};
+		const after = resolution.resolveAutoAttack(state, 0, defs);
+		expect(after.player[0].currentHp).toBeLessThanOrEqual(def.baseMaxHp);
+	});
+
+	it('attack_speed_bonus: hero with buff has shorter attack interval', () => {
+		// Hero 107 gets attack_speed_bonus buff (value 0.3)
+		const def = getHeroDef(107)!;
+		const baseInterval = formulas.attackInterval(def.baseAttackInterval, 0);
+		// With 0.3 attack speed bonus: interval should be shorter
+		const buffedInterval = formulas.attackInterval(def.baseAttackInterval, 0.3);
+		expect(buffedInterval).toBeLessThan(baseInterval);
+
+		// In resolveAutoAttack: hero with attack_speed_bonus buff should attack sooner
+		let state = createBattleState([107], 'wolf_pack', withDefs);
+		state = {
+			...state,
+			player: state.player.map((p) => ({
+				...p,
+				buffs: [{ id: 'attack_speed_bonus', duration: 8, value: 0.3 }],
+				attackTimer: buffedInterval // ready at buffed interval
+			}))
+		};
+		const after = resolution.resolveAutoAttack(state, 0, defs);
+		// Should have attacked (timer >= buffed interval)
+		expect(after.player[0].attackTimer).toBe(0);
+	});
+
+	it('all_enemies: spell hits all enemies, not just target', () => {
+		let state = createBattleState([108], 'wolf_pack', { getHeroDef });
+		const def = getHeroDef(108)!;
+		const interval = formulas.spellInterval(def.baseSpellInterval!, 0);
+		state = {
+			...state,
+			player: state.player.map((p) => ({ ...p, spellTimer: interval }))
+		};
+		// Wolf pack has multiple enemies — all should take damage
+		const hpBefore = state.enemy.map((e) => e.currentHp);
+		const after = resolution.resolveSpell(state, 0, defs);
+		expect(after.player[0].spellTimer).toBe(0);
+		// Every living enemy should have taken damage
+		for (let i = 0; i < after.enemy.length; i++) {
+			expect(after.enemy[i].currentHp).toBeLessThan(hpBefore[i]);
+		}
+	});
+
+	it('all_enemies: spell with statusEffectOnHit applies to all enemies', () => {
+		// Create a custom ability with all_enemies + stun status
+		const allEnemiesStun: import('../types').AbilityDef = {
+			id: 'test_all_enemies_stun',
+			type: 'active',
+			trigger: 'timer',
+			effect: 'stun',
+			target: 'all_enemies',
+			statusEffectOnHit: { statusEffectId: 'stun', duration: 1.5 }
+		};
+		const customGetAbilityDef = (id: string) =>
+			id === 'test_all_enemies_stun' ? allEnemiesStun : getAbilityDef(id);
+		const customDefs = { getHeroDef, getAbilityDef: customGetAbilityDef };
+
+		// Use hero 108 but override abilityIds to use stun
+		let state = createBattleState([108], 'wolf_pack', { getHeroDef });
+		const def = getHeroDef(108)!;
+		const interval = formulas.spellInterval(def.baseSpellInterval!, 0);
+		state = {
+			...state,
+			player: state.player.map((p) => ({
+				...p,
+				abilityIds: ['test_all_enemies_stun'],
+				spellTimer: interval
+			}))
+		};
+		const after = resolution.resolveSpell(state, 0, customDefs);
+		// All enemies should have stun buff
+		for (const e of after.enemy) {
+			const stunBuff = (e.buffs ?? []).find((b) => b.id === 'stun');
+			expect(stunBuff).toBeDefined();
+			expect(stunBuff!.duration).toBe(1.5);
+		}
+	});
+
 	it('processBuffs: magic_dot deals tick damage to enemy each tick', () => {
 		let state = createBattleState([99], 'wolf_pack', withDefs);
 		const enemyHpBefore = state.enemy[0].currentHp;

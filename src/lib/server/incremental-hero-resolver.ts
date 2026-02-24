@@ -20,7 +20,7 @@ function statusEffectOnHitFromDb(
 ): { statusEffectId: string; duration: number; value?: number } | undefined {
 	if (!effect) return undefined;
 
-	// Self-targeting buffs (evasion, shield)
+	// Self-targeting buffs (evasion, shield, attack_speed_bonus)
 	if (target === 'self') {
 		switch (effect) {
 			case 'evasion':
@@ -30,6 +30,30 @@ function statusEffectOnHitFromDb(
 				return { statusEffectId: 'shield', duration: 8 };
 			case 'damage_block':
 				return { statusEffectId: 'shield', duration: 8 };
+			case 'attack_speed_bonus':
+				return { statusEffectId: 'attack_speed_bonus', duration: 8, value: 0.3 };
+			default:
+				return undefined;
+		}
+	}
+
+	// AOE enemy-targeting debuffs/effects
+	if (target === 'all_enemies') {
+		switch (effect) {
+			case 'stun':
+				return { statusEffectId: 'stun', duration: 1.5 };
+			case 'attack_speed_slow':
+				return { statusEffectId: 'attack_speed_slow', duration: 4, value: -0.25 };
+			case 'attack_damage_reduce':
+				return { statusEffectId: 'attack_damage_reduce', duration: 4, value: -0.2 };
+			case 'armor_reduce':
+				return { statusEffectId: 'armor_reduce', duration: 6, value: -5 };
+			case 'magic_resist_reduce':
+				return { statusEffectId: 'magic_resist_reduce', duration: 6, value: -0.15 };
+			case 'magic_dot':
+				return { statusEffectId: 'magic_dot', duration: 5 };
+			case 'physical_dot':
+				return { statusEffectId: 'physical_dot', duration: 5 };
 			default:
 				return undefined;
 		}

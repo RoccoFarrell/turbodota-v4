@@ -70,6 +70,7 @@ function removeDeadEnemies(state: BattleState): BattleState {
 /**
  * Resolve one auto-attack from the given hero. Call when hero's attackTimer >= interval.
  * Applies non-focus penalty, physical damage to state.targetIndex, resets hero attackTimer.
+ * Also processes bonus_damage and lifesteal passives.
  */
 export function resolveAutoAttack(
 	state: BattleState,
@@ -82,7 +83,10 @@ export function resolveAutoAttack(
 	const def = defs?.getHeroDef?.(hero.heroId) ?? getHeroDef(hero.heroId);
 	if (!def) return state;
 
-	const interval = attackInterval(def.baseAttackInterval, def.attackSpeed ?? 0);
+	// Factor in attack_speed_bonus / attack_speed_slow buffs on the hero
+	const buffSpeedMult = getAttackSpeedMult(hero.buffs);
+	const effectiveAttackSpeed = (def.attackSpeed ?? 0) + Math.max(-0.9, buffSpeedMult);
+	const interval = attackInterval(def.baseAttackInterval, effectiveAttackSpeed);
 	if (hero.attackTimer < interval) return state;
 
 	if (state.enemy.length === 0) return state;
@@ -92,18 +96,42 @@ export function resolveAutoAttack(
 	if (!enemyDef) return state;
 
 	const rawDamage = attackDamage(def.baseAttackDamage);
+
+	// bonus_damage passives: add flat physical damage from on_attack abilities
+	let bonusDamage = 0;
+	const getAb = defs?.getAbilityDef ?? getAbilityDef;
+	for (const aid of hero.abilityIds) {
+		const ab = getAb(aid);
+		if (ab?.type === 'passive' && ab.trigger === 'on_attack' && ab.effect === 'bonus_damage' && ab.baseDamage) {
+			bonusDamage += ab.baseDamage;
+		}
+	}
+	const totalRawDamage = rawDamage + bonusDamage;
+
 	const enemyFrontLinerIndex = getEnemyFrontLinerIndex(state);
 	const isTargetEnemyFrontLiner =
 		enemyFrontLinerIndex >= 0 && targetIdx === enemyFrontLinerIndex;
-	const damage = nonFocusTargetPenalty(rawDamage, isTargetEnemyFrontLiner);
+	const damage = nonFocusTargetPenalty(totalRawDamage, isTargetEnemyFrontLiner);
 	const targetArmorMr = getEffectiveArmorMr(target.buffs, enemyDef.baseArmor, enemyDef.baseMagicResist);
 	const finalDamage = applyDamageByType(damage, DamageTypeConst.PHYSICAL, targetArmorMr);
+
+	// lifesteal passives: heal hero for ratio × finalDamage
+	let lifestealHeal = 0;
+	for (const aid of hero.abilityIds) {
+		const ab = getAb(aid);
+		if (ab?.type === 'passive' && ab.trigger === 'on_attack' && ab.effect === 'lifesteal' && ab.returnDamageRatio) {
+			lifestealHeal += ab.returnDamageRatio * finalDamage;
+		}
+	}
 
 	const enemy = state.enemy.map((e, i) =>
 		i === targetIdx ? { ...e, currentHp: Math.max(0, e.currentHp - finalDamage) } : e
 	);
+	const newHeroHp = lifestealHeal > 0
+		? Math.min(def.baseMaxHp, hero.currentHp + lifestealHeal)
+		: hero.currentHp;
 	const player = state.player.map((p, i) =>
-		i === heroIndex ? { ...p, attackTimer: 0 } : p
+		i === heroIndex ? { ...p, attackTimer: 0, currentHp: newHeroHp } : p
 	) as HeroInstance[];
 	const logEntry: CombatLogEntry = {
 		time: state.elapsedTime,
@@ -166,7 +194,7 @@ function getAttackDamageMult(buffs: Buff[] | undefined): number {
 }
 
 /** Sum of all attackSpeedMult modifiers from buffs on a unit. */
-function getAttackSpeedMult(buffs: Buff[] | undefined): number {
+export function getAttackSpeedMult(buffs: Buff[] | undefined): number {
 	let mult = 0;
 	for (const b of buffs ?? []) {
 		const def = getStatusEffectDef(b.id);
@@ -200,7 +228,8 @@ function isActiveTimerAbility(a: AbilityDef | undefined): boolean {
 /**
  * Resolve the focused hero's active spell. Call when hero's spellTimer >= interval.
  * Rotates through all active (timer) abilities. Applies damage/status only when the chosen
- * ability is single_enemy with damage or statusEffectOnHit; otherwise just consumes the cast (resets timer).
+ * ability targets single_enemy or all_enemies with damage or statusEffectOnHit;
+ * self-targeting applies buff to caster; otherwise just consumes the cast (resets timer).
  */
 export function resolveSpell(
 	state: BattleState,
@@ -231,25 +260,16 @@ export function resolveSpell(
 	const ability = getAb(abilityId);
 	if (!ability) return state;
 
-	// DEBUG spell rotation (remove after fixing)
-	console.log('[resolveSpell]', {
-		heroIndex,
-		heroId: hero.heroId,
-		abilityIds: hero.abilityIds,
-		rotatableAbilityIds,
-		lastSpellAbilityIndexByPlayer: state.lastSpellAbilityIndexByPlayer,
-		heroLastCast: hero.lastCastAbilityIndex,
-		prevIndex,
-		nextAbilityIndex,
-		abilityIdCast: abilityId
-	});
-
 	const appliesToTarget =
 		ability.target === 'single_enemy' &&
 		((ability.baseDamage != null && ability.baseDamage > 0) || ability.statusEffectOnHit != null);
 
 	const appliesToSelf =
 		ability.target === 'self' && ability.statusEffectOnHit != null;
+
+	const appliesToAllEnemies =
+		ability.target === 'all_enemies' &&
+		((ability.baseDamage != null && ability.baseDamage > 0) || ability.statusEffectOnHit != null);
 
 	let enemy = state.enemy;
 	let combatLog = state.combatLog ?? [];
@@ -292,6 +312,53 @@ export function resolveSpell(
 			type: 'spell',
 			attackerHeroIndex: heroIndex,
 			attackerHeroId: hero.heroId,
+			abilityId
+		});
+	} else if (appliesToAllEnemies && state.enemy.length > 0) {
+		// AOE: apply damage and/or status to ALL living enemies (no non-focus penalty)
+		const damageType: DamageType = ability.damageType ?? DamageTypeConst.PURE;
+		let totalDamageDealt = 0;
+
+		enemy = state.enemy.map((e) => {
+			if (e.currentHp <= 0) return e;
+			const eDef = getEnemyDef(e.enemyDefId);
+			if (!eDef) return e;
+			const eArmorMr = getEffectiveArmorMr(e.buffs, eDef.baseArmor, eDef.baseMagicResist);
+
+			let finalDmg = 0;
+			if (ability.baseDamage != null && ability.baseDamage > 0) {
+				const rawSpell = spellDamage(ability.baseDamage, def.spellPower ?? 0);
+				finalDmg = applyDamageByType(rawSpell, damageType, eArmorMr);
+			}
+			totalDamageDealt += finalDmg;
+
+			let buffs = e.buffs ?? [];
+			if (ability.statusEffectOnHit) {
+				const { statusEffectId, duration, value: seValue } = ability.statusEffectOnHit;
+				const seDef = getStatusEffectDef(statusEffectId);
+				if (seDef) {
+					const buffValue = seDef.tickDamage
+						? (seValue ?? ability.baseDamage ?? 0) + (def.spellPower ?? 0)
+						: (seValue ?? ability.baseDamage);
+					buffs = [...buffs, { id: statusEffectId, duration, value: buffValue }];
+				}
+			}
+
+			return {
+				...e,
+				currentHp: Math.max(0, e.currentHp - finalDmg),
+				buffs
+			};
+		});
+
+		// Single combat log entry for the AOE spell
+		combatLog = appendLog(state, {
+			time: state.elapsedTime,
+			type: 'spell',
+			attackerHeroIndex: heroIndex,
+			attackerHeroId: hero.heroId,
+			damage: Math.round(totalDamageDealt),
+			damageType,
 			abilityId
 		});
 	} else if (appliesToTarget && state.enemy.length > 0) {
@@ -399,7 +466,7 @@ export function resolveSpell(
 	lastSpellAbilityIndexByPlayer[heroIndex] = nextAbilityIndex;
 
 	let next: BattleState = { ...state, enemy, player, combatLog, lastSpellAbilityIndexByPlayer };
-	if (appliesToTarget && enemy !== state.enemy) next = removeDeadEnemies(next);
+	if ((appliesToTarget || appliesToAllEnemies) && enemy !== state.enemy) next = removeDeadEnemies(next);
 	return next;
 }
 

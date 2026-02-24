@@ -14,7 +14,8 @@ import {
 	resolveSpell,
 	resolveEnemyActions,
 	resolveEnemySummons,
-	processBuffs
+	processBuffs,
+	getAttackSpeedMult
 } from './resolution';
 import { getHeroDef } from '../constants';
 import { attackInterval, spellInterval } from '../stats/formulas';
@@ -72,7 +73,9 @@ export function tick(
 		if (!h || h.currentHp <= 0) continue;
 		const d = getHeroDefFrom(s, h.heroId, defs);
 		if (!d) continue;
-		const attackInt = attackInterval(d.baseAttackInterval, d.attackSpeed ?? 0);
+		const buffSpeedMult = getAttackSpeedMult(h.buffs);
+		const effectiveAttackSpeed = (d.attackSpeed ?? 0) + Math.max(-0.9, buffSpeedMult);
+		const attackInt = attackInterval(d.baseAttackInterval, effectiveAttackSpeed);
 		if (h.attackTimer >= attackInt) {
 			s = resolveAutoAttack(s, i, defs);
 		}
