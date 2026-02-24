@@ -261,7 +261,7 @@ export const ONBOARDING_DEFINITIONS: readonly OnboardingDef[] = [
 		description: 'Begin your first run.',
 		iconId: 'portal',
 		checkKey: 'has_run',
-		navLink: '/darkrift/rift',
+		navLink: '/darkrift/dungeon',
 		reward: { currency: { key: 'essence', amount: 500 } }
 	}
 ];
