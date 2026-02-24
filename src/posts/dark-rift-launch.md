@@ -1,7 +1,7 @@
 ---
 title: Introducing The Dark Rift - Descend Into the Void
 description: Train your heroes. Build your lineup. Survive the gauntlet.
-date: '2026-02-21'
+date: '2026-02-24'
 categories:
   - announcement
   - darkrift
