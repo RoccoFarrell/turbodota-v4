@@ -133,7 +133,12 @@ export function aggregateLeaderboard(
 
 /** Minimal league shape expected by the orchestrator. */
 export interface LeagueWithMembers {
-	members: { account_id: number; display_name: string | null; avatar_url: string | null }[];
+	members: {
+		account_id: number;
+		display_name: string | null;
+		avatar_url: string | null;
+		user: { username: string; avatar_url: string | null } | null;
+	}[];
 }
 
 /** Season date window (inclusive). */
@@ -189,8 +194,8 @@ export async function computeDarkRiftLeaderboard(
 		if (userId) {
 			membersMap.set(userId, {
 				accountId: m.account_id,
-				displayName: m.display_name ?? `Player ${m.account_id}`,
-				avatarUrl: m.avatar_url
+				displayName: m.user?.username ?? m.display_name ?? `Player ${m.account_id}`,
+				avatarUrl: m.user?.avatar_url ?? m.avatar_url
 			});
 		}
 	}

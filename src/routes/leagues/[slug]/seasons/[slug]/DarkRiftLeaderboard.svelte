@@ -8,97 +8,99 @@
 	let { leaderboard }: Props = $props();
 </script>
 
-<div class="bg-gray-900/60 border border-emerald-500/20 backdrop-blur-sm rounded-xl p-6 w-full">
-	<!-- Title -->
-	<h3 class="text-xl font-bold mb-4 bg-gradient-to-r from-emerald-400 to-emerald-600 bg-clip-text text-transparent">
-		Dark Rift Leaderboard
-	</h3>
-
-	{#if leaderboard.length === 0 || leaderboard.every((row) => row.runCount === 0)}
-		<!-- Empty state -->
-		<div class="border-2 border-dashed border-emerald-500/30 rounded-lg p-8 text-center">
-			<p class="text-gray-400 text-sm">No runs completed yet</p>
+<section class="rounded-xl border border-emerald-500/20 bg-gray-900/60 backdrop-blur-sm overflow-hidden w-full">
+	<header class="px-6 py-4 border-b border-emerald-500/10">
+		<div class="flex items-center justify-between">
+			<div class="flex items-center gap-3">
+				<h2 class="text-lg font-bold text-gray-100">Dark Rift Leaderboard</h2>
+				{#if leaderboard.length > 0}
+					<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-xs font-semibold text-emerald-300">
+						{leaderboard.length} players
+					</span>
+				{/if}
+			</div>
 		</div>
-	{:else}
+	</header>
+
+	{#if leaderboard.length > 0}
 		<div class="overflow-x-auto">
-			<table class="w-full text-sm">
+			<table class="w-full">
 				<thead>
-					<tr class="bg-gray-800/50">
-						<th class="text-left text-gray-400 font-medium px-4 py-3">Rank</th>
-						<th class="text-left text-gray-400 font-medium px-4 py-3">Player</th>
-						<th class="text-right text-gray-400 font-medium px-4 py-3">Deepest Level</th>
-						<th class="text-right text-gray-400 font-medium px-4 py-3">Best Lineup DPS</th>
-						<th class="text-right text-gray-400 font-medium px-4 py-3">Runs Completed</th>
+					<tr class="bg-gray-800/50 text-left">
+						<th class="py-3 px-4 text-xs font-semibold uppercase tracking-wider text-gray-400 w-16">Rank</th>
+						<th class="py-3 px-4 text-xs font-semibold uppercase tracking-wider text-gray-400">Player</th>
+						<th class="py-3 px-4 text-xs font-semibold uppercase tracking-wider text-gray-400 text-right">Deepest Level</th>
+						<th class="py-3 px-4 text-xs font-semibold uppercase tracking-wider text-gray-400 text-right">Best DPS</th>
+						<th class="py-3 px-4 text-xs font-semibold uppercase tracking-wider text-gray-400 text-right">Runs</th>
 					</tr>
 				</thead>
 				<tbody class="divide-y divide-gray-800">
-					{#each leaderboard as row (row.accountId)}
-						<tr class="hover:bg-gray-800/50 transition-colors">
-							<!-- Rank -->
-							<td class="px-4 py-3">
-								{#if row.rank === 1 && row.runCount > 0}
-									<span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-emerald-500/20 border border-emerald-500/40">
-										<span class="text-emerald-400 font-bold text-sm">1</span>
+					{#each leaderboard as entry (entry.accountId)}
+						<tr class={entry.rank === 1
+							? 'bg-emerald-500/5 hover:bg-emerald-500/10 transition-colors'
+							: 'hover:bg-gray-800/50 transition-colors'}>
+							<td class="py-3 px-4">
+								{#if entry.rank === 1}
+									<span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 text-white font-bold text-sm shadow-lg shadow-emerald-500/20">
+										{entry.rank}
+									</span>
+								{:else if entry.rank === 2}
+									<span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-700 text-gray-200 font-bold text-sm">
+										{entry.rank}
+									</span>
+								{:else if entry.rank === 3}
+									<span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-gray-700/60 text-gray-300 font-bold text-sm">
+										{entry.rank}
 									</span>
 								{:else}
-									<span class="text-gray-300 pl-2">{row.rank}</span>
+									<span class="inline-flex items-center justify-center w-8 h-8 text-gray-400 font-medium text-sm">
+										{entry.rank}
+									</span>
 								{/if}
 							</td>
-
-							<!-- Player -->
-							<td class="px-4 py-3">
+							<td class="py-3 px-4">
 								<div class="flex items-center gap-3">
-									{#if row.avatarUrl}
+									{#if entry.avatarUrl}
 										<img
-											src={row.avatarUrl}
-											alt={row.displayName}
-											class="rounded-full h-8 w-8 object-cover"
+											class="w-8 h-8 rounded-full shrink-0 {entry.rank === 1 ? 'ring-2 ring-emerald-400/50' : ''}"
+											src={entry.avatarUrl}
+											alt=""
 										/>
 									{:else}
-										<div class="rounded-full h-8 w-8 bg-gray-700 flex items-center justify-center">
-											<span class="text-gray-400 text-xs font-bold">
-												{row.displayName.charAt(0).toUpperCase()}
-											</span>
+										<div class="w-8 h-8 rounded-full shrink-0 bg-gray-700 flex items-center justify-center {entry.rank === 1 ? 'ring-2 ring-emerald-400/50' : ''}">
+											<svg class="w-4 h-4 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+												<path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd" />
+											</svg>
 										</div>
 									{/if}
-									<span class={row.rank === 1 && row.runCount > 0 ? 'font-bold text-emerald-400' : 'text-gray-200'}>
-										{row.displayName}
-									</span>
+									<span class="font-medium {entry.rank === 1 ? 'text-emerald-200' : 'text-gray-200'}">{entry.displayName}</span>
 								</div>
 							</td>
-
-							<!-- Deepest Level -->
-							<td class="px-4 py-3 text-right">
-								{#if row.deepestLevel > 0}
-									<span class={row.rank === 1 ? 'text-emerald-400 font-semibold' : 'text-gray-200'}>
-										{row.deepestLevel}
-									</span>
-								{:else}
-									<span class="text-gray-500">-</span>
-								{/if}
+							<td class="py-3 px-4 text-right">
+								<span class="font-bold {entry.rank === 1 ? 'text-emerald-300' : 'text-gray-200'}">
+									{entry.deepestLevel}
+								</span>
 							</td>
-
-							<!-- Best Lineup DPS -->
-							<td class="px-4 py-3 text-right">
-								{#if row.totalDps > 0}
-									<span class="text-gray-200">{row.totalDps.toFixed(1)}</span>
-								{:else}
-									<span class="text-gray-500">-</span>
-								{/if}
+							<td class="py-3 px-4 text-right">
+								<span class="text-gray-300 tabular-nums">{entry.totalDps.toFixed(1)}</span>
 							</td>
-
-							<!-- Runs Completed -->
-							<td class="px-4 py-3 text-right">
-								{#if row.runCount > 0}
-									<span class="text-gray-200">{row.runCount}</span>
-								{:else}
-									<span class="text-gray-500">0</span>
-								{/if}
+							<td class="py-3 px-4 text-right">
+								<span class="text-gray-400">{entry.runCount}</span>
 							</td>
 						</tr>
 					{/each}
 				</tbody>
 			</table>
 		</div>
+	{:else}
+		<div class="p-12 text-center">
+			<div class="rounded-xl border border-dashed border-emerald-500/30 p-8 max-w-md mx-auto">
+				<svg class="w-12 h-12 mx-auto text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+				</svg>
+				<p class="text-gray-400 font-medium mb-1">No leaderboard data yet</p>
+				<p class="text-sm text-gray-500">Complete Dark Rift runs during an active season to appear on the leaderboard.</p>
+			</div>
+		</div>
 	{/if}
-</div>
+</section>

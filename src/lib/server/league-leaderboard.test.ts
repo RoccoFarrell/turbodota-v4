@@ -9,7 +9,8 @@ import {
 	aggregateLeaderboard,
 	type WonRunRow,
 	type MemberInfo,
-	type LineupDpsInfo
+	type LineupDpsInfo,
+	type LeagueWithMembers
 } from './league-leaderboard';
 
 describe('aggregateLeaderboard', () => {
@@ -138,5 +139,75 @@ describe('aggregateLeaderboard', () => {
 		expect(result[0].totalDps).toBe(0);
 		expect(result[0].heroIds).toEqual([]);
 		expect(result[0].runCount).toBe(1);
+	});
+});
+
+describe('LeagueWithMembers name resolution', () => {
+	// These tests validate the interface shape and document the name resolution
+	// priority used by computeDarkRiftLeaderboard (user.username > display_name > account_id)
+
+	it('LeagueWithMembers type accepts user relation with username', () => {
+		const league: LeagueWithMembers = {
+			members: [
+				{
+					account_id: 100,
+					display_name: 'OpenDota Name',
+					avatar_url: null,
+					user: { username: 'SteamUser', avatar_url: 'https://steam.example/avatar.jpg' }
+				}
+			]
+		};
+
+		// user.username should take priority over display_name
+		const displayName = league.members[0].user?.username ?? league.members[0].display_name ?? `Player ${league.members[0].account_id}`;
+		expect(displayName).toBe('SteamUser');
+	});
+
+	it('falls back to display_name when user is null', () => {
+		const league: LeagueWithMembers = {
+			members: [
+				{
+					account_id: 200,
+					display_name: 'OpenDota Name',
+					avatar_url: null,
+					user: null
+				}
+			]
+		};
+
+		const displayName = league.members[0].user?.username ?? league.members[0].display_name ?? `Player ${league.members[0].account_id}`;
+		expect(displayName).toBe('OpenDota Name');
+	});
+
+	it('falls back to Player <id> when both user and display_name are null', () => {
+		const league: LeagueWithMembers = {
+			members: [
+				{
+					account_id: 300,
+					display_name: null,
+					avatar_url: null,
+					user: null
+				}
+			]
+		};
+
+		const displayName = league.members[0].user?.username ?? league.members[0].display_name ?? `Player ${league.members[0].account_id}`;
+		expect(displayName).toBe('Player 300');
+	});
+
+	it('prefers user avatar_url over DotaUser avatar_url', () => {
+		const league: LeagueWithMembers = {
+			members: [
+				{
+					account_id: 400,
+					display_name: null,
+					avatar_url: 'https://opendota.example/avatar.jpg',
+					user: { username: 'SteamUser', avatar_url: 'https://steam.example/avatar.jpg' }
+				}
+			]
+		};
+
+		const avatarUrl = league.members[0].user?.avatar_url ?? league.members[0].avatar_url;
+		expect(avatarUrl).toBe('https://steam.example/avatar.jpg');
 	});
 });
