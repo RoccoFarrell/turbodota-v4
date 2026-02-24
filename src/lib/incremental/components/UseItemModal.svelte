@@ -99,7 +99,9 @@
 			if (selectedTarget === 'mining') {
 				resultMessage = `Applied 1hr of mining: +${data.completions ?? 0} completions. Essence: ${data.essence ?? 0}`;
 			} else if (selectedTarget === 'training' && selectedHeroId != null && selectedStatKey) {
-				resultMessage = `Applied 1hr of ${statLabel(selectedStatKey)} training on ${heroNameFn(selectedHeroId)}. New value: ${Number(data.newTrainingValue ?? 0).toFixed(1)}`;
+				const xp = Number(data.totalPoints ?? data.newTrainingValue ?? 0);
+				const eff = data.effectiveStat != null ? ` (${Number(data.effectiveStat).toFixed(2)} effective)` : '';
+				resultMessage = `Applied 1hr of ${statLabel(selectedStatKey)} training on ${heroNameFn(selectedHeroId)}. ${xp.toLocaleString()} XP${eff}`;
 			} else {
 				resultMessage = 'Item used successfully.';
 			}

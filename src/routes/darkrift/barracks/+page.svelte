@@ -14,6 +14,7 @@
 	import * as actionStore from '$lib/incremental/stores/action-slots.svelte';
 	import type { HeroDef, AbilityDef } from '$lib/incremental/types';
 	import { getArcaneRuneQty, formatTrainingRuneToast } from '$lib/incremental/items/rune-apply-helpers';
+	import { formatEffectiveStat } from '$lib/incremental/stats/training-curve';
 
 	const layoutHeroes = getContext<Array<{ id: number; localized_name: string }>>('heroes') ?? [];
 
@@ -41,6 +42,7 @@
 	// ---- Local state ----
 	let rosterHeroIds = $state<number[]>([]);
 	let trainingValues = $state<Record<number, Record<string, number>>>({});
+	let trainingPoints = $state<Record<number, Record<string, number>>>({});
 	let arcaneRuneQty = $state(0);
 	let runeApplyMode = $state(false);
 	let applyingRune = $state(false);
@@ -71,12 +73,16 @@
 		const res = await fetch(`/api/incremental/training${saveParam()}`);
 		if (res.ok) {
 			const data = await res.json();
-			const map: Record<number, Record<string, number>> = {};
+			const effectiveMap: Record<number, Record<string, number>> = {};
+			const pointsMap: Record<number, Record<string, number>> = {};
 			for (const t of data.training ?? []) {
-				if (!map[t.heroId]) map[t.heroId] = {};
-				map[t.heroId][t.statKey] = t.value;
+				if (!effectiveMap[t.heroId]) effectiveMap[t.heroId] = {};
+				if (!pointsMap[t.heroId]) pointsMap[t.heroId] = {};
+				effectiveMap[t.heroId][t.statKey] = t.effectiveStat;
+				pointsMap[t.heroId][t.statKey] = t.totalPoints;
 			}
-			trainingValues = map;
+			trainingValues = effectiveMap;
+			trainingPoints = pointsMap;
 		}
 	}
 
@@ -166,7 +172,8 @@
 					data.completions ?? 0,
 					TRAINING_BUILDINGS[targetStatKey].name,
 					heroName(heroId),
-					data.newTrainingValue ?? 0
+					data.totalPoints ?? data.newTrainingValue ?? 0,
+					data.totalPoints != null ? formatEffectiveStat(data.totalPoints, targetStatKey) : undefined
 				);
 				toaster.success({ ...toast, duration: 8000 });
 				await Promise.all([fetchBank(), fetchTraining()]);
@@ -234,7 +241,7 @@
 						: slot.actionType}
 					progress={actionStore.slotDisplayProgress(slot)}
 					nextIn={actionStore.slotNextIn(slot)}
-					rateLabel="+1 per tick"
+					rateLabel="+1 XP / 5s"
 					isActive={isRunning}
 					onStop={() => handleClearSlot(i)}
 				/>
@@ -278,6 +285,7 @@
 					{getHeroDef}
 					{heroName}
 					{trainingValues}
+					{trainingPoints}
 					{maxSlots}
 					slotDisplayProgress={actionStore.slotDisplayProgress}
 					slotNextIn={actionStore.slotNextIn}

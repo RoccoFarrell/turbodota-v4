@@ -106,7 +106,7 @@
 			const byHero: Record<number, Record<string, number>> = {};
 			for (const row of data.training ?? []) {
 				if (!byHero[row.heroId]) byHero[row.heroId] = {};
-				byHero[row.heroId][row.statKey] = row.value;
+				byHero[row.heroId][row.statKey] = row.effectiveStat;
 			}
 			trainingByHero = byHero;
 		}

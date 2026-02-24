@@ -2,6 +2,7 @@
 	import { getAffinityRateModifier, getStatAffinityAttr } from '$lib/incremental/actions/hero-affinity';
 	import type { TrainingStatKey } from '$lib/incremental/actions/constants';
 	import type { HeroDef } from '$lib/incremental/types';
+	import { TRAINING_CURVE_CONFIGS } from '$lib/incremental/stats/training-curve';
 
 	interface Props {
 		rosterHeroIds: number[];
@@ -166,8 +167,9 @@
 					</span>
 				{/if}
 				{#if targetStatKey}
+					{@const cfg = TRAINING_CURVE_CONFIGS[targetStatKey]}
 					<span class="text-xs text-gray-500 dark:text-gray-400 shrink-0">
-						+{statVal.toFixed(0)}
+						+{statVal.toFixed(cfg.displayDecimals)} {cfg.unit}
 					</span>
 				{/if}
 				{#if busy}

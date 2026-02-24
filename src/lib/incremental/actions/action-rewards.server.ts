@@ -57,11 +57,11 @@ const REWARD_HANDLERS: Record<string, RewardHandler> = {
 		const heroId = params.heroId as number | undefined;
 		const statKey = params.statKey as string | undefined;
 		if (typeof heroId !== 'number' || !isValidStatKey(statKey)) return {};
-		const value = completions * 1;
+		const pointsEarned = completions * 1; // 1 raw point per completion
 		await ctx.tx.incrementalHeroTraining.upsert({
 			where: { saveId_heroId_statKey: { saveId: ctx.saveId, heroId, statKey } },
-			create: { saveId: ctx.saveId, heroId, statKey, value },
-			update: { value: { increment: value } }
+			create: { saveId: ctx.saveId, heroId, statKey, totalPoints: pointsEarned },
+			update: { totalPoints: { increment: pointsEarned } }
 		});
 		return {};
 	}

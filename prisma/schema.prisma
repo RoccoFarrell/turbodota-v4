@@ -786,7 +786,7 @@ model IncrementalHeroTraining {
   saveId    String
   heroId    Int // Hero.id
   statKey   String // hp, attack_damage, spell_power, attack_speed, spell_haste, armor, magic_resist
-  value     Float    @default(0) // trained amount (up to 3 decimal places)
+  totalPoints Float  @default(0) // raw training XP; use pointsToEffectiveStat() to convert
   updatedAt DateTime @updatedAt
 
   save IncrementalSave @relation(fields: [saveId], references: [id], onDelete: Cascade)

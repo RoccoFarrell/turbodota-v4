@@ -49,19 +49,27 @@ describe('formatMiningRuneToast', () => {
 });
 
 describe('formatTrainingRuneToast', () => {
-	it('includes time, completions, stat gain, hero name, and new total', () => {
+	it('includes time, completions, XP, and hero name (no effective label)', () => {
 		const result = formatTrainingRuneToast(720, 'Spell Power', 'Crystal Maiden', 1440);
 		expect(result.title).toBe('Arcane Rune applied!');
 		expect(result.description).toContain('1 hr instant progress');
 		expect(result.description).toContain('720 completions');
-		expect(result.description).toContain('+720 Spell Power on Crystal Maiden');
-		expect(result.description).toContain('now 1,440');
+		expect(result.description).toContain('Spell Power');
+		expect(result.description).toContain('Crystal Maiden');
+		expect(result.description).toContain('1,440 XP');
+	});
+
+	it('includes effective stat label when provided', () => {
+		const result = formatTrainingRuneToast(720, 'Spell Power', 'Crystal Maiden', 1440, '+8.3 SP');
+		expect(result.description).toContain('Crystal Maiden');
+		expect(result.description).toContain('+8.3 SP');
 	});
 
 	it('works with different stats and heroes', () => {
 		const result = formatTrainingRuneToast(360, 'Attack Damage', 'Anti-Mage', 500);
-		expect(result.description).toContain('+360 Attack Damage on Anti-Mage');
-		expect(result.description).toContain('now 500');
+		expect(result.description).toContain('Attack Damage');
+		expect(result.description).toContain('Anti-Mage');
+		expect(result.description).toContain('500 XP');
 	});
 });
 

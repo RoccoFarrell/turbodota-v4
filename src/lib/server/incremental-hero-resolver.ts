@@ -7,6 +7,8 @@
 import prisma from '$lib/server/prisma';
 import type { HeroDef, AbilityDef, PrimaryAttribute } from '$lib/incremental/types';
 import { PrimaryAttribute as PrimaryAttributeConst } from '$lib/incremental/types';
+import { pointsToEffectiveStat } from '$lib/incremental/stats/training-curve';
+import type { TrainingStatKey } from '$lib/incremental/actions/constants';
 
 function primaryAttribute(value: string): PrimaryAttribute {
 	if (value === 'str' || value === 'agi' || value === 'int' || value === 'universal') return value;
@@ -103,7 +105,7 @@ export async function getHeroDefsFromDb(saveId?: string | null): Promise<{
 		saveId
 			? prisma.incrementalHeroTraining.findMany({
 					where: { saveId },
-					select: { heroId: true, statKey: true, value: true }
+					select: { heroId: true, statKey: true, totalPoints: true }
 				})
 			: Promise.resolve([])
 	]);
@@ -115,7 +117,9 @@ export async function getHeroDefsFromDb(saveId?: string | null): Promise<{
 			m = new Map();
 			trainingByHero.set(t.heroId, m);
 		}
-		m.set(t.statKey, t.value);
+		// Convert raw points to effective stat at read-time
+		const effective = pointsToEffectiveStat(t.totalPoints, t.statKey as TrainingStatKey);
+		m.set(t.statKey, effective);
 	}
 
 	const abilityMap = new Map<string, AbilityDef>();

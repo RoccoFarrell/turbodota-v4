@@ -7,6 +7,7 @@
 	import type { HeroDef } from '$lib/incremental/types';
 	import HeroPickerDropdown from './HeroPickerDropdown.svelte';
 	import { shouldAutoApply } from '$lib/incremental/items/rune-apply-helpers';
+	import { TRAINING_CURVE_CONFIGS } from '$lib/incremental/stats/training-curve';
 
 	interface Props {
 		statKey: TrainingStatKey;
@@ -15,6 +16,7 @@
 		getHeroDef: (id: number) => HeroDef | undefined;
 		heroName: (id: number, fallback?: string) => string;
 		trainingValues: Record<number, Record<string, number>>;
+		trainingPoints: Record<number, Record<string, number>>;
 		maxSlots: number;
 		slotDisplayProgress: (slot: SlotState) => number;
 		slotNextIn: (slot: SlotState) => number;
@@ -35,6 +37,7 @@
 		getHeroDef,
 		heroName,
 		trainingValues,
+		trainingPoints,
 		maxSlots,
 		slotDisplayProgress,
 		slotNextIn,
@@ -143,8 +146,12 @@
 				<div class="flex items-center justify-between gap-2">
 					<span class="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
 						{activeSlot.actionHeroId != null ? heroName(activeSlot.actionHeroId) : 'Training…'}
-						{#if activeSlot.actionHeroId != null && trainingValues[activeSlot.actionHeroId]?.[statKey] != null}
-							<span class="text-xs text-gray-500 ml-1">+{(trainingValues[activeSlot.actionHeroId][statKey]).toFixed(0)}</span>
+						{#if activeSlot.actionHeroId != null && trainingPoints[activeSlot.actionHeroId]?.[statKey] != null}
+							{@const pts = trainingPoints[activeSlot.actionHeroId][statKey]}
+							{@const eff = trainingValues[activeSlot.actionHeroId]?.[statKey] ?? 0}
+							{@const cfg = TRAINING_CURVE_CONFIGS[statKey]}
+							<span class="text-xs text-gray-500 ml-1">{pts.toLocaleString()} XP</span>
+							<span class="text-xs {building.color} ml-0.5">+{eff.toFixed(cfg.displayDecimals)} {cfg.unit}</span>
 						{/if}
 					</span>
 					<button
@@ -167,7 +174,7 @@
 					{:else}
 						Paused
 					{/if}
-					· +1 per tick
+					· +1 XP / 5s
 				</p>
 			</div>
 		{/if}

@@ -18,6 +18,7 @@ import {
 	type BankTx
 } from '$lib/incremental/bank/bank.service.server';
 import { getItemDef } from '$lib/incremental/constants/item-definitions';
+import { pointsToEffectiveStat } from '$lib/incremental/stats/training-curve';
 import { getActionDef } from '$lib/incremental/actions/action-definitions';
 import { applyRewards } from '$lib/incremental/actions/action-rewards.server';
 import { getRateModifier } from '$lib/incremental/actions/talent-rate-modifier';
@@ -176,7 +177,7 @@ async function handleIdleInstant1h(
 		// Fetch updated training value for this hero+stat
 		const training = await prisma.incrementalHeroTraining.findUnique({
 			where: { saveId_heroId_statKey: { saveId, heroId, statKey } },
-			select: { value: true }
+			select: { totalPoints: true }
 		});
 
 		const [balances, inventory] = await Promise.all([
@@ -184,6 +185,7 @@ async function handleIdleInstant1h(
 			getBankItems(saveId)
 		]);
 
+		const totalPoints = training?.totalPoints ?? 0;
 		return json({
 			success: true,
 			itemId,
@@ -191,7 +193,9 @@ async function handleIdleInstant1h(
 			completions,
 			heroId,
 			statKey,
-			newTrainingValue: training?.value ?? 0,
+			totalPoints,
+			effectiveStat: pointsToEffectiveStat(totalPoints, statKey as TrainingStatKey),
+			newTrainingValue: totalPoints, // backward compat
 			essence: balances.essence ?? 0,
 			currencies: balances,
 			inventory

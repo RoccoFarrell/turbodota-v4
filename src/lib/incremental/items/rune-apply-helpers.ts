@@ -26,11 +26,15 @@ export function formatTrainingRuneToast(
 	completions: number,
 	statName: string,
 	heroName: string,
-	newTotal: number
+	newTotal: number,
+	effectiveStatLabel?: string
 ): { title: string; description: string } {
+	const statInfo = effectiveStatLabel
+		? `+${completions.toLocaleString()} XP on ${heroName} (${effectiveStatLabel})`
+		: `+${completions.toLocaleString()} ${statName} XP on ${heroName} (${newTotal.toLocaleString()} XP)`;
 	return {
 		title: 'Arcane Rune applied!',
-		description: `1 hr instant progress · ${completions.toLocaleString()} completions · +${completions.toLocaleString()} ${statName} on ${heroName} (now ${newTotal.toLocaleString()})`
+		description: `1 hr instant progress · ${completions.toLocaleString()} completions · ${statInfo}`
 	};
 }
 

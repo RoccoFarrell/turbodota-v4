@@ -216,7 +216,7 @@
 			const map: Record<number, Record<string, number>> = {};
 			for (const t of data.training ?? []) {
 				if (!map[t.heroId]) map[t.heroId] = {};
-				map[t.heroId][t.statKey] = t.value;
+				map[t.heroId][t.statKey] = t.effectiveStat;
 			}
 			trainingValues = map;
 		}
