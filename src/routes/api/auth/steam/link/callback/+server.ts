@@ -3,7 +3,7 @@ import type { RequestHandler } from '@sveltejs/kit';
 import prisma from '$lib/server/prisma';
 import { deriveAccountId } from '$lib/server/steam-utils';
 import { steamLink } from '../steam-link';
-import { createDotaUser } from '../../../helpers';
+import { createDotaUser } from '../../../../helpers';
 
 /**
  * Handle Steam OpenID callback for account linking
