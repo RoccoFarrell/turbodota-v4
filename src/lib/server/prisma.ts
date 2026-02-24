@@ -18,7 +18,7 @@ const pool = new pg.Pool({
 	connectionString,
 	ssl: { rejectUnauthorized: false }
 });
-const adapter = new PrismaPg({ pool });
+const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
 // prisma.$on('query', (e) => {
